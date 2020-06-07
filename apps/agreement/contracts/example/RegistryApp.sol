@@ -4,10 +4,10 @@
 
 pragma solidity 0.4.24;
 
-import "@aragon/os/contracts/apps/disputable/DisputableApp.sol";
+import "@aragon/os/contracts/apps/disputable/DisputableAragonApp.sol";
 
 
-contract Registry is DisputableApp {
+contract Registry is DisputableAragonApp {
     /* Validation errors */
     string internal constant ERROR_CANNOT_REGISTER = "REGISTRY_CANNOT_REGISTER";
     string internal constant ERROR_SENDER_NOT_ALLOWED = "REGISTRY_SENDER_NOT_ALLOWED";
@@ -22,7 +22,7 @@ contract Registry is DisputableApp {
 
     event Registered(bytes32 indexed id);
     event Unregistered(bytes32 indexed id);
-    event Challenged(bytes32 indexed id);
+    event Challenged(bytes32 indexed id, uint256 challengeId);
     event Allowed(bytes32 indexed id);
 
     struct Entry {
@@ -89,12 +89,35 @@ contract Registry is DisputableApp {
     * @return challenged Whether or not the entry is challenged
     * @return actionId Identification number of the given entry in the context of the agreement
     */
-    function getEntry(bytes32 _id) external view returns (address submitter, bytes value, bool challenged, uint256 actionId) {
+    function getEntry(bytes32 _id) external view returns (address submitter, bytes value, uint256 actionId) {
         Entry storage entry = _getEntry(_id);
         submitter = entry.submitter;
         value = entry.value;
-        challenged = entry.challenged;
         actionId = entry.actionId;
+    }
+
+    /**
+    * @dev Tell the disputable action information for a given action
+    * @param _id Identification number of the entry being queried
+    * @return endDate Timestamp when the disputable action ends so it cannot be challenged anymore, unless it's closed beforehand
+    * @return challenged True if the disputable action is being challenged
+    * @return closed True if the disputable action is closed
+    */
+    function getDisputableAction(uint256 _id) external view returns (uint64 endDate, bool challenged, bool closed) {
+        Entry storage entry = entries[bytes32(_id)];
+        endDate = 0;
+        challenged = entry.challenged;
+        closed = !_isRegistered(entry);
+    }
+
+    /**
+    * @dev Tell whether a disputable action can be challenged or not
+    * @param _id Identification number of the entry being queried
+    * @return True if the queried disputable action can be challenged, false otherwise
+    */
+    function canChallenge(uint256 _id) external view returns (bool) {
+        Entry storage entry = entries[bytes32(_id)];
+        return _isRegistered(entry) && !entry.challenged;
     }
 
     /**
@@ -124,13 +147,13 @@ contract Registry is DisputableApp {
     * @dev Challenge an entry
     * @param _id Identification number of the entry to be challenged
     */
-    function _onDisputableActionChallenged(uint256 _id, uint256 /* _challengeId */, address /* _challenger */) internal {
+    function _onDisputableActionChallenged(uint256 _id, uint256 _challengeId, address /* _challenger */) internal {
         bytes32 id = bytes32(_id);
         Entry storage entry = _getEntry(id);
         require(!_isChallenged(entry), ERROR_ENTRY_CHALLENGED);
 
         entry.challenged = true;
-        emit Challenged(id);
+        emit Challenged(id, _challengeId);
     }
 
     /**
@@ -176,7 +199,7 @@ contract Registry is DisputableApp {
         Entry storage entry = entries[_id];
         require(!_isRegistered(entry), ERROR_ENTRY_ALREADY_REGISTERED);
 
-        entry.actionId = _newAgreementAction(uint256(_id), _submitter, _context);
+        entry.actionId = _newAgreementAction(uint256(_id), _context, _submitter);
         entry.submitter = _submitter;
         entry.value = _value;
         emit Registered(_id);

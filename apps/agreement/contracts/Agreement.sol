@@ -25,8 +25,6 @@ contract Agreement is IAgreement, AragonApp {
     using SafeERC20 for ERC20;
     using BytesHelper for bytes;
 
-    uint64 internal constant MAX_UINT64 = uint64(-1);
-
     /* Arbitrator outcomes constants */
     uint256 internal constant DISPUTES_POSSIBLE_OUTCOMES = 2;
     uint256 internal constant DISPUTES_RULING_SUBMITTER = 3;
@@ -57,7 +55,6 @@ contract Agreement is IAgreement, AragonApp {
 
     /* Action related errors */
     string internal constant ERROR_CANNOT_CLOSE_ACTION = "AGR_CANNOT_CLOSE_ACTION";
-    string internal constant ERROR_CANNOT_CHALLENGE_ACTION = "AGR_CANNOT_CHALLENGE_ACTION";
     string internal constant ERROR_CANNOT_SETTLE_ACTION = "AGR_CANNOT_SETTLE_ACTION";
     string internal constant ERROR_CANNOT_DISPUTE_ACTION = "AGR_CANNOT_DISPUTE_ACTION";
     string internal constant ERROR_CANNOT_RULE_ACTION = "AGR_CANNOT_RULE_ACTION";
@@ -88,12 +85,6 @@ contract Agreement is IAgreement, AragonApp {
     event DisputableAppUnregistered(IDisputable indexed disputable);
     event CollateralRequirementChanged(IDisputable indexed disputable, uint256 id);
 
-    enum ActionState {
-        Submitted,
-        Challenged,
-        Closed
-    }
-
     enum ChallengeState {
         Waiting,
         Settled,
@@ -114,9 +105,7 @@ contract Agreement is IAgreement, AragonApp {
         uint256 disputableActionId;         // Identification number of the disputable action in the context of the disputable instance
         uint256 collateralId;               // Identification number of the collateral requirements for the given action
         uint256 settingId;                  // Identification number of the agreement setting for the given action
-        uint64 endDate;                     // Timestamp when the disputable action ends unless it's closed beforehand
         address submitter;                  // Address that has submitted the action
-        ActionState state;                  // Current state of the action
         bytes context;                      // Link to a human-readable text giving context for the given action
         uint256 currentChallengeId;         // Total number of challenges of the action
     }
@@ -279,12 +268,11 @@ contract Agreement is IAgreement, AragonApp {
     * @dev This function should be called from the disputable app registered on the Agreement every time a new disputable is created in the app.
     *      Each disputable action ID must be registered only once, this is how the Agreements notices about each disputable action.
     * @param _disputableActionId Identification number of the disputable action in the context of the disputable instance
-    * @param _lifetime Lifetime duration in seconds of the disputable action, it can be set to zero to specify infinite
     * @param _submitter Address of the user that has submitted the action
     * @param _context Link to a human-readable text giving context for the given action
     * @return Unique identification number for the created action in the context of the agreement
     */
-    function newAction(uint256 _disputableActionId, uint64 _lifetime, address _submitter, bytes _context) external returns (uint256) {
+    function newAction(uint256 _disputableActionId, bytes _context, address _submitter) external returns (uint256) {
         uint256 lastSettingIdSigned = lastSettingSignedBy[_submitter];
         require(lastSettingIdSigned >= _getCurrentSettingId(), ERROR_SIGNER_MUST_SIGN);
 
@@ -300,7 +288,6 @@ contract Agreement is IAgreement, AragonApp {
         action.disputable = IDisputable(msg.sender);
         action.collateralId = currentCollateralRequirementId;
         action.disputableActionId = _disputableActionId;
-        action.endDate = _lifetime == 0 ? MAX_UINT64 : getTimestamp64().add(_lifetime);
         action.submitter = _submitter;
         action.context = _context;
         action.settingId = _getCurrentSettingId();
@@ -311,14 +298,16 @@ contract Agreement is IAgreement, AragonApp {
 
     /**
     * @notice Mark action #`_actionId` as closed
-    * @dev This function can only be called by disputable apps that have registered a disputable action previously. These apps will be able to
-    *      close their registered actions if these are not challenged or ruled in favor of the submitter. To detect if that's possible before
-    *      hand, users can rely on `canProceed`.
+    * @dev This function can only be called by disputable apps that have registered a disputable action previously.
+    *      This function does not check the action was not closed before, it is responsibility of the disputable app to handle that correctly.
     * @param _actionId Identification number of the action to be closed
     */
     function closeAction(uint256 _actionId) external {
         (Action storage action, Challenge storage challenge, ) = _getChallengedAction(_actionId);
-        require(_canProceed(action), ERROR_CANNOT_CLOSE_ACTION);
+
+        // TODO: we could turn this into a responsibility of the disputable app
+        (, bool challenged, bool closed) = _getDisputableActionFor(action);
+        require(!challenged && !closed, ERROR_CANNOT_CLOSE_ACTION);
 
         (IDisputable disputable, CollateralRequirement storage requirement) = _getDisputableFor(action);
         require(disputable == IDisputable(msg.sender), ERROR_SENDER_NOT_ALLOWED);
@@ -328,7 +317,6 @@ contract Agreement is IAgreement, AragonApp {
             _unlockBalance(requirement.staking, action.submitter, requirement.actionAmount);
         }
 
-        action.state = ActionState.Closed;
         emit ActionClosed(_actionId);
     }
 
@@ -341,14 +329,11 @@ contract Agreement is IAgreement, AragonApp {
     */
     function challengeAction(uint256 _actionId, uint256 _settlementOffer, bool _finishedEvidence, bytes _context) external {
         Action storage action = _getAction(_actionId);
-        require(_canChallenge(action), ERROR_CANNOT_CHALLENGE_ACTION);
-
         (IDisputable disputable, CollateralRequirement storage requirement) = _getDisputableFor(action);
         require(_canPerformChallenge(disputable, msg.sender), ERROR_SENDER_CANNOT_CHALLENGE_ACTION);
         require(_settlementOffer <= requirement.actionAmount, ERROR_INVALID_SETTLEMENT_OFFER);
 
         uint256 challengeId = _createChallenge(_actionId, action, msg.sender, requirement, _settlementOffer, _finishedEvidence, _context);
-        action.state = ActionState.Challenged;
         action.currentChallengeId = challengeId;
         disputable.onDisputableActionChallenged(action.disputableActionId, challengeId, msg.sender);
         emit ActionChallenged(_actionId, challengeId);
@@ -369,7 +354,6 @@ contract Agreement is IAgreement, AragonApp {
         }
 
         (IDisputable disputable, CollateralRequirement storage requirement) = _getDisputableFor(action);
-        _addChallengeDuration(action, challenge, requirement);
         uint256 actionCollateral = requirement.actionAmount;
         uint256 settlementOffer = challenge.settlementOffer;
 
@@ -448,6 +432,7 @@ contract Agreement is IAgreement, AragonApp {
         challenge.ruling = _ruling;
         emit Ruled(arbitrator, _disputeId, _ruling);
 
+        // TODO: implement try catch
         if (_ruling == DISPUTES_RULING_SUBMITTER) {
             _rejectChallenge(action, challenge);
             emit ActionAccepted(actionId, challengeId);
@@ -489,8 +474,6 @@ contract Agreement is IAgreement, AragonApp {
             address disputable,
             uint256 disputableActionId,
             uint256 collateralId,
-            uint64 endDate,
-            ActionState state,
             address submitter,
             bytes context,
             uint256 currentChallengeId
@@ -501,8 +484,6 @@ contract Agreement is IAgreement, AragonApp {
         disputable = action.disputable;
         disputableActionId = action.disputableActionId;
         collateralId = action.collateralId;
-        endDate = action.endDate;
-        state = action.state;
         submitter = action.submitter;
         context = action.context;
         currentChallengeId = action.currentChallengeId;
@@ -655,16 +636,6 @@ contract Agreement is IAgreement, AragonApp {
     function canPerformChallenge(uint256 _actionId, address _challenger) external view returns (bool) {
         Action storage action = _getAction(_actionId);
         return _canPerformChallenge(action.disputable, _challenger);
-    }
-
-    /**
-    * @dev Tell whether an action can proceed or not, i.e. if its not being challenged or disputed
-    * @param _actionId Identification number of the action to be queried
-    * @return True if the action can proceed, false otherwise
-    */
-    function canProceed(uint256 _actionId) external view returns (bool) {
-        Action storage action = _getAction(_actionId);
-        return _canProceed(action);
     }
 
     /**
@@ -858,10 +829,8 @@ contract Agreement is IAgreement, AragonApp {
     function _acceptChallenge(Action storage _action, Challenge storage _challenge) internal {
         _challenge.state = ChallengeState.Accepted;
 
-        (IDisputable disputable, CollateralRequirement storage requirement) = _getDisputableFor(_action);
-        _addChallengeDuration(_action, _challenge, requirement);
-
         address challenger = _challenge.challenger;
+        (IDisputable disputable, CollateralRequirement storage requirement) = _getDisputableFor(_action);
         _slashBalance(requirement.staking, _action.submitter, challenger, requirement.actionAmount);
         _transfer(requirement.token, challenger, requirement.challengeAmount);
         disputable.onDisputableActionRejected(_action.disputableActionId);
@@ -873,13 +842,10 @@ contract Agreement is IAgreement, AragonApp {
     * @param _challenge Current challenge associated to the given action
     */
     function _rejectChallenge(Action storage _action, Challenge storage _challenge) internal {
-        _action.state = ActionState.Submitted;
         _challenge.state = ChallengeState.Rejected;
 
-        (IDisputable disputable, CollateralRequirement storage requirement) = _getDisputableFor(_action);
-        _addChallengeDuration(_action, _challenge, requirement);
-
         address submitter = _action.submitter;
+        (IDisputable disputable, CollateralRequirement storage requirement) = _getDisputableFor(_action);
         _unlockBalance(requirement.staking, submitter, requirement.actionAmount);
         _transfer(requirement.token, submitter, requirement.challengeAmount);
         disputable.onDisputableActionAllowed(_action.disputableActionId);
@@ -891,32 +857,12 @@ contract Agreement is IAgreement, AragonApp {
     * @param _challenge Current challenge associated to the given action
     */
     function _voidChallenge(Action storage _action, Challenge storage _challenge) internal {
-        _action.state = ActionState.Submitted;
         _challenge.state = ChallengeState.Voided;
 
         (IDisputable disputable, CollateralRequirement storage requirement) = _getDisputableFor(_action);
-        _addChallengeDuration(_action, _challenge, requirement);
-
         _unlockBalance(requirement.staking, _action.submitter, requirement.actionAmount);
         _transfer(requirement.token, _challenge.challenger, requirement.challengeAmount);
         disputable.onDisputableActionVoided(_action.disputableActionId);
-    }
-
-    /**
-    * @dev Add the total challenge duration of an action
-    * @param _action Action instance to consider its challenge duration
-    * @param _challenge Challenge associated to the given action to be added
-    * @param _requirement Collateral requirement used for the given challenge
-    */
-    function _addChallengeDuration(Action storage _action, Challenge storage _challenge, CollateralRequirement storage _requirement) internal {
-        uint64 challengeStartedAt = _challenge.endDate.sub(_requirement.challengeDuration);
-        uint64 challengeDuration = getTimestamp64().sub(challengeStartedAt);
-
-        uint64 currentEndDate = _action.endDate;
-        uint64 newEndDate = currentEndDate + challengeDuration;
-
-        // Cap action endDate to MAX_UINT64 to handle infinite action lifetimes
-        _action.endDate = (newEndDate >= currentEndDate) ? newEndDate : MAX_UINT64;
     }
 
     /**
@@ -1082,21 +1028,12 @@ contract Agreement is IAgreement, AragonApp {
     }
 
     /**
-    * @dev Tell whether an action can proceed or not, i.e. if its not being challenged or disputed
-    * @param _action Action instance to be queried
-    * @return True if the action can proceed, false otherwise
-    */
-    function _canProceed(Action storage _action) internal view returns (bool) {
-        return _isSubmitted(_action);
-    }
-
-    /**
     * @dev Tell whether an action can be challenged or not
     * @param _action Action instance to be queried
     * @return True if the action can be challenged, false otherwise
     */
     function _canChallenge(Action storage _action) internal view returns (bool) {
-        return _isSubmitted(_action) && _action.endDate > getTimestamp64();
+        return _action.disputable.canChallenge(_action.disputableActionId);
     }
 
     /**
@@ -1152,15 +1089,6 @@ contract Agreement is IAgreement, AragonApp {
     }
 
     /**
-    * @dev Tell whether an action is submitted or not
-    * @param _action Action instance to be queried
-    * @return True if the action is submitted, false otherwise
-    */
-    function _isSubmitted(Action storage _action) internal view returns (bool) {
-        return _action.state == ActionState.Submitted;
-    }
-
-    /**
     * @dev Tell whether an action is challenged by a given challenge instance or not
     * @param _actionId Identification number of the action to be queried
     * @param _action Action instance to be queried
@@ -1168,7 +1096,8 @@ contract Agreement is IAgreement, AragonApp {
     * @return True if the action is challenged by the given challenge instance, false otherwise
     */
     function _isChallenged(uint256 _actionId, Action storage _action, Challenge storage _challenge) internal view returns (bool) {
-        return _action.state == ActionState.Challenged && _actionId == _challenge.actionId;
+        (, bool challenged, ) = _getDisputableActionFor(_action);
+        return _actionId == _challenge.actionId && challenged;
     }
 
     /**
@@ -1318,6 +1247,17 @@ contract Agreement is IAgreement, AragonApp {
         DisputableInfo storage disputableInfo = disputableInfos[address(disputable)];
         requirement = disputableInfo.collateralRequirements[collateralId];
         require(collateralId < disputableInfo.collateralRequirementsLength, ERROR_MISSING_COLLATERAL_REQUIREMENT);
+    }
+
+    /**
+    * @dev Tell the disputable action information for a given action
+    * @param _action Action instance to be queried
+    * @return endDate Timestamp when the disputable action ends so it cannot be challenged anymore, unless it's closed beforehand
+    * @return challenged True if the disputable action is being challenged
+    * @return closed True if the disputable action is closed
+    */
+    function _getDisputableActionFor(Action storage _action) internal view returns (uint64 endDate, bool challenged, bool closed) {
+        return _action.disputable.getDisputableAction(_action.disputableActionId);
     }
 
     /**
