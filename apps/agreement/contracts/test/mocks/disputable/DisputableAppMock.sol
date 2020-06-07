@@ -15,6 +15,8 @@ contract DisputableAppMock is DisputableAragonApp, TimeHelpersMock {
 
     /* Validation errors */
     string internal constant ERROR_CANNOT_SUBMIT = "DISPUTABLE_CANNOT_SUBMIT";
+    string internal constant ERROR_CANNOT_CHALLENGE = "DISPUTABLE_CANNOT_CHALLENGE";
+    string internal constant ERROR_ENTRY_DOES_NOT_EXIST = "DISPUTABLE_ENTRY_DOES_NOT_EXIST";
 
     // bytes32 public constant SUBMIT_ROLE = keccak256("SUBMIT_ROLE");
     bytes32 public constant SUBMIT_ROLE = 0x8a8601cc8e9efb544266baca5bffc5cea11aed5de937dc37810fd002b4010eac;
@@ -94,9 +96,7 @@ contract DisputableAppMock is DisputableAragonApp, TimeHelpersMock {
     * @return True if the queried disputable action can be challenged, false otherwise
     */
     function canChallenge(uint256 _id) external view returns (bool) {
-        Entry storage entry = entries[_id];
-        uint64 endDate = entry.endDate;
-        return (endDate == 0 || endDate > getTimestamp64()) && entry.challengedAt == 0 && !entry.closed;
+        return _existsEntry(_id) && _canChallenge(entries[_id]);
     }
 
     /**
@@ -114,7 +114,9 @@ contract DisputableAppMock is DisputableAragonApp, TimeHelpersMock {
     * @param _id Identification number of the entry to be challenged
     */
     function _onDisputableActionChallenged(uint256 _id, uint256 /* _challengeId */, address /* _challenger */) internal {
-        Entry storage entry = entries[_id];
+        Entry storage entry = _getEntry(_id);
+        require(_canChallenge(entry), ERROR_CANNOT_CHALLENGE);
+
         entry.challengedAt = getTimestamp64();
         emit DisputableChallenged(_id);
     }
@@ -151,7 +153,7 @@ contract DisputableAppMock is DisputableAragonApp, TimeHelpersMock {
     * @param _id Identification number of the entry to be updated
     */
     function _updateChallengeDuration(uint256 _id) internal {
-        Entry storage entry = entries[_id];
+        Entry storage entry = _getEntry(_id);
         uint64 currentEndDate = entry.endDate;
 
         if (currentEndDate != 0) {
@@ -163,5 +165,34 @@ contract DisputableAppMock is DisputableAragonApp, TimeHelpersMock {
         }
 
         entry.challengedAt = 0;
+    }
+
+    /**
+    * @dev Tell whether an entry instance can be challenged or not
+    * @param _entry Entry instance being queried
+    * @return True if the queried entry can be challenged, false otherwise
+    */
+    function _canChallenge(Entry storage _entry) internal view returns (bool) {
+        uint64 endDate = _entry.endDate;
+        return (endDate == 0 || endDate > getTimestamp64()) && _entry.challengedAt == 0 && !_entry.closed;
+    }
+
+    /**
+    * @dev Fetch an entry instance by identification number
+    * @param _id Entry identification number being queried
+    * @return Entry instance associated to the given identification number
+    */
+    function _getEntry(uint256 _id) internal view returns (Entry storage) {
+        require(_existsEntry(_id), ERROR_ENTRY_DOES_NOT_EXIST);
+        return entries[_id];
+    }
+
+    /**
+    * @dev Tell weather an entry exists or not
+    * @param _id Entry identification number being queried
+    * @return True if the entry was registered, false otherwise
+    */
+    function _existsEntry(uint256 _id) internal view returns (bool) {
+        return _id < entriesLength;
     }
 }

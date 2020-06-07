@@ -117,7 +117,7 @@ contract Registry is DisputableAragonApp {
     */
     function canChallenge(uint256 _id) external view returns (bool) {
         Entry storage entry = entries[bytes32(_id)];
-        return _isRegistered(entry) && !entry.challenged;
+        return _isRegistered(entry) && !_isChallenged(entry);
     }
 
     /**
