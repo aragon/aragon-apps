@@ -437,8 +437,6 @@ contract Agreement is IAgreement, AragonApp {
     * @return disputable Address of the disputable that created the action
     * @return disputableActionId Identification number of the disputable action in the context of the disputable
     * @return collateralId Identification number of the collateral requirements for the given action
-    * @return endDate Timestamp when the disputable action ends unless it's closed beforehand
-    * @return state Current state of the action
     * @return submitter Address that has submitted the action
     * @return closed Whether the action was manually closed by the disputable app or not
     * @return context Link to a human-readable text giving context for the given action

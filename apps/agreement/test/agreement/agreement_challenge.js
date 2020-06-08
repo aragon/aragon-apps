@@ -32,7 +32,7 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
 
           const itCannotBeChallenged = () => {
             it('reverts', async () => {
-              await assertRevert(disputable.challenge({ actionId, challenger }), AGREEMENT_ERRORS.ERROR_CANNOT_CHALLENGE_ACTION)
+              await assertRevert(disputable.challenge({ actionId, challenger }), DISPUTABLE_ERRORS.ERROR_CANNOT_CHALLENGE)
             })
           }
 
