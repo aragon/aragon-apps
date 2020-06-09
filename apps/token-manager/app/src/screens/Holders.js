@@ -57,7 +57,10 @@ function Holders({
                 css={`
                   display: flex;
                   align-items: center;
-                  max-width: ${compact ? '50vw' : 'unset'};
+                  /* On compact views, leave space for the rest of the data view */
+                  max-width: ${compact
+                    ? `calc(100vw - ${20 * GU}px)`
+                    : 'unset'};
                 `}
               >
                 <LocalIdentityBadge
