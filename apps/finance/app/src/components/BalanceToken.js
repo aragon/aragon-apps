@@ -97,10 +97,10 @@ BalanceToken.defaultProps = {
 
 BalanceToken.propTypes = {
   address: PropTypes.string.isRequired,
-  amount: PropTypes.instanceOf(BN),
+  amount: PropTypes.instanceOf(BN).isRequired,
   compact: PropTypes.bool.isRequired,
   convertedAmount: PropTypes.instanceOf(BN),
-  decimals: PropTypes.instanceOf(BN),
+  decimals: PropTypes.instanceOf(BN).isRequired,
   symbol: PropTypes.string.isRequired,
   verified: PropTypes.bool.isRequired,
 }
