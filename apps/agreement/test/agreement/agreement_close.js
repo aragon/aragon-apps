@@ -2,114 +2,105 @@ const { assertBn } = require('../helpers/assert/assertBn')
 const { assertRevert } = require('../helpers/assert/assertThrow')
 const { decodeEventsOfType } = require('../helpers/lib/decodeEvent')
 const { assertEvent, assertAmountOfEvents } = require('../helpers/assert/assertEvent')
+const { RULINGS } = require('../helpers/utils/enums')
 const { AGREEMENT_ERRORS } = require('../helpers/utils/errors')
 const { AGREEMENT_EVENTS } = require('../helpers/utils/events')
-const { RULINGS, ACTIONS_STATE } = require('../helpers/utils/enums')
 
 const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 
 contract('Agreement', ([_, submitter, someone]) => {
-  let agreement, actionId
+  let disputable, actionId
 
   beforeEach('deploy agreement instance', async () => {
-    agreement = await deployer.deployAndInitializeWrapperWithDisputable()
+    disputable = await deployer.deployAndInitializeWrapperWithDisputable()
   })
 
   describe('close', () => {
     context('when the given action exists', () => {
       beforeEach('create action', async () => {
-        ({ actionId } = await agreement.newAction({ submitter }))
+        ({ actionId } = await disputable.newAction({ submitter }))
       })
 
       const itCanCloseActions = () => {
         const itClosesTheActionProperly = unlocksBalance => {
-          context('when the sender is the disputable', () => {
-            it('updates the action state only', async () => {
-              const previousActionState = await agreement.getAction(actionId)
+          it('marks the action as closed', async () => {
+            const previousActionState = await disputable.getAction(actionId)
 
-              await agreement.close({ actionId })
+            await disputable.close(actionId)
 
-              const currentActionState = await agreement.getAction(actionId)
-              assertBn(currentActionState.state, ACTIONS_STATE.CLOSED, 'action state does not match')
+            const currentActionState = await disputable.getAction(actionId)
+            assert.isTrue(currentActionState.closed, 'action is not closed')
 
-              assertBn(currentActionState.disputableActionId, previousActionState.disputableActionId, 'disputable action ID does not match')
-              assert.equal(currentActionState.disputable, previousActionState.disputable, 'disputable does not match')
-              assert.equal(currentActionState.submitter, previousActionState.submitter, 'submitter does not match')
-              assert.equal(currentActionState.context, previousActionState.context, 'action context does not match')
-              assertBn(currentActionState.collateralId, previousActionState.collateralId, 'collateral ID does not match')
-            })
-
-            if (unlocksBalance) {
-              it('unlocks the collateral amount', async () => {
-                const { actionCollateral } = agreement
-                const { locked: previousLockedBalance, available: previousAvailableBalance } = await agreement.getBalance(submitter)
-
-                await agreement.close({ actionId })
-
-                const { locked: currentLockedBalance, available: currentAvailableBalance } = await agreement.getBalance(submitter)
-                assertBn(currentLockedBalance, previousLockedBalance.sub(actionCollateral), 'locked balance does not match')
-                assertBn(currentAvailableBalance, previousAvailableBalance.add(actionCollateral), 'available balance does not match')
-              })
-            } else {
-              it('does not affect the submitter staked balances', async () => {
-                const { locked: previousLockedBalance, available: previousAvailableBalance } = await agreement.getBalance(submitter)
-
-                await agreement.close({ actionId })
-
-                const { locked: currentLockedBalance, available: currentAvailableBalance } = await agreement.getBalance(submitter)
-                assertBn(currentLockedBalance, previousLockedBalance, 'locked balance does not match')
-                assertBn(currentAvailableBalance, previousAvailableBalance, 'available balance does not match')
-              })
-            }
-
-            it('does not affect staked balances', async () => {
-              const stakingAddress = await agreement.getStakingAddress()
-              const { collateralToken } = agreement
-
-              const previousSubmitterBalance = await collateralToken.balanceOf(submitter)
-              const previousStakingBalance = await collateralToken.balanceOf(stakingAddress)
-
-              await agreement.close({ actionId })
-
-              const currentSubmitterBalance = await collateralToken.balanceOf(submitter)
-              assertBn(currentSubmitterBalance, previousSubmitterBalance, 'submitter balance does not match')
-
-              const currentStakingBalance = await collateralToken.balanceOf(stakingAddress)
-              assertBn(currentStakingBalance, previousStakingBalance, 'staking balance does not match')
-            })
-
-            it('emits an event', async () => {
-              const receipt = await agreement.close({ actionId })
-              const logs = decodeEventsOfType(receipt, agreement.abi, AGREEMENT_EVENTS.ACTION_CLOSED)
-
-              assertAmountOfEvents({ logs }, AGREEMENT_EVENTS.ACTION_CLOSED, 1)
-              assertEvent({ logs }, AGREEMENT_EVENTS.ACTION_CLOSED, { actionId })
-            })
-
-            it('there are no more paths allowed', async () => {
-              await agreement.close({ actionId })
-
-              const { canProceed, canChallenge, canSettle, canDispute, canRuleDispute } = await agreement.getAllowedPaths(actionId)
-              assert.isFalse(canProceed, 'action can proceed')
-              assert.isFalse(canChallenge, 'action can be challenged')
-              assert.isFalse(canSettle, 'action can be settled')
-              assert.isFalse(canDispute, 'action can be disputed')
-              assert.isFalse(canRuleDispute, 'action dispute can be ruled')
-            })
+            assert.equal(currentActionState.disputable, previousActionState.disputable, 'disputable does not match')
+            assert.equal(currentActionState.submitter, previousActionState.submitter, 'submitter does not match')
+            assert.equal(currentActionState.context, previousActionState.context, 'action context does not match')
+            assertBn(currentActionState.collateralId, previousActionState.collateralId, 'collateral ID does not match')
+            assertBn(currentActionState.disputableActionId, previousActionState.disputableActionId, 'disputable action ID does not match')
+            assertBn(currentActionState.currentChallengeId, previousActionState.currentChallengeId, 'challenge ID does not match')
           })
 
-          context('when the sender is not the disputable', () => {
-            const from = someone
+          if (unlocksBalance) {
+            it('unlocks the collateral amount', async () => {
+              const { actionCollateral } = disputable
+              const { locked: previousLockedBalance, available: previousAvailableBalance } = await disputable.getBalance(submitter)
 
-            it('reverts', async () => {
-              await assertRevert(agreement.close({ actionId, from }), AGREEMENT_ERRORS.ERROR_SENDER_NOT_ALLOWED)
+              await disputable.close(actionId)
+
+              const { locked: currentLockedBalance, available: currentAvailableBalance } = await disputable.getBalance(submitter)
+              assertBn(currentLockedBalance, previousLockedBalance.sub(actionCollateral), 'locked balance does not match')
+              assertBn(currentAvailableBalance, previousAvailableBalance.add(actionCollateral), 'available balance does not match')
             })
+          } else {
+            it('does not affect the submitter staked balances', async () => {
+              const { locked: previousLockedBalance, available: previousAvailableBalance } = await disputable.getBalance(submitter)
+
+              await disputable.close(actionId)
+
+              const { locked: currentLockedBalance, available: currentAvailableBalance } = await disputable.getBalance(submitter)
+              assertBn(currentLockedBalance, previousLockedBalance, 'locked balance does not match')
+              assertBn(currentAvailableBalance, previousAvailableBalance, 'available balance does not match')
+            })
+          }
+
+          it('does not affect staked balances', async () => {
+            const stakingAddress = await disputable.getStakingAddress()
+            const { collateralToken } = disputable
+
+            const previousSubmitterBalance = await collateralToken.balanceOf(submitter)
+            const previousStakingBalance = await collateralToken.balanceOf(stakingAddress)
+
+            await disputable.close(actionId)
+
+            const currentSubmitterBalance = await collateralToken.balanceOf(submitter)
+            assertBn(currentSubmitterBalance, previousSubmitterBalance, 'submitter balance does not match')
+
+            const currentStakingBalance = await collateralToken.balanceOf(stakingAddress)
+            assertBn(currentStakingBalance, previousStakingBalance, 'staking balance does not match')
+          })
+
+          it('emits an event', async () => {
+            const receipt = await disputable.close(actionId)
+            const logs = decodeEventsOfType(receipt, disputable.abi, AGREEMENT_EVENTS.ACTION_CLOSED)
+
+            assertAmountOfEvents({ logs }, AGREEMENT_EVENTS.ACTION_CLOSED, 1)
+            assertEvent({ logs }, AGREEMENT_EVENTS.ACTION_CLOSED, { actionId })
+          })
+
+          it('there are no more paths allowed', async () => {
+            await disputable.close(actionId)
+
+            const { canClose, canChallenge, canSettle, canDispute, canRuleDispute } = await disputable.getAllowedPaths(actionId)
+            assert.isFalse(canClose, 'action can be closed')
+            assert.isFalse(canChallenge, 'action can be challenged')
+            assert.isFalse(canSettle, 'action can be settled')
+            assert.isFalse(canDispute, 'action can be disputed')
+            assert.isFalse(canRuleDispute, 'action dispute can be ruled')
           })
         }
 
         const itCannotBeClosed = () => {
           it('reverts', async () => {
-            await assertRevert(agreement.close({ actionId }), AGREEMENT_ERRORS.ERROR_CANNOT_CLOSE_ACTION)
+            await assertRevert(disputable.close(actionId), AGREEMENT_ERRORS.ERROR_CANNOT_CLOSE_ACTION)
           })
         }
 
@@ -124,7 +115,7 @@ contract('Agreement', ([_, submitter, someone]) => {
             let challengeId
 
             beforeEach('challenge action', async () => {
-              ({ challengeId } = await agreement.challenge({ actionId }))
+              ({ challengeId } = await disputable.challenge({ actionId }))
             })
 
             context('when the challenge was not answered', () => {
@@ -133,24 +124,24 @@ contract('Agreement', ([_, submitter, someone]) => {
               })
 
               context('in the middle of the answer period', () => {
-                beforeEach('move before settlement period end date', async () => {
-                  await agreement.moveBeforeChallengeEndDate(challengeId)
+                beforeEach('move before the challenge end date', async () => {
+                  await disputable.moveBeforeChallengeEndDate(challengeId)
                 })
 
                 itCannotBeClosed()
               })
 
               context('at the end of the answer period', () => {
-                beforeEach('move to the settlement period end date', async () => {
-                  await agreement.moveToChallengeEndDate(challengeId)
+                beforeEach('move to the challenge end date', async () => {
+                  await disputable.moveToChallengeEndDate(challengeId)
                 })
 
                 itCannotBeClosed()
               })
 
               context('after the answer period', () => {
-                beforeEach('move after the settlement period end date', async () => {
-                  await agreement.moveAfterChallengeEndDate(challengeId)
+                beforeEach('move after the challenge end date', async () => {
+                  await disputable.moveAfterChallengeEndDate(challengeId)
                 })
 
                 itCannotBeClosed()
@@ -160,7 +151,7 @@ contract('Agreement', ([_, submitter, someone]) => {
             context('when the challenge was answered', () => {
               context('when the challenge was settled', () => {
                 beforeEach('settle challenge', async () => {
-                  await agreement.settle({ actionId })
+                  await disputable.settle({ actionId })
                 })
 
                 itCannotBeClosed()
@@ -168,7 +159,7 @@ contract('Agreement', ([_, submitter, someone]) => {
 
               context('when the challenge was disputed', () => {
                 beforeEach('dispute action', async () => {
-                  await agreement.dispute({ actionId })
+                  await disputable.dispute({ actionId })
                 })
 
                 context('when the dispute was not ruled', () => {
@@ -177,40 +168,41 @@ contract('Agreement', ([_, submitter, someone]) => {
 
                 context('when the dispute was ruled', () => {
                   context('when the dispute was refused', () => {
+                    const unlocksBalance = true
+
                     beforeEach('rule action', async () => {
-                      await agreement.executeRuling({ actionId, ruling: RULINGS.REFUSED })
+                      await disputable.executeRuling({ actionId, ruling: RULINGS.REFUSED })
                     })
 
                     context('when the action was closed', () => {
                       beforeEach('close action', async () => {
-                        await agreement.close({ actionId })
+                        await disputable.close(actionId)
                       })
 
                       itCannotBeClosed()
                     })
 
                     context('when the action was not closed', () => {
-                      const unlocksBalance = false
-
                       itClosesTheActionProperly(unlocksBalance)
                     })
                   })
 
                   context('when the dispute was ruled in favor the submitter', () => {
+                    const unlocksBalance = true
+
                     beforeEach('rule action', async () => {
-                      await agreement.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_SUBMITTER })
+                      await disputable.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_SUBMITTER })
                     })
 
                     context('when the action was closed', () => {
                       beforeEach('close action', async () => {
-                        await agreement.close({ actionId })
+                        await disputable.close(actionId)
                       })
 
                       itCannotBeClosed()
                     })
 
                     context('when the action was not closed', () => {
-                      const unlocksBalance = false
 
                       itClosesTheActionProperly(unlocksBalance)
                     })
@@ -218,7 +210,7 @@ contract('Agreement', ([_, submitter, someone]) => {
 
                   context('when the dispute was ruled in favor the challenger', () => {
                     beforeEach('rule action', async () => {
-                      await agreement.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_CHALLENGER })
+                      await disputable.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_CHALLENGER })
                     })
 
                     itCannotBeClosed()
@@ -231,7 +223,7 @@ contract('Agreement', ([_, submitter, someone]) => {
 
         context('when the action was closed', () => {
           beforeEach('close action', async () => {
-            await agreement.close({ actionId })
+            await disputable.close(actionId)
           })
 
           itCannotBeClosed()
@@ -244,7 +236,7 @@ contract('Agreement', ([_, submitter, someone]) => {
 
       context('when the app was unregistered', () => {
         beforeEach('mark app as unregistered', async () => {
-          await agreement.unregister()
+          await disputable.unregister()
         })
 
         itCanCloseActions()
@@ -253,7 +245,7 @@ contract('Agreement', ([_, submitter, someone]) => {
 
     context('when the given action does not exist', () => {
       it('reverts', async () => {
-        await assertRevert(agreement.close({ actionId: 0 }), AGREEMENT_ERRORS.ERROR_ACTION_DOES_NOT_EXIST)
+        await assertRevert(disputable.close(0), AGREEMENT_ERRORS.ERROR_ACTION_DOES_NOT_EXIST)
       })
     })
   })

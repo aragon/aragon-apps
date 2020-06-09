@@ -1,4 +1,3 @@
-const { bn } = require('../helpers/lib/numbers')
 const { assertBn } = require('../helpers/assert/assertBn')
 const { assertRevert } = require('../helpers/assert/assertThrow')
 const { assertEvent, assertAmountOfEvents } = require('../helpers/assert/assertEvent')
@@ -9,49 +8,53 @@ const { CHALLENGES_STATE, RULINGS } = require('../helpers/utils/enums')
 const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 
 contract('Agreement', ([_, someone, submitter, challenger]) => {
-  let agreement, actionId
-
-  const actionLifetime = 60
+  let disputable, actionId
 
   beforeEach('deploy agreement instance', async () => {
-    agreement = await deployer.deployAndInitializeWrapperWithDisputable()
+    disputable = await deployer.deployAndInitializeWrapperWithDisputable()
   })
 
   describe('settlement', () => {
     context('when the given action exists', () => {
       beforeEach('create action', async () => {
-        ({ actionId } = await agreement.newAction({ submitter, lifetime: actionLifetime }))
+        ({ actionId } = await disputable.newAction({ submitter }))
       })
 
       const itCanSettleActions = () => {
         const itCannotSettleAction = () => {
           it('reverts', async () => {
-            await assertRevert(agreement.settle({ actionId }), AGREEMENT_ERRORS.ERROR_CANNOT_SETTLE_ACTION)
+            await assertRevert(disputable.settle({ actionId }), AGREEMENT_ERRORS.ERROR_CANNOT_SETTLE_ACTION)
+          })
+        }
+
+        const itCannotSettleNonExistingChallenge = () => {
+          it('reverts', async () => {
+            await assertRevert(disputable.settle({ actionId }), AGREEMENT_ERRORS.ERROR_CHALLENGE_DOES_NOT_EXIST)
           })
         }
 
         context('when the action was not closed', () => {
           context('when the action was not challenged', () => {
-            itCannotSettleAction()
+            itCannotSettleNonExistingChallenge()
           })
 
           context('when the action was challenged', () => {
             let challengeId, challengeStartTime
 
             beforeEach('challenge action', async () => {
-              challengeStartTime = await agreement.currentTimestamp()
-              const result = await agreement.challenge({ actionId, challenger })
+              challengeStartTime = await disputable.currentTimestamp()
+              const result = await disputable.challenge({ actionId, challenger })
               challengeId = result.challengeId
             })
 
             context('when the challenge was not answered', () => {
               const itSettlesTheChallengeProperly = from => {
                 it('updates the challenge state only', async () => {
-                  const previousChallengeState = await agreement.getChallenge(challengeId)
+                  const previousChallengeState = await disputable.getChallenge(challengeId)
 
-                  await agreement.settle({ actionId, from })
+                  await disputable.settle({ actionId, from })
 
-                  const currentChallengeState = await agreement.getChallenge(challengeId)
+                  const currentChallengeState = await disputable.getChallenge(challengeId)
                   assertBn(currentChallengeState.state, CHALLENGES_STATE.SETTLED, 'challenge state does not match')
 
                   assert.equal(currentChallengeState.context, previousChallengeState.context, 'challenge context does not match')
@@ -63,52 +66,50 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                   assertBn(currentChallengeState.disputeId, previousChallengeState.disputeId, 'challenge dispute ID does not match')
                 })
 
-                it('updates the action end date only', async () => {
-                  const previousActionState = await agreement.getAction(actionId)
+                it('marks the action closed state', async () => {
+                  const previousActionState = await disputable.getAction(actionId)
 
-                  await agreement.settle({ actionId, from })
+                  await disputable.settle({ actionId, from })
 
-                  const currentTimestamp = await agreement.currentTimestamp()
-                  const challengeDuration = currentTimestamp.sub(challengeStartTime)
-                  const currentActionState = await agreement.getAction(actionId)
-                  assertBn(currentActionState.endDate, previousActionState.endDate.add(challengeDuration), 'action end date does not match')
+                  const currentActionState = await disputable.getAction(actionId)
+                  assert.isTrue(currentActionState.closed, 'action is not closed')
 
-                  assertBn(currentActionState.state, previousActionState.state, 'action state does not match')
-                  assertBn(currentActionState.disputableActionId, previousActionState.disputableActionId, 'disputable action ID does not match')
                   assert.equal(currentActionState.disputable, previousActionState.disputable, 'disputable does not match')
                   assert.equal(currentActionState.submitter, previousActionState.submitter, 'submitter does not match')
                   assert.equal(currentActionState.context, previousActionState.context, 'action context does not match')
                   assertBn(currentActionState.collateralId, previousActionState.collateralId, 'collateral ID does not match')
+                  assertBn(currentActionState.currentChallengeId, previousActionState.currentChallengeId, 'challenge ID does not match')
+                  assertBn(currentActionState.disputableActionId, previousActionState.disputableActionId, 'disputable action ID does not match')
                 })
 
                 it('slashes the submitter challenged balance', async () => {
-                  const { settlementOffer } = await agreement.getChallenge(challengeId)
-                  const { available: previousAvailableBalance, locked: previousLockedBalance } = await agreement.getBalance(submitter)
+                  const { settlementOffer } = await disputable.getChallenge(challengeId)
+                  const { available: previousAvailableBalance, locked: previousLockedBalance } = await disputable.getBalance(submitter)
 
-                  await agreement.settle({ actionId, from })
+                  await disputable.settle({ actionId, from })
 
-                  const { available: currentAvailableBalance, locked: currentLockedBalance } = await agreement.getBalance(submitter)
+                  const { available: currentAvailableBalance, locked: currentLockedBalance } = await disputable.getBalance(submitter)
 
-                  const expectedUnchallengedBalance = agreement.actionCollateral.sub(settlementOffer)
-                  assertBn(currentLockedBalance, previousLockedBalance.sub(agreement.actionCollateral), 'locked balance does not match')
+                  const expectedUnchallengedBalance = disputable.actionCollateral.sub(settlementOffer)
+                  assertBn(currentLockedBalance, previousLockedBalance.sub(disputable.actionCollateral), 'locked balance does not match')
                   assertBn(currentAvailableBalance, previousAvailableBalance.add(expectedUnchallengedBalance), 'available balance does not match')
                 })
 
                 it('transfers the settlement offer and the collateral to the challenger', async () => {
-                  const stakingAddress = await agreement.getStakingAddress()
-                  const { collateralToken, challengeCollateral } = agreement
-                  const { settlementOffer } = await agreement.getChallenge(challengeId)
+                  const stakingAddress = await disputable.getStakingAddress()
+                  const { collateralToken, challengeCollateral } = disputable
+                  const { settlementOffer } = await disputable.getChallenge(challengeId)
 
                   const previousStakingBalance = await collateralToken.balanceOf(stakingAddress)
-                  const previousAgreementBalance = await collateralToken.balanceOf(agreement.address)
+                  const previousAgreementBalance = await collateralToken.balanceOf(disputable.address)
                   const previousChallengerBalance = await collateralToken.balanceOf(challenger)
 
-                  await agreement.settle({ actionId, from })
+                  await disputable.settle({ actionId, from })
 
                   const currentStakingBalance = await collateralToken.balanceOf(stakingAddress)
                   assertBn(currentStakingBalance, previousStakingBalance.sub(settlementOffer), 'staking balance does not match')
 
-                  const currentAgreementBalance = await collateralToken.balanceOf(agreement.address)
+                  const currentAgreementBalance = await collateralToken.balanceOf(disputable.address)
                   assertBn(currentAgreementBalance, previousAgreementBalance.sub(challengeCollateral), 'agreement balance does not match')
 
                   const currentChallengerBalance = await collateralToken.balanceOf(challenger)
@@ -116,15 +117,15 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                 })
 
                 it('transfers the arbitrator fees back to the challenger', async () => {
-                  const arbitratorToken = await agreement.arbitratorToken()
-                  const halfArbitrationFees = await agreement.halfArbitrationFees()
+                  const arbitratorToken = await disputable.arbitratorToken()
+                  const halfArbitrationFees = await disputable.halfArbitrationFees()
 
-                  const previousAgreementBalance = await arbitratorToken.balanceOf(agreement.address)
+                  const previousAgreementBalance = await arbitratorToken.balanceOf(disputable.address)
                   const previousChallengerBalance = await arbitratorToken.balanceOf(challenger)
 
-                  await agreement.settle({ actionId, from })
+                  await disputable.settle({ actionId, from })
 
-                  const currentAgreementBalance = await arbitratorToken.balanceOf(agreement.address)
+                  const currentAgreementBalance = await arbitratorToken.balanceOf(disputable.address)
                   assertBn(currentAgreementBalance, previousAgreementBalance.sub(halfArbitrationFees), 'agreement balance does not match')
 
                   const currentChallengerBalance = await arbitratorToken.balanceOf(challenger)
@@ -132,18 +133,18 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                 })
 
                 it('emits an event', async () => {
-                  const { currentChallengeId } = await agreement.getAction(actionId)
-                  const receipt = await agreement.settle({ actionId, from })
+                  const { currentChallengeId } = await disputable.getAction(actionId)
+                  const receipt = await disputable.settle({ actionId, from })
 
                   assertAmountOfEvents(receipt, AGREEMENT_EVENTS.ACTION_SETTLED, 1)
                   assertEvent(receipt, AGREEMENT_EVENTS.ACTION_SETTLED, { actionId, challengeId: currentChallengeId })
                 })
 
                 it('there are no more paths allowed', async () => {
-                  await agreement.settle({ actionId, from })
+                  await disputable.settle({ actionId, from })
 
-                  const { canProceed, canChallenge, canSettle, canDispute, canClaimSettlement, canRuleDispute } = await agreement.getAllowedPaths(actionId)
-                  assert.isFalse(canProceed, 'action can proceed')
+                  const { canClose, canChallenge, canSettle, canDispute, canClaimSettlement, canRuleDispute } = await disputable.getAllowedPaths(actionId)
+                  assert.isFalse(canClose, 'action can be closec')
                   assert.isFalse(canChallenge, 'action can be challenged')
                   assert.isFalse(canSettle, 'action can be settled')
                   assert.isFalse(canDispute, 'action can be disputed')
@@ -163,7 +164,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                   const from = challenger
 
                   it('reverts', async () => {
-                    await assertRevert(agreement.settle({ actionId, from }), AGREEMENT_ERRORS.ERROR_CANNOT_SETTLE_ACTION)
+                    await assertRevert(disputable.settle({ actionId, from }), AGREEMENT_ERRORS.ERROR_CANNOT_SETTLE_ACTION)
                   })
                 })
 
@@ -171,7 +172,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                   const from = someone
 
                   it('reverts', async () => {
-                    await assertRevert(agreement.settle({ actionId, from }), AGREEMENT_ERRORS.ERROR_CANNOT_SETTLE_ACTION)
+                    await assertRevert(disputable.settle({ actionId, from }), AGREEMENT_ERRORS.ERROR_CANNOT_SETTLE_ACTION)
                   })
                 })
               }
@@ -201,24 +202,24 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
               })
 
               context('in the middle of the answer period', () => {
-                beforeEach('move before settlement period end date', async () => {
-                  await agreement.moveBeforeChallengeEndDate(challengeId)
+                beforeEach('move before the challenge end date', async () => {
+                  await disputable.moveBeforeChallengeEndDate(challengeId)
                 })
 
                 itCanOnlyBeSettledByTheSubmitter()
               })
 
               context('at the end of the answer period', () => {
-                beforeEach('move to the settlement period end date', async () => {
-                  await agreement.moveToChallengeEndDate(challengeId)
+                beforeEach('move to the challenge end date', async () => {
+                  await disputable.moveToChallengeEndDate(challengeId)
                 })
 
                 itCanBeSettledByAnyone()
               })
 
               context('after the answer period', () => {
-                beforeEach('move after the settlement period end date', async () => {
-                  await agreement.moveAfterChallengeEndDate(challengeId)
+                beforeEach('move after the challenge end date', async () => {
+                  await disputable.moveAfterChallengeEndDate(challengeId)
                 })
 
                 itCanBeSettledByAnyone()
@@ -228,7 +229,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
             context('when the challenge was answered', () => {
               context('when the challenge was settled', () => {
                 beforeEach('settle challenge', async () => {
-                  await agreement.settle({ actionId })
+                  await disputable.settle({ actionId })
                 })
 
                 itCannotSettleAction()
@@ -236,7 +237,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
 
               context('when the challenge was disputed', () => {
                 beforeEach('dispute action', async () => {
-                  await agreement.dispute({ actionId })
+                  await disputable.dispute({ actionId })
                 })
 
                 context('when the dispute was not ruled', () => {
@@ -246,7 +247,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                 context('when the dispute was ruled', () => {
                   context('when the dispute was refused', () => {
                     beforeEach('rule action', async () => {
-                      await agreement.executeRuling({ actionId, ruling: RULINGS.REFUSED })
+                      await disputable.executeRuling({ actionId, ruling: RULINGS.REFUSED })
                     })
 
                     context('when the action was not closed', () => {
@@ -255,7 +256,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
 
                     context('when the action was closed', () => {
                       beforeEach('close action', async () => {
-                        await agreement.close({ actionId })
+                        await disputable.close(actionId)
                       })
 
                       itCannotSettleAction()
@@ -264,7 +265,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
 
                   context('when the dispute was ruled in favor the submitter', () => {
                     beforeEach('rule action', async () => {
-                      await agreement.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_SUBMITTER })
+                      await disputable.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_SUBMITTER })
                     })
 
                     context('when the action was not closed', () => {
@@ -273,7 +274,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
 
                     context('when the action was closed', () => {
                       beforeEach('close action', async () => {
-                        await agreement.close({ actionId })
+                        await disputable.close(actionId)
                       })
 
                       itCannotSettleAction()
@@ -282,7 +283,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
 
                   context('when the dispute was ruled in favor the challenger', () => {
                     beforeEach('rule action', async () => {
-                      await agreement.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_CHALLENGER })
+                      await disputable.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_CHALLENGER })
                     })
 
                     itCannotSettleAction()
@@ -295,10 +296,10 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
 
         context('when the action was closed', () => {
           beforeEach('close action', async () => {
-            await agreement.close({ actionId })
+            await disputable.close(actionId)
           })
 
-          itCannotSettleAction()
+          itCannotSettleNonExistingChallenge()
         })
       }
 
@@ -308,7 +309,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
 
       context('when the app was unregistered', () => {
         beforeEach('mark app as unregistered', async () => {
-          await agreement.unregister()
+          await disputable.unregister()
         })
 
         itCanSettleActions()
@@ -318,7 +319,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
     // TODO: Skipping this test for now, Truffle is failing due to a weird error
     context.skip('when the given action does not exist', () => {
       it('reverts', async () => {
-        await assertRevert(agreement.settle({ actionId: 0 }), AGREEMENT_ERRORS.ERROR_ACTION_DOES_NOT_EXIST)
+        await assertRevert(disputable.settle({ actionId: 0 }), AGREEMENT_ERRORS.ERROR_ACTION_DOES_NOT_EXIST)
       })
     })
   })

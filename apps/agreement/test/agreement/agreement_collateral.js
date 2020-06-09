@@ -9,7 +9,7 @@ const { ARAGON_OS_ERRORS } = require('../helpers/utils/errors')
 const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 
 contract('Agreement', ([_, owner, someone]) => {
-  let agreement
+  let disputable
 
   let initialCollateralRequirement = {
     actionCollateral: bigExp(200, 18),
@@ -18,7 +18,7 @@ contract('Agreement', ([_, owner, someone]) => {
   }
 
   beforeEach('deploy agreement', async () => {
-    agreement = await deployer.deployAndInitializeWrapperWithDisputable({ owner, ...initialCollateralRequirement })
+    disputable = await deployer.deployAndInitializeWrapperWithDisputable({ owner, ...initialCollateralRequirement })
     initialCollateralRequirement.collateralToken = deployer.collateralToken
   })
 
@@ -41,7 +41,7 @@ contract('Agreement', ([_, owner, someone]) => {
     }
 
     it('starts with expected initial collateral requirements', async () => {
-      const currentCollateralRequirement = await agreement.getCollateralRequirement()
+      const currentCollateralRequirement = await disputable.getCollateralRequirement()
       await assertCurrentCollateralRequirement(currentCollateralRequirement, initialCollateralRequirement)
     })
 
@@ -49,26 +49,26 @@ contract('Agreement', ([_, owner, someone]) => {
       const from = owner
 
       it('changes the collateral requirements', async () => {
-        await agreement.changeCollateralRequirement({ ...newCollateralRequirement, from })
+        await disputable.changeCollateralRequirement({ ...newCollateralRequirement, from })
 
-        const currentCollateralRequirement = await agreement.getCollateralRequirement()
+        const currentCollateralRequirement = await disputable.getCollateralRequirement()
         await assertCurrentCollateralRequirement(currentCollateralRequirement, newCollateralRequirement)
       })
 
       it('keeps the previous collateral requirements', async () => {
-        const currentId = await agreement.getCurrentCollateralRequirementId()
-        await agreement.changeCollateralRequirement({ ...newCollateralRequirement, from })
+        const currentId = await disputable.getCurrentCollateralRequirementId()
+        await disputable.changeCollateralRequirement({ ...newCollateralRequirement, from })
 
-        const previousCollateralRequirement = await agreement.getCollateralRequirement(currentId)
+        const previousCollateralRequirement = await disputable.getCollateralRequirement(currentId)
         await assertCurrentCollateralRequirement(previousCollateralRequirement, initialCollateralRequirement)
       })
 
       it('emits an event', async () => {
-        const currentId = await agreement.getCurrentCollateralRequirementId()
-        const receipt = await agreement.changeCollateralRequirement({ ...newCollateralRequirement, from })
+        const currentId = await disputable.getCurrentCollateralRequirementId()
+        const receipt = await disputable.changeCollateralRequirement({ ...newCollateralRequirement, from })
 
         assertAmountOfEvents(receipt, AGREEMENT_EVENTS.COLLATERAL_REQUIREMENT_CHANGED, 1)
-        assertEvent(receipt, AGREEMENT_EVENTS.COLLATERAL_REQUIREMENT_CHANGED, { id: currentId.add(bn(1)), disputable: agreement.disputable.address })
+        assertEvent(receipt, AGREEMENT_EVENTS.COLLATERAL_REQUIREMENT_CHANGED, { id: currentId.add(bn(1)), disputable: disputable.disputable.address })
       })
     })
 
@@ -76,7 +76,7 @@ contract('Agreement', ([_, owner, someone]) => {
       const from = someone
 
       it('reverts', async () => {
-        await assertRevert(agreement.changeCollateralRequirement({ ...newCollateralRequirement, from }), ARAGON_OS_ERRORS.ERROR_AUTH_FAILED)
+        await assertRevert(disputable.changeCollateralRequirement({ ...newCollateralRequirement, from }), ARAGON_OS_ERRORS.ERROR_AUTH_FAILED)
       })
     })
   })

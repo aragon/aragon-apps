@@ -28,6 +28,7 @@ contract ArbitratorMock is IArbitrator {
     constructor(ERC20 _feeToken, uint256 _feeAmount) public {
         fee.token = _feeToken;
         fee.amount = _feeAmount;
+        disputesLength++;
     }
 
     function createDispute(uint256 _possibleRulings, bytes _metadata) external returns (uint256) {

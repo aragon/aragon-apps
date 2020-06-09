@@ -99,15 +99,15 @@ contract Registry is DisputableAragonApp {
     /**
     * @dev Tell the disputable action information for a given action
     * @param _id Identification number of the entry being queried
-    * @return endDate Timestamp when the disputable action ends so it cannot be challenged anymore, unless it's closed beforehand
+    * @return endDate Timestamp when the disputable action ends so it cannot be challenged anymore, unless it's finished beforehand
     * @return challenged True if the disputable action is being challenged
-    * @return closed True if the disputable action is closed
+    * @return finished True if the disputable action is finished
     */
-    function getDisputableAction(uint256 _id) external view returns (uint64 endDate, bool challenged, bool closed) {
+    function getDisputableAction(uint256 _id) external view returns (uint64 endDate, bool challenged, bool finished) {
         Entry storage entry = entries[bytes32(_id)];
         endDate = 0;
         challenged = entry.challenged;
-        closed = !_isRegistered(entry);
+        finished = !_isRegistered(entry);
     }
 
     /**
@@ -116,6 +116,16 @@ contract Registry is DisputableAragonApp {
     * @return True if the queried disputable action can be challenged, false otherwise
     */
     function canChallenge(uint256 _id) external view returns (bool) {
+        Entry storage entry = entries[bytes32(_id)];
+        return _isRegistered(entry) && !_isChallenged(entry);
+    }
+
+    /**
+    * @dev Tell whether a disputable action can be closed by the agreement or not
+    * @param _id Identification number of the entry being queried
+    * @return True if the queried disputable action can be closed, false otherwise
+    */
+    function canClose(uint256 _id) external view returns (bool) {
         Entry storage entry = entries[bytes32(_id)];
         return _isRegistered(entry) && !_isChallenged(entry);
     }

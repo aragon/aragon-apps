@@ -1,6 +1,7 @@
 const { bn } = require('../lib/numbers')
 const { CHALLENGES_STATE } = require('../utils/enums')
 const { AGREEMENT_EVENTS } = require('../utils/events')
+const { AGREEMENT_ERRORS } = require('../utils/errors')
 const { getEventArgument } = require('@aragon/contract-test-helpers/events')
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
@@ -35,8 +36,8 @@ class AgreementWrapper {
   }
 
   async getAction(actionId) {
-    const { disputable, disputableActionId, context, state, endDate, submitter, collateralId, currentChallengeId } = await this.agreement.getAction(actionId)
-    return { disputable, disputableActionId, context, state, endDate, submitter, collateralId, currentChallengeId }
+    const { disputable, disputableActionId, context, closed, submitter, collateralId, currentChallengeId } = await this.agreement.getAction(actionId)
+    return { disputable, disputableActionId, context, closed, submitter, collateralId, currentChallengeId }
   }
 
   async getChallenge(challengeId) {
@@ -84,18 +85,29 @@ class AgreementWrapper {
   }
 
   async getAllowedPaths(actionId) {
-    const canProceed = await this.agreement.canProceed(actionId)
+    const canClose = await this.agreement.canClose(actionId)
     const canChallenge = await this.agreement.canChallenge(actionId)
-    const canSettle = await this.agreement.canSettle(actionId)
-    const canDispute = await this.agreement.canDispute(actionId)
-    const canClaimSettlement = await this.agreement.canClaimSettlement(actionId)
-    const canRuleDispute = await this.agreement.canRuleDispute(actionId)
-    return { canProceed, canChallenge, canSettle, canDispute, canClaimSettlement, canRuleDispute }
+
+    let canSettle = false, canDispute = false, canClaimSettlement = false, canRuleDispute = false
+    try {
+      canSettle = await this.agreement.canSettle(actionId)
+      canDispute = await this.agreement.canDispute(actionId)
+      canClaimSettlement = await this.agreement.canClaimSettlement(actionId)
+      canRuleDispute = await this.agreement.canRuleDispute(actionId)
+    } catch (error) {
+      if (!error.message.includes(AGREEMENT_ERRORS.ERROR_CHALLENGE_DOES_NOT_EXIST)) throw error
+    }
+
+    return { canClose, canChallenge, canSettle, canDispute, canClaimSettlement, canRuleDispute }
   }
 
   async sign(from) {
     if (!from) from = await this._getSender()
     return this.agreement.sign({ from })
+  }
+
+  async close(actionId) {
+    return this.agreement.closeAction(actionId)
   }
 
   async challenge({ actionId, challenger = undefined, settlementOffer = 0, challengeDuration = undefined, challengeContext = '0xdcba', finishedSubmittingEvidence = false, arbitrationFees = undefined }) {
@@ -106,7 +118,7 @@ class AgreementWrapper {
 
     const receipt = await this.agreement.challengeAction(actionId, settlementOffer, finishedSubmittingEvidence, challengeContext, { from: challenger })
     const challengeId = getEventArgument(receipt, AGREEMENT_EVENTS.ACTION_CHALLENGED, 'challengeId')
-    if (challengeDuration) await this.increaseTime(challengeDuration)
+    // TODO: if (challengeDuration) await this.increaseTime(challengeDuration)
     return { receipt, challengeId }
   }
 
@@ -210,21 +222,6 @@ class AgreementWrapper {
 
   async currentTimestamp() {
     return this.agreement.getTimestampPublic()
-  }
-
-  async moveBeforeActionEndDate(actionId) {
-    const { endDate } = await this.getAction(actionId)
-    return this.moveToTimestamp(endDate.sub(bn(1)))
-  }
-
-  async moveToActionEndDate(actionId) {
-    const { endDate } = await this.getAction(actionId)
-    return this.moveToTimestamp(endDate)
-  }
-
-  async moveAfterActionEndDate(actionId) {
-    const { endDate } = await this.getAction(actionId)
-    return this.moveToTimestamp(endDate.add(bn(1)))
   }
 
   async moveBeforeChallengeEndDate(challengeId) {

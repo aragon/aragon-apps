@@ -1,6 +1,6 @@
 const { assertBn } = require('../helpers/assert/assertBn')
 const { bn, bigExp } = require('../helpers/lib/numbers')
-const { ACTIONS_STATE, CHALLENGES_STATE, RULINGS } = require('../helpers/utils/enums')
+const { CHALLENGES_STATE, RULINGS } = require('../helpers/utils/enums')
 
 const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 
@@ -68,8 +68,8 @@ contract('Agreement', ([_, challenger, holder0, holder1, holder2, holder3, holde
         const { id, settlementOffer } = action
         const { challengeId } = await disputable.challenge({ actionId: id, settlementOffer, challenger, challengeDuration: 10 })
         action.challengeId = challengeId
-        const { state } = await disputable.getAction(id)
-        assert.equal(state, ACTIONS_STATE.CHALLENGED, `action ${id} is not challenged`)
+        const { challenged } = await disputable.getDisputableAction(id)
+        assert.isTrue(challenged, `action ${id} is not challenged`)
       }
     })
 
@@ -98,27 +98,27 @@ contract('Agreement', ([_, challenger, holder0, holder1, holder2, holder3, holde
     it('closes the expected actions', async () => {
       const closedActions = actions.filter(action => action.closed)
       for (const { id } of closedActions) {
-        await disputable.close({ actionId: id })
-        const { state } = await disputable.getAction(id)
-        assert.equal(state, ACTIONS_STATE.CLOSED, `action ${id} is not closed`)
+        await disputable.close(id)
+        const { closed } = await disputable.getAction(id)
+        assert.isTrue(closed, `action ${id} is not closed`)
       }
     })
 
     it('closes not challenged or challenge-accepted actions', async () => {
       const closedActions = actions.filter(action => (!action.settlementOffer && !action.closed && !action.ruling) || action.ruling === RULINGS.REFUSED || action.ruling === RULINGS.IN_FAVOR_OF_SUBMITTER)
       for (const { id } of closedActions) {
-        const canProceed = await disputable.agreement.canProceed(id)
-        assert.isTrue(canProceed, `action ${id} cannot proceed`)
+        const canClose = await disputable.agreement.canClose(id)
+        assert.isTrue(canClose, `action ${id} cannot be closed`)
 
-        await disputable.close({ actionId: id })
-        const { state } = await disputable.getAction(id)
-        assert.equal(state, ACTIONS_STATE.CLOSED, `action ${id} is not closed`)
+        await disputable.close(id)
+        const { closed } = await disputable.getAction(id)
+        assert.isTrue(closed, `action ${id} is not closed`)
       }
 
       const notClosedActions = actions.filter(action => !closedActions.includes(action))
       for (const { id } of notClosedActions) {
-        const canProceed = await disputable.agreement.canProceed(id)
-        assert.isFalse(canProceed, `action ${id} can proceed`)
+        const canClose = await disputable.agreement.canClose(id)
+        assert.isFalse(canClose, `action ${id} can be closed`)
       }
     })
 

@@ -40,6 +40,12 @@ class DisputableWrapper extends AgreementWrapper {
     return super.getDisputableInfo(this.disputable)
   }
 
+  async getDisputableAction(actionId) {
+    const { disputableActionId } = await this.getAction(actionId)
+    const { challenged, endDate, finished } = await this.disputable.getDisputableAction(disputableActionId)
+    return { challenged, endDate, finished }
+  }
+
   async getCurrentCollateralRequirementId() {
     const { currentCollateralRequirementId } = await this.getDisputableInfo()
     return currentCollateralRequirementId
@@ -56,11 +62,6 @@ class DisputableWrapper extends AgreementWrapper {
 
   async getStaking() {
     return super.getStaking(this.collateralToken)
-  }
-
-  async setAgreement({ agreement = this.address, from = undefined }) {
-    if (!from) from = await this._getSender()
-    return this.disputable.setAgreement(agreement, { from })
   }
 
   async register(options = {}) {
@@ -83,26 +84,21 @@ class DisputableWrapper extends AgreementWrapper {
     return { receipt, actionId, disputableActionId }
   }
 
-  async newAction({ submitter = undefined, actionContext = '0x1234', lifetime = undefined, sign = undefined, stake = undefined }) {
+  async newAction({ submitter = undefined, actionContext = '0x1234', sign = undefined, stake = undefined }) {
     if (!submitter) submitter = await this._getSender()
 
     if (stake === undefined) stake = this.actionCollateral
     if (stake) await this.approveAndCall({ amount: stake, from: submitter })
     if (sign === undefined && (await this.getSigner(submitter)).mustSign) await this.sign(submitter)
-    if (lifetime) await this.disputable.setLifetime(lifetime)
 
     return this.forward({ script: actionContext, from: submitter })
   }
 
   async challenge(options = {}) {
-    if (options.challengeDuration === undefined) options.challengeDuration = this.challengeDuration.div(bn(2))
+    // TODO: if (options.challengeDuration === undefined) options.challengeDuration = this.challengeDuration.div(bn(2))
     if (options.stake === undefined) options.stake = this.challengeCollateral
     if (options.stake) await this.approve({ amount: options.stake, from: options.challenger })
     return super.challenge(options)
-  }
-
-  async close({ actionId, from = undefined }) {
-    return from === undefined ? this.disputable.closeAction(actionId) : this.agreement.closeAction(actionId, { from })
   }
 
   async changeCollateralRequirement(options = {}) {
@@ -124,6 +120,11 @@ class DisputableWrapper extends AgreementWrapper {
 
   async unstake(options = {}) {
     return super.unstake({ token: this.collateralToken, ...options })
+  }
+
+  async mockDisputable(options = {}) {
+    const { canClose, canChallenge } = options
+    return this.disputable.mockDisputable(!!canClose, !!canChallenge)
   }
 }
 

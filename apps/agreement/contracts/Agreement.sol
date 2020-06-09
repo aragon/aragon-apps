@@ -55,6 +55,7 @@ contract Agreement is IAgreement, AragonApp {
     string internal constant ERROR_DISPUTABLE_APP_ALREADY_EXISTS = "AGR_DISPUTABLE_ALREADY_EXISTS";
 
     /* Action related errors */
+    string internal constant ERROR_CANNOT_CHALLENGE_ACTION = "AGR_CANNOT_CHALLENGE_ACTION";
     string internal constant ERROR_CANNOT_CLOSE_ACTION = "AGR_CANNOT_CLOSE_ACTION";
     string internal constant ERROR_CANNOT_SETTLE_ACTION = "AGR_CANNOT_SETTLE_ACTION";
     string internal constant ERROR_CANNOT_DISPUTE_ACTION = "AGR_CANNOT_DISPUTE_ACTION";
@@ -72,28 +73,8 @@ contract Agreement is IAgreement, AragonApp {
     // bytes32 public constant MANAGE_DISPUTABLE_ROLE = keccak256("MANAGE_DISPUTABLE_ROLE");
     bytes32 public constant MANAGE_DISPUTABLE_ROLE = 0x2309a8cbbd5c3f18649f3b7ac47a0e7b99756c2ac146dda1ffc80d3f80827be6;
 
-    event Signed(address indexed signer, uint256 settingId);
     event SettingChanged(uint256 settingId);
-    event ActionSubmitted(uint256 indexed actionId);
-    event ActionClosed(uint256 indexed actionId);
-    event ActionChallenged(uint256 indexed actionId, uint256 indexed challengeId);
-    event ActionSettled(uint256 indexed actionId, uint256 indexed challengeId);
-    event ActionDisputed(uint256 indexed actionId, uint256 indexed challengeId);
-    event ActionAccepted(uint256 indexed actionId, uint256 indexed challengeId);
-    event ActionVoided(uint256 indexed actionId, uint256 indexed challengeId);
-    event ActionRejected(uint256 indexed actionId, uint256 indexed challengeId);
-    event DisputableAppRegistered(IDisputable indexed disputable);
-    event DisputableAppUnregistered(IDisputable indexed disputable);
     event CollateralRequirementChanged(IDisputable indexed disputable, uint256 id);
-
-    enum ChallengeState {
-        Waiting,
-        Settled,
-        Disputed,
-        Rejected,
-        Accepted,
-        Voided
-    }
 
     struct Setting {
         string title;
@@ -300,26 +281,16 @@ contract Agreement is IAgreement, AragonApp {
 
     /**
     * @notice Mark action #`_actionId` as closed
-    * @dev This function can only be called by disputable apps that have registered a disputable action previously.
-    *      This function must be called by disputable apps to close a disputable action that was not challenged to
-    *      unlock the submitter's collateral.
+    * @dev This function allows users to close actions that haven't been challenged or that were ruled in favor of the submitter
     * @param _actionId Identification number of the action to be closed
     */
     function closeAction(uint256 _actionId) external {
         Action storage action = _getAction(_actionId);
         require(_canClose(_actionId, action), ERROR_CANNOT_CLOSE_ACTION);
 
-        (IDisputable disputable, CollateralRequirement storage requirement) = _getDisputableFor(action);
-        require(disputable == IDisputable(msg.sender), ERROR_SENDER_NOT_ALLOWED);
-
-        // Unlock balance if there was no challenge
-        uint256 challengeId = action.currentChallengeId;
-        if (challengeId >= challengesLength || _actionId != challenges[challengeId].actionId) {
-            _unlockBalance(requirement.staking, action.submitter, requirement.actionAmount);
-        }
-
-        action.closed = true;
-        emit ActionClosed(_actionId);
+        (, CollateralRequirement storage requirement) = _getDisputableFor(action);
+        _unlockBalance(requirement.staking, action.submitter, requirement.actionAmount);
+        _closeAction(_actionId, action);
     }
 
     /**
@@ -331,10 +302,13 @@ contract Agreement is IAgreement, AragonApp {
     */
     function challengeAction(uint256 _actionId, uint256 _settlementOffer, bool _finishedEvidence, bytes _context) external {
         Action storage action = _getAction(_actionId);
+        require(_canChallenge(_actionId, action), ERROR_CANNOT_CHALLENGE_ACTION);
+
         (IDisputable disputable, CollateralRequirement storage requirement) = _getDisputableFor(action);
         require(_canPerformChallenge(disputable, msg.sender), ERROR_SENDER_CANNOT_CHALLENGE_ACTION);
         require(_settlementOffer <= requirement.actionAmount, ERROR_INVALID_SETTLEMENT_OFFER);
 
+        // TODO: implement try catch
         uint256 challengeId = _createChallenge(_actionId, action, msg.sender, requirement, _settlementOffer, _finishedEvidence, _context);
         action.currentChallengeId = challengeId;
         disputable.onDisputableActionChallenged(action.disputableActionId, challengeId, msg.sender);
@@ -372,6 +346,7 @@ contract Agreement is IAgreement, AragonApp {
         challenge.state = ChallengeState.Settled;
         disputable.onDisputableActionRejected(action.disputableActionId);
         emit ActionSettled(_actionId, challengeId);
+        _closeAction(_actionId, action);
     }
 
     /**
@@ -436,14 +411,11 @@ contract Agreement is IAgreement, AragonApp {
 
         // TODO: implement try catch
         if (_ruling == DISPUTES_RULING_SUBMITTER) {
-            _rejectChallenge(action, challenge);
-            emit ActionAccepted(actionId, challengeId);
+            _rejectChallenge(actionId, action, challengeId, challenge);
         } else if (_ruling == DISPUTES_RULING_CHALLENGER) {
-            _acceptChallenge(action, challenge);
-            emit ActionRejected(actionId, challengeId);
+            _acceptChallenge(actionId, action, challengeId, challenge);
         } else {
-            _voidChallenge(action, challenge);
-            emit ActionVoided(actionId, challengeId);
+            _voidChallenge(actionId, action, challengeId, challenge);
         }
     }
 
@@ -586,7 +558,7 @@ contract Agreement is IAgreement, AragonApp {
     * @return challengeAmount Amount of collateral tokens that will be locked every time an action is challenged
     * @return challengeDuration Duration in seconds of the challenge, during this time window the submitter can answer the challenge
     */
-    function getCollateralRequirement(IDisputable _disputable, uint256 _collateralId) external view
+    function getCollateralRequirement(address _disputable, uint256 _collateralId) external view
         returns (
             ERC20 collateralToken,
             uint256 actionAmount,
@@ -594,7 +566,7 @@ contract Agreement is IAgreement, AragonApp {
             uint64 challengeDuration
         )
     {
-        DisputableInfo storage disputableInfo = disputableInfos[address(_disputable)];
+        DisputableInfo storage disputableInfo = disputableInfos[_disputable];
         CollateralRequirement storage collateral = disputableInfo.collateralRequirements[_collateralId];
         collateralToken = collateral.token;
         actionAmount = collateral.actionAmount;
@@ -650,7 +622,17 @@ contract Agreement is IAgreement, AragonApp {
     */
     function canChallenge(uint256 _actionId) external view returns (bool) {
         Action storage action = _getAction(_actionId);
-        return _canChallenge(action);
+        return _canChallenge(_actionId, action);
+    }
+
+    /**
+    * @dev Tell whether an action can be closed or not, i.e. if its not being challenged or if it was ruled in favor of the submitter
+    * @param _actionId Identification number of the action to be queried
+    * @return True if the action can be closed, false otherwise
+    */
+    function canClose(uint256 _actionId) external view returns (bool) {
+        Action storage action = _getAction(_actionId);
+        return _canClose(_actionId, action);
     }
 
     /**
@@ -693,17 +675,17 @@ contract Agreement is IAgreement, AragonApp {
         return _canRuleDispute(_actionId, challenge);
     }
 
-    /**
-    * @dev Tell whether an action can be closed or not, i.e. if its not being challenged or if it was ruled in favor of the submitter
-    * @param _actionId Identification number of the action to be queried
-    * @return True if the action can be closed, false otherwise
-    */
-    function canClose(uint256 _actionId) internal view returns (bool) {
-        Action storage action = _getAction(_actionId);
-        return _canClose(_actionId, action);
-    }
-
     // Internal fns
+
+    /**
+    * @dev Close an action
+    * @param _actionId Identification number of the action being closed
+    * @param _action Action instance being closed
+    */
+    function _closeAction(uint256 _actionId, Action storage _action) internal {
+        _action.closed = true;
+        emit ActionClosed(_actionId);
+    }
 
     /**
     * @dev Challenge an action
@@ -838,10 +820,12 @@ contract Agreement is IAgreement, AragonApp {
 
     /**
     * @dev Accept a challenge proposed against an action
+    * @param _actionId Identification number of the action to be rejected
     * @param _action Action instance to be rejected
+    * @param _challengeId Current challenge identification number associated to the given action
     * @param _challenge Current challenge associated to the given action
     */
-    function _acceptChallenge(Action storage _action, Challenge storage _challenge) internal {
+    function _acceptChallenge(uint256 _actionId, Action storage _action, uint256 _challengeId, Challenge storage _challenge) internal {
         _challenge.state = ChallengeState.Accepted;
 
         address challenger = _challenge.challenger;
@@ -849,35 +833,42 @@ contract Agreement is IAgreement, AragonApp {
         _slashBalance(requirement.staking, _action.submitter, challenger, requirement.actionAmount);
         _transfer(requirement.token, challenger, requirement.challengeAmount);
         disputable.onDisputableActionRejected(_action.disputableActionId);
+        emit ActionRejected(_actionId, _challengeId);
+
+        _closeAction(_actionId, _action);
     }
 
     /**
     * @dev Reject a challenge proposed against an action
+    * @param _actionId Identification number of the action to be accepted
     * @param _action Action instance to be accepted
+    * @param _challengeId Current challenge identification number associated to the given action
     * @param _challenge Current challenge associated to the given action
     */
-    function _rejectChallenge(Action storage _action, Challenge storage _challenge) internal {
+    function _rejectChallenge(uint256 _actionId, Action storage _action, uint256 _challengeId, Challenge storage _challenge) internal {
         _challenge.state = ChallengeState.Rejected;
 
         address submitter = _action.submitter;
         (IDisputable disputable, CollateralRequirement storage requirement) = _getDisputableFor(_action);
-        _unlockBalance(requirement.staking, submitter, requirement.actionAmount);
         _transfer(requirement.token, submitter, requirement.challengeAmount);
         disputable.onDisputableActionAllowed(_action.disputableActionId);
+        emit ActionAccepted(_actionId, _challengeId);
     }
 
     /**
     * @dev Void a challenge proposed against an action
+    * @param _actionId Identification number of the action to be voided
     * @param _action Action instance to be voided
+    * @param _challengeId Current challenge identification number associated to the given action
     * @param _challenge Current challenge associated to the given action
     */
-    function _voidChallenge(Action storage _action, Challenge storage _challenge) internal {
+    function _voidChallenge(uint256 _actionId, Action storage _action, uint256 _challengeId, Challenge storage _challenge) internal {
         _challenge.state = ChallengeState.Voided;
 
         (IDisputable disputable, CollateralRequirement storage requirement) = _getDisputableFor(_action);
-        _unlockBalance(requirement.staking, _action.submitter, requirement.actionAmount);
         _transfer(requirement.token, _challenge.challenger, requirement.challengeAmount);
         disputable.onDisputableActionVoided(_action.disputableActionId);
+        emit ActionVoided(_actionId, _challengeId);
     }
 
     /**
@@ -1044,11 +1035,47 @@ contract Agreement is IAgreement, AragonApp {
 
     /**
     * @dev Tell whether an action can be challenged or not
+    * @param _actionId Identification number of the action to be queried
     * @param _action Action instance to be queried
     * @return True if the action can be challenged, false otherwise
     */
-    function _canChallenge(Action storage _action) internal view returns (bool) {
-        return _action.disputable.canChallenge(_action.disputableActionId);
+    function _canChallenge(uint256 _actionId, Action storage _action) internal view returns (bool) {
+        return _canProceed(_actionId, _action) && _action.disputable.canChallenge(_action.disputableActionId);
+    }
+
+    /**
+    * @dev Tell whether an action can be closed or not
+    * @param _actionId Identification number of the action to be queried
+    * @param _action Action instance to be queried
+    * @return True if the action can be closed, false otherwise
+    */
+    function _canClose(uint256 _actionId, Action storage _action) internal view returns (bool) {
+        return _canProceed(_actionId, _action) && _action.disputable.canClose(_action.disputableActionId);
+    }
+
+    /**
+    * @dev Tell whether an action can proceed, i.e. if it was not closed nor challenged, or if it was refused or ruled in favor of the submitter
+    * @param _actionId Identification number of the action to be queried
+    * @param _action Action instance to be queried
+    * @return True if the action can proceed, false otherwise
+    */
+    function _canProceed(uint256 _actionId, Action storage _action) internal view returns (bool) {
+        uint256 challengeId = _action.currentChallengeId;
+        Challenge storage challenge = challenges[challengeId];
+
+        // If the action was already closed, return false
+        if (_action.closed) {
+            return false;
+        }
+
+        // If the action was not challenged, return true
+        if (!_existChallenge(_actionId, challengeId, challenge)) {
+            return true;
+        }
+
+        // If the action was challenged but ruled in favor of the submitter or refused, return true
+        ChallengeState state = challenge.state;
+        return state == ChallengeState.Rejected || state == ChallengeState.Voided;
     }
 
     /**
@@ -1100,25 +1127,6 @@ contract Agreement is IAgreement, AragonApp {
     }
 
     /**
-    * @dev Tell whether an action can be closed or not, i.e. if it was not challenged or if it was ruled in favor of the submitter
-    * @param _actionId Identification number of the action to be queried
-    * @param _action Action instance to be queried
-    * @return True if the action can be closed, false otherwise
-    */
-    function _canClose(uint256 _actionId, Action storage _action) internal view returns (bool) {
-        if (_action.closed) {
-            return false;
-        }
-
-        uint256 challengeId = _action.currentChallengeId;
-        bool existsChallenge = challengeId < challengesLength;
-        Challenge storage challenge = challenges[challengeId];
-        bool isChallengeLinkedToAction = _actionId == challenge.actionId;
-
-        return (!existsChallenge || !isChallengeLinkedToAction) || (existsChallenge && challenge.state == ChallengeState.Rejected);
-    }
-
-    /**
     * @dev Tell whether an action is challenged and it's waiting to be answered or not
     * @param _actionId Identification number of the action to be queried
     * @param _challenge Current challenge instance associated to the action being queried
@@ -1136,18 +1144,6 @@ contract Agreement is IAgreement, AragonApp {
     */
     function _isDisputed(uint256 _actionId, Challenge storage _challenge) internal view returns (bool) {
         return _actionId == _challenge.actionId && _challenge.state == ChallengeState.Disputed;
-    }
-
-    /**
-    * @dev Tell whether an action is disputed and ruled in favor of the submitter or not
-    * @param _actionId Identification number of the action to be queried
-    * @param _action Action instance to be queried
-    * @return True if the action is disputed and ruled in in favor of the submitter, false otherwise
-    */
-    function _isChallengeRejected(uint256 _actionId, Action storage _action) internal view returns (bool) {
-        uint256 challengeId = _action.currentChallengeId;
-        Challenge storage challenge = challenges[challengeId];
-        return challengeId < challengesLength && challenge.actionId == _actionId && challenge.state == ChallengeState.Rejected;
     }
 
     /**
@@ -1176,7 +1172,7 @@ contract Agreement is IAgreement, AragonApp {
     {
         action = _getAction(_actionId);
         challengeId = action.currentChallengeId;
-        require(challengeId < challengesLength, ERROR_CHALLENGE_DOES_NOT_EXIST);
+        require(_existChallenge(challengeId), ERROR_CHALLENGE_DOES_NOT_EXIST);
         challenge = challenges[challengeId];
     }
 
@@ -1197,7 +1193,7 @@ contract Agreement is IAgreement, AragonApp {
         )
     {
         challengeId = challengeByDispute[_disputeId];
-        require(challengeId < challengesLength, ERROR_CHALLENGE_DOES_NOT_EXIST);
+        require(_existChallenge(challengeId), ERROR_DISPUTE_DOES_NOT_EXIST);
 
         challenge = challenges[challengeId];
         actionId = challenge.actionId;
@@ -1258,6 +1254,26 @@ contract Agreement is IAgreement, AragonApp {
         DisputableInfo storage disputableInfo = disputableInfos[address(disputable)];
         requirement = disputableInfo.collateralRequirements[collateralId];
         require(collateralId < disputableInfo.collateralRequirementsLength, ERROR_MISSING_COLLATERAL_REQUIREMENT);
+    }
+
+    /**
+    * @dev Tell whether a challenge exists for an action or not
+    * @param _actionId Identification number of the action being queried
+    * @param _challengeId Identification number of the challenge being queried
+    * @param _challenge Challenge instance associated to the challenge identification number being queried
+    * @return True if the requested challenge exists, false otherwise
+    */
+    function _existChallenge(uint256 _actionId, uint256 _challengeId, Challenge storage _challenge) internal view returns (bool) {
+        return _existChallenge(_challengeId) && _actionId == _challenge.actionId;
+    }
+
+    /**
+    * @dev Tell whether a challenge exists or not
+    * @param _challengeId Identification number of the challenge being queried
+    * @return True if the requested challenge exists, false otherwise
+    */
+    function _existChallenge(uint256 _challengeId) internal view returns (bool) {
+        return _challengeId < challengesLength;
     }
 
     /**

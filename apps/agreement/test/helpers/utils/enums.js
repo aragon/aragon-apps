@@ -1,9 +1,3 @@
-const ACTIONS_STATE = {
-  SUBMITTED: 0,
-  CHALLENGED: 1,
-  CLOSED: 2
-}
-
 const CHALLENGES_STATE = {
   WAITING: 0,
   SETTLED: 1,
@@ -22,6 +16,5 @@ const RULINGS = {
 
 module.exports = {
   RULINGS,
-  ACTIONS_STATE,
   CHALLENGES_STATE
 }

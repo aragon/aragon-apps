@@ -39,7 +39,7 @@ contract('Agreement', ([_, user]) => {
         ({ actionId } = await disputable.newAction({}))
       })
 
-      itCostsAtMost(95e3, () => disputable.close({ actionId }))
+      itCostsAtMost(93e3, () => disputable.close(actionId))
     })
 
     context('challenge', () => {
@@ -47,7 +47,7 @@ contract('Agreement', ([_, user]) => {
         ({ actionId } = await disputable.newAction({}))
       })
 
-      itCostsAtMost(394e3, async () => (await disputable.challenge({ actionId })).receipt)
+      itCostsAtMost(419e3, async () => (await disputable.challenge({ actionId })).receipt)
     })
 
     context('settle', () => {
@@ -56,7 +56,7 @@ contract('Agreement', ([_, user]) => {
         await disputable.challenge({ actionId })
       })
 
-      itCostsAtMost(266e3, () => disputable.settle({ actionId }))
+      itCostsAtMost(254e3, () => disputable.settle({ actionId }))
     })
 
     context('dispute', () => {
@@ -65,7 +65,7 @@ contract('Agreement', ([_, user]) => {
         await disputable.challenge({ actionId })
       })
 
-      itCostsAtMost(300e3, () => disputable.dispute({ actionId }))
+      itCostsAtMost(304e3, () => disputable.dispute({ actionId }))
     })
 
     context('executeRuling', () => {
@@ -76,15 +76,15 @@ contract('Agreement', ([_, user]) => {
       })
 
       context('refused', () => {
-        itCostsAtMost(221e3, () => disputable.executeRuling({ actionId, ruling: RULINGS.REFUSED }))
+        itCostsAtMost(177e3, () => disputable.executeRuling({ actionId, ruling: RULINGS.REFUSED }))
       })
 
       context('in favor of the submitter', () => {
-        itCostsAtMost(220e3, () => disputable.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_SUBMITTER }))
+        itCostsAtMost(177e3, () => disputable.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_SUBMITTER }))
       })
 
       context('in favor of the challenger', () => {
-        itCostsAtMost(269e3, () => disputable.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_CHALLENGER }))
+        itCostsAtMost(257e3, () => disputable.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_CHALLENGER }))
       })
     })
   })

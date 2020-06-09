@@ -26,16 +26,15 @@ contract DisputableAppMock is DisputableAragonApp, TimeHelpersMock {
     event DisputableAllowed(uint256 indexed id);
     event DisputableRejected(uint256 indexed id);
     event DisputableVoided(uint256 indexed id);
-    event DisputableClosed(uint256 indexed id);
 
     struct Entry {
-        bool closed;
-        uint64 endDate;
-        uint64 challengedAt;
+        bool challenged;
         uint256 actionId;
     }
 
-    uint64 public entryLifetime;
+    bool internal mockCanClose;
+    bool internal mockCanChallenge;
+
     uint256 private entriesLength;
     mapping (uint256 => Entry) private entries;
 
@@ -44,21 +43,16 @@ contract DisputableAppMock is DisputableAragonApp, TimeHelpersMock {
     */
     function initialize() external {
         initialized();
+        mockCanClose = true;
+        mockCanChallenge = true;
     }
 
     /**
-    * @dev Set entry lifetime duration
+    * @dev Mock can close or can challenge checks
     */
-    function setLifetime(uint64 _lifetime) external {
-        entryLifetime = _lifetime;
-    }
-
-    /**
-    * @dev Close action
-    */
-    function closeAction(uint256 _id) public {
-        _closeAgreementAction(entries[_id].actionId);
-        emit DisputableClosed(_id);
+    function mockDisputable(bool _canClose, bool _canChallenge) external {
+        mockCanClose = _canClose;
+        mockCanChallenge = _canChallenge;
     }
 
     /**
@@ -69,9 +63,7 @@ contract DisputableAppMock is DisputableAragonApp, TimeHelpersMock {
         require(canForward(msg.sender, data), ERROR_CANNOT_SUBMIT);
 
         uint256 id = entriesLength++;
-        uint256 actionId = _newAgreementAction(id, data, msg.sender);
-        uint64 endDate = entryLifetime == 0 ? 0 : getTimestamp64().add(entryLifetime);
-        entries[id] = Entry({ endDate: endDate, actionId: actionId, closed: false, challengedAt: 0 });
+        entries[id].actionId = _newAgreementAction(id, data, msg.sender);
 
         emit DisputableSubmitted(id);
     }
@@ -81,22 +73,26 @@ contract DisputableAppMock is DisputableAragonApp, TimeHelpersMock {
     * @param _id Identification number of the entry being queried
     * @return endDate Timestamp when the disputable action ends so it cannot be challenged anymore, unless it's closed beforehand
     * @return challenged True if the disputable action is being challenged
-    * @return closed True if the disputable action is closed
+    * @return finished True if the disputable action has finished
     */
-    function getDisputableAction(uint256 _id) external view returns (uint64 endDate, bool challenged, bool closed) {
-        Entry storage entry = entries[_id];
-        closed = entry.closed;
-        endDate = entry.endDate;
-        challenged = entry.challengedAt != 0;
+    function getDisputableAction(uint256 _id) external view returns (uint64 endDate, bool challenged, bool finished) {
+        return (0, entries[_id].challenged, false);
     }
 
     /**
     * @dev Tell whether a disputable action can be challenged or not
-    * @param _id Identification number of the entry being queried
     * @return True if the queried disputable action can be challenged, false otherwise
     */
-    function canChallenge(uint256 _id) external view returns (bool) {
-        return _existsEntry(_id) && _canChallenge(entries[_id]);
+    function canChallenge(uint256 /* _id */) external view returns (bool) {
+        return mockCanChallenge;
+    }
+
+    /**
+    * @dev Tell whether a disputable action can be closed by the agreement or not
+    * @return True if the queried disputable action can be closed, false otherwise
+    */
+    function canClose(uint256 /* _id */) external view returns (bool) {
+        return mockCanClose;
     }
 
     /**
@@ -114,10 +110,7 @@ contract DisputableAppMock is DisputableAragonApp, TimeHelpersMock {
     * @param _id Identification number of the entry to be challenged
     */
     function _onDisputableActionChallenged(uint256 _id, uint256 /* _challengeId */, address /* _challenger */) internal {
-        Entry storage entry = _getEntry(_id);
-        require(_canChallenge(entry), ERROR_CANNOT_CHALLENGE);
-
-        entry.challengedAt = getTimestamp64();
+        entries[_id].challenged = true;
         emit DisputableChallenged(_id);
     }
 
@@ -126,7 +119,7 @@ contract DisputableAppMock is DisputableAragonApp, TimeHelpersMock {
     * @param _id Identification number of the entry to be allowed
     */
     function _onDisputableActionAllowed(uint256 _id) internal {
-        _updateChallengeDuration(_id);
+        entries[_id].challenged = false;
         emit DisputableAllowed(_id);
     }
 
@@ -135,7 +128,7 @@ contract DisputableAppMock is DisputableAragonApp, TimeHelpersMock {
     * @param _id Identification number of the entry to be rejected
     */
     function _onDisputableActionRejected(uint256 _id) internal {
-        _updateChallengeDuration(_id);
+        entries[_id].challenged = false;
         emit DisputableRejected(_id);
     }
 
@@ -144,55 +137,7 @@ contract DisputableAppMock is DisputableAragonApp, TimeHelpersMock {
     * @param _id Identification number of the entry to be voided
     */
     function _onDisputableActionVoided(uint256 _id) internal {
-        _updateChallengeDuration(_id);
+        entries[_id].challenged = false;
         emit DisputableVoided(_id);
-    }
-
-    /**
-    * @dev Add the total challenge duration of a disputable action
-    * @param _id Identification number of the entry to be updated
-    */
-    function _updateChallengeDuration(uint256 _id) internal {
-        Entry storage entry = _getEntry(_id);
-        uint64 currentEndDate = entry.endDate;
-
-        if (currentEndDate != 0) {
-            uint64 challengeDuration = getTimestamp64().sub(entry.challengedAt);
-            uint64 newEndDate = currentEndDate + challengeDuration;
-
-            // Cap action endDate to MAX_UINT64 to handle infinite action lifetimes
-            entry.endDate = (newEndDate >= currentEndDate) ? newEndDate : MAX_UINT64;
-        }
-
-        entry.challengedAt = 0;
-    }
-
-    /**
-    * @dev Tell whether an entry instance can be challenged or not
-    * @param _entry Entry instance being queried
-    * @return True if the queried entry can be challenged, false otherwise
-    */
-    function _canChallenge(Entry storage _entry) internal view returns (bool) {
-        uint64 endDate = _entry.endDate;
-        return (endDate == 0 || endDate > getTimestamp64()) && _entry.challengedAt == 0 && !_entry.closed;
-    }
-
-    /**
-    * @dev Fetch an entry instance by identification number
-    * @param _id Entry identification number being queried
-    * @return Entry instance associated to the given identification number
-    */
-    function _getEntry(uint256 _id) internal view returns (Entry storage) {
-        require(_existsEntry(_id), ERROR_ENTRY_DOES_NOT_EXIST);
-        return entries[_id];
-    }
-
-    /**
-    * @dev Tell weather an entry exists or not
-    * @param _id Entry identification number being queried
-    * @return True if the entry was registered, false otherwise
-    */
-    function _existsEntry(uint256 _id) internal view returns (bool) {
-        return _id < entriesLength;
     }
 }
