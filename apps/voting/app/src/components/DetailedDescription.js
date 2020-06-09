@@ -7,7 +7,9 @@ function DetailedDescription({ path }) {
   const theme = useTheme()
   const description = useMemo(() => {
     return path
-      ? path.map((step, index) => descriptionStep(step, [index + 1], theme))
+      ? path.map((step, index) => (
+          <DescriptionStep step={step} depth={index + 1} />
+        ))
       : ''
   }, [path, theme])
   return (
@@ -26,7 +28,8 @@ function DetailedDescription({ path }) {
   )
 }
 
-function descriptionStep(step, depth, theme) {
+function DescriptionStep({ step, depth }) {
+  const theme = useTheme()
   const app =
     step.name || step.identifier ? (
       <React.Fragment key={0}>
@@ -76,16 +79,7 @@ function descriptionStep(step, depth, theme) {
       }
 
       if (type === 'role' || type === 'kernelNamespace' || type === 'app') {
-        return (
-          <span
-            key={index + 1}
-            css={`
-              font-style: italic;
-            `}
-          >
-            {value.name}{' '}
-          </span>
-        )
+        return <span key={index + 1}>'{value.name}' </span>
       }
 
       if (type === 'apmPackage') {
@@ -113,9 +107,9 @@ function descriptionStep(step, depth, theme) {
 
   let childrenDescriptions = ''
   if (step.children) {
-    childrenDescriptions = step.children.map((child, index) =>
-      descriptionStep(child, depth.concat(index + 1), theme)
-    )
+    childrenDescriptions = step.children.map((child, index) => (
+      <DescriptionStep step={child} depth={`${depth}${index + 1}`} />
+    ))
   }
 
   return (
