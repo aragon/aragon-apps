@@ -1,6 +1,6 @@
 const { isAddress } = require('web3-utils')
 const { isBigNumber } = require('../lib/numbers')
-const { getEventAt, getEvents } = require('@aragon/contract-test-helpers/events')
+const { getEventAt, getEvents } = require('@aragon/contract-helpers-test/events')
 
 const assertEvent = (receipt, eventName, expectedArgs = {}, index = 0) => {
   const event = getEventAt(receipt, eventName, index)

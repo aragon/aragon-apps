@@ -2,7 +2,7 @@ const { bn } = require('../lib/numbers')
 const { CHALLENGES_STATE } = require('../utils/enums')
 const { AGREEMENT_EVENTS } = require('../utils/events')
 const { AGREEMENT_ERRORS } = require('../utils/errors')
-const { getEventArgument } = require('@aragon/contract-test-helpers/events')
+const { getEventArgument } = require('@aragon/contract-helpers-test/events')
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 const EMPTY_DATA = '0x'
