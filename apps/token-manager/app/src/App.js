@@ -38,7 +38,7 @@ class App extends React.PureComponent {
     const holder = holders.find(holder =>
       addressesEqual(holder.address, address)
     )
-    return holder ? holder.balance : new BN('0')
+    return holder ? holder.balance : new BN(0)
   }
   handleUpdateTokens = ({ amount, holder, mode }) => {
     const { api } = this.props
