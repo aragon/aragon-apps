@@ -64,7 +64,7 @@ function Holders({
                   entity={address}
                   connectedAccount={isCurrentUser}
                 />
-                {isCurrentUser && <You />}
+                {isCurrentUser && <You css="flex-shrink: 0" />}
               </div>,
             ]
 
