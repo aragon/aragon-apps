@@ -214,6 +214,7 @@ function updateVestingState(state, receiver, newVesting) {
   const address = receiver.toLowerCase()
 
   const nextVestings = {
+    ...vestings,
     [address]: updateVestingsForAddress(vestings[address] || [], newVesting),
   }
 
