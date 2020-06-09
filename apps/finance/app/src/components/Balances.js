@@ -47,7 +47,7 @@ function useConvertRates(symbols) {
             CONVERT_API_RETRY_DELAY_MAX,
             retryDelay.current * 1.2
           )
-          retryTimer = setTimeout(update, Math.max(retryDelay.current))
+          retryTimer = setTimeout(update, retryDelay.current)
         }
       }
     }
