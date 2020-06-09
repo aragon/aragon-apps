@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react'
-import styled from 'styled-components'
 import { GU, Link, useTheme } from '@aragon/ui'
 import LocalIdentityBadge from './components/LocalIdentityBadge/LocalIdentityBadge'
 
@@ -107,28 +106,30 @@ function renderForwardingStep(step, depth, theme) {
     )
   }
 
-  const IndentedDescription = styled.div`
-    padding-left: ${2 * GU}px;
-    &:before {
-      content: '';
-      width: 6px;
-      height: 6px;
-      margin-right: ${1 * GU}px;
-      background: ${theme.accent};
-      border-radius: 6px;
-      display: inline-block;
-    }
-    span {
-      display: inline;
-      color: ${theme.surfaceContentSecondary};
-    }
-  `
-
   return (
     <React.Fragment key={depth}>
       <span>{description}</span>
       {childrenDescriptions && (
-        <IndentedDescription>{childrenDescriptions}</IndentedDescription>
+        <div
+          css={`
+            padding-left: ${2 * GU}px;
+            &:before {
+              content: '';
+              width: 6px;
+              height: 6px;
+              margin-right: ${1 * GU}px;
+              background: ${theme.accent};
+              border-radius: 6px;
+              display: inline-block;
+            }
+            span {
+              display: inline;
+              color: ${theme.surfaceContentSecondary};
+            }
+          `}
+        >
+          {childrenDescriptions}
+        </div>
       )}
     </React.Fragment>
   )
