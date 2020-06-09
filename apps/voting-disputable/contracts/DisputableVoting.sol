@@ -10,10 +10,9 @@ import "@aragon/os/contracts/lib/math/SafeMath.sol";
 import "@aragon/os/contracts/lib/math/SafeMath64.sol";
 import "@aragon/os/contracts/apps/disputable/DisputableAragonApp.sol";
 import "@aragon/minime/contracts/MiniMeToken.sol";
-import "../../agreement/contracts/Agreement.sol";
 
 
-contract DisputableVoting is DisputableAragonApp {
+contract DisputableVoting is DisputableAragonApp, IForwarder {
     using SafeMath for uint256;
     using SafeMath64 for uint64;
 
@@ -85,7 +84,7 @@ contract DisputableVoting is DisputableAragonApp {
         uint256 actionId;                       // Identification number of the disputable action in the context of the agreement
     }
 
-    MiniMeToken public token;
+    MiniMeToken public token;                   // We assume the governance token is not malicious
     uint64 public supportRequiredPct;
     uint64 public minAcceptQuorumPct;
     uint64 public voteTime;
@@ -99,7 +98,7 @@ contract DisputableVoting is DisputableAragonApp {
 
     event StartVote(uint256 indexed voteId, address indexed creator, string metadata);
     event CastVote(uint256 indexed voteId, address indexed voter, bool supports, uint256 stake);
-    event PauseVote(uint256 indexed voteId);
+    event PauseVote(uint256 indexed voteId, uint256 indexed challengeId);
     event ResumeVote(uint256 indexed voteId);
     event CancelVote(uint256 indexed voteId);
     event ProxyVoteFailure(uint256 indexed voteId, address indexed voter, address indexed representative);
@@ -191,7 +190,7 @@ contract DisputableVoting is DisputableAragonApp {
     * @param _metadata Vote metadata
     * @return voteId id for newly created vote
     */
-    function newVote(bytes _executionScript, string _metadata) external authP(CREATE_VOTES_ROLE, arr(msg.sender)) returns (uint256 voteId) {
+    function newVote(bytes _executionScript, string _metadata) external auth(CREATE_VOTES_ROLE) returns (uint256 voteId) {
         return _newVote(_executionScript, _metadata);
     }
 
@@ -211,13 +210,13 @@ contract DisputableVoting is DisputableAragonApp {
     * @notice Vote `_supports ? 'yes' : 'no'` in vote #`_voteId` on behalf of a set of voters
     * @dev Initialization check is implicitly provided by `voteExists()` as new votes can only be
     *      created via `newVote()`, which requires initialization
-    * @param _voters Addresses of the voters voting on behalf of
     * @param _voteId Id for vote
     * @param _supports Whether the representative supports the vote
+    * @param _voters Addresses of the voters voting on behalf of
     */
-    function voteOnBehalfOf(address[] _voters, uint256 _voteId, bool _supports) external voteExists(_voteId) {
+    function voteOnBehalfOf(uint256 _voteId, bool _supports, address[] _voters) external voteExists(_voteId) {
         require(_voters.length <= MAX_VOTES_DELEGATION_SET_LENGTH, ERROR_DELEGATES_EXCEEDS_MAX_LEN);
-        _voteOnBehalfOf(_voters, _voteId, _supports);
+        _voteOnBehalfOf(_voteId, _supports, _voters);
     }
 
     /**
@@ -241,6 +240,34 @@ contract DisputableVoting is DisputableAragonApp {
         emit ExecuteVote(_voteId);
     }
 
+    // Disputable getter fns
+
+    /**
+    * @dev Tells whether a vote can be challenged or not
+    * @return True if the given vote can be challenged, false otherwise
+    */
+    function canChallenge(uint256 _voteId) external view returns (bool) {
+        return _voteExists(_voteId) && _canPause(votes[_voteId]);
+    }
+
+    /**
+    * @dev Tells whether a vote can be closed or not
+    * @return True if the given vote can be closed, false otherwise
+    */
+    function canClose(uint256 _voteId) external view returns (bool) {
+        return _voteExists(_voteId) && !_isVoteOpen(votes[_voteId]);
+    }
+
+    /**
+    * @dev Tell disputable information related to a vote
+    */
+    function getDisputableAction(uint256 _voteId) external view voteExists(_voteId) returns (uint64 endDate, bool challenged, bool finished) {
+        Vote storage vote_ = votes[_voteId];
+        endDate = _voteEndDate(vote_);
+        challenged = _isPaused(vote_);
+        finished = _isVoteOpen(vote_);
+    }
+
     // Getter fns
 
     /**
@@ -251,11 +278,7 @@ contract DisputableVoting is DisputableAragonApp {
     */
     function canExecute(uint256 _voteId) external view voteExists(_voteId) returns (bool) {
         Vote storage vote_ = votes[_voteId];
-        // Since we are relying on the vote's disputable state cache in `_canExecute`,
-        // here we are manually checking against the Agreement app as well to double check.
-        // Note that even in a super edge case where the cache gets outdated, the execution
-        // will fail since it also tries to close the Agreement action through `_closeAgreementAction`.
-        return _canExecute(vote_) && _canProceedAgreementAction(vote_.actionId);
+        return _canExecute(vote_);
     }
 
     /**
@@ -407,6 +430,15 @@ contract DisputableVoting is DisputableAragonApp {
     // Forwarding fns
 
     /**
+    * @notice Tells whether the Voting app is a forwarder or not
+    * @dev IForwarder interface conformance
+    * @return Always true
+    */
+    function isForwarder() external pure returns (bool) {
+        return true;
+    }
+
+    /**
     * @notice Creates a vote to execute the desired action, and casts a support vote if possible
     * @dev IForwarder interface conformance
     *      Disputable apps are required to be the initial step in the forwarding chain
@@ -414,6 +446,7 @@ contract DisputableVoting is DisputableAragonApp {
     */
     function forward(bytes _evmScript) public {
         require(canForward(msg.sender, _evmScript), ERROR_CANNOT_FORWARD);
+        // TODO: Use new forwarding interface with context information
         _newVote(_evmScript, "");
     }
 
@@ -424,6 +457,7 @@ contract DisputableVoting is DisputableAragonApp {
     * @return True if the given address can create votes, false otherwise
     */
     function canForward(address _sender, bytes) public view returns (bool) {
+        // TODO: Handle the case where a Disputable app doesn't have an Agreement set
         // Note that `canPerform()` implicitly does an initialization check itself
         return canPerform(_sender, CREATE_VOTES_ROLE, arr(_sender));
     }
@@ -433,14 +467,15 @@ contract DisputableVoting is DisputableAragonApp {
     /**
     * @dev Challenge a vote
     * @param _voteId Identification number of the vote to be challenged
+    * @param _challengeId Identification number of the challenge associated to the vote in the Agreement app
     */
-    function _onDisputableActionChallenged(uint256 _voteId, uint256 /* _challengeId */, address /* _challenger */) internal {
+    function _onDisputableActionChallenged(uint256 _voteId, uint256 _challengeId, address /* _challenger */) internal {
         Vote storage vote_ = votes[_voteId];
         require(_canPause(vote_), ERROR_CANNOT_PAUSE_VOTE);
 
         vote_.disputableStatus = DisputableStatus.Paused;
         vote_.pausedAt = getTimestamp64();
-        emit PauseVote(_voteId);
+        emit PauseVote(_voteId, _challengeId);
     }
 
     /**
@@ -474,7 +509,7 @@ contract DisputableVoting is DisputableAragonApp {
     * @param _voteId Identification number of the entry to be voided
     */
     function _onDisputableActionVoided(uint256 _voteId) internal {
-        // When a vote that has been challenged gets voided, it is considered allowed for the current implementation.
+        // When a challenged vote is voided, it is considered as being allowed.
         // This could be the case for challenges where the arbitrator refuses to rule.
         _onDisputableActionAllowed(_voteId);
     }
@@ -503,8 +538,8 @@ contract DisputableVoting is DisputableAragonApp {
         vote_.disputableStatus = DisputableStatus.Active;
 
         // Notify the Agreement app tied to the current voting app about the vote created.
-        // This is mandatory to make votes disputable, we then store its reference on the Agreement app.
-        vote_.actionId = _newAgreementAction(voteId, msg.sender, bytes(_metadata));
+        // This is mandatory to make the vote disputable, by storing a reference to it on the Agreement app.
+        vote_.actionId = _newAgreementAction(voteId, bytes(_metadata), msg.sender);
 
         emit StartVote(voteId, msg.sender, _metadata);
     }
@@ -513,7 +548,6 @@ contract DisputableVoting is DisputableAragonApp {
     * @dev Internal function to cast a vote. It assumes the queried vote exists.
     */
     function _vote(uint256 _voteId, bool _supports, address _voter) internal {
-        // This could re-enter, though we can assume the governance token is not malicious
         Vote storage vote_ = votes[_voteId];
         _castVote(vote_, _voteId, _supports, _voter);
         _overwriteCasterIfNecessary(vote_, _voter);
@@ -522,7 +556,7 @@ contract DisputableVoting is DisputableAragonApp {
     /**
     * @dev Internal function for a representative to cast a vote on behalf of many voters. It assumes the queried vote exists.
     */
-    function _voteOnBehalfOf(address[] _voters, uint256 _voteId, bool _supports) internal {
+    function _voteOnBehalfOf(uint256 _voteId, bool _supports, address[] _voters) internal {
         Vote storage vote_ = votes[_voteId];
         for (uint256 i = 0; i < _voters.length; i++) {
             address voter = _voters[i];
@@ -567,9 +601,6 @@ contract DisputableVoting is DisputableAragonApp {
         }
 
         // If none of the above conditions are met, it can be executed.
-        // We are not checking if the vote can proceed against the Agreement app since it will
-        // be tried to be closed when executed. This means the close call will fail in the Agreement
-        // side if the vote's status cache on the voting app was outdated for some weird reason.
         return true;
     }
 
@@ -578,12 +609,6 @@ contract DisputableVoting is DisputableAragonApp {
     * @return True if the given voter can participate a certain vote, false otherwise
     */
     function _canVote(Vote storage vote_, address _voter) internal view returns (bool) {
-        // WARNING! Note that here we are relying entirely on the vote's disputable state cache.
-        // This means that in case the cache gets outdated we will be allowing people to vote on
-        // a vote being challenged. We are deciding not to consider this as a security risk based on
-        // the probability of occurrence and the impact it can have. For instance, early execution is
-        // not allowed in this app and users can change their vote withing the voting period. We prefer
-        // prioritizing the gas costs for the rest of 99% of the cases.
         return _isVoteOpen(vote_) && token.balanceOfAt(_voter, vote_.snapshotBlock) > 0;
     }
 
@@ -648,20 +673,19 @@ contract DisputableVoting is DisputableAragonApp {
     * @return True if the given vote is within its overrule window, false otherwise
     */
     function _withinOverruleWindow(Vote storage vote_) internal view returns (bool) {
+        if (_isPausedOrCancelled(vote_)) {
+            return false;
+        }
+
         return getTimestamp64() >= _voteEndDate(vote_).sub(vote_.overruleWindow);
     }
 
     /**
     * @dev Internal function to calculate the end date of a vote. It assumes the queried vote exists.
+    *      This function contemplates a pause duration if the vote was paused before.
     */
     function _voteEndDate(Vote storage vote_) internal view returns (uint64) {
         uint64 endDate = vote_.startDate.add(voteTime);
-        DisputableStatus status = vote_.disputableStatus;
-
-        if (status == DisputableStatus.Cancelled) {
-            return vote_.pausedAt.add(vote_.pauseDuration);
-        }
-
         return endDate.add(vote_.pauseDuration);
     }
 

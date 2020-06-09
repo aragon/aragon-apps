@@ -87,14 +87,14 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
     })
 
     it('registers a new action in the agreement', async () => {
-      const { disputable, disputableActionId, collateralId, context, state, submitter } = await agreement.getAction(actionId)
+      const { disputable, disputableActionId, collateralId, context, closed, submitter } = await agreement.getAction(actionId)
 
       assertBn(disputableActionId, voteId, 'disputable ID does not match')
       assert.equal(disputable, voting.address, 'disputable address does not match')
       assertBn(collateralId, 0, 'collateral ID does not match')
       assert.equal(toAscii(context), 'metadata', 'context does not match')
       assert.equal(submitter, voter51, 'action submitter does not match')
-      assertBn(state, ACTIONS_STATE.SUBMITTED, 'action status does not match')
+      assert.isFalse(closed, 'action is not closed')
     })
   })
 
@@ -118,8 +118,8 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
     it('closes the action on the agreement and executed the vote', async () => {
       assertBn(await executionTarget.counter(), 1, 'vote was not executed')
 
-      const { disputable, disputableActionId, collateralId, context, state, submitter } = await agreement.getAction(actionId)
-      assertBn(state, ACTIONS_STATE.CLOSED, 'action status does not match')
+      const { disputable, disputableActionId, collateralId, context, closed, submitter } = await agreement.getAction(actionId)
+      assert.isTrue(closed, 'action is not closed')
 
       assertBn(disputableActionId, voteId, 'disputable ID does not match')
       assert.equal(disputable, voting.address, 'disputable address does not match')
@@ -202,8 +202,8 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
         await voting.executeVote(voteId)
         assertBn(await executionTarget.counter(), 1, 'vote was not executed')
 
-        const { state } = await agreement.getAction(actionId)
-        assertBn(state, ACTIONS_STATE.CLOSED, 'action status does not match')
+        const { closed } = await agreement.getAction(actionId)
+        assert.isTrue(closed, 'action is not closed')
       })
 
       it('marks the vote as open', async () => {

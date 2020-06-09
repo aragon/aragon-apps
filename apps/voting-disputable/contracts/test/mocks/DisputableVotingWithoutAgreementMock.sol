@@ -7,7 +7,7 @@ import "@aragon/contract-test-helpers/contracts/TimeHelpersMock.sol";
 contract DisputableVotingWithoutAgreementMock is DisputableVotingMock {
     uint256 private actionsLength;
 
-    function _newAgreementAction(uint256 /* _disputableActionId */, uint64 /* _lifetime */, address /* _submitter */, bytes /* _context */)
+    function _newAgreementAction(uint256 /* _disputableActionId */, bytes /* _context */, address /* _submitter */)
         internal
         returns (uint256)
     {
@@ -16,9 +16,5 @@ contract DisputableVotingWithoutAgreementMock is DisputableVotingMock {
 
     function _closeAgreementAction(uint256 /* _actionId */) internal {
         // do nothing
-    }
-
-    function _canProceedAgreementAction(uint256 /* _actionId */) internal view returns (bool) {
-        return true;
     }
 }
