@@ -57,7 +57,7 @@ function BalanceToken({
           css={`
             ${textStyle('title2')}
             margin: ${(compact ? 1 : 1.5) * GU}px 0;
-            display:flex;
+            display: flex;
           `}
         >
           {amountWasRounded && '~'}
