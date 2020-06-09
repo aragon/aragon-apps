@@ -6,7 +6,7 @@ import {
   useInstalledApps,
   usePath,
 } from '@aragon/api-react'
-import { useNow } from './date-utils'
+import { useNow } from './hooks/useNow'
 import { holderFromPath } from './routing'
 import { addressesEqual } from './web3-utils'
 
