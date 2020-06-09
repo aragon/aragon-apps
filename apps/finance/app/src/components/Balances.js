@@ -3,7 +3,8 @@ import BN from 'bn.js'
 import { Box, GU, textStyle, useTheme, useLayout } from '@aragon/ui'
 import BalanceToken from './BalanceToken'
 
-const CONVERT_API_RETRY_DELAY = 2000
+const CONVERT_API_RETRY_DELAY = 2 * 1000
+const CONVERT_API_RETRY_DELAY_MAX = 60 * 1000
 
 function convertRatesUrl(symbolsQuery) {
   return `https://min-api.cryptocompare.com/data/price?fsym=USD&tsyms=${symbolsQuery}`
@@ -11,6 +12,7 @@ function convertRatesUrl(symbolsQuery) {
 
 function useConvertRates(symbols) {
   const [rates, setRates] = useState({})
+  const retryDelay = useRef(CONVERT_API_RETRY_DELAY)
 
   const symbolsQuery = symbols.join(',')
 
@@ -29,6 +31,7 @@ function useConvertRates(symbols) {
         const rates = await response.json()
         if (!cancelled) {
           setRates(rates)
+          retryDelay.current = CONVERT_API_RETRY_DELAY
         }
       } catch (err) {
         // The !cancelled check is needed in case:
@@ -39,7 +42,12 @@ function useConvertRates(symbols) {
         //  Assuming the fetch() request keeps throwing, it would create new
         //  requests even though the useEffect() got cancelled.
         if (!cancelled) {
-          retryTimer = setTimeout(update, CONVERT_API_RETRY_DELAY)
+          // Add more delay after every failed attempt
+          retryDelay.current = Math.min(
+            CONVERT_API_RETRY_DELAY_MAX,
+            retryDelay.current * 1.2
+          )
+          retryTimer = setTimeout(update, Math.max(retryDelay.current))
         }
       }
     }
@@ -48,6 +56,7 @@ function useConvertRates(symbols) {
     return () => {
       cancelled = true
       clearTimeout(retryTimer)
+      retryDelay.current = CONVERT_API_RETRY_DELAY
     }
   }, [symbolsQuery])
 
