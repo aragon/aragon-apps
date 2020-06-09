@@ -922,7 +922,8 @@ contract Agreement is IAgreement, AragonApp {
     */
     function _unlockAndSlashBalance(Staking _staking, address _user, uint256 _unlockAmount, address _challenger, uint256 _slashAmount) internal {
         if (_unlockAmount != 0 && _slashAmount != 0) {
-            _staking.slashAndUnlock(_user, _challenger, _unlockAmount, _slashAmount);
+            _staking.slashAndUnstake(_user, _challenger, _slashAmount);
+            _staking.unlock(_user, address(this), _unlockAmount);
         } else {
             _unlockBalance(_staking, _user, _unlockAmount);
             _slashBalance(_staking, _user, _challenger, _slashAmount);

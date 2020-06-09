@@ -132,8 +132,10 @@ contract('Agreement', ([_, challenger, holder0, holder1, holder2, holder3, holde
       const returnedCollateralTotal = challengeCollateral.mul(bn(challengeSettledActions)).add(challengeCollateral.mul(bn(challengeRefusedActions)))
 
       const expectedChallengerBalance = wonDisputesTotal.add(settledTotal).add(returnedCollateralTotal)
-      const challengerBalance = await disputable.getTotalAvailableBalance(challenger)
+      const challengerBalance = await collateralToken.balanceOf(challenger)
+      const challengerTotalBalance = await disputable.getTotalAvailableBalance(challenger)
       assertBn(challengerBalance, expectedChallengerBalance, 'challenger balance does not match')
+      assertBn(challengerTotalBalance, expectedChallengerBalance, 'challenger total balance does not match')
     })
 
     it('computes available stake balances properly', async () => {

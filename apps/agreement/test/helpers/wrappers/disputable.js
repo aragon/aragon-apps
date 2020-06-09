@@ -107,11 +107,7 @@ class DisputableWrapper extends AgreementWrapper {
     if (!submitter) submitter = await this._getSender()
 
     if (stake === undefined) stake = this.actionCollateral
-    if (stake) {
-      await this.approveAndCall({ amount: stake, from: submitter })
-    } else {
-      stake = this.actionCollateral
-    }
+    if (stake) await this.approveAndCall({ amount: stake, from: submitter })
     if (sign === undefined && (await this.getSigner(submitter)).mustSign) await this.sign(submitter)
 
     return this.forward({ script: actionContext, from: submitter })
