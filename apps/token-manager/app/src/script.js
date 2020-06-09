@@ -55,6 +55,7 @@ retryEvery(() =>
   app
     .call('token')
     .toPromise()
+    .then(marshallAddress)
     .then(initialize)
     .catch(err => {
       console.error(
@@ -239,7 +240,7 @@ function updateVestingsForAddress(vestingsForAddress, newVesting) {
 
 function loadNewBalances(token, ...addresses) {
   return Promise.all(
-    addresses.map(address =>
+    addresses.map(marshallAddress).map(address =>
       token
         .balanceOf(address)
         .toPromise()
@@ -294,6 +295,11 @@ function marshallVesting({ amount, cliff, revokable, start, vesting }) {
     start: marshallDate(start),
     vesting: marshallDate(vesting),
   }
+}
+
+function marshallAddress(address) {
+  // On machine-returned addresses, always assume they are correct
+  return address.toLowerCase()
 }
 
 function marshallDate(date) {
