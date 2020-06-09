@@ -1,8 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { transformAddresses } from '../web3-utils'
 import AutoLink from '../components/AutoLink'
-import LocalIdentityBadge from '../components/LocalIdentityBadge/LocalIdentityBadge'
 
 // Render a description associated to a vote.
 // Usually vote.data.metadata and vote.data.description.
@@ -18,7 +16,7 @@ const VoteDescription = React.memo(
         {...props}
         css={`
           // overflow-wrap:anywhere and hyphens:auto are not supported yet by
-          // the latest versions of Webkit / Blink (as of October 2019), which
+          // the latest versions of Safari (as of June 2020), which
           // is why word-break:break-word has been added here.
           hyphens: auto;
           overflow-wrap: anywhere;
@@ -40,8 +38,8 @@ const VoteDescription = React.memo(
 )
 
 VoteDescription.propTypes = {
+  description: PropTypes.node,
   disabled: PropTypes.bool,
-  description: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
   prefix: PropTypes.node,
 }
 

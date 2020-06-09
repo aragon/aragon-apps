@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react'
 import styled from 'styled-components'
-import { GU, useTheme } from '@aragon/ui'
+import { GU, Link, useTheme } from '@aragon/ui'
 import LocalIdentityBadge from './components/LocalIdentityBadge/LocalIdentityBadge'
 import LocalLabelAppBadge from './components/LocalIdentityBadge/LocalLabelAppBadge'
 
@@ -50,22 +50,42 @@ function renderForwardingStep(step, depth, theme) {
     )
 
   let description = ''
+
   if (step.annotatedDescription) {
-    description = step.annotatedDescription.map((descriptionLine, index) => {
-      if (descriptionLine.type == 'address') {
+    description = step.annotatedDescription.map(({ type, value }, index) => {
+      if (type === 'address' || type === 'any-account') {
         return (
-          <LocalIdentityBadge
-            key={index + 1}
-            compact
-            entity={descriptionLine.value}
-          />
+          <span key={index + 1}>
+            <LocalIdentityBadge
+              compact
+              entity={type === 'any-account' ? 'Any account' : value}
+            />{' '}
+          </span>
         )
       }
-      return (
-        <span key={index + 1}>
-          {descriptionLine.value.description || descriptionLine.value}
-        </span>
-      )
+
+      if (type === 'role' || type === 'kernelNamespace' || type === 'app') {
+        return (
+          <span
+            key={index + 1}
+            css={`
+              font-style: italic;
+            `}
+          >
+            {value.name}{' '}
+          </span>
+        )
+      }
+
+      if (type === 'apmPackage') {
+        return (
+          <span key={index + 1}>
+            <LocalIdentityBadge entity={value.name} />{' '}
+          </span>
+        )
+      }
+
+      return <span key={index + 1}>{value.description || value} </span>
     })
 
     description.unshift(app)
@@ -93,8 +113,8 @@ function renderForwardingStep(step, depth, theme) {
       content: '';
       width: 6px;
       height: 6px;
-      margin-right: 10px;
-      background: #08bee5;
+      margin-right: ${1 * GU}px;
+      background: ${theme.accent};
       border-radius: 6px;
       display: inline-block;
     }
