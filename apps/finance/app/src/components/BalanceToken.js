@@ -67,7 +67,7 @@ function BalanceToken({
               css={`
                 display: flex;
                 align-items: center;
-                margin-left: ${GU}px;
+                margin-left: ${1 * GU}px;
               `}
             >
               <Help hint="This is an approximation, see the complete amount">
