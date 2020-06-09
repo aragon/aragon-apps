@@ -26,6 +26,7 @@ import {
   getTokenSymbol,
 } from '../../lib/token-utils'
 import { addressesEqual, isAddress } from '../../lib/web3-utils'
+import AmountInput from '../AmountInput'
 import ToggleContent from '../ToggleContent'
 import TokenSelector from './TokenSelector'
 
@@ -248,11 +249,17 @@ class Deposit extends React.Component {
     })
     return true
   }
-
+  setMaxUserBalance = () => {
+    const { selectedToken, amount } = this.state
+    const { userBalance, decimals } = selectedToken.data
+    const adjustedAmount = fromDecimals(userBalance, decimals)
+    this.setState({
+      amount: { ...amount, value: adjustedAmount },
+    })
+  }
   render() {
     const { appAddress, network, title, tokens } = this.props
     const { amount, reference, selectedToken } = this.state
-
     let errorMessage
     if (selectedToken.error === TOKEN_NOT_FOUND_ERROR) {
       errorMessage = 'Token not found'
@@ -268,6 +275,7 @@ class Deposit extends React.Component {
       addressesEqual(selectedToken.value, ETHER_TOKEN_FAKE_ADDRESS)
     const tokenSelected = selectedToken.value && !ethSelected
     const isMainnet = network.type === 'main'
+    const isMaxButtonVisible = selectedToken && selectedToken.data.symbol
 
     return (
       <form onSubmit={this.handleSubmit}>
@@ -279,12 +287,11 @@ class Deposit extends React.Component {
         />
         <SelectedTokenBalance network={network} selectedToken={selectedToken} />
         <Field label="Amount">
-          <TextInput
-            type="number"
-            value={amount.value}
+          <AmountInput
             onChange={this.handleAmountUpdate}
-            min={0}
-            step="any"
+            onMaxClick={this.setMaxUserBalance}
+            showMax={isMaxButtonVisible}
+            value={amount.value}
             required
             wide
           />
