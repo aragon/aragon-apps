@@ -92,7 +92,7 @@ function BalanceToken({
 }
 
 BalanceToken.defaultProps = {
-  convertedAmount: -1,
+  convertedAmount: new BN(-1),
 }
 
 BalanceToken.propTypes = {
