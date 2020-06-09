@@ -123,7 +123,7 @@ function InfoBoxes({
                 <LocalIdentityBadge
                   entity={account}
                   connectedAccount={isCurrentUser}
-                  defaultLabel="YOU"
+                  defaultLabel={isCurrentUser ? 'YOU' : undefined}
                   labelStyle={
                     isCurrentUser && !label
                       ? `color: ${theme.tagIndicatorContent};`
