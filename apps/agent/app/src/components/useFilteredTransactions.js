@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react'
-import { endOfDay, isAfter, isWithinInterval, startOfDay } from 'date-fns'
+import { endOfDay, isWithinInterval, startOfDay } from 'date-fns'
 import { TRANSACTION_TYPES } from '../transaction-types'
 import { addressesEqual } from '../lib/web3-utils'
 
