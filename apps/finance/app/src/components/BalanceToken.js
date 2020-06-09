@@ -1,6 +1,6 @@
 import React from 'react'
-import BN from 'bn.js'
 import PropTypes from 'prop-types'
+import BN from 'bn.js'
 import { GU, Help, formatTokenAmount, textStyle, useTheme } from '@aragon/ui'
 import { useNetwork } from '@aragon/api-react'
 import { tokenIconUrl } from '../lib/icon-utils'
