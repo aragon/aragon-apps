@@ -17,6 +17,7 @@ import {
 } from '@aragon/ui'
 import { useAppState, useConnectedAccount, useNetwork } from '@aragon/api-react'
 import { format } from 'date-fns'
+import DetailedDescription from '../components/DetailedDescription'
 import LocalIdentityBadge from '../components/LocalIdentityBadge/LocalIdentityBadge'
 import LocalLabelAppBadge from '../components/LocalIdentityBadge/LocalLabelAppBadge'
 import SummaryBar from '../components/SummaryBar'
@@ -24,10 +25,8 @@ import SummaryRows from '../components/SummaryRows'
 import VoteActions from '../components/VoteActions'
 import VoteCast from '../components/VoteCast'
 import VoteStatus from '../components/VoteStatus'
-import VoteDescription from '../components/VoteDescription'
 import { percentageList, round, safeDiv } from '../math-utils'
 import { getQuorumProgress } from '../vote-utils'
-import { renderDescription } from '../vote-description-utils'
 import { VOTE_NAY, VOTE_YEA } from '../vote-types'
 import { addressesEqual } from '../web3-utils'
 
@@ -72,10 +71,6 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
   const handleExecute = useCallback(() => {
     onExecute(voteId)
   }, [onExecute, voteId])
-
-  const descriptionText = vote.data.path
-    ? renderDescription(vote.data.path)
-    : vote.description
 
   return (
     <React.Fragment>
@@ -137,14 +132,19 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                   >
                     Description
                   </h2>
-                  <VoteDescription
-                    description={
-                      descriptionText || metadata || DEFAULT_DESCRIPTION
-                    }
+                  <div
                     css={`
-                      ${textStyle('body2')};
+                      hyphens: auto;
+                      overflow-wrap: anywhere;
+                      word-break: break-word;
                     `}
-                  />
+                  >
+                    {vote.data.path ? (
+                      <DetailedDescription path={vote.data.path} />
+                    ) : (
+                      vote.description || metadata || DEFAULT_DESCRIPTION
+                    )}
+                  </div>
                 </div>
                 <div>
                   <h2

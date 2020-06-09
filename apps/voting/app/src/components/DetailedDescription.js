@@ -1,20 +1,32 @@
 import React, { useMemo } from 'react'
+import styled from 'styled-components'
 import { GU, Link, useTheme } from '@aragon/ui'
-import LocalIdentityBadge from './components/LocalIdentityBadge/LocalIdentityBadge'
+import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
 
-export function renderDescription(path) {
+function DetailedDescription({ path }) {
   const theme = useTheme()
   const description = useMemo(() => {
     return path
-      ? path.map((step, index) =>
-          renderForwardingStep(step, [index + 1], theme)
-        )
+      ? path.map((step, index) => descriptionStep(step, [index + 1], theme))
       : ''
   }, [path, theme])
-  return <React.Fragment>{description}</React.Fragment>
+  return (
+    <div
+      css={`
+        // overflow-wrap:anywhere and hyphens:auto are not supported yet by
+        // the latest versions of Safari (as of June 2020), which
+        // is why word-break:break-word has been added here.
+        hyphens: auto;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+      `}
+    >
+      {description}
+    </div>
+  )
 }
 
-function renderForwardingStep(step, depth, theme) {
+function descriptionStep(step, depth, theme) {
   const app =
     step.name || step.identifier ? (
       <React.Fragment key={0}>
@@ -102,7 +114,7 @@ function renderForwardingStep(step, depth, theme) {
   let childrenDescriptions = ''
   if (step.children) {
     childrenDescriptions = step.children.map((child, index) =>
-      renderForwardingStep(child, depth.concat(index + 1), theme)
+      descriptionStep(child, depth.concat(index + 1), theme)
     )
   }
 
@@ -110,27 +122,37 @@ function renderForwardingStep(step, depth, theme) {
     <React.Fragment key={depth}>
       <span>{description}</span>
       {childrenDescriptions && (
-        <div
+        <ul
           css={`
-            padding-left: ${2 * GU}px;
-            &:before {
-              content: '';
-              width: 6px;
-              height: 6px;
-              margin-right: ${1 * GU}px;
-              background: ${theme.accent};
-              border-radius: 6px;
-              display: inline-block;
-            }
-            span {
-              display: inline;
-              color: ${theme.surfaceContentSecondary};
-            }
+            list-style-type: none;
+            margin-left: 0;
+            padding-left: 6px;
+            text-indent: -6px;
           `}
         >
-          {childrenDescriptions}
-        </div>
+          <li
+            css={`
+              padding-left: ${2 * GU}px;
+              &:before {
+                content: '';
+                width: 6px;
+                height: 6px;
+                background: ${theme.accent};
+                border-radius: 6px;
+                display: inline-block;
+              }
+              span {
+                display: inline;
+                color: ${theme.surfaceContentSecondary};
+              }
+            `}
+          >
+            {childrenDescriptions}
+          </li>
+        </ul>
       )}
     </React.Fragment>
   )
 }
+
+export default DetailedDescription
