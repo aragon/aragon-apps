@@ -25,9 +25,7 @@ export function useSelectedHolderVestings() {
       const holder = holders.find(holder =>
         addressesEqual(holder.address, holderAddress)
       )
-      if (holder) {
-        holderInfo.balance = holder.balance
-      }
+      holderInfo.balance = holder ? holder.balance : new BN(0)
     }
 
     if (vestings && vestings[holderAddress]) {
