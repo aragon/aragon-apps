@@ -140,6 +140,7 @@ function Balances({ balances, compactMode }) {
                       display: block;
                       min-width: ${20 * GU}px;
                       padding-right: ${3 * GU}px;
+                      padding-right: ${4 * GU}px;
                       ${compactMode ? `margin-bottom: ${3 * GU}px;` : ''}
                       &:last-of-type {
                         min-width: unset;
