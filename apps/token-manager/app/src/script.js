@@ -98,7 +98,6 @@ async function initialize(tokenAddress) {
     switch (event) {
       case 'NewVesting':
         return newVesting(nextState, returnValues)
-        return nextState
       default:
         // TODO: add handlers for the other vesting events
         return nextState
@@ -169,17 +168,12 @@ async function transfer(token, state, { _from, _to }) {
   )
 }
 
-async function newVesting(state, vesting) {
-  const vestingInfo = await app
-    .call('getVesting', vesting.receiver, vesting.vestingId)
-    .toPromise()
-
-  return updateVestingState(
-    state,
-    vesting.receiver,
-    vesting.vestingId,
-    vestingInfo
-  )
+async function newVesting(state, { receiver, vestingId }) {
+  const vestingData = await loadVesting(receiver, vestingId)
+  return updateVestingState(state, receiver, {
+    id: vestingId,
+    data: vestingData,
+  })
 }
 
 /***********************
@@ -214,39 +208,33 @@ function updateHolders(holders, changed) {
   }
 }
 
-function updateVestingState(state, receiver, vestingId, vestingInfo) {
+function updateVestingState(state, receiver, newVesting) {
   const { vestings = {} } = state
   const address = receiver.toLowerCase()
+
+  const nextVestings = {
+    [address]: updateVestingsForAddress(vestings[address] || [], newVesting),
+  }
+
   return {
     ...state,
-    vestings: updateVestings(vestings, address, {
-      amount: vestingInfo.amount,
-      cliff: marshallDate(vestingInfo.cliff),
-      start: marshallDate(vestingInfo.start),
-      vesting: marshallDate(vestingInfo.vesting),
-      revokable: vestingInfo.revokable,
-      vestingId: vestingId,
-    }),
+    vestings: nextVestings,
   }
 }
 
-function updateVestings(vestings, receiver, changed) {
-  if (!vestings[receiver]) {
-    // If we can't find it, concat
-    vestings[receiver] = [changed]
-  } else {
-    const vestingIndex = vestings[receiver].findIndex(
-      vesting => vesting.id === changed.id
-    )
-    if (vestingIndex === -1) {
-      vestings[receiver].push(changed)
-    } else {
-      // update existing vesting
-      vestings[receiver][vestingIndex] = changed
-    }
+function updateVestingsForAddress(vestingsForAddress, newVesting) {
+  const vestingIndex = vestingsForAddress.findIndex(
+    vesting => vesting.id === newVesting.id
+  )
+  if (vestingIndex === -1) {
+    // Can't find it; concat
+    return vestingsForAddress.concat(newVesting)
   }
 
-  return vestings
+  // Update existing vesting
+  const nextVestingsForAddress = Array.from(vestingsForAddress)
+  nextVestingsForAddress[vestingIndex] = newVesting
+  return nextVestingsForAddress
 }
 
 function loadNewBalances(token, ...addresses) {
@@ -284,6 +272,28 @@ function loadTokenSettings(token) {
       // Return an empty object to try again later
       return {}
     })
+}
+
+function loadVesting(receiver, vestingId) {
+  // Wrap with retry in case the vesting is somehow not present
+  return retryEvery(() =>
+    app
+      .call('getVesting', receiver, vestingId)
+      .toPromise()
+      .then(vesting => marshallVesting(vesting))
+  )
+}
+
+// Apply transformations to a vesting received from web3
+// Note: ignores the 'open' field as we calculate that locally
+function marshallVesting({ amount, cliff, revokable, start, vesting }) {
+  return {
+    amount,
+    revokable,
+    cliff: marshallDate(cliff),
+    start: marshallDate(start),
+    vesting: marshallDate(vesting),
+  }
 }
 
 function marshallDate(date) {

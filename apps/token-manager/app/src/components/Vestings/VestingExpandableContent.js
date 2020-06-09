@@ -6,6 +6,8 @@ import { formatDate, timePeriod } from '../../date-utils'
 function VestingExpandableContent({ tokenDecimals, tokenSymbol, vesting }) {
   const theme = useTheme()
   const vestingInfo = useVestedTokensInfo(vesting)
+  const { start, cliff, vesting: end } = vesting.data
+
   return (
     <div
       css={`
@@ -34,7 +36,7 @@ function VestingExpandableContent({ tokenDecimals, tokenSymbol, vesting }) {
               ${textStyle('body4')};
             `}
           >
-            {formatDate(new Date(parseInt(vesting.start)))}
+            {formatDate(start)}
           </p>
         </div>
         <div
@@ -55,7 +57,7 @@ function VestingExpandableContent({ tokenDecimals, tokenSymbol, vesting }) {
               ${textStyle('body4')};
             `}
           >
-            {formatDate(new Date(parseInt(vesting.vesting)))}
+            {formatDate(end)}
           </p>
         </div>
       </div>
@@ -78,10 +80,7 @@ function VestingExpandableContent({ tokenDecimals, tokenSymbol, vesting }) {
               ${textStyle('body4')};
             `}
           >
-            {timePeriod(
-              new Date(parseInt(vesting.vesting)),
-              new Date(parseInt(vesting.start))
-            )}
+            {timePeriod(end, start)}
           </p>
         </div>
         <div
@@ -102,10 +101,7 @@ function VestingExpandableContent({ tokenDecimals, tokenSymbol, vesting }) {
               ${textStyle('body4')};
             `}
           >
-            {timePeriod(
-              new Date(parseInt(vesting.cliff)),
-              new Date(parseInt(vesting.start))
-            )}
+            {timePeriod(cliff, start)}
           </p>
         </div>
       </div>

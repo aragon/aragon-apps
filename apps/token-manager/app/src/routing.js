@@ -5,5 +5,9 @@ export function holderFromPath(path) {
     return null
   }
   const matches = path.match(HOLDER_ADDRESS_PATH)
-  return matches ? matches[0].split('/')[2] : null
+  return matches ? matches[0].split('/')[2].toLowerCase() : null
+}
+
+export function pathFromHolder(holder) {
+  return String(holder) === null ? '' : `/vesting/${holder}/`
 }

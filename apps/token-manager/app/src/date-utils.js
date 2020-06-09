@@ -14,3 +14,6 @@ export function timePeriod(fromDate, toDate) {
 export function formatDate(date) {
   return dayjs(date).format('YYYY-MM-DD, HH:mm')
 }
+
+// Re-export dayjs with the installed plugins
+export { dayjs }

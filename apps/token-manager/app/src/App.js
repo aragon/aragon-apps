@@ -124,11 +124,10 @@ class App extends React.PureComponent {
               onAssignHolder={this.handleLaunchAssignTokensNoHolder}
               tokenSymbol={tokenSymbol}
             />
-            {selectedHolder ? (
+            {selectedHolder && selectedHolder.address ? (
               <Details
                 tokenSymbol={tokenSymbol}
                 tokenDecimals={tokenDecimals}
-                vestings={vestings}
               />
             ) : (
               <Holders

@@ -34,7 +34,7 @@ function VestingContent({ tokenDecimals, tokenSymbol, vesting }) {
           align-items: center;
         `}
       >
-        {formatTokenAmount(vesting.amount, tokenDecimals, {
+        {formatTokenAmount(vesting.data.amount, tokenDecimals, {
           symbol: tokenSymbol,
         })}
       </div>

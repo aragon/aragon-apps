@@ -10,18 +10,21 @@ import {
 } from '@aragon/ui'
 import { addressesEqual } from '../../web3-utils'
 import { shortenAddress } from '../../utils'
-import { useTotalVestedTokensInfo } from '../../app-logic'
+import { useAppLogic, useTotalVestedTokensInfo } from '../../app-logic'
 import { useIdentity } from '../IdentityManager/IdentityManager'
 import TokenIcon from '../Icons/TokenIcon'
 import VestingIcon from '../Icons/VestingIcon'
 import TransferIcon from '../Icons/TransferIcon'
 
-function VestingInfoBoxes({ selectedHolder, tokenDecimals, tokenSymbol }) {
+function VestingInfoBoxes({ tokenDecimals, tokenSymbol }) {
   const theme = useTheme()
   const connectedAccount = useConnectedAccount()
-  const isCurrentUser = addressesEqual(selectedHolder.address, connectedAccount)
-  const totalInfo = useTotalVestedTokensInfo(selectedHolder.vestings)
+
+  const { selectedHolder } = useAppLogic()
   const [label] = useIdentity(selectedHolder.address)
+  const totalInfo = useTotalVestedTokensInfo(selectedHolder.vestings)
+
+  const isCurrentUser = addressesEqual(selectedHolder.address, connectedAccount)
 
   return (
     <React.Fragment>

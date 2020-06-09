@@ -1,12 +1,30 @@
 import BN from 'bn.js'
+import { dayjs } from './date-utils'
 
 function getTimeProgress(time, { start, end }) {
-  const progress = Math.max(0, Math.min(1, (time - start) / (end - start)))
-  return progress
+  const fromStart = dayjs(time).diff(dayjs(start))
+  const fromEnd = dayjs(end).diff(dayjs(time))
+  return Math.max(0, Math.min(1, fromStart / fromEnd))
 }
 
-export function getVestedTokensInfo(now, vesting) {
-  const { amount, cliff, vesting: end, start } = vesting
+function getVestingUnlockedTokens(time, { amount, start, cliff, end }) {
+  const amountBn = new BN(amount)
+
+  if (!dayjs(time).isBefore(dayjs(end))) {
+    return amountBn
+  }
+
+  if (dayjs(time).isBefore(dayjs(cliff))) {
+    return new BN(0)
+  }
+
+  // Vesting progress: 0 => 1
+  const progress = getTimeProgress(time, { start, end })
+  return new BN(amountBn).div(new BN(10000)).mul(new BN(progress * 10000))
+}
+
+export function getVestedTokensInfo(now, vestingData) {
+  const { amount, start, cliff, vesting: end } = vestingData
   const amountBn = new BN(amount)
 
   // Shortcuts for before cliff and after vested cases.
@@ -38,20 +56,4 @@ export function getVestedTokensInfo(now, vesting) {
     unlockedPercentage,
     unlockedTokens,
   }
-}
-
-function getVestingUnlockedTokens(now, { amount, start, cliff, end }) {
-  const amountBn = new BN(amount)
-
-  if (now >= end) {
-    return amountBn
-  }
-
-  if (now < cliff) {
-    return new BN(0)
-  }
-
-  // Vesting progress: 0 => 1
-  const progress = getTimeProgress(now, { start, end })
-  return new BN(amountBn).div(new BN(10000)).mul(new BN(progress * 10000))
 }

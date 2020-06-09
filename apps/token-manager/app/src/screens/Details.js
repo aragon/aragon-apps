@@ -43,7 +43,6 @@ function Details({ tokenSymbol, tokenDecimals }) {
           }
           secondary={
             <VestingInfoBoxes
-              selectedHolder={selectedHolder}
               tokenDecimals={tokenDecimals}
               tokenSymbol={tokenSymbol}
             />
