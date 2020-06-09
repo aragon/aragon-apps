@@ -30,15 +30,17 @@ function EmptyVestings() {
           src={emptyImage}
           css={`
             margin: auto;
+            min-height: 243px;
           `}
         />
         <div
           css={`
+            margin-top: ${1 * GU}px;
             ${textStyle('title2')};
           `}
         >
-          {isCurrentUser ? 'You have not' : 'This account has not'} been
-          assigned any vestings yet
+          {isCurrentUser ? 'You do not' : 'This account does not'} own any
+          vestings yet
         </div>
       </div>
     </div>
