@@ -21,7 +21,7 @@ const VOTE_STATUS = {
   ACTIVE: 0,
   PAUSED: 1,
   CANCELLED: 2,
-  CLOSED: 3,
+  EXECUTED: 3,
 }
 
 contract('Voting disputable', ([_, owner, voter51, voter49]) => {
@@ -96,6 +96,13 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
       assert.equal(submitter, voter51, 'action submitter does not match')
       assert.isFalse(closed, 'action is not closed')
     })
+
+    it('cannot be paused if ready to be executed', async () => {
+      await voting.vote(voteId, true, { from: voter51 })
+      await voting.mockIncreaseTime(VOTING_DURATION)
+
+      await assertRevert(agreement.challenge({ actionId }), 'AGR_CANNOT_CHALLENGE_ACTION')
+    })
   })
 
   describe('execute', () => {
@@ -108,7 +115,7 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
 
     it('changes the disputable state to closed', async () => {
       const { actionId: voteActionId, pausedAt, pauseDuration, status } = await voting.getDisputableInfo(voteId)
-      assertBn(status, VOTE_STATUS.CLOSED, 'vote status does not match')
+      assertBn(status, VOTE_STATUS.EXECUTED, 'vote status does not match')
 
       assertBn(voteActionId, actionId, 'action ID does not match')
       assertBn(pausedAt, 0, 'paused at does not match')

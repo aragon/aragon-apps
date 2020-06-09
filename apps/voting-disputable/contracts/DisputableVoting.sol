@@ -49,24 +49,16 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
 
     enum VoterState { Absent, Yea, Nay }
 
-    /**
-    * These statuses are used only for caching purposes to avoid querying the Agreement app every time
-    * we need to check if a vote is being challenged. Note that this is not mandatory, we could check
-    * every time against the Agreement app but in order to save some gas, we are using this cache for
-    * cases when there is not a huge risk in case the cache gets outdated. Although the cache is carefully
-    * updated only within the disputable app callbacks, edge cases like an Agreement app upgrade could occur.
-    */
-    enum DisputableStatus {
-        Active,                         // A vote that has been reported to the Agreement
+    enum VoteStatus {
+        Active,                         // An ongoing vote
         Paused,                         // A vote that is being challenged
         Cancelled,                      // A vote that has been cancelled since it was refused after a dispute
-        Closed                          // A vote that has been executed
+        Executed                        // A vote that has been executed
     }
 
     // The `casters` mapping is only used for voting delegation to store
     // the address of representative that voted on behalf of a principal
     struct Vote {
-        bool executed;
         uint64 startDate;
         uint64 snapshotBlock;
         uint64 supportRequiredPct;
@@ -80,7 +72,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
         uint64 overruleWindow;
         uint64 pausedAt;                        // Datetime when the vote was paused
         uint64 pauseDuration;                   // Duration in seconds while the vote has been paused
-        DisputableStatus disputableStatus;      // Status of the disputable vote
+        VoteStatus status;            // Status of the disputable vote
         uint256 actionId;                       // Identification number of the disputable action in the context of the agreement
     }
 
@@ -229,8 +221,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
         Vote storage vote_ = votes[_voteId];
         require(_canExecute(vote_), ERROR_CANNOT_EXECUTE);
 
-        vote_.executed = true;
-        vote_.disputableStatus = DisputableStatus.Closed;
+        vote_.status = VoteStatus.Executed;
         _closeAgreementAction(vote_.actionId);
 
         bytes memory input = new bytes(0); // TODO: Consider input for voting scripts
@@ -247,7 +238,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     * @return True if the given vote can be challenged, false otherwise
     */
     function canChallenge(uint256 _voteId) external view returns (bool) {
-        return _voteExists(_voteId) && _canPause(votes[_voteId]);
+        return _voteExists(_voteId) && _isVoteOpen(votes[_voteId]);
     }
 
     /**
@@ -339,7 +330,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     {
         Vote storage vote_ = votes[_voteId];
 
-        executed = vote_.executed;
+        executed = _isExecuted(vote_);
         startDate = vote_.startDate;
         snapshotBlock = vote_.snapshotBlock;
         supportRequired = vote_.supportRequiredPct;
@@ -357,7 +348,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     * @return Vote agreement action ID
     * @return Vote paused date
     * @return Vote paused duration
-    * @return Vote disputable status
+    * @return Vote status
     */
     function getDisputableInfo(uint256 _voteId)
         external
@@ -367,14 +358,14 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
             uint256 actionId,
             uint64 pausedAt,
             uint64 pauseDuration,
-            DisputableStatus status
+            VoteStatus status
         )
     {
         Vote storage vote_ = votes[_voteId];
         actionId = vote_.actionId;
         pausedAt = vote_.pausedAt;
         pauseDuration = vote_.pauseDuration;
-        status = vote_.disputableStatus;
+        status = vote_.status;
     }
 
     /**
@@ -471,9 +462,9 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     */
     function _onDisputableActionChallenged(uint256 _voteId, uint256 _challengeId, address /* _challenger */) internal {
         Vote storage vote_ = votes[_voteId];
-        require(_canPause(vote_), ERROR_CANNOT_PAUSE_VOTE);
+        require(!_isPaused(vote_), ERROR_CANNOT_PAUSE_VOTE);
 
-        vote_.disputableStatus = DisputableStatus.Paused;
+        vote_.status = VoteStatus.Paused;
         vote_.pausedAt = getTimestamp64();
         emit PauseVote(_voteId, _challengeId);
     }
@@ -486,7 +477,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
         Vote storage vote_ = votes[_voteId];
         require(_isPaused(vote_), ERROR_VOTE_NOT_PAUSED);
 
-        vote_.disputableStatus = DisputableStatus.Active;
+        vote_.status = VoteStatus.Active;
         vote_.pauseDuration = getTimestamp64().sub(vote_.pausedAt);
         emit ResumeVote(_voteId);
     }
@@ -499,7 +490,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
         Vote storage vote_ = votes[_voteId];
         require(_isPaused(vote_), ERROR_VOTE_NOT_PAUSED);
 
-        vote_.disputableStatus = DisputableStatus.Cancelled;
+        vote_.status = VoteStatus.Cancelled;
         vote_.pauseDuration = getTimestamp64().sub(vote_.pausedAt);
         emit CancelVote(_voteId);
     }
@@ -535,7 +526,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
         vote_.minAcceptQuorumPct = minAcceptQuorumPct;
         vote_.votingPower = votingPower;
         vote_.executionScript = _executionScript;
-        vote_.disputableStatus = DisputableStatus.Active;
+        vote_.status = VoteStatus.Active;
 
         // Notify the Agreement app tied to the current voting app about the vote created.
         // This is mandatory to make the vote disputable, by storing a reference to it on the Agreement app.
@@ -580,7 +571,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     */
     function _canExecute(Vote storage vote_) internal view returns (bool) {
         // If vote is already executed, it cannot be executed again
-        if (vote_.executed) {
+        if (_isExecuted(vote_)) {
             return false;
         }
 
@@ -621,12 +612,12 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     }
 
     /**
-    * @dev Tell whether a vote can be paused or not
+    * @dev Tell whether a vote is executed or not
     * @param vote_ Vote action instance being queried
-    * @return True if the given vote can be paused, false otherwise
+    * @return True if the given vote is executed, false otherwise
     */
-    function _canPause(Vote storage vote_) internal view returns (bool) {
-        return vote_.disputableStatus == DisputableStatus.Active && vote_.pausedAt == 0;
+    function _isExecuted(Vote storage vote_) internal view returns (bool) {
+        return vote_.status == VoteStatus.Executed;
     }
 
     /**
@@ -635,7 +626,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     * @return True if the given vote is paused, false otherwise
     */
     function _isPaused(Vote storage vote_) internal view returns (bool) {
-        return vote_.disputableStatus == DisputableStatus.Paused;
+        return vote_.status == VoteStatus.Paused;
     }
 
     /**
@@ -644,8 +635,8 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     * @return True if the given vote is paused or cancelled, false otherwise
     */
     function _isPausedOrCancelled(Vote storage vote_) internal view returns (bool) {
-        DisputableStatus status = vote_.disputableStatus;
-        return status == DisputableStatus.Paused || status == DisputableStatus.Cancelled;
+        VoteStatus status = vote_.status;
+        return status == VoteStatus.Paused || status == VoteStatus.Cancelled;
     }
 
     /**
@@ -665,7 +656,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
             return false;
         }
 
-        return getTimestamp64() < _voteEndDate(vote_) && !vote_.executed;
+        return getTimestamp64() < _voteEndDate(vote_) && !_isExecuted(vote_);
     }
 
     /**
