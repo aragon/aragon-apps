@@ -2,7 +2,6 @@ import React, { useMemo } from 'react'
 import styled from 'styled-components'
 import { GU, Link, useTheme } from '@aragon/ui'
 import LocalIdentityBadge from './components/LocalIdentityBadge/LocalIdentityBadge'
-import LocalLabelAppBadge from './components/LocalIdentityBadge/LocalLabelAppBadge'
 
 export function renderDescription(path) {
   const theme = useTheme()
@@ -12,7 +11,7 @@ export function renderDescription(path) {
           renderForwardingStep(step, [index + 1], theme)
         )
       : ''
-  }, [path])
+  }, [path, theme])
   return <React.Fragment>{description}</React.Fragment>
 }
 
@@ -20,8 +19,9 @@ function renderForwardingStep(step, depth, theme) {
   const app =
     step.name || step.identifier ? (
       <React.Fragment key={0}>
-        {step.name && step.name}
-        {step.identifier ? ` (${step.identifier})` : ''}
+        {step.name && step.identifier
+          ? `${step.name} (${step.identifier})`
+          : step.name || step.identifier}
         <span
           css={`
             padding-right: ${1 * GU}px;
