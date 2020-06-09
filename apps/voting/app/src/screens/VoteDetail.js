@@ -24,6 +24,7 @@ import SummaryBar from '../components/SummaryBar'
 import SummaryRows from '../components/SummaryRows'
 import VoteActions from '../components/VoteActions'
 import VoteCast from '../components/VoteCast'
+import VoteDescription from '../components/VoteDescription'
 import VoteStatus from '../components/VoteStatus'
 import { percentageList, round, safeDiv } from '../math-utils'
 import { getQuorumProgress } from '../vote-utils'
@@ -132,19 +133,15 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                   >
                     Description
                   </h2>
-                  <div
-                    css={`
-                      hyphens: auto;
-                      overflow-wrap: anywhere;
-                      word-break: break-word;
-                    `}
-                  >
-                    {vote.data.path ? (
-                      <DetailedDescription path={vote.data.path} />
-                    ) : (
-                      vote.description || metadata || DEFAULT_DESCRIPTION
-                    )}
-                  </div>
+                  <VoteDescription
+                    description={
+                      vote.data.path ? (
+                        <DetailedDescription path={vote.data.path} />
+                      ) : (
+                        vote.description || metadata || DEFAULT_DESCRIPTION
+                      )
+                    }
+                  />
                 </div>
                 <div>
                   <h2

@@ -34,7 +34,7 @@ const VoteDescription = React.memo(
       </div>
     )
   },
-  (prevProps, nextProps) => prevProps.description === nextProps.description
+  (prevProps, nextProps) => prevProps === nextProps
 )
 
 VoteDescription.propTypes = {
