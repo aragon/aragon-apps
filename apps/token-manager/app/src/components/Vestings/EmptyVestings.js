@@ -37,8 +37,8 @@ function EmptyVestings() {
             ${textStyle('title2')};
           `}
         >
-          {isCurrentUser ? `You don't ` : `This account doesn’t `}have any
-          vestings yet
+          {isCurrentUser ? 'You have not' : 'This account has not'} been
+          assigned any vestings yet
         </div>
       </div>
     </div>
