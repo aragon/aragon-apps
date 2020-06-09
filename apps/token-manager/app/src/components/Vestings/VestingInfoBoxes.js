@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React from 'react'
 import { useConnectedAccount } from '@aragon/api-react'
 import {
   Box,
@@ -12,7 +12,6 @@ import { addressesEqual } from '../../web3-utils'
 import { shortenAddress } from '../../utils'
 import { useTotalVestedTokensInfo } from '../../app-logic'
 import { useIdentity } from '../IdentityManager/IdentityManager'
-import LocalIdentityBadge from '../LocalIdentityBadge/LocalIdentityBadge'
 import TokenIcon from '../Icons/TokenIcon'
 import VestingIcon from '../Icons/VestingIcon'
 import TransferIcon from '../Icons/TransferIcon'
@@ -48,7 +47,7 @@ function VestingInfoBoxes({ selectedHolder, tokenDecimals, tokenSymbol }) {
               ${textStyle('body2')};
             `}
           >
-            {label ? label : shortenAddress(selectedHolder.address)}
+            {label || shortenAddress(selectedHolder.address)}
           </span>
         </div>
 

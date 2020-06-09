@@ -1,11 +1,5 @@
 import React from 'react'
-import {
-  GU,
-  formatTokenAmount,
-  textStyle,
-  useLayout,
-  useTheme,
-} from '@aragon/ui'
+import { GU, formatTokenAmount, textStyle, useTheme } from '@aragon/ui'
 import { useVestedTokensInfo } from '../../app-logic'
 import { formatDate, timePeriod } from '../../date-utils'
 

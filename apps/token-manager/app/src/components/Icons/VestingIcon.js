@@ -1,6 +1,5 @@
 import React from 'react'
 import { useAragonApi } from '@aragon/api-react'
-import { GU } from '@aragon/ui'
 import icon from '../../assets/vested-token.svg'
 import iconDark from '../../assets/vested-token-dark.svg'
 

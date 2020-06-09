@@ -1,27 +1,13 @@
 import React, { useCallback } from 'react'
-import {
-  Accordion,
-  Bar,
-  BackButton,
-  Box,
-  Button,
-  GU,
-  Split,
-  formatTokenAmount,
-  textStyle,
-  useLayout,
-  useTheme,
-} from '@aragon/ui'
-import { useAppState } from '@aragon/api-react'
+import { Accordion, Bar, BackButton, Box, Split } from '@aragon/ui'
 import EmptyVestings from '../components/Vestings/EmptyVestings'
-import ExpandableContent from '../components/Vestings/VestingExpandableContent'
 import VestingContent from '../components/Vestings/VestingContent'
+import VestingExpandableContent from '../components/Vestings/VestingExpandableContent'
 import VestingInfoBoxes from '../components/Vestings/VestingInfoBoxes'
-import { useAppLogic, toISODate, useVestedTokensInfo } from '../app-logic'
+import { useAppLogic } from '../app-logic'
 
 function Details({ tokenSymbol, tokenDecimals }) {
-  const theme = useTheme()
-  const { selectedHolder, selectHolder, unselectHolder } = useAppLogic()
+  const { selectedHolder, unselectHolder } = useAppLogic()
   const handleBack = useCallback(() => unselectHolder(), [unselectHolder])
 
   return (
@@ -41,7 +27,7 @@ function Details({ tokenSymbol, tokenDecimals }) {
                       tokenSymbol={tokenSymbol}
                       vesting={vesting}
                     />,
-                    <ExpandableContent
+                    <VestingExpandableContent
                       tokenDecimals={tokenDecimals}
                       tokenSymbol={tokenSymbol}
                       vesting={vesting}
