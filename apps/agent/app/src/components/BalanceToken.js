@@ -1,46 +1,37 @@
 import React from 'react'
-import BN from 'bn.js'
 import PropTypes from 'prop-types'
-import { formatTokenAmount, GU, Help, textStyle, useTheme } from '@aragon/ui'
+import BN from 'bn.js'
+import { GU, Help, formatTokenAmount, textStyle, useTheme } from '@aragon/ui'
 import { useNetwork } from '@aragon/api-react'
 import { tokenIconUrl } from '../lib/icon-utils'
-
-
 function BalanceToken({
-  address = '',
+  address,
   amount,
+  compact,
   convertedAmount,
   decimals,
   symbol,
   verified,
 }) {
-  
   const theme = useTheme()
   const network = useNetwork()
-
   const amountFormatted = formatTokenAmount(amount, decimals, {
     digits: decimals,
   })
-
   const amountFormattedRounded = formatTokenAmount(amount, decimals, {
     digits: 3,
   })
-
   const amountWasRounded = amountFormatted !== amountFormattedRounded
-  
   return (
-    <React.Fragment>
+    <div css="display: inline-block">
       <div
         title={symbol || 'Unknown symbol'}
         css={`
           display: flex;
           align-items: center;
-          text-transform: uppercase;
-          img {
-            margin-right: 10px;
-          }
           color: ${theme.surfaceContentSecondary};
           ${textStyle('body2')}
+          text-transform: uppercase;
         `}
       >
         {verified && address && (
@@ -49,6 +40,9 @@ function BalanceToken({
             width="20"
             height="20"
             src={tokenIconUrl(address, symbol, network && network.type)}
+            css={`
+              margin-right: ${0.75 * GU}px;
+            `}
           />
         )}
         {symbol || '?'}
@@ -57,7 +51,8 @@ function BalanceToken({
         <div
           css={`
             ${textStyle('title2')}
-            display:flex;
+            margin: ${(compact ? 1 : 1.5) * GU}px 0;
+            display: flex;
           `}
         >
           {amountWasRounded && '~'}
@@ -67,10 +62,10 @@ function BalanceToken({
               css={`
                 display: flex;
                 align-items: center;
-                margin-left: ${GU}px;
+                margin-left: ${1 * GU}px;
               `}
             >
-              <Help hint={"This is an approximation, see the complete amount"}>
+              <Help hint="This is an approximation, see the complete amount">
                 Total: {amountFormatted} {symbol}
               </Help>
             </div>
@@ -87,23 +82,23 @@ function BalanceToken({
             : `$${formatTokenAmount(convertedAmount, decimals)}`}
         </div>
       </div>
-    </React.Fragment>
+    </div>
   )
 }
 
 BalanceToken.defaultProps = {
-  convertedAmount: -1,
+  convertedAmount: new BN(-1),
 }
 
 BalanceToken.propTypes = {
   address: PropTypes.string.isRequired,
-  amount: PropTypes.instanceOf(BN),
+  amount: PropTypes.instanceOf(BN).isRequired,
+  compact: PropTypes.bool.isRequired,
   convertedAmount: PropTypes.instanceOf(BN),
-  decimals: PropTypes.instanceOf(BN),
+  decimals: PropTypes.instanceOf(BN).isRequired,
   symbol: PropTypes.string.isRequired,
   verified: PropTypes.bool.isRequired,
 }
-
 function SplitAmount({ amountFormatted }) {
   const [integer, fractional] = amountFormatted.split('.')
   return (
@@ -111,7 +106,9 @@ function SplitAmount({ amountFormatted }) {
       <span>{integer}</span>
       {fractional && (
         <span
-          css="font-size: 14px;"
+          css={`
+            ${textStyle('body3')}
+          `}
         >
           .{fractional}
         </span>
@@ -119,5 +116,4 @@ function SplitAmount({ amountFormatted }) {
     </span>
   )
 }
-
 export default BalanceToken
