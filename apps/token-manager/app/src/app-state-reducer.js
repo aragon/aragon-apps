@@ -68,7 +68,7 @@ function appStateReducer(state) {
           },
           {}
         )
-      : null,
+      : {},
   }
 }
 

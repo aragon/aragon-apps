@@ -8,7 +8,7 @@ import { addressesEqual } from './web3-utils'
 
 // Get the vestings from the holder currently selected, or null otherwise.
 export function useSelectedHolderVestings() {
-  const { vestings, holders } = useAppState()
+  const { holders, vestings } = useAppState()
   const [path, requestPath] = usePath()
 
   // The memoized holder currently selected.
@@ -21,16 +21,11 @@ export function useSelectedHolderVestings() {
     }
 
     holderInfo.address = holderAddress
-    if (holders) {
-      const holder = holders.find(holder =>
-        addressesEqual(holder.address, holderAddress)
-      )
-      holderInfo.balance = holder ? holder.balance : new BN(0)
-    }
-
-    if (vestings && vestings[holderAddress]) {
-      holderInfo.vestings = vestings[holderAddress]
-    }
+    const holder = Array.isArray(holders)
+      ? holders.find(holder => addressesEqual(holder.address, holderAddress))
+      : null
+    holderInfo.balance = holder ? holder.balance : new BN(0)
+    holderInfo.vestings = (vestings && vestings[holderAddress]) || []
 
     return holderInfo
   }, [path, vestings])
