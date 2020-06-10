@@ -27,9 +27,12 @@ function appStateReducer(state) {
 
   const transactionsBn = transactions.map(transaction => ({
     ...transaction,
-    onlyOne: transaction.tokenTransfers.length === 1,
     isIncoming: transaction.tokenTransfers.some(({ from }) => !!from),
     isOutgoing: transaction.tokenTransfers.some(({ to }) => !!to),
+    tokenTransfers: transaction.tokenTransfers.map(transfer => ({
+      ...transfer,
+      amount: new BN(transfer.amount),
+    })),
   }))
 
   return {
