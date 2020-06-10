@@ -49,7 +49,7 @@ class Withdrawal extends React.Component {
     }
   }
   nonZeroTokens() {
-    return this.props.tokens.filter(({ amount }) => amount > 0)
+    return this.props.tokens.filter(({ amount }) => !amount.isZero())
   }
   handleAmountUpdate = event => {
     this.setState({

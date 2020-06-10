@@ -35,13 +35,18 @@ function appStateReducer(state) {
   return {
     ...state,
 
-    tokens: balancesBn.map(({ address, decimals, name, symbol, verified }) => ({
-      address,
-      decimals: decimals.toNumber(),
-      name,
-      symbol,
-      verified,
-    })),
+    tokens: balancesBn.map(
+      ({ address, amount, decimals, name, symbol, verified }) => ({
+        address,
+        // TODO: we should remove `amount` from this interface in the future, but right now it
+        // is the easiest way to tell components that this org holds this token
+        amount,
+        decimals: decimals.toNumber(),
+        name,
+        symbol,
+        verified,
+      })
+    ),
 
     // Filter out empty balances
     balances: balancesBn.filter(balance => !balance.amount.isZero()),
