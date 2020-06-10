@@ -50,7 +50,7 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
     voteId,
   } = vote
   const { minAcceptQuorum, supportRequired, yea, nay } = numData
-  const { creator, description, metadata, open } = data
+  const { creator, description, metadata, open, path: executionPath } = data
   const quorumProgress = getQuorumProgress(vote)
   const totalVotes = yea + nay
   const votesYeaVotersSize = safeDiv(yea, totalVotes)
@@ -135,10 +135,10 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                   </h2>
                   <VoteDescription
                     description={
-                      vote.data.path ? (
-                        <DetailedDescription path={vote.data.path} />
+                      Array.isArray(executionPath) ? (
+                        <DetailedDescription path={executionPath} />
                       ) : (
-                        vote.description || metadata || DEFAULT_DESCRIPTION
+                        description || metadata || DEFAULT_DESCRIPTION
                       )
                     }
                   />
