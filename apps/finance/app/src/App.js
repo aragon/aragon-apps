@@ -7,20 +7,18 @@ import {
   Main,
   SidePanel,
   SyncIndicator,
-  useLayout,
 } from '@aragon/ui'
 import { useAragonApi } from '@aragon/api-react'
+import { ETHER_TOKEN_FAKE_ADDRESS } from './lib/token-utils'
+import { IdentityProvider } from './components/IdentityManager/IdentityManager'
 import Balances from './components/Balances'
 import NewTransferPanelContent from './components/NewTransfer/PanelContent'
 import Transfers from './components/Transfers'
-import { ETHER_TOKEN_FAKE_ADDRESS } from './lib/token-utils'
-import { IdentityProvider } from './components/IdentityManager/IdentityManager'
 
 class App extends React.Component {
   static propTypes = {
     api: PropTypes.object,
     appState: PropTypes.object,
-    compactMode: PropTypes.bool,
     isSyncing: PropTypes.bool,
   }
   static defaultProps = {
@@ -87,7 +85,7 @@ class App extends React.Component {
   }
 
   render() {
-    const { appState, isSyncing, compactMode } = this.props
+    const { appState, isSyncing } = this.props
     const { newTransferOpened } = this.state
     const { balances, transactions, tokens } = appState
 
@@ -105,11 +103,10 @@ class App extends React.Component {
               onClick={this.handleNewTransferOpen}
               label="New transfer"
               icon={<IconPlus />}
-              display={compactMode ? 'icon' : 'label'}
             />
           }
         />
-        <Balances balances={balances} compactMode={compactMode} />
+        <Balances balances={balances} />
         <Transfers transactions={transactions} tokens={tokens} />
         <SidePanel
           opened={newTransferOpened}
@@ -130,17 +127,10 @@ class App extends React.Component {
 
 export default () => {
   const { api, appState, guiStyle } = useAragonApi()
-  const { layoutName } = useLayout()
   const { appearance } = guiStyle
-
   return (
     <Main theme={appearance} assetsUrl="./aragon-ui">
-      <App
-        api={api}
-        appState={appState}
-        isSyncing={appState.isSyncing}
-        compactMode={layoutName === 'small'}
-      />
+      <App api={api} appState={appState} isSyncing={appState.isSyncing} />
     </Main>
   )
 }
