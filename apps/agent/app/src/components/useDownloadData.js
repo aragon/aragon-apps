@@ -26,11 +26,11 @@ async function getDownloadData({ transactions, tokenDetails, resolveAddress }) {
         tokenTransfers.map(async ({ amount, from, to, token }) => {
           const { symbol, decimals } = tokenDetails[toChecksumAddress(token)]
           const formattedAmount = formatTokenAmount(
-            Boolean(from) ? amount : -Math.abs(amount),
+            from ? amount : amount.neg(),
             decimals,
             { displaySign: true, digits: 5 }
           )
-        
+
           const [source, recipient] = await Promise.all(
             [from, to].map(address => {
               return address
