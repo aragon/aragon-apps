@@ -300,12 +300,13 @@ async function loadVoteDescription(vote) {
   }
 
   try {
-    const path = await app.describeScript(vote.script).toPromise()
+    const path = (await app.describeScript(vote.script).toPromise()) || []
 
     // Get unique list of targets
     vote.executionTargets = [...new Set(path.map(({ to }) => to))]
-    vote.path = path ? path : null
-    vote.description = path
+    vote.path = path
+    // TODO: consider removing description as it can be rendered from the path in the frontend
+    vote.description = path.length
       ? path
           .map(step => {
             const identifier = step.identifier ? ` (${step.identifier})` : ''
