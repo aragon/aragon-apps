@@ -326,8 +326,6 @@ function TokenPanelContent({
       >
         <AmountInput
           ref={holderAddress ? amountInputRef : undefined}
-          max={amountField.max}
-          min={tokenStep}
           onChange={handleAmountChange}
           onMaxClick={() => updateAmount(amountField.max)}
           step={tokenStep}
