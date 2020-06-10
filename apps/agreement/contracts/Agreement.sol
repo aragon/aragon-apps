@@ -362,8 +362,8 @@ contract Agreement is IAgreement, AragonApp {
         address submitter = action.submitter;
         require(msg.sender == submitter, ERROR_SENDER_NOT_ALLOWED);
 
-        (, bytes memory content, IArbitrator arbitrator) = _getSettingFor(action);
-        bytes memory metadata = _buildDisputeMetadata(action, content);
+        (,, IArbitrator arbitrator) = _getSettingFor(action);
+        bytes memory metadata = _buildDisputeMetadata(_actionId);
         uint256 disputeId = _createDispute(action, challenge, arbitrator, metadata);
         _submitEvidence(arbitrator, disputeId, submitter, action.context, _submitterFinishedEvidence);
         _submitEvidence(arbitrator, disputeId, challenge.challenger, challenge.context, challenge.challengerFinishedEvidence);
@@ -437,8 +437,7 @@ contract Agreement is IAgreement, AragonApp {
     * @return disputable Address of the disputable that created the action
     * @return disputableActionId Identification number of the disputable action in the context of the disputable
     * @return collateralId Identification number of the collateral requirements for the given action
-    * @return endDate Timestamp when the disputable action ends unless it's closed beforehand
-    * @return state Current state of the action
+    * @return settingId Identification number of the agreement setting at the moment the action was submitted
     * @return submitter Address that has submitted the action
     * @return closed Whether the action was manually closed by the disputable app or not
     * @return context Link to a human-readable text giving context for the given action
@@ -449,6 +448,7 @@ contract Agreement is IAgreement, AragonApp {
             address disputable,
             uint256 disputableActionId,
             uint256 collateralId,
+            uint256 settingId,
             address submitter,
             bool closed,
             bytes context,
@@ -460,6 +460,7 @@ contract Agreement is IAgreement, AragonApp {
         disputable = action.disputable;
         disputableActionId = action.disputableActionId;
         collateralId = action.collateralId;
+        settingId = action.settingId;
         submitter = action.submitter;
         closed = action.closed;
         context = action.context;
@@ -1317,13 +1318,15 @@ contract Agreement is IAgreement, AragonApp {
         return (recipient, feeToken, missingFees, disputeFees);
     }
 
-    function _buildDisputeMetadata(Action storage _action, bytes memory _content) internal view returns (bytes memory) {
-        bytes memory metadata = new bytes(10);
-        assembly { mstore(add(metadata, 32), 0x61677265656d656e747300000000000000000000000000000000000000000000) }
-
-        return metadata
-                .pipe(address(_action.disputable))
-                .pipe(_action.disputableActionId)
-                .pipe(_content);
+    /**
+    * @dev Helper to build an agreement dispute metadata as "agreements:[ACTION_ID]"
+    * @param _actionId Identification number of the action to create a dispute for
+    * @return dispute metadata for the requested action
+    */
+    function _buildDisputeMetadata(uint256 _actionId) internal view returns (bytes memory) {
+        // Header "agreement:"
+        bytes memory metadata = new bytes(11);
+        assembly { mstore(add(metadata, 32), 0x61677265656d656e74733A000000000000000000000000000000000000000000) }
+        return metadata.concat(_actionId);
     }
 }

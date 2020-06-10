@@ -5,27 +5,17 @@ pragma solidity 0.4.24;
 * Borrowed from https://github.com/Arachnid/solidity-stringutils/
 */
 library BytesHelper {
-    function pipe(bytes memory self, address other) internal pure returns (bytes memory) {
-        return pipe(self, abi.encodePacked(other));
+    function concat(bytes memory self, uint256 other) internal pure returns (bytes memory) {
+        bytes memory otherBytes = new bytes(32);
+        assembly { mstore(add(otherBytes, 32), other) }
+        return concat(self, otherBytes);
     }
 
-    function pipe(bytes memory self, uint256 other) internal pure returns (bytes memory) {
-        bytes memory castedOther = new bytes(32);
-        assembly { mstore(add(castedOther, 32), other) }
-        return pipe(self, castedOther);
-    }
-
-    function pipe(bytes memory self, bytes memory other) internal pure returns (bytes memory) {
-        bytes memory pipeChar = new bytes(1);
-        pipeChar[0] = 0x7C;
-
-        bytes memory result = new bytes(self.length + other.length + 1);
+    function concat(bytes memory self, bytes memory other) internal pure returns (bytes memory) {
+        bytes memory result = new bytes(self.length + other.length);
 
         uint256 selfPtr;
         assembly { selfPtr := add(self, 32) }
-
-        uint256 pipePtr;
-        assembly { pipePtr := add(pipeChar, 32) }
 
         uint256 otherPtr;
         assembly { otherPtr := add(other, 32) }
@@ -34,8 +24,7 @@ library BytesHelper {
         assembly { resultPtr := add(result, 32) }
 
         memcpy(resultPtr, selfPtr, self.length);
-        memcpy(resultPtr + self.length, pipePtr, pipeChar.length);
-        memcpy(resultPtr + self.length + pipeChar.length, otherPtr, other.length);
+        memcpy(resultPtr + self.length, otherPtr, other.length);
         return result;
     }
 

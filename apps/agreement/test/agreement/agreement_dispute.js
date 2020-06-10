@@ -95,6 +95,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                       assert.equal(currentActionState.disputable, previousActionState.disputable, 'disputable does not match')
                       assert.equal(currentActionState.submitter, previousActionState.submitter, 'submitter does not match')
                       assert.equal(currentActionState.context, previousActionState.context, 'action context does not match')
+                      assertBn(currentActionState.settingId, previousActionState.settingId, 'setting ID does not match')
                       assertBn(currentActionState.collateralId, previousActionState.collateralId, 'collateral ID does not match')
                       assertBn(currentActionState.currentChallengeId, previousActionState.currentChallengeId, 'challenge ID does not match')
                       assertBn(currentActionState.disputableActionId, previousActionState.disputableActionId, 'disputable action ID does not match')
@@ -108,12 +109,9 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                       assert.isFalse(submitterFinishedEvidence, 'submitter finished evidence')
                       assert.isFalse(challengerFinishedEvidence, 'challenger finished evidence')
 
-                      const pipe = utf8ToHex('|').slice(2)
-                      const identifier = utf8ToHex('agreements').slice(2)
-                      const disputableAddress = disputable.disputable.address.toLowerCase().slice(2)
-                      const disputableActionId = padLeft((await disputable.getAction(actionId)).disputableActionId, 64)
-                      const content = (await disputable.getCurrentSetting()).content.slice(2)
-                      const expectedMetadata = `0x${identifier}${pipe}${disputableAddress}${pipe}${disputableActionId}${pipe}${content}`
+                      const identifier = utf8ToHex('agreements:').slice(2)
+                      const paddedActionId = padLeft(actionId, 64)
+                      const expectedMetadata = `0x${identifier}${paddedActionId}`
 
                       const IArbitrator = artifacts.require('ArbitratorMock')
                       const logs = decodeEventsOfType(receipt, IArbitrator.abi, 'NewDispute')
