@@ -1,6 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
 import BN from 'BN.js'
+import { format } from 'date-fns'
 import {
   theme,
   Button,
@@ -8,6 +9,7 @@ import {
   IdentityBadge,
   Info,
   RadioButton,
+  SafeLink,
   SidePanel,
   SidePanelSeparator,
   Slider,
@@ -21,6 +23,9 @@ import {
 } from '../../math-utils'
 import provideNetwork from '../../provide-network'
 import { log } from '../../utils'
+
+const formatDate = date =>
+  `${format(date, 'dd/MM/yy')} at ${format(date, 'HH:mm')} UTC`
 
 class VotingPanel extends React.Component {
   state = {
@@ -334,13 +339,22 @@ class VotingPanel extends React.Component {
                 if (userCanVote && hasUserBalance) {
                   return (
                     <Info.Action>
-                      Voting with your {formatNumber(userBalance, 2)}{' '}
-                      {tokenSymbol}
+                      <div>
+                        Voting with your {formatNumber(userBalance, 2)}{' '}
+                        {tokenSymbol}, since it was your balance when the survey
+                        was created ({formatDate(survey.data.startDate)}.
+                      </div>
+                      <NoTokenCost />
                     </Info.Action>
                   )
                 }
                 if (userCanVote) {
-                  return <Info.Action>You may be able to vote</Info.Action>
+                  return (
+                    <Info.Action>
+                      You may be able to vote, and will need to connect your
+                      account in the next screen.
+                    </Info.Action>
+                  )
                 }
                 return (
                   <Info.Action>
@@ -480,6 +494,18 @@ const OptionInput = styled(TextInput)`
   box-shadow: none;
   cursor: default;
 `
+
+const NoTokenCost = () => (
+  <p css="margin-top: 10px">
+    Performing this action will{' '}
+    <span css="font-weight: bold">not transfer out</span> any of your tokens.
+    You’ll only have to pay for the{' '}
+    <SafeLink href="https://ethgas.io/" target="_blank">
+      ETH fee
+    </SafeLink>{' '}
+    when signing the transaction.
+  </p>
+)
 
 const Label = styled(Text).attrs({
   smallcaps: true,
