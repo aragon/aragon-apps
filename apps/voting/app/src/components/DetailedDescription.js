@@ -3,12 +3,6 @@ import { GU, useTheme } from '@aragon/ui'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
 
 function DetailedDescription({ path }) {
-  const description = useMemo(() => {
-    return path
-      ? path.map((step, index) => <DescriptionStep key={index} step={step} />)
-      : ''
-  }, [path])
-
   return (
     <div
       css={`
@@ -20,7 +14,9 @@ function DetailedDescription({ path }) {
         word-break: break-word;
       `}
     >
-      {description}
+      {path
+        ? path.map((step, index) => <DescriptionStep key={index} step={step} />)
+        : ''}
     </div>
   )
 }
@@ -84,7 +80,7 @@ function DescriptionStep({ step }) {
   } else {
     description.push(
       <span key={description.length + 1}>
-        step.description || 'No description'
+        {step.description || 'No description'}
       </span>
     )
   }
