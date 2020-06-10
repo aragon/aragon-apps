@@ -6,20 +6,23 @@ import {
   ContextMenu,
   ContextMenuItem,
   DataView,
+  GU,
   IconAdd,
+  IconInfo,
   IconLabel,
   IconRemove,
   Split,
-  GU,
+  formatTokenAmount,
+  textStyle,
   useLayout,
   useTheme,
 } from '@aragon/ui'
-import { formatBalance } from '../utils'
 import { addressesEqual } from '../web3-utils'
 import InfoBoxes from '../components/InfoBoxes'
 import LocalIdentityBadge from '../components/LocalIdentityBadge/LocalIdentityBadge'
 import { useIdentity } from '../components/IdentityManager/IdentityManager'
 import You from '../components/You'
+import { useTotalVestedTokensInfo } from '../app-logic'
 
 function Holders({
   groupMode,
@@ -28,30 +31,40 @@ function Holders({
   onAssignTokens,
   onRemoveTokens,
   tokenAddress,
+  tokenDecimals,
   tokenDecimalsBase,
   tokenName,
   tokenSupply,
   tokenSymbol,
   tokenTransfersEnabled,
+  selectHolder,
+  vestings,
 }) {
   const { layoutName } = useLayout()
   const compact = layoutName === 'small'
   const connectedAccount = useConnectedAccount()
+
   const mappedEntries = useMemo(
-    () => holders.map(({ address, balance }) => [address, balance]),
-    [holders]
+    () =>
+      holders.map(({ address, balance }) => {
+        if (vestings[address]) {
+          return [address, balance, vestings[address]]
+        }
+
+        return [address, balance, []]
+      }),
+    [holders, vestings]
   )
 
   return (
     <Split
       primary={
         <DataView
-          mode="table"
           fields={groupMode ? ['Owner'] : ['Holder', 'Balance']}
           entries={mappedEntries}
-          renderEntry={([address, balance]) => {
+          renderEntry={([address, balance, vestings]) => {
             const isCurrentUser = addressesEqual(address, connectedAccount)
-
+            const theme = useTheme()
             const values = [
               <div
                 css={`
@@ -72,18 +85,43 @@ function Holders({
             ]
 
             if (!groupMode) {
-              values.push(formatBalance(balance, tokenDecimalsBase))
+              values.push(
+                <div
+                  css={`
+                    display: flex;
+                    align-items: center;
+                  `}
+                >
+                  {formatTokenAmount(balance, tokenDecimals)}
+                  <div
+                    css={`
+                      padding-left: ${1 * GU}px;
+                      ${textStyle('label1')};
+                      color: ${theme.surfaceContentSecondary};
+                    `}
+                  >
+                    (
+                    {formatTokenAmount(
+                      useTotalVestedTokensInfo(vestings).totalLocked,
+                      tokenDecimals
+                    )}{' '}
+                    locked)
+                  </div>
+                </div>
+              )
             }
 
             return values
           }}
-          renderEntryActions={([address, balance]) => (
+          renderEntryActions={([address, balance, vestings]) => (
             <EntryActions
               address={address}
               onAssignTokens={onAssignTokens}
               onRemoveTokens={onRemoveTokens}
+              onSelectHolder={selectHolder}
               singleToken={groupMode || balance.eq(tokenDecimalsBase)}
               canAssign={!groupMode && balance.lt(maxAccountTokens)}
+              hasVestings={vestings.length > 0}
             />
           )}
         />
@@ -110,6 +148,7 @@ Holders.propTypes = {
   onAssignTokens: PropTypes.func.isRequired,
   onRemoveTokens: PropTypes.func.isRequired,
   tokenAddress: PropTypes.string,
+  tokenDecimals: PropTypes.instanceOf(BN),
   tokenDecimalsBase: PropTypes.instanceOf(BN),
   tokenName: PropTypes.string,
   tokenSupply: PropTypes.instanceOf(BN),
@@ -125,8 +164,10 @@ function EntryActions({
   address,
   onAssignTokens,
   onRemoveTokens,
+  onSelectHolder,
   singleToken,
   canAssign,
+  hasVestings,
 }) {
   const theme = useTheme()
   const [label, showLocalIdentityModal] = useIdentity(address)
@@ -144,7 +185,12 @@ function EntryActions({
     onRemoveTokens,
   ])
 
+  const selectHolder = useCallback(() => onSelectHolder(address), [
+    address,
+    onSelectHolder,
+  ])
   const actions = [
+    ...(hasVestings ? [[selectHolder, IconInfo, 'Details']] : []),
     ...(canAssign ? [[assignTokens, IconAdd, 'Add tokens']] : []),
     [removeTokens, IconRemove, `Remove token${singleToken ? '' : 's'}`],
     [editLabel, IconLabel, `${label ? 'Edit' : 'Add'} custom label`],
