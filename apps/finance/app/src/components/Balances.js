@@ -1,99 +1,121 @@
-import React from 'react'
-import throttle from 'lodash.throttle'
-import { Box, GU, textStyle, useTheme } from '@aragon/ui'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+import BN from 'bn.js'
+import { Box, GU, textStyle, useTheme, useLayout } from '@aragon/ui'
 import BalanceToken from './BalanceToken'
-import { round } from '../lib/math-utils'
 
-const CONVERT_API_BASE = 'https://min-api.cryptocompare.com/data'
-const CONVERT_THROTTLE_TIME = 5000
+const CONVERT_API_RETRY_DELAY = 2 * 1000
+const CONVERT_API_RETRY_DELAY_MAX = 60 * 1000
 
-const convertApiUrl = symbols =>
-  `${CONVERT_API_BASE}/price?fsym=USD&tsyms=${symbols.join(',')}`
-
-const keyFromBalances = balances =>
-  balances
-    .filter(({ verified }) => verified)
-    .sort(({ addressA, addressB }) => addressA - addressB)
-    .map(({ address, numData: { amount } }) => `${address}:${amount}`)
-    .join(',')
-
-const areSameBalances = (balancesA, balancesB) => {
-  const keyA = keyFromBalances(balancesA)
-  const keyB = keyFromBalances(balancesB)
-  return keyA === keyB
+function convertRatesUrl(symbolsQuery) {
+  return `https://min-api.cryptocompare.com/data/price?fsym=USD&tsyms=${symbolsQuery}`
 }
 
-class Balances extends React.Component {
-  state = {
-    convertRates: {},
-  }
-  componentDidMount() {
-    this.updateConvertedRates(this.props)
-  }
-  componentDidUpdate(prevProps) {
-    if (!areSameBalances(prevProps.balances, this.props.balances)) {
-      this.updateConvertedRates(this.props)
-    }
-  }
-  updateConvertedRates = throttle(async ({ balances }) => {
-    const verifiedSymbols = balances
-      .filter(({ verified }) => verified)
-      .map(({ symbol }) => symbol)
+function useConvertRates(symbols) {
+  const [rates, setRates] = useState({})
+  const retryDelay = useRef(CONVERT_API_RETRY_DELAY)
 
-    if (!verifiedSymbols.length) {
-      return
-    }
+  const symbolsQuery = symbols.join(',')
 
-    const res = await fetch(convertApiUrl(verifiedSymbols))
-    const convertRates = await res.json()
-    this.setState({ convertRates })
-  }, CONVERT_THROTTLE_TIME)
+  useEffect(() => {
+    let cancelled = false
+    let retryTimer = null
 
-  render() {
-    const { compactMode, balances, theme } = this.props
-    const { convertRates } = this.state
-    const balanceItems = balances.map(
-      ({ address, numData: { amount, decimals }, symbol, verified }) => {
-        const adjustedAmount = amount / Math.pow(10, decimals)
-        const convertedAmount =
-          verified && convertRates[symbol]
-            ? adjustedAmount / convertRates[symbol]
-            : -1
-        return {
-          address,
-          symbol,
-          verified,
-          amount: round(adjustedAmount, 5),
-          convertedAmount: round(convertedAmount, 5),
+    const update = async () => {
+      if (!symbolsQuery) {
+        setRates({})
+        return
+      }
+
+      try {
+        const response = await fetch(convertRatesUrl(symbolsQuery))
+        const rates = await response.json()
+        if (!cancelled) {
+          setRates(rates)
+          retryDelay.current = CONVERT_API_RETRY_DELAY
+        }
+      } catch (err) {
+        // The !cancelled check is needed in case:
+        //  1. The fetch() request is ongoing.
+        //  2. The component gets unmounted.
+        //  3. An error gets thrown.
+        //
+        //  Assuming the fetch() request keeps throwing, it would create new
+        //  requests even though the useEffect() got cancelled.
+        if (!cancelled) {
+          // Add more delay after every failed attempt
+          retryDelay.current = Math.min(
+            CONVERT_API_RETRY_DELAY_MAX,
+            retryDelay.current * 1.2
+          )
+          retryTimer = setTimeout(update, retryDelay.current)
         }
       }
-    )
-    const noBalances = balanceItems.length === 0
+    }
+    update()
 
-    return (
-      <Box heading="Token Balances">
+    return () => {
+      cancelled = true
+      clearTimeout(retryTimer)
+      retryDelay.current = CONVERT_API_RETRY_DELAY
+    }
+  }, [symbolsQuery])
+
+  return rates
+}
+
+// Prepare the balances for the BalanceToken component
+function useBalanceItems(balances) {
+  const verifiedSymbols = balances
+    .filter(({ verified }) => verified)
+    .map(({ symbol }) => symbol)
+
+  const convertRates = useConvertRates(verifiedSymbols)
+
+  const balanceItems = useMemo(() => {
+    return balances.map(({ address, amount, decimals, symbol, verified }) => ({
+      address,
+      amount,
+      convertedAmount: convertRates[symbol]
+        ? amount.divn(convertRates[symbol])
+        : new BN(-1),
+      decimals,
+      symbol,
+      verified,
+    }))
+  }, [balances, convertRates])
+
+  return balanceItems
+}
+
+function Balances({ balances }) {
+  const theme = useTheme()
+  const { layoutName } = useLayout()
+  const balanceItems = useBalanceItems(balances)
+
+  const compact = layoutName === 'small'
+
+  return (
+    <Box heading="Token Balances" padding={0}>
+      <div
+        css={`
+          padding: ${(compact ? 1 : 2) * GU}px;
+        `}
+      >
         <div
           css={`
-            /*
-            * translate3d() fixes an issue on recent Firefox versions where the
-            * scrollbar would briefly appear on top of everything (including the
-            * sidepanel overlay).
-            */
-            min-height: 112px;
-            transform: translate3d(0, 0, 0);
+            display: flex;
+            align-items: center;
+            min-height: ${14 * GU}px;
             overflow-x: auto;
-            ${noBalances
-              ? `
-                display: flex;
-                justify-content: center;
-                align-items: center;
-              `
-              : ''}
+            padding: ${1 * GU}px;
           `}
         >
-          {noBalances ? (
+          {balanceItems.length === 0 ? (
             <div
               css={`
+                display: flex;
+                width: 100%;
+                justify-content: center;
                 ${textStyle('body1')};
                 color: ${theme.content};
               `}
@@ -105,7 +127,7 @@ class Balances extends React.Component {
               css={`
                 list-style: none;
                 display: flex;
-                ${compactMode
+                ${compact
                   ? `
                     flex-direction: column;
                     padding: ${1 * GU}px 0;
@@ -114,13 +136,22 @@ class Balances extends React.Component {
               `}
             >
               {balanceItems.map(
-                ({ address, amount, convertedAmount, symbol, verified }) => (
+                ({
+                  address,
+                  amount,
+                  convertedAmount,
+                  decimals,
+                  symbol,
+                  verified,
+                }) => (
                   <li
                     key={address}
                     css={`
+                      flex-shrink: 0;
                       display: block;
                       min-width: ${20 * GU}px;
-                      ${compactMode ? `margin-bottom: ${3 * GU}px;` : ''}
+                      padding-right: ${4 * GU}px;
+                      ${compact ? `margin-bottom: ${3 * GU}px;` : ''}
                       &:last-of-type {
                         min-width: unset;
                         margin-bottom: 0;
@@ -130,8 +161,9 @@ class Balances extends React.Component {
                     <BalanceToken
                       address={address}
                       amount={amount}
-                      compact={compactMode}
+                      compact={compact}
                       convertedAmount={convertedAmount}
+                      decimals={decimals}
                       symbol={symbol}
                       verified={verified}
                     />
@@ -141,12 +173,9 @@ class Balances extends React.Component {
             </ul>
           )}
         </div>
-      </Box>
-    )
-  }
+      </div>
+    </Box>
+  )
 }
 
-export default props => {
-  const theme = useTheme()
-  return <Balances {...props} theme={theme} />
-}
+export default Balances
