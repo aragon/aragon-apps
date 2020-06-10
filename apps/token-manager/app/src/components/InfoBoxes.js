@@ -1,7 +1,14 @@
 import React, { useMemo } from 'react'
 import { useConnectedAccount, useNetwork } from '@aragon/api-react'
-import { Box, Distribution, GU, TokenBadge, useTheme } from '@aragon/ui'
-import { formatBalance, stakesPercentages } from '../utils'
+import {
+  Box,
+  Distribution,
+  formatTokenAmount,
+  GU,
+  TokenBadge,
+  useTheme,
+} from '@aragon/ui'
+import { stakesPercentages } from '../utils'
 import { addressesEqual } from '../web3-utils'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
 import You from './You'
@@ -32,7 +39,7 @@ function transferableLabel(transfersEnabled) {
 function InfoBoxes({
   holders,
   tokenAddress,
-  tokenDecimalsBase,
+  tokenDecimals,
   tokenName,
   tokenSupply,
   tokenSymbol,
@@ -54,7 +61,7 @@ function InfoBoxes({
           {[
             [
               'Total supply',
-              <strong>{formatBalance(tokenSupply, tokenDecimalsBase)}</strong>,
+              <strong>{formatTokenAmount(tokenSupply, tokenDecimals)}</strong>,
             ],
             [
               'Transferable',

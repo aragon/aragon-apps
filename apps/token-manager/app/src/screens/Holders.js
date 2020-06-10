@@ -130,7 +130,7 @@ function Holders({
         <InfoBoxes
           holders={holders}
           tokenAddress={tokenAddress}
-          tokenDecimalsBase={tokenDecimalsBase}
+          tokenDecimals={tokenDecimals}
           tokenName={tokenName}
           tokenSupply={tokenSupply}
           tokenSymbol={tokenSymbol}
