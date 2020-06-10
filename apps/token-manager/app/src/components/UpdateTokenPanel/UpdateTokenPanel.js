@@ -4,18 +4,14 @@ import BN from 'bn.js'
 import {
   Button,
   Field,
+  formatTokenAmount,
   GU,
   Info,
   SidePanel,
   useSidePanelFocusOnReady,
 } from '@aragon/ui'
 import { isAddress } from '../../web3-utils'
-import {
-  fromDecimals,
-  toDecimals,
-  formatBalance,
-  splitDecimalNumber,
-} from '../../utils'
+import { fromDecimals, toDecimals, splitDecimalNumber } from '../../utils'
 import LocalIdentitiesAutoComplete from '../LocalIdentitiesAutoComplete/LocalIdentitiesAutoComplete'
 import AmountInput from '../AmountInput'
 
@@ -105,11 +101,7 @@ function usePanelForm({
     value => {
       const maxAmount = getMaxAmountFromBalance(getHolderBalance(value.trim()))
 
-      const maxAmountLabel = formatBalance(
-        maxAmount,
-        tokenDecimalsBase,
-        tokenDecimals
-      )
+      const maxAmountLabel = formatTokenAmount(maxAmount, tokenDecimals)
 
       setHolderField(holderField => ({
         ...holderField,
@@ -125,7 +117,7 @@ function usePanelForm({
 
       setAmountField(amountField => ({
         ...amountField,
-        max: formatBalance(maxAmount, tokenDecimalsBase, tokenDecimals),
+        max: formatTokenAmount(maxAmount, tokenDecimals),
       }))
     },
     [
@@ -178,11 +170,9 @@ function usePanelForm({
             } an amount that is greater than the
              maximum amount of tokens that can be ${
                mode === 'assign' ? 'assigned' : 'removed'
-             } (${formatBalance(
-              maxAmount,
-              tokenDecimalsBase,
-              tokenDecimals
-            )} ${tokenSymbol}).`
+             } (${formatTokenAmount(maxAmount, tokenDecimals, {
+              symbol: tokenSymbol,
+            })} ).`
           : null,
       }))
     },
@@ -336,8 +326,6 @@ function TokenPanelContent({
       >
         <AmountInput
           ref={holderAddress ? amountInputRef : undefined}
-          max={amountField.max}
-          min={tokenStep}
           onChange={handleAmountChange}
           onMaxClick={() => updateAmount(amountField.max)}
           step={tokenStep}
