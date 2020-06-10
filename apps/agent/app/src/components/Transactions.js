@@ -269,7 +269,7 @@ const Transactions = React.memo(function Transactions({
                 color: ${amountColor};
               `}
             >
-              {formattedAmount}&nbsp;{symbol}
+              {formattedAmount}
             </span>
           )
         })()
@@ -393,7 +393,7 @@ const Transactions = React.memo(function Transactions({
                     color: ${amountColor};
                   `}
                 >
-                  {formattedAmount} {symbol}
+                  {formattedAmount}
                 </span>
               </div>
             </div>
