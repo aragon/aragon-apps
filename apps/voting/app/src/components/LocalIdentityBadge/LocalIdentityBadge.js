@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { useNetwork } from '@aragon/api-react'
 import { IdentityBadge } from '@aragon/ui'
-import { useIdentity } from '../IdentityManager/IdentityManager'
+import { useIdentity } from '../../identity-manager'
 import LocalLabelPopoverTitle from './LocalLabelPopoverTitle'
 import LocalLabelPopoverActionLabel from './LocalLabelPopoverActionLabel'
 
