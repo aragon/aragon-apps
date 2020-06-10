@@ -9,11 +9,11 @@ import {
   SyncIndicator,
 } from '@aragon/ui'
 import { useAragonApi } from '@aragon/api-react'
+import { ETHER_TOKEN_FAKE_ADDRESS } from './lib/token-utils'
+import { IdentityProvider } from './components/IdentityManager/IdentityManager'
 import Balances from './components/Balances'
 import NewTransferPanelContent from './components/NewTransfer/PanelContent'
 import Transfers from './components/Transfers'
-import { ETHER_TOKEN_FAKE_ADDRESS } from './lib/token-utils'
-import { IdentityProvider } from './components/IdentityManager/IdentityManager'
 
 class App extends React.Component {
   static propTypes = {
