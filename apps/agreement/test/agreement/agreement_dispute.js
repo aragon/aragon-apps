@@ -64,7 +64,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                   context('when the sender is the action submitter', () => {
                     const from = submitter
 
-                    it('updates the challenge state only and its associated dispute', async () => {
+                    it.only('updates the challenge state only and its associated dispute', async () => {
                       const previousChallengeState = await disputable.getChallenge(challengeId)
 
                       const receipt = await disputable.dispute({ actionId, from, arbitrationFees })

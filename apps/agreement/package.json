@@ -12,7 +12,7 @@
   "scripts": {
     "compile": "truffle compile",
     "lint": "solium --dir ./contracts",
-    "test": "npm ls web3-utils; TRUFFLE_TEST=true npm run ganache-cli:test test/agreement/agreement_dispute.js",
+    "test": "npm ls web3-utils; npm ls @aragon/contract-helpers-test; TRUFFLE_TEST=true npm run ganache-cli:test test/agreement/agreement_dispute.js",
     "test:gas": "GAS_REPORTER=true npm test",
     "coverage": "SOLIDITY_COVERAGE=true npm run ganache-cli:test",
     "ganache-cli:test": "./scripts/ganache-cli.sh",
