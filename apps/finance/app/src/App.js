@@ -109,7 +109,7 @@ class App extends React.Component {
             />
           }
         />
-        <Balances balances={balances} compactMode={compactMode} />
+        <Balances balances={balances} />
         <Transfers transactions={transactions} tokens={tokens} />
         <SidePanel
           opened={newTransferOpened}

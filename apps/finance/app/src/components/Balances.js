@@ -87,16 +87,18 @@ function useBalanceItems(balances) {
   return balanceItems
 }
 
-function Balances({ balances, compactMode }) {
+function Balances({ balances }) {
   const theme = useTheme()
   const { layoutName } = useLayout()
   const balanceItems = useBalanceItems(balances)
+
+  const compact = layoutName === 'small'
 
   return (
     <Box heading="Token Balances" padding={0}>
       <div
         css={`
-          padding: ${(layoutName === 'small' ? 1 : 2) * GU}px;
+          padding: ${(compact ? 1 : 2) * GU}px;
         `}
       >
         <div
@@ -125,7 +127,7 @@ function Balances({ balances, compactMode }) {
               css={`
                 list-style: none;
                 display: flex;
-                ${compactMode
+                ${compact
                   ? `
                     flex-direction: column;
                     padding: ${1 * GU}px 0;
@@ -149,7 +151,7 @@ function Balances({ balances, compactMode }) {
                       display: block;
                       min-width: ${20 * GU}px;
                       padding-right: ${4 * GU}px;
-                      ${compactMode ? `margin-bottom: ${3 * GU}px;` : ''}
+                      ${compact ? `margin-bottom: ${3 * GU}px;` : ''}
                       &:last-of-type {
                         min-width: unset;
                         margin-bottom: 0;
@@ -159,7 +161,7 @@ function Balances({ balances, compactMode }) {
                     <BalanceToken
                       address={address}
                       amount={amount}
-                      compact={compactMode}
+                      compact={compact}
                       convertedAmount={convertedAmount}
                       decimals={decimals}
                       symbol={symbol}
