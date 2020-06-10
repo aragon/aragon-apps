@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import BN from 'bn.js'
 import { Box, GU, textStyle, useTheme, useLayout } from '@aragon/ui'
 import BalanceToken from './BalanceToken'
@@ -60,22 +60,22 @@ function useBalanceItems(balances) {
     .filter(({ verified }) => verified)
     .map(({ symbol }) => symbol)
 
-    const convertRates = useConvertRates(verifiedSymbols)
+  const convertRates = useConvertRates(verifiedSymbols)
 
-    const balanceItems = useMemo(() => {
-      return balances.map(({ address, amount, decimals, symbol, verified }) => ({
-        address,
-        amount,
-        convertedAmount: convertRates[symbol]
-          ? amount.divn(convertRates[symbol])
-          : new BN(-1),
-        decimals,
-        symbol,
-        verified,
-      }))
-    }, [balances, convertRates])
+  const balanceItems = useMemo(() => {
+    return balances.map(({ address, amount, decimals, symbol, verified }) => ({
+      address,
+      amount,
+      convertedAmount: convertRates[symbol]
+        ? amount.divn(convertRates[symbol])
+        : new BN(-1),
+      decimals,
+      symbol,
+      verified,
+    }))
+  }, [balances, convertRates])
 
-    return balanceItems
+  return balanceItems
 }
 
 function Balances({ balances, compactMode }) {
