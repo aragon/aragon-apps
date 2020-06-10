@@ -4,7 +4,6 @@ import { getTestTokenAddresses } from './testnet'
 import * as transactionTypes from './transaction-types'
 import {
   ETHER_TOKEN_FAKE_ADDRESS,
-  findTargetFromReceipt,
   findTransfersFromReceipt,
   getPresetTokens,
   getTokenSymbol,

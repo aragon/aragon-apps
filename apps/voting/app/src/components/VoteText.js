@@ -34,14 +34,11 @@ const VoteText = React.memo(
               {i > 0 && <br />}
               {transformAddresses(line, (part, isAddress, index) =>
                 isAddress ? (
-                  <span title={part} key={index}>
-                    {' '}
-                    <LocalIdentityBadge
-                      badgeOnly={disabled}
-                      compact
-                      entity={part}
-                    />{' '}
-                  </span>
+                  <LocalIdentityBadge
+                    badgeOnly={disabled}
+                    compact
+                    entity={part}
+                  />
                 ) : (
                   <span key={index}>{part}</span>
                 )
