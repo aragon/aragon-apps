@@ -1,19 +1,4 @@
 language: node_js
-cache:
-  timeout: 600
-  directories:
-    - node_modules
-    - apps/agent/node_modules
-    - apps/finance/node_modules
-    - apps/survey/node_modules
-    - apps/token-manager/node_modules
-    - apps/token-manager/app/node_modules
-    - apps/vault/node_modules
-    - apps/voting/node_modules
-    - future-apps/payroll/node_modules
-    - shared/migrations/node_modules
-    - shared/minime/node_modules
-    - shared/test-helpers/node_modules
 notifications:
   email: false
 node_js:
