@@ -1,10 +1,18 @@
 import React, { useMemo } from 'react'
 import { useConnectedAccount, useNetwork } from '@aragon/api-react'
-import { Box, Distribution, GU, TokenBadge, useTheme } from '@aragon/ui'
-import { formatBalance, stakesPercentages } from '../utils'
+import {
+  Box,
+  Distribution,
+  formatTokenAmount,
+  GU,
+  TokenBadge,
+  useTheme,
+} from '@aragon/ui'
+import { stakesPercentages } from '../utils'
 import { addressesEqual } from '../web3-utils'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
 import You from './You'
+import { useIdentity } from './IdentityManager/IdentityManager'
 
 const DISTRIBUTION_ITEMS_MAX = 7
 
@@ -31,7 +39,7 @@ function transferableLabel(transfersEnabled) {
 function InfoBoxes({
   holders,
   tokenAddress,
-  tokenDecimalsBase,
+  tokenDecimals,
   tokenName,
   tokenSupply,
   tokenSymbol,
@@ -53,7 +61,7 @@ function InfoBoxes({
           {[
             [
               'Total supply',
-              <strong>{formatBalance(tokenSupply, tokenDecimalsBase)}</strong>,
+              <strong>{formatTokenAmount(tokenSupply, tokenDecimals)}</strong>,
             ],
             [
               'Transferable',
@@ -106,17 +114,32 @@ function InfoBoxes({
       </Box>
       <Box heading="Ownership Distribution">
         <Distribution
-          heading="Token holder stakes"
+          heading="Tokenholder stakes"
           items={stakes}
           renderLegendItem={({ item: account }) => {
             const isCurrentUser = addressesEqual(account, connectedAccount)
+            const [label] = useIdentity(account)
+
             return (
-              <div>
+              <div
+                css={`
+                  display: flex;
+                  align-items: center;
+                `}
+              >
                 <LocalIdentityBadge
                   entity={account}
                   connectedAccount={isCurrentUser}
+                  defaultLabel={isCurrentUser ? 'YOU' : undefined}
+                  labelStyle={
+                    isCurrentUser && !label
+                      ? `color: ${theme.tagIndicatorContent};`
+                      : ''
+                  }
                 />
-                {isCurrentUser && <You />}
+                {isCurrentUser && Boolean(label) && (
+                  <You css="flex-shrink: 0;" />
+                )}
               </div>
             )
           }}

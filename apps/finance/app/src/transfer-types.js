@@ -1,21 +1,14 @@
-export const All = Symbol('All')
-export const Incoming = Symbol('Incoming')
-export const Outgoing = Symbol('Outgoing')
+export const All = Symbol('ALL_TRANSFER')
+export const Incoming = Symbol('INCOMING_TRANSFER')
+export const Outgoing = Symbol('OUTGOING_TRANSFER')
 
-const symbolMapping = {
-  All,
-  Incoming,
-  Outgoing,
-}
-const stringMapping = {
-  [All]: 'All',
-  [Incoming]: 'Incoming',
-  [Outgoing]: 'Outgoing',
-}
+const AVAILABLE_TRANSFER_TYPES = [
+  [All, 'All'],
+  [Incoming, 'Incoming'],
+  [Outgoing, 'Outgoing'],
+]
 
-export function convertFromString(str) {
-  return symbolMapping[str]
-}
-export function convertToString(symbol) {
-  return stringMapping[symbol]
-}
+export const TRANSFER_TYPES = AVAILABLE_TRANSFER_TYPES.map(([type]) => type)
+export const TRANSFER_TYPES_LABELS = AVAILABLE_TRANSFER_TYPES.map(
+  ([_, label]) => label
+)

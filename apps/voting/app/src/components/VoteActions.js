@@ -1,17 +1,19 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import styled from 'styled-components'
 import {
+  blockExplorerUrl,
   Button,
   GU,
   IconCheck,
   IconConnect,
   IconCross,
   Info,
+  Link,
   RADIUS,
   textStyle,
   useTheme,
 } from '@aragon/ui'
-import { useAppState, useConnectedAccount } from '@aragon/api-react'
+import { useAppState, useConnectedAccount, useNetwork } from '@aragon/api-react'
 import useExtendedVoteData from '../hooks/useExtendedVoteData'
 import { noop, formatDate } from '../utils'
 import { VOTE_NAY, VOTE_YEA } from '../vote-types'
@@ -223,8 +225,9 @@ const TokenReference = ({
     <strong>
       {userBalance} {tokenSymbol}
     </strong>{' '}
-    due to the snapshot taken at block <strong>{snapshotBlock}</strong> at{' '}
-    <strong>{formatDate(startDate)}</strong>.{' '}
+    . This was your balance when the vote started (block{' '}
+    <BlockNumber blockNumber={snapshotBlock} />, mined at{' '}
+    <strong>{formatDate(startDate)}</strong>).{' '}
     {userBalance !== userBalanceNow ? (
       <span>
         Your current balance is{' '}
@@ -238,6 +241,22 @@ const TokenReference = ({
     )}
   </Info>
 )
+
+function BlockNumber({ blockNumber }) {
+  const network = useNetwork()
+
+  return network ? (
+    <Link
+      href={blockExplorerUrl('block', blockNumber, {
+        networkType: network.type,
+      })}
+    >
+      {blockNumber}
+    </Link>
+  ) : (
+    <strong>{blockNumber}</strong>
+  )
+}
 
 const VotingButton = styled(Button)`
   ${textStyle('body2')};

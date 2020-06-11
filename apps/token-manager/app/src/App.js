@@ -7,8 +7,10 @@ import AppHeader from './components/AppHeader'
 import { IdentityProvider } from './components/IdentityManager/IdentityManager'
 import UpdateTokenPanel from './components/UpdateTokenPanel/UpdateTokenPanel'
 import EmptyState from './screens/EmptyState'
+import Details from './screens/Details'
 import Holders from './screens/Holders'
 import { addressesEqual } from './web3-utils'
+import { useAppLogic } from './app-logic'
 
 const initialAssignTokensConfig = {
   mode: null,
@@ -24,6 +26,7 @@ class App extends React.PureComponent {
     appStateReady: false,
     isSyncing: true,
     holders: [],
+    vestings: [],
     groupMode: false,
   }
   state = {
@@ -35,7 +38,7 @@ class App extends React.PureComponent {
     const holder = holders.find(holder =>
       addressesEqual(holder.address, address)
     )
-    return holder ? holder.balance : new BN('0')
+    return holder ? holder.balance : new BN(0)
   }
   handleUpdateTokens = ({ amount, holder, mode }) => {
     const { api } = this.props
@@ -50,6 +53,7 @@ class App extends React.PureComponent {
 
     this.handleSidepanelClose()
   }
+
   handleLaunchAssignTokensNoHolder = () => {
     this.handleLaunchAssignTokens('')
   }
@@ -81,6 +85,7 @@ class App extends React.PureComponent {
       .requestAddressIdentityModification(address)
       .toPromise()
   }
+
   render() {
     const {
       appStateReady,
@@ -89,12 +94,16 @@ class App extends React.PureComponent {
       isSyncing,
       maxAccountTokens,
       numData,
+      selectedHolder,
+      selectHolder,
       tokenAddress,
+      tokenDecimals,
       tokenDecimalsBase,
       tokenName,
       tokenSupply,
       tokenSymbol,
       tokenTransfersEnabled,
+      vestings,
     } = this.props
 
     const { assignTokensConfig, sidepanelOpened } = this.state
@@ -109,25 +118,35 @@ class App extends React.PureComponent {
         {!isSyncing && appStateReady && holders.length === 0 && (
           <EmptyState onAssignHolder={this.handleLaunchAssignTokensNoHolder} />
         )}
-        {appStateReady && holders.length !== 0 && (
+        {!isSyncing && appStateReady && holders.length !== 0 && (
           <React.Fragment>
             <AppHeader
               onAssignHolder={this.handleLaunchAssignTokensNoHolder}
               tokenSymbol={tokenSymbol}
             />
-            <Holders
-              holders={holders}
-              groupMode={groupMode}
-              maxAccountTokens={maxAccountTokens}
-              tokenAddress={tokenAddress}
-              tokenDecimalsBase={tokenDecimalsBase}
-              tokenName={tokenName}
-              tokenSupply={tokenSupply}
-              tokenSymbol={tokenSymbol}
-              tokenTransfersEnabled={tokenTransfersEnabled}
-              onAssignTokens={this.handleLaunchAssignTokens}
-              onRemoveTokens={this.handleLaunchRemoveTokens}
-            />
+            {selectedHolder && selectedHolder.address ? (
+              <Details
+                tokenSymbol={tokenSymbol}
+                tokenDecimals={tokenDecimals}
+              />
+            ) : (
+              <Holders
+                holders={holders}
+                vestings={vestings}
+                groupMode={groupMode}
+                maxAccountTokens={maxAccountTokens}
+                tokenAddress={tokenAddress}
+                tokenDecimals={tokenDecimals}
+                tokenDecimalsBase={tokenDecimalsBase}
+                tokenName={tokenName}
+                tokenSupply={tokenSupply}
+                tokenSymbol={tokenSymbol}
+                tokenTransfersEnabled={tokenTransfersEnabled}
+                onAssignTokens={this.handleLaunchAssignTokens}
+                onRemoveTokens={this.handleLaunchRemoveTokens}
+                selectHolder={selectHolder}
+              />
+            )}
           </React.Fragment>
         )}
 
@@ -154,10 +173,16 @@ class App extends React.PureComponent {
 export default () => {
   const { api, appState, guiStyle } = useAragonApi()
   const { appearance } = guiStyle
+  const { selectHolder, selectedHolder } = useAppLogic()
 
   return (
     <Main assetsUrl="./aragon-ui" theme={appearance}>
-      <App api={api} {...appState} />
+      <App
+        api={api}
+        selectHolder={selectHolder}
+        selectedHolder={selectedHolder}
+        {...appState}
+      />
     </Main>
   )
 }

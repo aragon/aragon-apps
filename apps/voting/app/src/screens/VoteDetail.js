@@ -4,6 +4,7 @@ import {
   Bar,
   Box,
   GU,
+  Help,
   IconCheck,
   IconTime,
   Split,
@@ -16,20 +17,21 @@ import {
 } from '@aragon/ui'
 import { useAppState, useConnectedAccount, useNetwork } from '@aragon/api-react'
 import { format } from 'date-fns'
+import DetailedDescription from '../components/DetailedDescription'
 import LocalIdentityBadge from '../components/LocalIdentityBadge/LocalIdentityBadge'
 import LocalLabelAppBadge from '../components/LocalIdentityBadge/LocalLabelAppBadge'
 import SummaryBar from '../components/SummaryBar'
 import SummaryRows from '../components/SummaryRows'
 import VoteActions from '../components/VoteActions'
+import VoteCast from '../components/VoteCast'
+import VoteDescription from '../components/VoteDescription'
 import VoteStatus from '../components/VoteStatus'
-import VoteText from '../components/VoteText'
-import VoteCasted from '../components/VoteCasted'
 import { percentageList, round, safeDiv } from '../math-utils'
 import { getQuorumProgress } from '../vote-utils'
 import { VOTE_NAY, VOTE_YEA } from '../vote-types'
 import { addressesEqual } from '../web3-utils'
 
-const formatDate = date => `${format(date, 'do MMM yy, HH:mm')} UTC`
+const formatDate = date => `${format(date, 'do MMM yy, HH:mm')}`
 
 const DEFAULT_DESCRIPTION =
   'No additional description has been provided for this proposal.'
@@ -48,7 +50,7 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
     voteId,
   } = vote
   const { minAcceptQuorum, supportRequired, yea, nay } = numData
-  const { creator, description, metadata, open } = data
+  const { creator, description, metadata, open, path: executionPath } = data
   const quorumProgress = getQuorumProgress(vote)
   const totalVotes = yea + nay
   const votesYeaVotersSize = safeDiv(yea, totalVotes)
@@ -131,11 +133,14 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                   >
                     Description
                   </h2>
-                  <VoteText
-                    text={description || metadata || DEFAULT_DESCRIPTION}
-                    css={`
-                      ${textStyle('body2')};
-                    `}
+                  <VoteDescription
+                    description={
+                      Array.isArray(executionPath) ? (
+                        <DetailedDescription path={executionPath} />
+                      ) : (
+                        description || metadata || DEFAULT_DESCRIPTION
+                      )
+                    }
                   />
                 </div>
                 <div>
@@ -188,7 +193,7 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                   symbol={tokenSymbol}
                   connectedAccountVote={connectedAccountVote}
                 />
-                {youVoted && <VoteCasted vote={vote} />}
+                {youVoted && <VoteCast vote={vote} />}
               </div>
               <VoteActions
                 onExecute={handleExecute}
@@ -204,7 +209,20 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
             <Box heading="Status">
               <Status vote={vote} />
             </Box>
-            <Box heading="Relative support %">
+            <Box
+              heading={
+                <React.Fragment>
+                  Support %
+                  <Help hint="What is Support?">
+                    <strong>Support</strong> is the relative percentage of
+                    tokens that are required to vote “Yes” for a proposal to be
+                    approved. For example, if “Support” is set to 50%, then more
+                    than 50% of the tokens used to vote on a proposal must vote
+                    “Yes” for it to pass.
+                  </Help>
+                </React.Fragment>
+              }
+            >
               <div
                 css={`
                   ${textStyle('body2')};
@@ -216,7 +234,7 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                     color: ${theme.surfaceContentSecondary};
                   `}
                 >
-                  (>{round(supportRequired * 100, 2)}% support needed)
+                  (>{round(supportRequired * 100, 2)}% needed)
                 </span>
               </div>
               <SummaryBar
@@ -227,7 +245,21 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                 `}
               />
             </Box>
-            <Box heading="Minimum approval %">
+            <Box
+              heading={
+                <React.Fragment>
+                  Minimum Approval %
+                  <Help hint="What is Minimum Approval?">
+                    <strong>Minimum Approval</strong> is the percentage of the
+                    total token supply that is required to vote “Yes” on a
+                    proposal before it can be approved. For example, if the
+                    “Minimum Approval” is set to 20%, then more than 20% of the
+                    outstanding token supply must vote “Yes” on a proposal for
+                    it to pass.
+                  </Help>
+                </React.Fragment>
+              }
+            >
               <div
                 css={`
                   ${textStyle('body2')};
@@ -239,7 +271,7 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                     color: ${theme.surfaceContentSecondary};
                   `}
                 >
-                  (>{round(minAcceptQuorum * 100, 2)}% approval needed)
+                  (>{round(minAcceptQuorum * 100, 2)}% needed)
                 </span>
               </div>
               <SummaryBar

@@ -14,6 +14,7 @@ import {
   ContextMenu,
   ContextMenuItem,
   DataView,
+  formatTokenAmount,
   GU,
   IconExternal,
   IconLabel,
@@ -28,7 +29,6 @@ import TransactionFilters from './TransactionFilters'
 import { TRANSACTION_TYPES_LABELS } from '../transaction-types'
 import useDownloadData from './useDownloadData'
 import useFilteredTransactions from './useFilteredTransactions'
-import { formatTokenAmount, ROUNDING_AMOUNT } from '../lib/utils'
 import { ISO_FORMAT, MMDDYY_FUNC_FORMAT } from '../lib/date-utils'
 import { addressesEqual, toChecksumAddress } from '../lib/web3-utils'
 import AgentSvg from './assets/agent_badge.svg'
@@ -169,11 +169,11 @@ const Transactions = React.memo(function Transactions({
         description: reference,
         type,
         tokenTransfers,
-        onlyOne,
         isIncoming,
         targetContract,
       }) => {
         const [{ token, amount, to, from } = {}] = tokenTransfers
+        const onlyOne = tokenTransfers.length === 1
         const entity = to || from
         const formattedDate = format(date, ISO_FORMAT)
         const isValidEntity =
@@ -257,11 +257,9 @@ const Transactions = React.memo(function Transactions({
 
           const { symbol, decimals } = tokenDetails[toChecksumAddress(token)]
           const formattedAmount = formatTokenAmount(
-            amount,
-            isIncoming,
+            isIncoming ? amount : amount.neg(),
             decimals,
-            true,
-            { rounding: ROUNDING_AMOUNT }
+            { displaySign: true, digits: 5, symbol }
           )
           const amountColor = isIncoming ? theme.positive : theme.negative
           return (
@@ -271,7 +269,7 @@ const Transactions = React.memo(function Transactions({
                 color: ${amountColor};
               `}
             >
-              {formattedAmount}&nbsp;{symbol}
+              {formattedAmount}
             </span>
           )
         })()
@@ -302,11 +300,9 @@ const Transactions = React.memo(function Transactions({
           const isIncoming = Boolean(from)
           const { symbol, decimals } = tokenDetails[toChecksumAddress(token)]
           const formattedAmount = formatTokenAmount(
-            amount,
-            isIncoming,
+            isIncoming ? amount : amount.neg(),
             decimals,
-            true,
-            { rounding: ROUNDING_AMOUNT }
+            { displaySign: true, digits: 5, symbol }
           )
           const amountColor = isIncoming ? theme.positive : theme.negative
 
@@ -397,7 +393,7 @@ const Transactions = React.memo(function Transactions({
                     color: ${amountColor};
                   `}
                 >
-                  {formattedAmount} {symbol}
+                  {formattedAmount}
                 </span>
               </div>
             </div>

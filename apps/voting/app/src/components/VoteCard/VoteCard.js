@@ -6,7 +6,7 @@ import LocalLabelAppBadge from '..//LocalIdentityBadge/LocalLabelAppBadge'
 import VoteOptions from './VoteOptions'
 import VotedIndicator from './VotedIndicator'
 import VoteStatus from '../VoteStatus'
-import VoteText from '../VoteText'
+import VoteDescription from '../VoteDescription'
 import You from '../You'
 
 function VoteCard({ vote, onOpen }) {
@@ -89,10 +89,10 @@ function VoteCard({ vote, onOpen }) {
         )}
         {hasConnectedAccountVoted && <VotedIndicator expand={highlighted} />}
       </div>
-      <VoteText
+      <VoteDescription
         disabled
         prefix={<span css="font-weight: bold">#{voteId}: </span>}
-        text={description || metadata}
+        description={description || metadata}
         title={`#${voteId}: ${description || metadata}`}
         css={`
           overflow: hidden;

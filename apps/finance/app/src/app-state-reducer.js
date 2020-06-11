@@ -21,13 +21,6 @@ function appStateReducer(state) {
           ...balance,
           amount: new BN(balance.amount),
           decimals: new BN(balance.decimals),
-
-          // Note that numbers in `numData` are not safe for accurate
-          // computations (but are useful for making divisions easier).
-          numData: {
-            amount: parseInt(balance.amount, 10),
-            decimals: parseInt(balance.decimals, 10),
-          },
         }))
         .sort(compareBalancesByEthAndSymbol)
     : []
@@ -36,9 +29,6 @@ function appStateReducer(state) {
     ? transactions.map(transaction => ({
         ...transaction,
         amount: new BN(transaction.amount),
-        numData: {
-          amount: parseInt(transaction.amount, 10),
-        },
       }))
     : []
 
@@ -46,10 +36,12 @@ function appStateReducer(state) {
     ...state,
 
     tokens: balancesBn.map(
-      ({ address, name, symbol, numData: { amount, decimals }, verified }) => ({
+      ({ address, amount, decimals, name, symbol, verified }) => ({
         address,
+        // TODO: we should remove `amount` from this interface in the future, but right now it
+        // is the easiest way to tell components that this org holds this token
         amount,
-        decimals,
+        decimals: decimals.toNumber(),
         name,
         symbol,
         verified,

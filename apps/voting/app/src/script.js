@@ -157,7 +157,7 @@ async function updateConnectedAccount(state, { account }) {
   connectedAccount = account
   return {
     ...state,
-    // fetch all the votes casted by the connected account
+    // Fetch all the votes cast by the connected account
     connectedAccountVotes: state.votes
       ? await getAccountVotes({
           connectedAccount: account,
@@ -300,16 +300,17 @@ async function loadVoteDescription(vote) {
   }
 
   try {
-    const path = await app.describeScript(vote.script).toPromise()
+    const path = (await app.describeScript(vote.script).toPromise()) || []
 
     // Get unique list of targets
     vote.executionTargets = [...new Set(path.map(({ to }) => to))]
-    vote.description = path
+    vote.path = path
+    // TODO: consider removing description as it can be rendered from the path in the frontend
+    vote.description = path.length
       ? path
           .map(step => {
             const identifier = step.identifier ? ` (${step.identifier})` : ''
             const app = step.name ? `${step.name}${identifier}` : `${step.to}`
-
             return `${app}: ${step.description || 'No description'}`
           })
           .join('\n')

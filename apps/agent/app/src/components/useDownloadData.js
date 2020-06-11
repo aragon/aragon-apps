@@ -1,9 +1,9 @@
 import { useContext, useCallback } from 'react'
 import { format } from 'date-fns'
 import { saveAs } from 'file-saver'
+import { formatTokenAmount } from '@aragon/ui'
 import { IdentityContext } from './IdentityManager/IdentityManager'
 import { toChecksumAddress } from '../lib/web3-utils'
-import { formatTokenAmount, ROUNDING_AMOUNT } from '../lib/utils'
 import { formatDate, ISO_SHORT_FORMAT } from '../lib/date-utils'
 import { TRANSACTION_TYPES_LABELS } from '../transaction-types'
 
@@ -26,12 +26,11 @@ async function getDownloadData({ transactions, tokenDetails, resolveAddress }) {
         tokenTransfers.map(async ({ amount, from, to, token }) => {
           const { symbol, decimals } = tokenDetails[toChecksumAddress(token)]
           const formattedAmount = formatTokenAmount(
-            amount,
-            Boolean(from),
+            from ? amount : amount.neg(),
             decimals,
-            true,
-            { rounding: ROUNDING_AMOUNT }
+            { displaySign: true, digits: 5 }
           )
+
           const [source, recipient] = await Promise.all(
             [from, to].map(address => {
               return address

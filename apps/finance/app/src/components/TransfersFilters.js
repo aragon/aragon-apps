@@ -2,8 +2,6 @@ import React from 'react'
 import { DropDown, GU, DateRangePicker } from '@aragon/ui'
 
 const TransfersFilters = ({
-  compactMode,
-  opened,
   dateRangeFilter,
   onDateRangeChange,
   onTokenChange,
