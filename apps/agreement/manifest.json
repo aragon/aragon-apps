@@ -1,7 +1,7 @@
 {
   "name": "Agreement",
   "author": "Aragon Association",
-  "description": "Govern organizations through a subjective rules.",
+  "description": "Govern organizations through subjective rules.",
   "changelog_url": "https://github.com/aragon/aragon-apps/releases",
   "details_url": "/meta/details.md",
   "source_url": "https://github.com/aragon/aragon-apps/blob/master/apps/agreement",
