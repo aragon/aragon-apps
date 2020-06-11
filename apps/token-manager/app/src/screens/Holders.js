@@ -63,8 +63,11 @@ function Holders({
           fields={groupMode ? ['Owner'] : ['Holder', 'Balance']}
           entries={mappedEntries}
           renderEntry={([address, balance, vestings]) => {
-            const isCurrentUser = addressesEqual(address, connectedAccount)
             const theme = useTheme()
+            const { totalLocked } = useTotalVestedTokensInfo(vestings)
+
+            const isCurrentUser = addressesEqual(address, connectedAccount)
+
             const values = [
               <div
                 css={`
@@ -93,20 +96,17 @@ function Holders({
                   `}
                 >
                   {formatTokenAmount(balance, tokenDecimals)}
-                  <div
-                    css={`
-                      padding-left: ${1 * GU}px;
-                      ${textStyle('label1')};
-                      color: ${theme.surfaceContentSecondary};
-                    `}
-                  >
-                    (
-                    {formatTokenAmount(
-                      useTotalVestedTokensInfo(vestings).totalLocked,
-                      tokenDecimals
-                    )}{' '}
-                    locked)
-                  </div>
+                  {!totalLocked.isZero() && (
+                    <div
+                      css={`
+                        padding-left: ${1 * GU}px;
+                        ${textStyle('label1')};
+                        color: ${theme.surfaceContentSecondary};
+                      `}
+                    >
+                      ({formatTokenAmount(totalLocked, tokenDecimals)} locked)
+                    </div>
+                  )}
                 </div>
               )
             }
