@@ -5,10 +5,10 @@ import useExtendedVoteData from '../hooks/useExtendedVoteData'
 import { VOTE_YEA } from '../vote-types'
 
 function VoteCast({ vote }) {
+  const theme = useTheme()
   const { connectedAccountVote } = vote
   const { userBalance } = useExtendedVoteData(vote)
   const { tokenSymbol } = useAppState()
-  const theme = useTheme()
 
   return (
     <div

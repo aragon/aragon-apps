@@ -1,4 +1,5 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useMemo } from 'react'
+import BN from 'bn.js'
 import {
   BackButton,
   Bar,
@@ -26,7 +27,12 @@ import VoteActions from '../components/VoteActions'
 import VoteCast from '../components/VoteCast'
 import VoteDescription from '../components/VoteDescription'
 import VoteStatus from '../components/VoteStatus'
-import { percentageList, round, safeDiv } from '../math-utils'
+import {
+  formatBnPercentage,
+  percentageList,
+  round,
+  safeBnDiv,
+} from '../math-utils'
 import { getQuorumProgress } from '../vote-utils'
 import { VOTE_NAY, VOTE_YEA } from '../vote-types'
 import { addressesEqual } from '../web3-utils'
@@ -42,29 +48,46 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
   const { tokenSymbol } = useAppState()
   const connectedAccount = useConnectedAccount()
 
+  const { connectedAccountVote, data, executionTargetData, voteId } = vote
   const {
-    connectedAccountVote,
-    data,
-    executionTargetData,
-    numData,
-    voteId,
-  } = vote
-  const { minAcceptQuorum, supportRequired, yea, nay } = numData
-  const { creator, description, metadata, open, path: executionPath } = data
+    creator,
+    description,
+    metadata,
+    minAcceptQuorum,
+    nay,
+    open,
+    path: executionPath,
+    supportRequired,
+    yea,
+  } = data
+
+  const {
+    yeaSize: votesYeaVotersSize,
+    naySize: votesNayVotersSize,
+    percentages: [yeaPct, nayPct],
+  } = useMemo(() => {
+    const precision = 10 ** 9
+    const precisionBn = new BN(precision)
+    const totalVotes = yea.value().add(nay.value())
+
+    const yeaSize =
+      safeBnDiv(yea.value().mul(precisionBn), totalVotes).toNumber() / precision
+
+    const naySize =
+      safeBnDiv(nay.value().mul(precisionBn), totalVotes).toNumber() / precision
+
+    return { yeaSize, naySize, percentages: percentageList([yeaSize, naySize]) }
+  }, [yea, nay])
+
   const quorumProgress = getQuorumProgress(vote)
-  const totalVotes = yea + nay
-  const votesYeaVotersSize = safeDiv(yea, totalVotes)
-  const votesNayVotersSize = safeDiv(nay, totalVotes)
-  const [yeaPct, nayPct] = percentageList(
-    [votesYeaVotersSize, votesNayVotersSize],
-    2
-  )
+
   const youVoted =
     connectedAccountVote === VOTE_YEA || connectedAccountVote === VOTE_NAY
 
   const handleVoteNo = useCallback(() => {
     onVote(voteId, VOTE_NAY)
   }, [onVote, voteId])
+
   const handleVoteYes = useCallback(() => {
     onVote(voteId, VOTE_YEA)
   }, [onVote, voteId])
@@ -182,7 +205,7 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                 <SummaryBar
                   positiveSize={votesYeaVotersSize}
                   negativeSize={votesNayVotersSize}
-                  requiredSize={supportRequired}
+                  requiredSize={Number(supportRequired)}
                   css={`
                     margin-bottom: ${2 * GU}px;
                   `}
@@ -234,12 +257,12 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                     color: ${theme.surfaceContentSecondary};
                   `}
                 >
-                  (>{round(supportRequired * 100, 2)}% needed)
+                  {`(>${supportRequired} needed)`}
                 </span>
               </div>
               <SummaryBar
                 positiveSize={votesYeaVotersSize}
-                requiredSize={supportRequired}
+                requiredSize={Number(supportRequired)}
                 css={`
                   margin-top: ${2 * GU}px;
                 `}
@@ -271,12 +294,12 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                     color: ${theme.surfaceContentSecondary};
                   `}
                 >
-                  (>{round(minAcceptQuorum * 100, 2)}% needed)
+                  {`(> ${minAcceptQuorum} needed)`}
                 </span>
               </div>
               <SummaryBar
                 positiveSize={quorumProgress}
-                requiredSize={minAcceptQuorum}
+                requiredSize={Number(minAcceptQuorum)}
                 css={`
                   margin-top: ${2 * GU}px;
                 `}

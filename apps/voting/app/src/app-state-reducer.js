@@ -1,5 +1,6 @@
 import BN from 'bn.js'
 import { hasLoadedVoteSettings } from './vote-settings'
+import { Percentage, TokenAmount } from './math-utils'
 
 function appStateReducer(state) {
   const ready = hasLoadedVoteSettings(state)
@@ -16,6 +17,7 @@ function appStateReducer(state) {
     connectedAccountVotes,
   } = state
 
+  const pctBaseBn = new BN(pctBase)
   const pctBaseNum = parseInt(pctBase, 10)
   const tokenDecimalsNum = parseInt(tokenDecimals, 10)
   const tokenDecimalsBaseNum = Math.pow(10, tokenDecimalsNum)
@@ -24,14 +26,8 @@ function appStateReducer(state) {
     ...state,
 
     ready,
-    pctBase: new BN(pctBase),
+    pctBase: pctBaseBn,
     tokenDecimals: new BN(tokenDecimals),
-
-    numData: {
-      pctBase: pctBaseNum,
-      tokenDecimals: tokenDecimalsNum,
-    },
-
     connectedAccountVotes: connectedAccountVotes || {},
 
     // Transform the vote data for the frontend
@@ -44,20 +40,12 @@ function appStateReducer(state) {
               ...data,
               executionDate: data.executionDate && new Date(data.executionDate),
               endDate: new Date(data.startDate + voteTime),
-              minAcceptQuorum: new BN(data.minAcceptQuorum),
-              nay: new BN(data.nay),
+              minAcceptQuorum: new Percentage(data.minAcceptQuorum, pctBaseBn),
               startDate: new Date(data.startDate),
-              supportRequired: new BN(data.supportRequired),
-              votingPower: new BN(data.votingPower),
-              yea: new BN(data.yea),
-            },
-            numData: {
-              minAcceptQuorum: parseInt(data.minAcceptQuorum, 10) / pctBaseNum,
-              nay: parseInt(data.nay, 10) / tokenDecimalsBaseNum,
-              supportRequired: parseInt(data.supportRequired, 10) / pctBaseNum,
-              votingPower:
-                parseInt(data.votingPower, 10) / tokenDecimalsBaseNum,
-              yea: parseInt(data.yea, 10) / tokenDecimalsBaseNum,
+              supportRequired: new Percentage(data.supportRequired, pctBaseBn),
+              votingPower: new TokenAmount(data.votingPower, tokenDecimals),
+              yea: new TokenAmount(data.yea, tokenDecimals),
+              nay: new TokenAmount(data.nay, tokenDecimals),
             },
           }
         })

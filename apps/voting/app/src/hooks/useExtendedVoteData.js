@@ -1,17 +1,18 @@
 import { useMemo } from 'react'
+import BN from 'bn.js'
+import { formatTokenAmount } from '@aragon/ui'
 import { useAragonApi } from '@aragon/api-react'
-import { getUserBalanceAt, getUserBalanceNow, formatBalance } from '../token-utils'
+import { getUserBalanceAt, getUserBalanceNow } from '../token-utils'
 import { getCanExecute, getCanVote } from '../vote-utils'
 import useTokenContract from './useTokenContract'
 import usePromise from './usePromise'
-import BN from 'bn.js'
 
 // Get the extended data related to a vote
 export default function useExtendedVoteData(vote) {
   const {
     api,
-    connectedAccount,
     appState: { tokenDecimals },
+    connectedAccount,
   } = useAragonApi()
 
   const tokenContract = useTokenContract()
@@ -25,35 +26,34 @@ export default function useExtendedVoteData(vote) {
   )
   const canUserVote = usePromise(canUserVotePromise, [], false)
 
-  const userBalancePromise = useMemo(() => {
-    if (!vote) {
-      return -1
-    }
-    const userBalance =  getUserBalanceAt(
-      connectedAccount,
-      vote.data.snapshotBlock,
-      tokenContract,
-    )
-    
-    return userBalance
-
-  }, [connectedAccount, tokenContract, tokenDecimals, vote])
-  const userBalanceResolved = usePromise(userBalancePromise, [], -1)
-
-
-  const userBalanceBN = new BN(userBalanceResolved)
-  const tokenDecimalsBase = new BN(10).pow(new BN(tokenDecimals))
-
-  const userBalance = userBalanceResolved != -1 ? formatBalance(userBalanceBN, tokenDecimalsBase) : userBalanceResolved
-
+  const userBalancePromise = useMemo(
+    () =>
+      vote
+        ? getUserBalanceAt(
+            connectedAccount,
+            vote.data.snapshotBlock,
+            tokenContract
+          )
+        : Promise.resolve('-1'),
+    [connectedAccount, tokenContract, tokenDecimals, vote]
+  )
   const userBalanceNowPromise = useMemo(
     () => getUserBalanceNow(connectedAccount, tokenContract, tokenDecimals),
     [connectedAccount, tokenContract, tokenDecimals]
   )
-  const userBalanceNowResolved = usePromise(userBalanceNowPromise, [], -1)
-  const userBalanceNowBN = new BN(userBalanceResolved)
 
-  const userBalanceNow = userBalanceNowResolved != -1 ?  formatBalance(userBalanceNowBN, tokenDecimalsBase) : userBalanceNowResolved
+  const userBalanceResolved = usePromise(userBalancePromise, [], '-1')
+  const userBalanceNowResolved = usePromise(userBalanceNowPromise, [], '-1')
+
+  const userBalance =
+    userBalanceResolved !== '-1'
+      ? formatTokenAmount(userBalanceResolved, tokenDecimals)
+      : userBalanceResolved
+
+  const userBalanceNow =
+    userBalanceNowResolved !== '-1'
+      ? formatTokenAmount(userBalanceNowResolved, tokenDecimals)
+      : userBalanceNowResolved
 
   return {
     canExecute,
