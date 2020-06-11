@@ -5,14 +5,14 @@
 pragma solidity 0.4.24;
 
 import "@aragon/os/contracts/apps/AragonApp.sol";
-import "@aragon/os/contracts/common/TimeHelpers.sol";
+import "@aragon/os/contracts/apps/disputable/IAgreement.sol";
+import "@aragon/os/contracts/apps/disputable/IDisputable.sol";
+import "@aragon/os/contracts/common/ConversionHelpers.sol";
 import "@aragon/os/contracts/common/SafeERC20.sol";
+import "@aragon/os/contracts/common/TimeHelpers.sol";
 import "@aragon/os/contracts/lib/token/ERC20.sol";
 import "@aragon/os/contracts/lib/math/SafeMath.sol";
 import "@aragon/os/contracts/lib/math/SafeMath64.sol";
-import "@aragon/os/contracts/common/ConversionHelpers.sol";
-import "@aragon/os/contracts/apps/disputable/IAgreement.sol";
-import "@aragon/os/contracts/apps/disputable/IDisputable.sol";
 
 import "./lib/BytesHelper.sol";
 import "./staking/Staking.sol";
