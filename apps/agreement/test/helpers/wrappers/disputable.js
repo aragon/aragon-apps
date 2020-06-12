@@ -2,8 +2,10 @@ const AgreementWrapper = require('./agreement')
 
 const { bn } = require('../lib/numbers')
 const { decodeEventsOfType } = require('../lib/decodeEvent')
-const { getEventArgument } = require('@aragon/contract-test-helpers/events')
+const { getEventArgument } = require('@aragon/contract-helpers-test/events')
 const { AGREEMENT_EVENTS, DISPUTABLE_EVENTS } = require('../utils/events')
+
+const EMPTY_DATA = '0x'
 
 class DisputableWrapper extends AgreementWrapper {
   constructor(artifacts, web3, agreement, arbitrator, stakingFactory, disputable, collateralRequirement = {}) {
@@ -34,6 +36,10 @@ class DisputableWrapper extends AgreementWrapper {
 
   async getBalance(user) {
     return super.getBalance(this.collateralToken, user)
+  }
+
+  async getTotalAvailableBalance(user) {
+    return super.getTotalAvailableBalance(this.collateralToken, user)
   }
 
   async getDisputableInfo() {
@@ -73,8 +79,21 @@ class DisputableWrapper extends AgreementWrapper {
     return super.unregister({ disputable: this.disputable, ...options })
   }
 
+  async allowManager({ owner, amount}) {
+    // allow lock manager if needed
+    const staking = await this.getStaking()
+    const lock = await staking.getLock(owner, this.agreement.address)
+    if (lock._allowance.eq(bn(0))) {
+      await staking.allowManager(this.agreement.address, amount, EMPTY_DATA, { from: owner })
+    } else if (lock._allowance.sub(lock._amount).lt(amount)) {
+      await staking.increaseLockAllowance(this.agreement.address, amount, { from: owner })
+    }
+  }
+
   async forward({ script = '0x', from = undefined }) {
     if (!from) from = await this._getSender()
+
+    await this.allowManager({ owner: from, amount: this.actionCollateral })
 
     const receipt = await this.disputable.forward(script, { from })
     const logs = decodeEventsOfType(receipt, this.abi, AGREEMENT_EVENTS.ACTION_SUBMITTED)

@@ -15,8 +15,6 @@ import "@aragon/os/contracts/lib/math/SafeMath.sol";
 import "@aragon/os/contracts/lib/math/SafeMath64.sol";
 
 import "./lib/BytesHelper.sol";
-import "./staking/Staking.sol";
-import "./staking/StakingFactory.sol";
 
 
 contract Agreement is IAgreement, AragonApp {
@@ -895,7 +893,7 @@ contract Agreement is IAgreement, AragonApp {
             return;
         }
 
-        _staking.lock(_user, _amount);
+        _staking.lock(_user, address(this), _amount);
     }
 
     /**
@@ -909,7 +907,7 @@ contract Agreement is IAgreement, AragonApp {
             return;
         }
 
-        _staking.unlock(_user, _amount);
+        _staking.unlock(_user, address(this), _amount);
     }
 
     /**
@@ -924,7 +922,7 @@ contract Agreement is IAgreement, AragonApp {
             return;
         }
 
-        _staking.slash(_user, _challenger, _amount);
+        _staking.slashAndUnstake(_user, _challenger, _amount);
     }
 
     /**
@@ -936,12 +934,8 @@ contract Agreement is IAgreement, AragonApp {
     * @param _slashAmount Number of collateral tokens to be slashed
     */
     function _unlockAndSlashBalance(Staking _staking, address _user, uint256 _unlockAmount, address _challenger, uint256 _slashAmount) internal {
-        if (_unlockAmount != 0 && _slashAmount != 0) {
-            _staking.unlockAndSlash(_user, _unlockAmount, _challenger, _slashAmount);
-        } else {
-            _unlockBalance(_staking, _user, _unlockAmount);
-            _slashBalance(_staking, _user, _challenger, _slashAmount);
-        }
+        _unlockBalance(_staking, _user, _unlockAmount);
+        _slashBalance(_staking, _user, _challenger, _slashAmount);
     }
 
     /**

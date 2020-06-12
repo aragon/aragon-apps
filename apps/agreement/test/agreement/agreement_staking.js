@@ -78,7 +78,7 @@ contract('Agreement', ([_, someone, user]) => {
       const amount = 0
 
       it('reverts', async () => {
-        await assertRevert(agreement.stake({ token, amount, user, approve }), STAKING_ERRORS.ERROR_INVALID_STAKE_AMOUNT)
+        await assertRevert(agreement.stake({ token, amount, user, approve }), STAKING_ERRORS.ERROR_AMOUNT_ZERO)
       })
     })
   })
@@ -146,7 +146,7 @@ contract('Agreement', ([_, someone, user]) => {
       const amount = 0
 
       it('reverts', async () => {
-        await assertRevert(agreement.stake({ token, user, amount, from, approve }), STAKING_ERRORS.ERROR_INVALID_STAKE_AMOUNT)
+        await assertRevert(agreement.stake({ token, user, amount, from, approve }), STAKING_ERRORS.ERROR_AMOUNT_ZERO)
       })
     })
   })
@@ -206,7 +206,7 @@ contract('Agreement', ([_, someone, user]) => {
       const amount = 0
 
       it('reverts', async () => {
-        await assertRevert(agreement.approveAndCall({ token, amount, from, to: staking.address, mint: false }), STAKING_ERRORS.ERROR_INVALID_STAKE_AMOUNT)
+        await assertRevert(agreement.approveAndCall({ token, amount, from, to: staking.address, mint: false }), STAKING_ERRORS.ERROR_AMOUNT_ZERO)
       })
     })
   })
@@ -275,7 +275,7 @@ contract('Agreement', ([_, someone, user]) => {
           const amount = initialStake.add(bn(1))
 
           it('reverts', async () => {
-            await assertRevert(agreement.unstake({ token, user, amount }), STAKING_ERRORS.ERROR_NOT_ENOUGH_AVAILABLE_STAKE)
+            await assertRevert(agreement.unstake({ token, user, amount }), STAKING_ERRORS.STAKING_NOT_ENOUGH_BALANCE)
           })
         })
       })
@@ -284,7 +284,7 @@ contract('Agreement', ([_, someone, user]) => {
         const amount = 0
 
         it('reverts', async () => {
-          await assertRevert(agreement.unstake({ token, user, amount }), STAKING_ERRORS.ERROR_INVALID_UNSTAKE_AMOUNT)
+          await assertRevert(agreement.unstake({ token, user, amount }), STAKING_ERRORS.ERROR_AMOUNT_ZERO)
         })
       })
     })
@@ -294,7 +294,7 @@ contract('Agreement', ([_, someone, user]) => {
         const amount = bigExp(200, 18)
 
         it('reverts', async () => {
-          await assertRevert(agreement.unstake({ token, user, amount }), STAKING_ERRORS.ERROR_NOT_ENOUGH_AVAILABLE_STAKE)
+          await assertRevert(agreement.unstake({ token, user, amount }), STAKING_ERRORS.STAKING_NOT_ENOUGH_BALANCE)
         })
       })
 
@@ -302,7 +302,7 @@ contract('Agreement', ([_, someone, user]) => {
         const amount = 0
 
         it('reverts', async () => {
-          await assertRevert(agreement.unstake({ token, user, amount }), STAKING_ERRORS.ERROR_INVALID_UNSTAKE_AMOUNT)
+          await assertRevert(agreement.unstake({ token, user, amount }), STAKING_ERRORS.ERROR_AMOUNT_ZERO)
         })
       })
     })

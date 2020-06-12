@@ -2,9 +2,10 @@ const { bn } = require('../lib/numbers')
 const { CHALLENGES_STATE } = require('../utils/enums')
 const { AGREEMENT_EVENTS } = require('../utils/events')
 const { AGREEMENT_ERRORS } = require('../utils/errors')
-const { getEventArgument } = require('@aragon/contract-test-helpers/events')
+const { getEventArgument } = require('@aragon/contract-helpers-test/events')
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
+const EMPTY_DATA = '0x'
 
 class AgreementWrapper {
   constructor(artifacts, web3, agreement, arbitrator, stakingFactory) {
@@ -48,8 +49,17 @@ class AgreementWrapper {
 
   async getBalance(token, user) {
     const staking = await this.getStaking(token)
-    const { available, locked } = await staking.getBalance(user)
+    const { locked } = await staking.getBalancesOf(user)
+    const available = await staking.unlockedBalanceOf(user)
     return { available, locked }
+  }
+
+  async getTotalAvailableBalance(token, user) {
+    const staking = await this.getStaking(token.address)
+    const unlocked = await staking.unlockedBalanceOf(user)
+    const tokenBalance = await token.balanceOf(user)
+
+    return unlocked.add(tokenBalance)
   }
 
   async getStakingAddress(token) {
@@ -263,7 +273,7 @@ class AgreementWrapper {
     if (!from) from = await this._getSender()
 
     if (mint) await token.generateTokens(from, amount)
-    return token.approveAndCall(to, amount, '0x', { from })
+    return token.approveAndCall(to, amount, EMPTY_DATA, { from })
   }
 
   async stake({ token, amount, user = undefined, from = undefined, approve = undefined }) {
@@ -275,14 +285,14 @@ class AgreementWrapper {
     if (approve) await this.approve({ token, amount: approve, to: staking.address, from })
 
     return (user === from)
-      ? staking.stake(amount, { from: user })
-      : staking.stakeFor(user, amount, { from })
+      ? staking.stake(amount, EMPTY_DATA, { from: user })
+      : staking.stakeFor(user, amount, EMPTY_DATA, { from })
   }
 
   async unstake({ token, user, amount = undefined }) {
-    if (amount === undefined) amount = (await this.getBalance(user)).available
     const staking = await this.getStaking(token)
-    return staking.unstake(amount, { from: user })
+    if (amount === undefined) amount = await staking.unlockedBalanceOf(user)
+    return staking.unstake(amount, EMPTY_DATA, { from: user })
   }
 
   async safeApprove(token, from, to, amount, accumulate = true) {
