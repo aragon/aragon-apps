@@ -1,4 +1,10 @@
-import React, { useCallback } from 'react'
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
 import { Subject } from 'rxjs'
 import { useApi } from '@aragon/api-react'
 
@@ -29,11 +35,11 @@ function useModifyLocalIdentity() {
 // The main identity hook, exposing `name`
 // and `handleModifyLocalIdentity` based on the provided address.
 export function useIdentity(address) {
-  const [name, setName] = React.useState(null)
+  const [name, setName] = useState(null)
   const resolveLocalIdentity = useResolveLocalIdentity()
   const modifyLocalIdentity = useModifyLocalIdentity()
 
-  const { updates$ } = React.useContext(IdentityContext)
+  const { updates$ } = useContext(IdentityContext)
 
   const handleNameChange = useCallback(metadata => {
     setName(metadata ? metadata.name : null)
@@ -45,7 +51,7 @@ export function useIdentity(address) {
     return modifyLocalIdentity(address).then(() => updates$.next(address))
   }
 
-  React.useEffect(() => {
+  useEffect(() => {
     resolveLocalIdentity(address).then(handleNameChange)
 
     const subscription = updates$.subscribe(updatedAddress => {

@@ -111,7 +111,3 @@ export function useAppLogic() {
     votes,
   }
 }
-
-export function AppLogicProvider({ children }) {
-  return <AragonApi reducer={appStateReducer}>{children}</AragonApi>
-}
