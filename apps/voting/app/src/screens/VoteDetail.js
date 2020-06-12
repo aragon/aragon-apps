@@ -294,7 +294,7 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                     color: ${theme.surfaceContentSecondary};
                   `}
                 >
-                  {`(> ${minAcceptQuorum} needed)`}
+                  {`(>${minAcceptQuorum} needed)`}
                 </span>
               </div>
               <SummaryBar

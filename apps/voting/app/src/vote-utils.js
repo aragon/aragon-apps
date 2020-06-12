@@ -1,4 +1,6 @@
 import { isBefore } from 'date-fns'
+import BN from 'bn.js'
+import { divideRoundBigInt } from '@aragon/ui'
 import {
   VOTE_ABSENT,
   VOTE_YEA,
@@ -23,10 +25,16 @@ export function isVoteOpen(vote, date) {
 }
 
 export function getQuorumProgress({ data: { yea, votingPower } }) {
-  return yea
-    .value()
-    .div(votingPower.value())
-    .toNumber()
+  const precision = 10 ** 9
+  return (
+    parseInt(
+      divideRoundBigInt(
+        yea.value().mul(new BN(precision)),
+        votingPower.value()
+      ),
+      10
+    ) / precision
+  )
 }
 
 export function getVoteStatus(vote, pctBase) {
