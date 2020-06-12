@@ -391,10 +391,10 @@ contract Agreement is IAgreement, AragonApp {
         require(_isDisputed(_actionId, challenge), ERROR_CANNOT_SUBMIT_EVIDENCE);
 
         (, , IArbitrator arbitrator) = _getSettingFor(action);
-        bool finished = _registerEvidence(action, challenge, msg.sender, _finished);
+        bool submitterAndChallengerFinished = _updateEvidenceSubmissionStatus(action, challenge, msg.sender, _finished);
         _submitEvidence(arbitrator, _disputeId, msg.sender, _evidence, _finished);
 
-        if (finished) {
+        if (submitterAndChallengerFinished) {
             arbitrator.closeEvidencePeriod(_disputeId);
         }
     }
@@ -757,7 +757,7 @@ contract Agreement is IAgreement, AragonApp {
         // Compute missing fees for dispute
         ERC20 challengerFeeToken = _challenge.arbitratorFeeToken;
         uint256 challengerFeeAmount = _challenge.arbitratorFeeAmount;
-        (address recipient, ERC20 feeToken, uint256 missingFees, uint256 totalFees) = _getMissingArbitratorFees(
+        (address disputeFeeRecipient, ERC20 feeToken, uint256 missingFees, uint256 totalFees) = _getMissingArbitratorFees(
             _arbitrator,
             challengerFeeToken,
             challengerFeeAmount
@@ -771,8 +771,8 @@ contract Agreement is IAgreement, AragonApp {
         // To be safe, We first set the allowance to zero in case there is a remaining approval for the arbitrator.
         // This is not strictly necessary for ERC20s, but some tokens, e.g. MiniMe (ANT and ANJ),
         // revert on an approval if an outstanding allowance exists
-        _approveArbitratorFeeTokens(feeToken, recipient, 0);
-        _approveArbitratorFeeTokens(feeToken, recipient, totalFees);
+        _approveArbitratorFeeTokens(feeToken, disputeFeeRecipient, 0);
+        _approveArbitratorFeeTokens(feeToken, disputeFeeRecipient, totalFees);
         uint256 disputeId = _arbitrator.createDispute(DISPUTES_POSSIBLE_OUTCOMES, _metadata);
 
         // Return any remaining portion of the pre-paid arbitrator fees to the challenger, if necessary
@@ -784,13 +784,14 @@ contract Agreement is IAgreement, AragonApp {
     }
 
     /**
-    * @dev Register evidence for a disputed action
-    * @param _action Action instance to submit evidence for
+    * @dev Update evidence submission status for a disputed action
+    * @param _action Action instance whose dispute is being submitted evidence
     * @param _challenge Current challenge instance for the action
-    * @param _submitter Address of submitting the evidence
-    * @param _finished Whether both parties have finished submitting evidence
+    * @param _submitter Address submitting the evidence
+    * @param _finished Whether the evidence submitter is finished submitting evidence
+    * @returns Whether both parties have finished submitting evidence
     */
-    function _registerEvidence(Action storage _action, Challenge storage _challenge, address _submitter, bool _finished)
+    function _updateEvidenceSubmissionStatus(Action storage _action, Challenge storage _challenge, address _submitter, bool _finished)
         internal
         returns (bool)
     {
@@ -1323,7 +1324,7 @@ contract Agreement is IAgreement, AragonApp {
     function _getMissingArbitratorFees(IArbitrator _arbitrator, ERC20 _challengerFeeToken, uint256 _challengerFeeAmount) internal view
         returns (address, ERC20, uint256, uint256)
     {
-        (address recipient, ERC20 feeToken, uint256 disputeFees) = _arbitrator.getDisputeFees();
+        (address disputeFeeRecipient, ERC20 feeToken, uint256 disputeFees) = _arbitrator.getDisputeFees();
 
         uint256 missingFees;
         if (_challengerFeeToken == feeToken) {
@@ -1332,7 +1333,7 @@ contract Agreement is IAgreement, AragonApp {
             missingFees = disputeFees;
         }
 
-        return (recipient, feeToken, missingFees, disputeFees);
+        return (disputeFeeRecipient, feeToken, missingFees, disputeFees);
     }
 
     /**
