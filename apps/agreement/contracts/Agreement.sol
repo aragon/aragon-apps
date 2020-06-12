@@ -1078,13 +1078,13 @@ contract Agreement is IAgreement, AragonApp {
     * @return True if the action can proceed, false otherwise
     */
     function _canProceed(uint256 _actionId, Action storage _action) internal view returns (bool) {
-        uint256 challengeId = _action.currentChallengeId;
-        Challenge storage challenge = challenges[challengeId];
-
         // If the action was already closed, return false
         if (_action.closed) {
             return false;
         }
+
+        uint256 challengeId = _action.currentChallengeId;
+        Challenge storage challenge = challenges[challengeId];
 
         // If the action was not challenged, return true
         if (!_existChallenge(_actionId, challengeId, challenge)) {
