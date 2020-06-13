@@ -240,13 +240,13 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
         })
       }
 
-      context('when the app was registered', () => {
+      context('when the app was activated', () => {
         itCanSubmitEvidence()
       })
 
       context('when the app was unregistered', () => {
         beforeEach('mark app as unregistered', async () => {
-          await disputable.unregister()
+          await disputable.deactivate()
         })
 
         itCanSubmitEvidence()

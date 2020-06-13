@@ -4,6 +4,8 @@ import "@aragon/os/contracts/common/TimeHelpers.sol";
 import "@aragon/os/contracts/lib/math/SafeMath.sol";
 import "@aragon/os/contracts/lib/math/SafeMath64.sol";
 
+
+// TODO: Move this implementation to `contract-test-helpers`
 contract ClockMock {
     uint256 public mockedTimestamp;
 

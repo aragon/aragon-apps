@@ -70,13 +70,13 @@ class DisputableWrapper extends AgreementWrapper {
     return super.getStaking(this.collateralToken)
   }
 
-  async register(options = {}) {
+  async activate(options = {}) {
     const { disputable, collateralToken, actionCollateral, challengeCollateral, challengeDuration } = this
-    return super.register({ disputable, collateralToken, actionCollateral, challengeCollateral, challengeDuration, ...options })
+    return super.activate({ disputable, collateralToken, actionCollateral, challengeCollateral, challengeDuration, ...options })
   }
 
-  async unregister(options = {}) {
-    return super.unregister({ disputable: this.disputable, ...options })
+  async deactivate(options = {}) {
+    return super.deactivate({ disputable: this.disputable, ...options })
   }
 
   async allowManager({ owner, amount}) {
@@ -114,7 +114,6 @@ class DisputableWrapper extends AgreementWrapper {
   }
 
   async challenge(options = {}) {
-    // TODO: if (options.challengeDuration === undefined) options.challengeDuration = this.challengeDuration.div(bn(2))
     if (options.stake === undefined) options.stake = this.challengeCollateral
     if (options.stake) await this.approve({ amount: options.stake, from: options.challenger })
     return super.challenge(options)

@@ -68,7 +68,7 @@ contract('Agreement', ([_, owner, someone]) => {
         const receipt = await disputable.changeCollateralRequirement({ ...newCollateralRequirement, from })
 
         assertAmountOfEvents(receipt, AGREEMENT_EVENTS.COLLATERAL_REQUIREMENT_CHANGED, 1)
-        assertEvent(receipt, AGREEMENT_EVENTS.COLLATERAL_REQUIREMENT_CHANGED, { id: currentId.add(bn(1)), disputable: disputable.disputable.address })
+        assertEvent(receipt, AGREEMENT_EVENTS.COLLATERAL_REQUIREMENT_CHANGED, { collateralRequirementId: currentId.add(bn(1)), disputable: disputable.disputable.address })
       })
     })
 

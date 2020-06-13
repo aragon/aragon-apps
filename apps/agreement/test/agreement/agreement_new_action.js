@@ -13,7 +13,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
   const actionContext = '0x123456'
 
   beforeEach('deploy agreement instance', async () => {
-    disputable = await deployer.deployAndInitializeWrapperWithDisputable({ owner, register: false, submitters: [submitter] })
+    disputable = await deployer.deployAndInitializeWrapperWithDisputable({ owner, activate: false, submitters: [submitter] })
     actionCollateral = disputable.actionCollateral
   })
 
@@ -22,12 +22,12 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
       const sign = false // do not sign before scheduling actions
       const stake = false // do not stake before scheduling actions
 
-      context('when the app was registered', () => {
-        beforeEach('register app', async () => {
-          await disputable.register({ from: owner })
+      context('when the app was activated', () => {
+        beforeEach('activate app', async () => {
+          await disputable.activate({ from: owner })
         })
 
-        context('when the app is registered', () => {
+        context('when the app is activated', () => {
           context('when the signer has already signed the agreement', () => {
             beforeEach('sign agreement', async () => {
               await disputable.sign(submitter)
@@ -50,9 +50,9 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
                     assert.equal(actionData.submitter, submitter, 'submitter does not match')
                     assert.equal(actionData.context, actionContext, 'action context does not match')
                     assert.isFalse(actionData.closed, 'action state does not match')
-                    assertBn(actionId.settingId, currentSettingId, 'setting ID does not match')
-                    assertBn(actionData.collateralId, currentCollateralId, 'action collateral ID does not match')
+                    assertBn(actionData.settingId, currentSettingId, 'setting ID does not match')
                     assertBn(actionData.disputableActionId, disputableActionId, 'disputable action ID does not match')
+                    assertBn(actionData.collateralRequirementId, currentCollateralId, 'action collateral ID does not match')
                   })
 
                   it('locks the collateral amount', async () => {
@@ -158,11 +158,11 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
           beforeEach('mark as unregistered', async () => {
             await disputable.sign(submitter)
             await disputable.newAction({ submitter })
-            await disputable.unregister({ from: owner })
+            await disputable.deactivate({ from: owner })
           })
 
           it('reverts', async () => {
-            await assertRevert(disputable.newAction({ submitter, actionContext, stake, sign }), AGREEMENT_ERRORS.ERROR_DISPUTABLE_APP_NOT_REGISTERED)
+            await assertRevert(disputable.newAction({ submitter, actionContext, stake, sign }), AGREEMENT_ERRORS.ERROR_DISPUTABLE_APP_NOT_ACTIVE)
           })
         })
       })

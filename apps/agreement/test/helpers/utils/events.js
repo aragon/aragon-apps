@@ -9,8 +9,8 @@ const AGREEMENT_EVENTS = {
   ACTION_VOIDED: 'ActionVoided',
   ACTION_REJECTED: 'ActionRejected',
   ACTION_CLOSED: 'ActionClosed',
-  DISPUTABLE_REGISTERED: 'DisputableAppRegistered',
-  DISPUTABLE_UNREGISTERED: 'DisputableAppUnregistered',
+  DISPUTABLE_ACTIVATED: 'DisputableAppActivated',
+  DISPUTABLE_DEACTIVATED: 'DisputableAppDeactivated',
   COLLATERAL_REQUIREMENT_CHANGED: 'CollateralRequirementChanged'
 }
 

@@ -7,6 +7,7 @@ pragma solidity 0.4.24;
 import "@aragon/os/contracts/apps/disputable/DisputableAragonApp.sol";
 
 
+// TODO: Move this sample app to aragonOS
 contract Registry is DisputableAragonApp {
     /* Validation errors */
     string internal constant ERROR_CANNOT_REGISTER = "REGISTRY_CANNOT_REGISTER";
@@ -55,7 +56,7 @@ contract Registry is DisputableAragonApp {
         external
     {
         initialized();
-        _agreement.register(IDisputable(this), _collateralToken, _actionCollateral, _challengeCollateral, _challengeDuration);
+        _agreement.activate(IDisputable(this), _collateralToken, _challengeDuration, _actionCollateral, _challengeCollateral);
     }
 
     /**

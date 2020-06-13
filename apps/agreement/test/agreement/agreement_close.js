@@ -35,9 +35,9 @@ contract('Agreement', ([_, submitter, someone]) => {
             assert.equal(currentActionState.submitter, previousActionState.submitter, 'submitter does not match')
             assert.equal(currentActionState.context, previousActionState.context, 'action context does not match')
             assertBn(currentActionState.settingId, previousActionState.settingId, 'setting ID does not match')
-            assertBn(currentActionState.collateralId, previousActionState.collateralId, 'collateral ID does not match')
             assertBn(currentActionState.disputableActionId, previousActionState.disputableActionId, 'disputable action ID does not match')
             assertBn(currentActionState.currentChallengeId, previousActionState.currentChallengeId, 'challenge ID does not match')
+            assertBn(currentActionState.collateralRequirementId, previousActionState.collateralRequirementId, 'collateral requirement ID does not match')
           })
 
           if (unlocksBalance) {
@@ -231,13 +231,13 @@ contract('Agreement', ([_, submitter, someone]) => {
         })
       }
 
-      context('when the app was registered', () => {
+      context('when the app was activated', () => {
         itCanCloseActions()
       })
 
       context('when the app was unregistered', () => {
         beforeEach('mark app as unregistered', async () => {
-          await disputable.unregister()
+          await disputable.deactivate()
         })
 
         itCanCloseActions()

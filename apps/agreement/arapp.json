@@ -35,13 +35,6 @@
       ]
     },
     {
-      "name": "Challenge Agreement actions",
-      "id": "CHALLENGE_ROLE",
-      "params": [
-        "Challenger address"
-      ]
-    },
-    {
       "name": "Change Agreement configuration",
       "id": "CHANGE_AGREEMENT_ROLE",
       "params": []

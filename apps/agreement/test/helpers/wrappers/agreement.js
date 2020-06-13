@@ -33,8 +33,8 @@ class AgreementWrapper {
   }
 
   async getAction(actionId) {
-    const { disputable, disputableActionId, context, closed, submitter, settingId, collateralId, currentChallengeId } = await this.agreement.getAction(actionId)
-    return { disputable, disputableActionId, context, closed, submitter, settingId, collateralId, currentChallengeId }
+    const { disputable, disputableActionId, context, closed, submitter, settingId, collateralRequirementId, currentChallengeId } = await this.agreement.getAction(actionId)
+    return { disputable, disputableActionId, context, closed, submitter, settingId, collateralRequirementId, currentChallengeId }
   }
 
   async getChallenge(challengeId) {
@@ -76,13 +76,13 @@ class AgreementWrapper {
   }
 
   async getDisputableInfo(disputable) {
-    const { registered, currentCollateralRequirementId } = await this.agreement.getDisputableInfo(disputable.address)
-    return { registered, currentCollateralRequirementId }
+    const { activated, currentCollateralRequirementId } = await this.agreement.getDisputableInfo(disputable.address)
+    return { activated, currentCollateralRequirementId }
   }
 
-  async getCollateralRequirement(disputable, collateralId) {
+  async getCollateralRequirement(disputable, collateralRequirementId) {
     const MiniMeToken = this._getContract('MiniMeToken')
-    const { collateralToken, actionAmount, challengeAmount, challengeDuration } = await this.agreement.getCollateralRequirement(disputable.address, collateralId)
+    const { collateralToken, actionAmount, challengeAmount, challengeDuration } = await this.agreement.getCollateralRequirement(disputable.address, collateralRequirementId)
     return { collateralToken: await MiniMeToken.at(collateralToken), actionCollateral: actionAmount, challengeCollateral: challengeAmount, challengeDuration }
   }
 
@@ -167,14 +167,14 @@ class AgreementWrapper {
       : this.agreement.rule(disputeId, ruling)
   }
 
-  async register({ disputable, collateralToken, actionCollateral, challengeCollateral, challengeDuration, from = undefined }) {
+  async activate({ disputable, collateralToken, actionCollateral, challengeCollateral, challengeDuration, from = undefined }) {
     if (!from) from = await this._getSender()
-    return this.agreement.register(disputable.address, collateralToken.address, actionCollateral, challengeCollateral, challengeDuration, { from })
+    return this.agreement.activate(disputable.address, collateralToken.address, challengeDuration, actionCollateral, challengeCollateral, { from })
   }
 
-  async unregister({ disputable, from = undefined }) {
+  async deactivate({ disputable, from = undefined }) {
     if (!from) from = await this._getSender()
-    return this.agreement.unregister(disputable.address, { from })
+    return this.agreement.deactivate(disputable.address, { from })
   }
 
   async changeCollateralRequirement(options = {}) {
@@ -186,13 +186,13 @@ class AgreementWrapper {
     const challengeCollateral = options.challengeCollateral || currentRequirements.challengeCollateral
     const challengeDuration = options.challengeDuration || currentRequirements.challengeDuration
 
-    return this.agreement.changeCollateralRequirement(options.disputable.address, collateralToken.address, actionCollateral, challengeCollateral, challengeDuration, { from })
+    return this.agreement.changeCollateralRequirement(options.disputable.address, collateralToken.address, challengeDuration, actionCollateral, challengeCollateral, { from })
   }
 
   async changeSetting({ title = 'title', content = '0x1234', arbitrator = undefined, from = undefined }) {
     if (!from) from = await this._getSender()
     if (!arbitrator) arbitrator = this.arbitrator
-    return this.agreement.changeSetting(title, content, arbitrator.address, { from })
+    return this.agreement.changeSetting(arbitrator.address, title, content, { from })
   }
 
   async approveArbitrationFees({ amount = undefined, from = undefined, accumulate = false }) {
