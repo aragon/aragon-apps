@@ -17,14 +17,15 @@ import {
 } from '@aragon/ui'
 import { useAppState, useConnectedAccount, useNetwork } from '@aragon/api-react'
 import { format } from 'date-fns'
+import DetailedDescription from '../components/DetailedDescription'
 import LocalIdentityBadge from '../components/LocalIdentityBadge/LocalIdentityBadge'
 import LocalLabelAppBadge from '../components/LocalIdentityBadge/LocalLabelAppBadge'
 import SummaryBar from '../components/SummaryBar'
 import SummaryRows from '../components/SummaryRows'
 import VoteActions from '../components/VoteActions'
 import VoteCast from '../components/VoteCast'
+import VoteDescription from '../components/VoteDescription'
 import VoteStatus from '../components/VoteStatus'
-import VoteText from '../components/VoteText'
 import { percentageList, round, safeDiv } from '../math-utils'
 import { getQuorumProgress } from '../vote-utils'
 import { VOTE_NAY, VOTE_YEA } from '../vote-types'
@@ -49,7 +50,7 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
     voteId,
   } = vote
   const { minAcceptQuorum, supportRequired, yea, nay } = numData
-  const { creator, description, metadata, open } = data
+  const { creator, description, metadata, open, path: executionPath } = data
   const quorumProgress = getQuorumProgress(vote)
   const totalVotes = yea + nay
   const votesYeaVotersSize = safeDiv(yea, totalVotes)
@@ -132,11 +133,14 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                   >
                     Description
                   </h2>
-                  <VoteText
-                    text={description || metadata || DEFAULT_DESCRIPTION}
-                    css={`
-                      ${textStyle('body2')};
-                    `}
+                  <VoteDescription
+                    description={
+                      Array.isArray(executionPath) ? (
+                        <DetailedDescription path={executionPath} />
+                      ) : (
+                        description || metadata || DEFAULT_DESCRIPTION
+                      )
+                    }
                   />
                 </div>
                 <div>

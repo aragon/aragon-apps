@@ -55,6 +55,7 @@ retryEvery(() =>
   app
     .call('token')
     .toPromise()
+    .then(marshallAddress)
     .then(initialize)
     .catch(err => {
       console.error(
@@ -94,10 +95,14 @@ async function initialize(tokenAddress) {
       }
     }
 
-    // Token Manager event
-    // TODO: add handlers for the vesting events from token Manager
-
-    return nextState
+    // Token Manager events
+    switch (event) {
+      case 'NewVesting':
+        return newVesting(nextState, returnValues)
+      default:
+        // TODO: add handlers for the other vesting events
+        return nextState
+    }
   }
 
   const storeOptions = {
@@ -148,14 +153,14 @@ function initState({ token, tokenAddress }) {
 
 async function claimedTokens(token, state, { _token, _controller }) {
   const changes = await loadNewBalances(token, _token, _controller)
-  return updateState(state, changes)
+  return updateTokenState(state, changes)
 }
 
 async function transfer(token, state, { _from, _to }) {
   const changes = await loadNewBalances(token, _from, _to)
   // The transfer may have increased the token's total supply, so let's refresh it
   const tokenSupply = await token.totalSupply().toPromise()
-  return updateState(
+  return updateTokenState(
     {
       ...state,
       tokenSupply,
@@ -164,13 +169,21 @@ async function transfer(token, state, { _from, _to }) {
   )
 }
 
+async function newVesting(state, { receiver, vestingId }) {
+  const vestingData = await loadVesting(receiver, vestingId)
+  return updateVestingState(state, receiver, {
+    id: vestingId,
+    data: vestingData,
+  })
+}
+
 /***********************
  *                     *
  *       Helpers       *
  *                     *
  ***********************/
 
-function updateState(state, changes) {
+function updateTokenState(state, changes) {
   const { holders = [] } = state
   return {
     ...state,
@@ -196,9 +209,39 @@ function updateHolders(holders, changed) {
   }
 }
 
+function updateVestingState(state, receiver, newVesting) {
+  const { vestings = {} } = state
+  const address = receiver.toLowerCase()
+
+  const nextVestings = {
+    ...vestings,
+    [address]: updateVestingsForAddress(vestings[address] || [], newVesting),
+  }
+
+  return {
+    ...state,
+    vestings: nextVestings,
+  }
+}
+
+function updateVestingsForAddress(vestingsForAddress, newVesting) {
+  const vestingIndex = vestingsForAddress.findIndex(
+    vesting => vesting.id === newVesting.id
+  )
+  if (vestingIndex === -1) {
+    // Can't find it; concat
+    return vestingsForAddress.concat(newVesting)
+  }
+
+  // Update existing vesting
+  const nextVestingsForAddress = Array.from(vestingsForAddress)
+  nextVestingsForAddress[vestingIndex] = newVesting
+  return nextVestingsForAddress
+}
+
 function loadNewBalances(token, ...addresses) {
   return Promise.all(
-    addresses.map(address =>
+    addresses.map(marshallAddress).map(address =>
       token
         .balanceOf(address)
         .toPromise()
@@ -231,4 +274,37 @@ function loadTokenSettings(token) {
       // Return an empty object to try again later
       return {}
     })
+}
+
+function loadVesting(receiver, vestingId) {
+  // Wrap with retry in case the vesting is somehow not present
+  return retryEvery(() =>
+    app
+      .call('getVesting', receiver, vestingId)
+      .toPromise()
+      .then(vesting => marshallVesting(vesting))
+  )
+}
+
+// Apply transformations to a vesting received from web3
+// Note: ignores the 'open' field as we calculate that locally
+function marshallVesting({ amount, cliff, revokable, start, vesting }) {
+  return {
+    amount,
+    revokable,
+    cliff: marshallDate(cliff),
+    start: marshallDate(start),
+    vesting: marshallDate(vesting),
+  }
+}
+
+function marshallAddress(address) {
+  // On machine-returned addresses, always assume they are correct
+  return address.toLowerCase()
+}
+
+function marshallDate(date) {
+  // Represent dates as real numbers, as it's very unlikely they'll hit the limit...
+  // Adjust for js time (in ms vs s)
+  return parseInt(date, 10) * 1000
 }
