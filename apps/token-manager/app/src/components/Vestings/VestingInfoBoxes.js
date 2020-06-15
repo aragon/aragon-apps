@@ -5,11 +5,11 @@ import {
   EthIdenticon,
   formatTokenAmount,
   GU,
+  shortenAddress,
   textStyle,
   useTheme,
 } from '@aragon/ui'
 import { addressesEqual } from '../../web3-utils'
-import { shortenAddress } from '../../utils'
 import { useAppLogic, useTotalVestedTokensInfo } from '../../app-logic'
 import { useIdentity } from '../IdentityManager/IdentityManager'
 import TokenIcon from '../Icons/TokenIcon'
