@@ -1,10 +1,5 @@
 import BN from 'bn.js'
-import {
-  formatBalance,
-  fromDecimals,
-  stakesPercentages,
-  toDecimals,
-} from './utils'
+import { fromDecimals, stakesPercentages, toDecimals } from './utils'
 
 const bn = v => new BN(v)
 
@@ -116,20 +111,6 @@ describe('toDecimals', () => {
   })
   test('Should return 0 if any empty string is given', () => {
     expect(toDecimals('', 3)).toBe('0')
-  })
-})
-
-describe('formatBalance', () => {
-  test('Should not display the decimals if they are 0', () => {
-    expect(formatBalance(bn(3000), bn(1000))).toBe('3')
-  })
-  test('Should display decimals correctly', () => {
-    expect(formatBalance(bn(3001), bn(1000), 3)).toBe('3.001')
-    expect(formatBalance(bn(3010), bn(1000), 3)).toBe('3.01')
-  })
-  test('Should adapt based on the precision', () => {
-    expect(formatBalance(bn(3001), bn(1000), 1)).toBe('3')
-    expect(formatBalance(bn(3101), bn(1000), 1)).toBe('3.1')
   })
 })
 

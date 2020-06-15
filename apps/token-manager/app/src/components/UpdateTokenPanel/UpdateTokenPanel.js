@@ -4,20 +4,16 @@ import BN from 'bn.js'
 import {
   Button,
   Field,
+  formatTokenAmount,
   GU,
   Info,
   SidePanel,
-  TextInput,
   useSidePanelFocusOnReady,
 } from '@aragon/ui'
 import { isAddress } from '../../web3-utils'
-import {
-  fromDecimals,
-  toDecimals,
-  formatBalance,
-  splitDecimalNumber,
-} from '../../utils'
+import { fromDecimals, toDecimals, splitDecimalNumber } from '../../utils'
 import LocalIdentitiesAutoComplete from '../LocalIdentitiesAutoComplete/LocalIdentitiesAutoComplete'
+import AmountInput from '../AmountInput'
 
 // Any more and the number input field starts to put numbers in scientific notation
 const MAX_INPUT_DECIMAL_BASE = 6
@@ -105,11 +101,7 @@ function usePanelForm({
     value => {
       const maxAmount = getMaxAmountFromBalance(getHolderBalance(value.trim()))
 
-      const maxAmountLabel = formatBalance(
-        maxAmount,
-        tokenDecimalsBase,
-        tokenDecimals
-      )
+      const maxAmountLabel = formatTokenAmount(maxAmount, tokenDecimals)
 
       setHolderField(holderField => ({
         ...holderField,
@@ -125,7 +117,7 @@ function usePanelForm({
 
       setAmountField(amountField => ({
         ...amountField,
-        max: formatBalance(maxAmount, tokenDecimalsBase, tokenDecimals),
+        max: formatTokenAmount(maxAmount, tokenDecimals),
       }))
     },
     [
@@ -178,11 +170,9 @@ function usePanelForm({
             } an amount that is greater than the
              maximum amount of tokens that can be ${
                mode === 'assign' ? 'assigned' : 'removed'
-             } (${formatBalance(
-              maxAmount,
-              tokenDecimalsBase,
-              tokenDecimals
-            )} ${tokenSymbol}).`
+             } (${formatTokenAmount(maxAmount, tokenDecimals, {
+              symbol: tokenSymbol,
+            })} ).`
           : null,
       }))
     },
@@ -334,15 +324,14 @@ function TokenPanelContent({
             : 'Number of tokens to remove'
         }
       >
-        <TextInput
-          type="number"
+        <AmountInput
           ref={holderAddress ? amountInputRef : undefined}
-          value={amountField.value}
           onChange={handleAmountChange}
-          min={tokenStep}
-          max={amountField.max}
+          onMaxClick={() => updateAmount(amountField.max)}
           step={tokenStep}
+          value={amountField.value}
           required
+          showMax={mode === 'remove'}
           wide
         />
       </Field>

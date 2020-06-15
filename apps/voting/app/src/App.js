@@ -14,7 +14,7 @@ import useScrollTop from './hooks/useScrollTop'
 import NoVotes from './screens/NoVotes'
 import VoteDetail from './screens/VoteDetail'
 import Votes from './screens/Votes'
-import { AppLogicProvider, useAppLogic } from './app-logic'
+import { useAppLogic } from './app-logic'
 import { IdentityProvider } from './identity-manager'
 import { SettingsProvider } from './vote-settings-manager'
 
@@ -30,6 +30,7 @@ const App = React.memo(function App() {
   } = useAppLogic()
 
   const { appearance } = useGuiStyle()
+
   const { layoutName } = useLayout()
   const compactMode = layoutName === 'small'
   const handleBack = useCallback(() => selectVote(-1), [selectVote])
@@ -125,14 +126,10 @@ const App = React.memo(function App() {
   )
 })
 
-export default function Voting() {
-  return (
-    <AppLogicProvider>
-      <IdentityProvider>
-        <SettingsProvider>
-          <App />
-        </SettingsProvider>
-      </IdentityProvider>
-    </AppLogicProvider>
-  )
-}
+export default () => (
+  <IdentityProvider>
+    <SettingsProvider>
+      <App />
+    </SettingsProvider>
+  </IdentityProvider>
+)
