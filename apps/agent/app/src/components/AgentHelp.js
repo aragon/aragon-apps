@@ -38,11 +38,7 @@ function AgentHelp() {
               The Agent app can be used to interact with external contracts.
             </div>
             <div>
-              <Link
-                css={`
-                  color: ${theme.indicatorContent};
-                `}
-                href="https://help.aragon.org/article/37-agent">Learn More</Link>
+              <Link href="https://help.aragon.org/article/37-agent">Learn More</Link>
             </div>
           </div>
         </div>
