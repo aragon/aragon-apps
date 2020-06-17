@@ -770,18 +770,18 @@ module.exports = (
         })
 
         it('isValidSignature returns false if there is not designated signer and hash isn\'t presigned', async () => {
-          assertIsValidSignature(false, await agent.isValidSignature(HASH, NO_SIG))
+          assertIsValidSignature(false, await agent.isValidSignatureBytes32(HASH, NO_SIG))
         })
 
         it('presigns a hash', async () => {
           await agent.presignHash(HASH, { from: presigner })
 
-          assertIsValidSignature(true, await agent.isValidSignature(HASH, NO_SIG))
+          assertIsValidSignature(true, await agent.isValidSignatureBytes32(HASH, NO_SIG))
         })
 
         it('fails to presign a hash if not authorized', async () => {
           await assertRevert(agent.presignHash(HASH, { from: nobody }), errors.APP_AUTH_FAILED)
-          assertIsValidSignature(false, await agent.isValidSignature(HASH, NO_SIG))
+          assertIsValidSignature(false, await agent.isValidSignatureBytes32(HASH, NO_SIG))
         })
 
         context('> Designated signer', () => {
@@ -876,27 +876,27 @@ module.exports = (
 
               it('isValidSignature returns true to a valid signature', async () => {
                 const signature = await sign(HASH, signerOrKey)
-                assertIsValidSignature(true, await agent.isValidSignature(HASH, signature))
+                assertIsValidSignature(true, await agent.isValidSignatureBytes32(HASH, signature))
               })
 
               it('isValidSignature returns true to a valid signature with legacy version', async () => {
                 const legacyVersionSignature = await sign(HASH, signerOrKey, true)
-                assertIsValidSignature(true, await agent.isValidSignature(HASH, legacyVersionSignature))
+                assertIsValidSignature(true, await agent.isValidSignatureBytes32(HASH, legacyVersionSignature))
               })
 
               it('isValidSignature returns false to an invalid signature', async () => {
                 const badSignature = (await sign(HASH, signerOrKey)).slice(0, -2) // drop last byte
-                assertIsValidSignature(false, await agent.isValidSignature(HASH, badSignature))
+                assertIsValidSignature(false, await agent.isValidSignatureBytes32(HASH, badSignature))
               })
 
               it('isValidSignature returns false to a signature with an invalid v', async () => {
                 const invalidVersionSignature = await sign(HASH, signerOrKey, false, true)
-                assertIsValidSignature(false, await agent.isValidSignature(HASH, invalidVersionSignature))
+                assertIsValidSignature(false, await agent.isValidSignatureBytes32(HASH, invalidVersionSignature))
               })
 
               it('isValidSignature returns false to an unauthorized signer', async () => {
                 const otherSignature = await sign(HASH, notSignerOrKey)
-                assertIsValidSignature(false, await agent.isValidSignature(HASH, otherSignature))
+                assertIsValidSignature(false, await agent.isValidSignatureBytes32(HASH, otherSignature))
               })
             })
           }
@@ -916,7 +916,7 @@ module.exports = (
               // false - doesn't modify state on checking sig
               await setDesignatedSignerContract(true, true, false, false)
 
-              assertIsValidSignature(true, await agent.isValidSignature(HASH, ERC1271_SIG))
+              assertIsValidSignature(true, await agent.isValidSignatureBytes32(HASH, ERC1271_SIG))
             })
 
             it('isValidSignature returns false if designated signer returns false', async () => {
@@ -927,7 +927,7 @@ module.exports = (
               await setDesignatedSignerContract(true, false, false, false)
 
               // Signature fails check
-              assertIsValidSignature(false, await agent.isValidSignature(HASH, ERC1271_SIG))
+              assertIsValidSignature(false, await agent.isValidSignatureBytes32(HASH, ERC1271_SIG))
             })
 
             it('isValidSignature returns true even if the designated signer doesnt support the interface', async () => {
@@ -937,7 +937,7 @@ module.exports = (
               // false - doesn't modify state on checking sig
               await setDesignatedSignerContract(false, true, false, false)
 
-              assertIsValidSignature(true, await agent.isValidSignature(HASH, ERC1271_SIG))
+              assertIsValidSignature(true, await agent.isValidSignatureBytes32(HASH, ERC1271_SIG))
             })
 
             it('isValidSignature returns false if designated signer reverts', async () => {
@@ -948,7 +948,7 @@ module.exports = (
               await setDesignatedSignerContract(true, true, true, false)
 
               // Reverts on checking
-              assertIsValidSignature(false, await agent.isValidSignature(HASH, ERC1271_SIG))
+              assertIsValidSignature(false, await agent.isValidSignatureBytes32(HASH, ERC1271_SIG))
             })
 
             it('isValidSignature returns false if designated signer attempts to modify state', async () => {
@@ -959,7 +959,7 @@ module.exports = (
               await setDesignatedSignerContract(true, true, false, true)
 
               // Checking costs too much gas
-              assertIsValidSignature(false, await agent.isValidSignature(HASH, ERC1271_SIG))
+              assertIsValidSignature(false, await agent.isValidSignatureBytes32(HASH, ERC1271_SIG))
             })
           })
 
@@ -972,26 +972,26 @@ module.exports = (
 
             it('isValidSignature returns false to an empty signature', async () => {
               const emptySig = '0x'
-              assertIsValidSignature(false, await agent.isValidSignature(HASH, emptySig))
+              assertIsValidSignature(false, await agent.isValidSignatureBytes32(HASH, emptySig))
             })
 
             it('isValidSignature returns false to an invalid mode signature', async () => {
               const invalidSignature = SIGNATURE_MODES.Invalid
-              assertIsValidSignature(false, await agent.isValidSignature(HASH, invalidSignature))
+              assertIsValidSignature(false, await agent.isValidSignatureBytes32(HASH, invalidSignature))
             })
 
             it('isValidSignature returns false to an unspecified mode signature', async () => {
               const unspecifiedSignature = SIGNATURE_MODES.NMode
-              assertIsValidSignature(false, await agent.isValidSignature(HASH, unspecifiedSignature))
+              assertIsValidSignature(false, await agent.isValidSignatureBytes32(HASH, unspecifiedSignature))
             })
 
             it('isValidSignature returns true to an invalid signature iff the hash was presigned', async () => {
               const invalidSignature = SIGNATURE_MODES.Invalid
-              assertIsValidSignature(false, await agent.isValidSignature(HASH, invalidSignature))
+              assertIsValidSignature(false, await agent.isValidSignatureBytes32(HASH, invalidSignature))
 
               // Now presign it
               await agent.presignHash(HASH, { from: presigner })
-              assertIsValidSignature(true, await agent.isValidSignature(HASH, invalidSignature))
+              assertIsValidSignature(true, await agent.isValidSignatureBytes32(HASH, invalidSignature))
             })
           })
 
