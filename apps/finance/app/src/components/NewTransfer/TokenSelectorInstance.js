@@ -1,11 +1,10 @@
 import React from 'react'
 import styled from 'styled-components'
-import { GU } from '@aragon/ui'
+import { addressesEqual, GU } from '@aragon/ui'
 import { useNetwork } from '@aragon/api-react'
 import LocalIdentityBadge from '../LocalIdentityBadge/LocalIdentityBadge'
 import { tokenIconUrl } from '../../lib/icon-utils'
 import { ETHER_TOKEN_FAKE_ADDRESS } from '../../lib/token-utils'
-import { addressesEqual } from '../../lib/web3-utils'
 
 const TokenSelectorInstance = React.memo(function TokenSelectorInstance({
   address,

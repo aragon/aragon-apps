@@ -6,7 +6,7 @@ import {
   Incoming,
   Outgoing,
 } from '../transfer-types'
-import { addressesEqual } from '../lib/web3-utils'
+import { addressesEqual} from '@aragon/ui'
 
 const UNSELECTED_TOKEN_FILTER = -1
 const UNSELECTED_TRANSFER_TYPE_FILTER = -1

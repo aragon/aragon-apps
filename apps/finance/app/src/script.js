@@ -1,4 +1,5 @@
 import Aragon, { events } from '@aragon/api'
+import { addressesEqual } from '@aragon/ui'
 import { first } from 'rxjs/operators'
 import { getTestTokenAddresses } from './testnet'
 import {
@@ -9,7 +10,6 @@ import {
   isTokenVerified,
   tokenDataOverride,
 } from './lib/token-utils'
-import { addressesEqual } from './lib/web3-utils'
 import tokenBalanceOfAbi from './abi/token-balanceof.json'
 import tokenDecimalsAbi from './abi/token-decimals.json'
 import tokenNameAbi from './abi/token-name.json'

@@ -2,6 +2,7 @@ import React, { useMemo, useCallback, useContext } from 'react'
 import PropTypes from 'prop-types'
 import { compareDesc, format } from 'date-fns'
 import {
+  addressesEqual,
   Button,
   ContextMenu,
   ContextMenuItem,
@@ -24,7 +25,7 @@ import {
   useNetwork,
 } from '@aragon/api-react'
 import { saveAs } from 'file-saver'
-import { addressesEqual, toChecksumAddress } from '../lib/web3-utils'
+import { toChecksumAddress } from '../lib/web3-utils'
 import TransfersFilters from './TransfersFilters'
 import { useIdentity, IdentityContext } from './IdentityManager/IdentityManager'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
