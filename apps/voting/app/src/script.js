@@ -1,5 +1,5 @@
 import Aragon, { events } from '@aragon/api'
-import { addressesEqual } from './web3-utils'
+import { addressesEqual } from '@aragon/ui'
 import voteSettings from './vote-settings'
 import { VOTE_ABSENT } from './vote-types'
 import { voteTypeFromContractEnum } from './vote-utils'

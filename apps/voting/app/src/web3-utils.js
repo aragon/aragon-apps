@@ -3,18 +3,6 @@ const ETH_ADDRESS_TEST_REGEX = /(0x[a-fA-F0-9]{40}(?:\b|\.|,|\?|!|;))/g
 
 export const EMPTY_ADDRESS = '0x0000000000000000000000000000000000000000'
 
-/**
- * Check address equality without checksums
- * @param {string} first First address
- * @param {string} second Second address
- * @returns {boolean} Address equality
- */
-export function addressesEqual(first, second) {
-  first = first && first.toLowerCase()
-  second = second && second.toLowerCase()
-  return first === second
-}
-
 // Detect Ethereum addresses in a string and transform each part.
 //
 // `callback` is called on every part with two params:

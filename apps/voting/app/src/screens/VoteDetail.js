@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react'
 import {
+  addressesEqual,
   BackButton,
   Bar,
   Box,
@@ -29,7 +30,6 @@ import VoteStatus from '../components/VoteStatus'
 import { percentageList, round, safeDiv } from '../math-utils'
 import { getQuorumProgress } from '../vote-utils'
 import { VOTE_NAY, VOTE_YEA } from '../vote-types'
-import { addressesEqual } from '../web3-utils'
 
 const formatDate = date => `${format(date, 'do MMM yy, HH:mm')}`
 
