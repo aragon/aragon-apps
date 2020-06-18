@@ -1,9 +1,8 @@
 import React from 'react'
 import { useConnectedAccount } from '@aragon/api-react'
-import { GU, textStyle } from '@aragon/ui'
+import { addressesEqual, GU, textStyle } from '@aragon/ui'
 import { useAppLogic } from '../../app-logic'
 import emptyImage from '../../assets/no-vestings.png'
-import { addressesEqual } from '../../web3-utils'
 
 function EmptyVestings() {
   const { selectedHolder } = useAppLogic()

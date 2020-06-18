@@ -3,6 +3,7 @@ import PropTypes from 'prop-types'
 import BN from 'bn.js'
 import { useConnectedAccount } from '@aragon/api-react'
 import {
+  addressesEqual,
   ContextMenu,
   ContextMenuItem,
   DataView,
@@ -17,7 +18,6 @@ import {
   useLayout,
   useTheme,
 } from '@aragon/ui'
-import { addressesEqual } from '../web3-utils'
 import InfoBoxes from '../components/InfoBoxes'
 import LocalIdentityBadge from '../components/LocalIdentityBadge/LocalIdentityBadge'
 import { useIdentity } from '../components/IdentityManager/IdentityManager'

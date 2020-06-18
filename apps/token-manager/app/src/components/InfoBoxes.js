@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react'
 import { useConnectedAccount, useNetwork } from '@aragon/api-react'
 import {
+  addressesEqual,
   Box,
   Distribution,
   formatTokenAmount,
@@ -9,7 +10,6 @@ import {
   useTheme,
 } from '@aragon/ui'
 import { stakesPercentages } from '../utils'
-import { addressesEqual } from '../web3-utils'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
 import You from './You'
 import { useIdentity } from './IdentityManager/IdentityManager'

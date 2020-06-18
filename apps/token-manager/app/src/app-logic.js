@@ -1,10 +1,10 @@
 import { useCallback, useMemo } from 'react'
 import BN from 'bn.js'
 import { useAppState, usePath } from '@aragon/api-react'
+import { addressesEqual } from '@aragon/ui'
 import { useNow } from './hooks/useNow'
 import { holderFromPath, pathFromHolder } from './routing'
 import { getVestedTokensInfo } from './vesting-utils'
-import { addressesEqual } from './web3-utils'
 
 // Get the vestings from the holder currently selected, or null otherwise.
 export function useSelectedHolderVestings() {
