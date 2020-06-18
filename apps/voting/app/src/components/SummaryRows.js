@@ -1,8 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
-import { GU, textStyle, useTheme } from '@aragon/ui'
+import { formatTokenAmount, GU, textStyle, useTheme } from '@aragon/ui'
 import You from './You'
-import { formatNumber } from '../math-utils'
 import { VOTE_NAY, VOTE_YEA } from '../vote-types'
 
 function SummaryRows({ yea, nay, symbol, connectedAccountVote }) {
@@ -69,7 +68,9 @@ function SummaryRow({ color, label, pct, token, youVoted }) {
           margin-left: ${2 * GU}px;
         `}
       >
-        {formatNumber(token.amount, 5)} {token.symbol}
+        {formatTokenAmount(token.amount, 0, {
+          symbol: token.symbol
+        })}
       </div>
     </div>
   )

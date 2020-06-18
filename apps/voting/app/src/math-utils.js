@@ -1,43 +1,5 @@
 import BN from 'bn.js'
 
-/**
- * Format numbers for a given number of decimal places
- *
- * @param {number} num Number to round
- * @param {number} [decimals=2] Number of decimals to round to
- * @param {Object} [options] Options object
- * @param {bool} [options.truncate=true] Whether to truncate the trailing decimals (if they're 0)
- * @returns {String} Formatted number
- */
-export function formatNumber(num, decimals = 2, { truncate = true } = {}) {
-  const multiplicator = Math.pow(10, decimals)
-  const roundedNum = Math.round(num * multiplicator) / multiplicator
-  const numString = String(roundedNum)
-
-  if (!decimals) {
-    return numString
-  }
-
-  const exponentialIndex = numString.indexOf('e+')
-  const numWithoutExponents =
-    exponentialIndex > -1 ? numString.substring(0, exponentialIndex) : numString
-
-  const [whole, decimal = ''] = numWithoutExponents.split('.')
-  const trimmedDecimals = truncate ? decimal.replace(/0+$/, '') : decimals
-  const formattedNumber = trimmedDecimals.length
-    ? `${whole}.${
-        trimmedDecimals.length > decimals
-          ? trimmedDecimals.slice(0, decimals)
-          : trimmedDecimals
-      }`
-    : whole
-
-  // If we were dealing with a yuge number, append the exponent suffix back
-  return exponentialIndex > -1
-    ? `${formattedNumber}${numString.substring(exponentialIndex)}`
-    : formattedNumber
-}
-
 export function percentageList(values, digits = 0) {
   return scaleBNValuesSet(values).map(value => value.toNumber())
 }
