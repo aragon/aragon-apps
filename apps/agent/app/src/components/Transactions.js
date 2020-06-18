@@ -8,6 +8,7 @@ import {
   useNetwork,
 } from '@aragon/api-react'
 import {
+  addressesEqual,
   AppBadge,
   blockExplorerUrl,
   Button,
@@ -30,7 +31,7 @@ import { TRANSACTION_TYPES_LABELS } from '../transaction-types'
 import useDownloadData from './useDownloadData'
 import useFilteredTransactions from './useFilteredTransactions'
 import { ISO_FORMAT, MMDDYY_FUNC_FORMAT } from '../lib/date-utils'
-import { addressesEqual, toChecksumAddress } from '../lib/web3-utils'
+import { toChecksumAddress } from '../lib/web3-utils'
 import AgentSvg from './assets/agent_badge.svg'
 
 const Transactions = React.memo(function Transactions({
