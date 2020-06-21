@@ -30,7 +30,7 @@ import { useIdentity, IdentityContext } from './IdentityManager/IdentityManager'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
 import useFilteredTransfers from './useFilteredTransfers'
 
-const formatDate = date => format(date, 'dd/MM/yy')
+const formatDate = date => format(date, 'yy-MM-dd')
 
 const getDownloadData = async (transfers, tokenDetails, resolveAddress) => {
   const mappedData = await Promise.all(
@@ -219,7 +219,7 @@ const Transfers = React.memo(({ tokens, transactions }) => {
 
         return [
           <time dateTime={formattedDate} title={formattedDate}>
-            {format(date, 'dd/MM/yy')}
+            {format(date, 'yyyy-MM-dd')}
           </time>,
           <div
             css={`

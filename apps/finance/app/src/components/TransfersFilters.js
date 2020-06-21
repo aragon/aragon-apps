@@ -40,6 +40,7 @@ const TransfersFilters = ({
         startDate={dateRangeFilter.start}
         endDate={dateRangeFilter.end}
         onChange={onDateRangeChange}
+        format={'YYYY-MM-DD'}
       />
     </div>
   )
