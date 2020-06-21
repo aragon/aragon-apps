@@ -30,7 +30,7 @@ import { useIdentity, IdentityContext } from './IdentityManager/IdentityManager'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
 import useFilteredTransfers from './useFilteredTransfers'
 
-const formatDate = date => format(date, 'yy-MM-dd')
+const formatDate = date => format(date, 'yyyy-MM-dd')
 
 const getDownloadData = async (transfers, tokenDetails, resolveAddress) => {
   const mappedData = await Promise.all(
