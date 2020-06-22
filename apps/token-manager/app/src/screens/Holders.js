@@ -3,7 +3,6 @@ import PropTypes from 'prop-types'
 import BN from 'bn.js'
 import { useConnectedAccount } from '@aragon/api-react'
 import {
-  addressesEqual,
   ContextMenu,
   ContextMenuItem,
   DataView,
@@ -13,6 +12,7 @@ import {
   IconLabel,
   IconRemove,
   Split,
+  addressesEqual,
   formatTokenAmount,
   textStyle,
   useLayout,
