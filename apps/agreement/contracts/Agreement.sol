@@ -10,6 +10,7 @@ import "@aragon/os/contracts/apps/disputable/IDisputable.sol";
 import "@aragon/os/contracts/common/ConversionHelpers.sol";
 import "@aragon/os/contracts/common/SafeERC20.sol";
 import "@aragon/os/contracts/common/TimeHelpers.sol";
+import "@aragon/os/contracts/lib/arbitration/ITransactionFeesOracle.sol";
 import "@aragon/os/contracts/lib/token/ERC20.sol";
 import "@aragon/os/contracts/lib/math/SafeMath.sol";
 import "@aragon/os/contracts/lib/math/SafeMath64.sol";
@@ -29,6 +30,9 @@ contract Agreement is IAgreement, AragonApp {
     uint256 internal constant DISPUTES_POSSIBLE_OUTCOMES = 2;
     uint256 internal constant DISPUTES_RULING_SUBMITTER = 3;
     uint256 internal constant DISPUTES_RULING_CHALLENGER = 4;
+
+    // Transaction fees module ID - keccak256(abi.encodePacked("TRANSACTION_FEES"))
+    bytes32 internal constant TRANSACTION_FEES_MODULE = 0x5ad82e07a3131a2e6a5f70dcd6174d074efb2b1eda63b07d0625721114bab36d;
 
     /* Validation errors */
     string internal constant ERROR_SENDER_NOT_ALLOWED = "AGR_SENDER_NOT_ALLOWED";
@@ -62,6 +66,7 @@ contract Agreement is IAgreement, AragonApp {
     string internal constant ERROR_CANNOT_SUBMIT_EVIDENCE = "AGR_CANNOT_SUBMIT_EVIDENCE";
     string internal constant ERROR_SUBMITTER_FINISHED_EVIDENCE = "AGR_SUBMITTER_FINISHED_EVIDENCE";
     string internal constant ERROR_CHALLENGER_FINISHED_EVIDENCE = "AGR_CHALLENGER_FINISHED_EVIDENCE";
+    string internal constant ERROR_TX_FEES_MODULE_NOT_FOUND = "AGR_TX_FEES_MODULE_NOT_FOUND";
 
     // bytes32 public constant CHALLENGE_ROLE = keccak256("CHALLENGE_ROLE");
     bytes32 public constant CHALLENGE_ROLE = 0xef025787d7cd1a96d9014b8dc7b44899b8c1350859fb9e1e05f5a546dd65158d;
@@ -271,11 +276,14 @@ contract Agreement is IAgreement, AragonApp {
         uint256 currentCollateralRequirementId = disputableInfo.nextCollateralRequirementsId - 1;
         CollateralRequirement storage requirement = _getCollateralRequirement(disputableInfo, currentCollateralRequirementId);
         _lockBalance(requirement.staking, _submitter, requirement.actionAmount);
-        // TODO: pay court transaction fees
+
+        // Pay court transaction fees
+        IDisputable disputable = IDisputable(msg.sender);
+        _payTransactionFees(currentSettingId, disputable, requirement.staking, _submitter);
 
         uint256 id = nextActionId++;
         Action storage action = actions[id];
-        action.disputable = IDisputable(msg.sender);
+        action.disputable = disputable;
         action.collateralRequirementId = currentCollateralRequirementId;
         action.disputableActionId = _disputableActionId;
         action.submitter = _submitter;
@@ -711,6 +719,28 @@ contract Agreement is IAgreement, AragonApp {
     }
 
     // Internal fns
+
+    function _payTransactionFees(uint256 settingId, IDisputable _disputable, Staking _staking, address _submitter) internal {
+        // Get fees
+        IArbitrator arbitrator = settings[settingId].arbitrator;
+        address transactionFeesOracleAddress = arbitrator.getModule(TRANSACTION_FEES_MODULE);
+        require(transactionFeesOracleAddress != address(0), ERROR_TX_FEES_MODULE_NOT_FOUND);
+        ITransactionFeesOracle transactionFeesOracle = ITransactionFeesOracle(transactionFeesOracleAddress);
+        bytes32 appId = _disputable.appId();
+        (ERC20 token, uint256 amount, address beneficiary) = transactionFeesOracle.getFee(appId);
+
+        if (amount == 0) {
+            return;
+        }
+
+        // Pay fees
+        if (token == _staking.token()) {
+            _staking.lock(_submitter, address(this), amount);
+            _staking.slashAndUnstake(_submitter, beneficiary, amount);
+        } else {
+            require(token.safeTransferFrom(_submitter, beneficiary, amount), ERROR_TOKEN_TRANSFER_FAILED);
+        }
+    }
 
     /**
     * @dev Close an action

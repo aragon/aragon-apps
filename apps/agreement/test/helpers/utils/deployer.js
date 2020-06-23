@@ -8,6 +8,7 @@ const { getEventArgument, getNewProxyAddress } = require('@aragon/contract-helpe
 
 const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff'
 const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
+const TRANSACTION_FEES_MODULE = '0x5ad82e07a3131a2e6a5f70dcd6174d074efb2b1eda63b07d0625721114bab36d'
 
 const DEFAULT_AGREEMENT_INITIALIZATION_PARAMS = {
   appId: '0xcafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234',
@@ -46,6 +47,10 @@ class AgreementDeployer {
     this.previousDeploy = {}
   }
 
+  get TRANSACTION_FEES_MODULE() {
+    return TRANSACTION_FEES_MODULE
+  }
+ 
   get owner() {
     return this.previousDeploy.owner
   }
@@ -88,6 +93,10 @@ class AgreementDeployer {
 
   get clockMock() {
     return this.previousDeploy.clockMock
+  }
+
+  get transactionFeesOracle() {
+    return this.previousDeploy.transactionFeesOracle
   }
 
   get abi() {
@@ -186,6 +195,13 @@ class AgreementDeployer {
     const Arbitrator = this._getContract('ArbitratorMock')
     const arbitrator = await Arbitrator.new(feeToken.address, feeAmount)
     this.previousDeploy = { ...this.previousDeploy, arbitrator }
+
+    // add transaction fees module
+    const TransactionFeesOracle = this._getContract('TransactionFeesOracleMock')
+    const transactionFeesOracle = await TransactionFeesOracle.new()
+    await arbitrator.setModule(TRANSACTION_FEES_MODULE, transactionFeesOracle.address)
+    this.previousDeploy = { ...this.previousDeploy, transactionFeesOracle }
+
     return arbitrator
   }
 

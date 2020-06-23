@@ -21,6 +21,7 @@ contract ArbitratorMock is IArbitrator {
     Fee public fee;
     uint256 public disputesLength;
     mapping (uint256 => Dispute) public disputes;
+    mapping (bytes32 => address) internal modules;
 
     event NewDispute(uint256 disputeId, uint256 possibleRulings, bytes metadata);
     event EvidencePeriodClosed(uint256 indexed disputeId);
@@ -60,11 +61,19 @@ contract ArbitratorMock is IArbitrator {
         fee.amount = _feeAmount;
     }
 
+    function setModule(bytes32 _id, address _module) external {
+        modules[_id] = _module;
+    }
+
     function getDisputeFees() public view returns (address recipient, ERC20 feeToken, uint256 feeAmount) {
         return (address(this), fee.token, fee.amount);
     }
 
     function getSubscriptionFees(address) external view returns (address, ERC20, uint256) {
         return (address(this), fee.token, 0);
+    }
+
+    function getModule(bytes32 _id) external view returns (address) {
+        return modules[_id];
     }
 }
