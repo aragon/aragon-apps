@@ -23,8 +23,8 @@ function AgentHelp() {
         >
           <div
             css={`
-              width: 46px;
-              height: 46px;
+              width: ${6 * GU}px;
+              height: ${6 * GU}px;
             `}
           >
             <AgentSvg />
