@@ -44,6 +44,7 @@ function TransactionFilters({
         format={MMDDYY_FORMAT}
         onChange={onDateRangeChange}
         startDate={dateRangeFilter.start}
+        format={'YYYY-MM-DD'}
       />
     </div>
   )
