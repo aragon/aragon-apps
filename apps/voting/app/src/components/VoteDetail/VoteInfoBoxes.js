@@ -35,10 +35,8 @@ function VoteInfoBoxes({ vote }) {
       css={`
         margin-top: ${2 * GU}px;
         display: grid;
-        grid-template-columns: ${compact ? 'auto' : 'auto auto auto'};
-        grid-template-rows: ${compact ? 'auto auto auto' : 'auto'};
-        column-gap: ${2 * GU}px;
-        row-gap: ${2 * GU}px;
+        grid-auto-flow: ${compact ? 'row' : 'column'};
+        grid-gap: ${2 * GU}px;
       `}
     >
       <div>
@@ -80,7 +78,7 @@ function VoteInfoBoxes({ vote }) {
                 color: ${theme.surfaceContentSecondary};
               `}
             >
-              (>{round(supportRequired * 100, 2)}% needed)
+              (&gt;{round(supportRequired * 100, 2)}% needed)
             </span>
           </div>
           <SummaryBar
@@ -166,7 +164,7 @@ function Status({ vote }) {
         css={`
           margin-top: ${1 * GU}px;
           display: inline-grid;
-          grid-template-columns: auto auto;
+          grid-auto-flow: column;
           grid-gap: ${1 * GU}px;
           align-items: center;
           color: ${theme.surfaceContentSecondary};
