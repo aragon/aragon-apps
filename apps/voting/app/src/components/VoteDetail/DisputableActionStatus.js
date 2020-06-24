@@ -1,0 +1,116 @@
+import React from 'react'
+import {
+  Box,
+  Button,
+  GU,
+  IconLock,
+  Info,
+  textStyle,
+  Timer,
+  useTheme,
+} from '@aragon/ui'
+import { getAgreement } from '../../agreementsMockData'
+import { addressesEqual } from '../../web3-utils'
+
+function DisputableActionStatus({ vote, connectedAccount }) {
+  //TODO: get agreement and vote real data
+  const theme = useTheme()
+  const agreement = getAgreement()
+
+  return (
+    <React.Fragment>
+      <Box heading="Disputable Action Status">
+        <Item>
+          <Label>Status</Label>
+          <div>DisputableStatusTag</div>
+        </Item>
+        <Item>
+          <Label>Action collateral locked</Label>
+          <div
+            css={`
+              display: flex;
+              align-items: center;
+            `}
+          >
+            {vote.disputable.action.collateral.challengeAmount}{' '}
+            {vote.disputable.action.collateral.collateralToken}
+            <span
+              css={`
+                padding-left: ${1 * GU}px;
+              `}
+            >
+              <IconLock size="small" />
+            </span>
+          </div>
+        </Item>
+        <Item>
+          <Label>Challenge period</Label>
+          <Timer end={new Date(Date.now() + 48 * 1000 * 60 * 60)} />
+        </Item>
+        <Item>
+          <Label>Agreement</Label>
+          <div
+            css={`
+              ${textStyle('body2')};
+              color: ${theme.link};
+            `}
+          >
+            {agreement.agreementTitle}
+          </div>
+        </Item>
+        {vote.disputable && vote.disputable.action && (
+          <Item>
+            <Label>Dispute</Label>
+            <div
+              css={`
+                ${textStyle('body2')};
+                color: ${theme.link};
+              `}
+            >
+              Dispute #{vote.disputable.action.currentChallengeId}
+            </div>
+          </Item>
+        )}
+        <Item>
+          <Info>
+            Exceeding reaction chamber thermal limit. We have begun power-supply
+            calibration. Force fields have been established on all turbo lifts
+            and crawlways. Warp drive within normal parameters. I read an ion
+            trail.
+          </Info>
+        </Item>
+      </Box>
+    </React.Fragment>
+  )
+}
+
+function Item({ children }) {
+  return (
+    <div
+      css={`
+        margin-bottom: ${3 * GU}px;
+      `}
+    >
+      {children}
+    </div>
+  )
+}
+
+function Label({ children }) {
+  const theme = useTheme()
+
+  return (
+    <label
+      css={`
+        ${textStyle('label2')};
+        color: ${theme.surfaceContentSecondary};
+        display: block;
+        margin-bottom: ${1 * GU}px;
+      `}
+    >
+      {children}
+    </label>
+  )
+}
+
+export default DisputableActionStatus
