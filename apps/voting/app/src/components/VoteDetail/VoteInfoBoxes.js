@@ -174,13 +174,14 @@ function Status({ vote }) {
         <IconTime size="small" /> {formatDate(executionDate || endDate)}
       </div>
       {executionTransaction && (
-        <div>
+        <div
+          css={`
+            margin-top: ${1 * GU}px;
+          `}
+        >
           <TransactionBadge
             networkType={network && network.type}
             transaction={executionTransaction}
-            css={`
-              margin-top: ${1 * GU}px;
-            `}
           />
         </div>
       )}
