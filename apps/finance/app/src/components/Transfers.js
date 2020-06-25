@@ -30,7 +30,7 @@ import { useIdentity, IdentityContext } from './IdentityManager/IdentityManager'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
 import useFilteredTransfers from './useFilteredTransfers'
 
-const formatDate = date => format(date, 'dd/MM/yy')
+const formatDate = date => format(date, 'yyyy-MM-dd')
 
 const getDownloadData = async (transfers, tokenDetails, resolveAddress) => {
   const mappedData = await Promise.all(
@@ -58,11 +58,11 @@ const getDownloadData = async (transfers, tokenDetails, resolveAddress) => {
 }
 
 const getDownloadFilename = (appAddress, { start, end }) => {
-  const today = format(Date.now(), 'yyyy-MM-dd')
+  const today = formatDate(Date.now())
   let filename = `finance_${appAddress}_${today}.csv`
   if (start && end) {
-    const formattedStart = format(start, 'yyyy-MM-dd')
-    const formattedEnd = format(end, 'yyyy-MM-dd')
+    const formattedStart = formatDate(start)
+    const formattedEnd = formatDate(end)
     filename = `finance_${appAddress}_${formattedStart}_to_${formattedEnd}.csv`
   }
   return filename
@@ -219,7 +219,7 @@ const Transfers = React.memo(({ tokens, transactions }) => {
 
         return [
           <time dateTime={formattedDate} title={formattedDate}>
-            {format(date, 'dd/MM/yy')}
+            {formatDate(date)}
           </time>,
           <div
             css={`
