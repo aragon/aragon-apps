@@ -27,17 +27,20 @@
     "@babel/preset-env": "^7.10.2",
     "@babel/preset-react": "^7.10.1",
     "babel-eslint": "^10.0.1",
+    "babel-jest": "^26.1.0",
     "babel-plugin-styled-components": "^1.10.7",
     "eslint": "^5.6.0",
     "eslint-config-prettier": "^3.1.0",
     "eslint-config-standard": "^12.0.0",
     "eslint-config-standard-react": "^7.0.2",
     "eslint-plugin-import": "^2.8.0",
+    "eslint-plugin-jest": "^23.17.1",
     "eslint-plugin-node": "^7.0.1",
     "eslint-plugin-prettier": "^2.7.0",
     "eslint-plugin-promise": "^4.0.1",
     "eslint-plugin-react": "^7.5.1",
     "eslint-plugin-standard": "^4.0.0",
+    "jest": "^26.1.0",
     "parcel-bundler": "^1.12.4",
     "parcel-plugin-bundle-visualiser": "^1.2.0",
     "prettier": "^1.11.1"
@@ -49,7 +52,8 @@
     "build:script": "parcel build src/script.js --out-dir build/",
     "watch:script": "parcel watch src/script.js --out-dir build/ --no-hmr",
     "sync-assets": "copy-aragon-ui-assets -n aragon-ui ./build && rsync -rtu ./public/ ./build",
-    "now-build": "npm run build"
+    "now-build": "npm run build",
+    "test": "jest"
   },
   "browserslist": [
     ">2%",
