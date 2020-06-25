@@ -21,7 +21,7 @@ function convertRatesUrl(symbolsQuery) {
  */
 export function convertAmount(amount, decimals, rate, options) {
   return formatTokenAmount(
-    new BN(amount)
+    new BN(String(amount))
       .mul(new BN(10).pow(new BN(CONVERT_PRECISION)))
       .mul(new BN(rate * 10 ** CONVERT_PRECISION)),
     new BN(decimals).add(new BN(CONVERT_PRECISION * 2)),
