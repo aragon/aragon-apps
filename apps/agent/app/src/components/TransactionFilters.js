@@ -1,7 +1,6 @@
 import React from 'react'
 import { DateRangePicker, DropDown, GU } from '@aragon/ui'
 import { noop } from '../lib/utils'
-import { MMDDYY_FORMAT } from '../lib/date-utils'
 
 function TransactionFilters({
   dateRangeFilter,
@@ -40,10 +39,10 @@ function TransactionFilters({
         onChange={onTokenChange}
       />
       <DateRangePicker
-        endDate={dateRangeFilter.end}
-        format={MMDDYY_FORMAT}
-        onChange={onDateRangeChange}
         startDate={dateRangeFilter.start}
+        endDate={dateRangeFilter.end}
+        onChange={onDateRangeChange}
+        format={'YYYY-MM-DD'}
       />
     </div>
   )

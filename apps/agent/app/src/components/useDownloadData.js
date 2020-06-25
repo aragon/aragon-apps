@@ -4,7 +4,7 @@ import { saveAs } from 'file-saver'
 import { formatTokenAmount } from '@aragon/ui'
 import { IdentityContext } from './IdentityManager/IdentityManager'
 import { toChecksumAddress } from '../lib/web3-utils'
-import { formatDate, ISO_SHORT_FORMAT } from '../lib/date-utils'
+import { ISO_SHORT_FORMAT } from '../lib/date-utils'
 import { TRANSACTION_TYPES_LABELS } from '../transaction-types'
 
 // Transforms a two dimensional array into a CSV data structure
@@ -41,7 +41,7 @@ async function getDownloadData({ transactions, tokenDetails, resolveAddress }) {
             })
           )
           return [
-            formatDate(date),
+            format(date, ISO_SHORT_FORMAT),
             source,
             recipient,
             TRANSACTION_TYPES_LABELS[type],
