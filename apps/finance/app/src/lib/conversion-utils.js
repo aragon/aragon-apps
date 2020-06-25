@@ -10,7 +10,15 @@ function convertRatesUrl(symbolsQuery) {
   return `https://min-api.cryptocompare.com/data/price?fsym=USD&tsyms=${symbolsQuery}`
 }
 
-// Convert an amount into another one using a rate (Number).
+/**
+ * Convert an amount into another one using a rate.
+ *
+ * @param {BigInt|string|number} amount amount to convert
+ * @param {BigInt|string|number} decimals number of decimals for the amount
+ * @param {string|number} rate the rate to use for the conversion
+ * @param {Object} [options] options passed to formatTokenAmount()
+ * @returns {string} the formatted amount converted
+ */
 export function convertAmount(amount, decimals, rate, options) {
   return formatTokenAmount(
     new BN(amount)
