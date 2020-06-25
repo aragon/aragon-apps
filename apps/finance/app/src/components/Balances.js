@@ -2,7 +2,8 @@ import React, { useMemo } from 'react'
 import BN from 'bn.js'
 import { Box, GU, textStyle, useTheme, useLayout } from '@aragon/ui'
 import BalanceToken from './BalanceToken'
-import { getConvertedAmount, useConvertRates } from '../lib/conversion-utils'
+import { getConvertedAmount } from '../lib/conversion-utils'
+import { useConvertRates } from './useConvertRates'
 
 // Prepare the balances for the BalanceToken component
 function useBalanceItems(balances) {
