@@ -8,8 +8,8 @@ import { tokenIconUrl } from '../lib/icon-utils'
 function BalanceToken({
   address,
   amount,
+  amountConverted,
   compact,
-  convertedAmount,
   decimals,
   symbol,
   verified,
@@ -82,24 +82,18 @@ function BalanceToken({
             ${textStyle('body2')}
           `}
         >
-          {convertedAmount.isNeg()
-            ? '−'
-            : `$${formatTokenAmount(convertedAmount, decimals)}`}
+          {amountConverted ? `$${amountConverted}` : '−'}
         </div>
       </div>
     </div>
   )
 }
 
-BalanceToken.defaultProps = {
-  convertedAmount: new BN(-1),
-}
-
 BalanceToken.propTypes = {
   address: PropTypes.string.isRequired,
   amount: PropTypes.instanceOf(BN).isRequired,
+  amountConverted: PropTypes.string,
   compact: PropTypes.bool.isRequired,
-  convertedAmount: PropTypes.instanceOf(BN),
   decimals: PropTypes.instanceOf(BN).isRequired,
   symbol: PropTypes.string.isRequired,
   verified: PropTypes.bool.isRequired,

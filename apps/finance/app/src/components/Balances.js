@@ -2,7 +2,7 @@ import React, { useMemo } from 'react'
 import BN from 'bn.js'
 import { Box, GU, textStyle, useTheme, useLayout } from '@aragon/ui'
 import BalanceToken from './BalanceToken'
-import { getConvertedAmount, useConvertRates } from '../lib/conversion-utils'
+import { convertAmount, useConvertRates } from '../lib/conversion-utils'
 
 // Prepare the balances for the BalanceToken component
 function useBalanceItems(balances) {
@@ -18,9 +18,10 @@ function useBalanceItems(balances) {
         return {
           address,
           amount,
-          convertedAmount: convertRates[symbol]
-            ? getConvertedAmount(amount, convertRates[symbol], decimals)
-            : new BN('-1'),
+          amountConverted:
+            amount && decimals && convertRates[symbol]
+              ? convertAmount(amount, decimals, 1 / convertRates[symbol])
+              : '',
           decimals,
           symbol,
           verified,
@@ -84,7 +85,7 @@ function Balances({ balances }) {
                 ({
                   address,
                   amount,
-                  convertedAmount,
+                  amountConverted,
                   decimals,
                   symbol,
                   verified,
@@ -107,7 +108,7 @@ function Balances({ balances }) {
                       address={address}
                       amount={amount}
                       compact={compact}
-                      convertedAmount={convertedAmount}
+                      amountConverted={amountConverted}
                       decimals={decimals}
                       symbol={symbol}
                       verified={verified}
