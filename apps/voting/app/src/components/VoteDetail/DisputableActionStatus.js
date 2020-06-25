@@ -10,6 +10,7 @@ import {
   useTheme,
 } from '@aragon/ui'
 import { format } from 'date-fns'
+import DisputableStatusLabel from '../DisputableStatusLabel'
 import { getAgreement } from '../../agreementsMockData'
 
 const formatDate = date => `${format(date, 'yyyy-MM-dd, HH:mm')}`
@@ -33,7 +34,7 @@ function DisputableActionStatus({ vote }) {
     <Box heading="Disputable Action Status">
       <ul>
         <Item label="Status">
-          <div>DisputableStatusTag</div>
+          <DisputableStatusLabel vote={vote} />
         </Item>
         <Item label="Action collateral locked">
           <div
