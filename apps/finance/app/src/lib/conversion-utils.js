@@ -20,11 +20,13 @@ function convertRatesUrl(symbolsQuery) {
  * @returns {string} the formatted amount converted
  */
 export function convertAmount(amount, decimals, rate, options) {
+  amount = new BN(String(amount))
+  decimals = parseInt(String(decimals), 10)
   return formatTokenAmount(
-    new BN(String(amount))
+    amount
       .mul(new BN(10).pow(new BN(CONVERT_PRECISION)))
       .mul(new BN(rate * 10 ** CONVERT_PRECISION)),
-    new BN(decimals).add(new BN(CONVERT_PRECISION * 2)),
+    decimals + CONVERT_PRECISION * 2,
     options
   )
 }
