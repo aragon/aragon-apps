@@ -10,6 +10,7 @@ import {
   useTheme,
 } from '@aragon/ui'
 import { format } from 'date-fns'
+import DisputableActions from './DisputableActions'
 import DisputableStatusLabel from '../DisputableStatusLabel'
 import { getAgreement } from '../../agreementsMockData'
 import { DISPUTABLE_VOTE_STATUSES } from '../../disputable-vote-statuses'
@@ -35,17 +36,23 @@ function DisputableActionStatus({ vote }) {
 
   return (
     <Box heading="Disputable Action Status">
-      <ul>
-        <Item label="Status">
-          {disputableStatus && (
-            <DisputableStatusLabel status={disputableStatus} />
-          )}
-        </Item>
-        <Item label="Action collateral locked">
-          <div
+      <Item>
+        <Label>Status</Label>
+        <DisputableStatusLabel vote={vote} />
+      </Item>
+      <Item>
+        <Label>Action collateral locked</Label>
+        <div
+          css={`
+            display: flex;
+            align-items: center;
+          `}
+        >
+          {vote.disputable.action.collateral.challengeAmount}{' '}
+          {vote.disputable.action.collateral.collateralToken}
+          <span
             css={`
-              display: flex;
-              align-items: center;
+              padding-left: ${1 * GU}px;
             `}
           >
             {challengeAmount} {collateralToken}
@@ -99,6 +106,9 @@ function DisputableActionStatus({ vote }) {
             and crawlways. Warp drive within normal parameters. I read an ion
             trail.
           </Info>
+        </Item>
+        <Item>
+          <DisputableActions vote={vote} />
         </Item>
       </ul>
     </Box>
