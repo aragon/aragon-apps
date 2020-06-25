@@ -5,10 +5,10 @@
 pragma solidity 0.4.24;
 
 import "@aragon/os/contracts/apps/AragonApp.sol";
+import "@aragon/os/contracts/apps/disputable/DisputableAragonApp.sol";
 import "@aragon/os/contracts/common/IForwarder.sol";
 import "@aragon/os/contracts/lib/math/SafeMath.sol";
 import "@aragon/os/contracts/lib/math/SafeMath64.sol";
-import "@aragon/os/contracts/apps/disputable/DisputableAragonApp.sol";
 import "@aragon/minime/contracts/MiniMeToken.sol";
 
 
@@ -52,12 +52,10 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     enum VoteStatus {
         Active,                         // An ongoing vote
         Paused,                         // A vote that is being challenged
-        Cancelled,                      // A vote that has been cancelled since it was refused after a dispute
+        Cancelled,                      // A vote that has been cancelled since it was refused after a challenge or dispute
         Executed                        // A vote that has been executed
     }
 
-    // The `casters` mapping is only used for voting delegation to store
-    // the address of representative that voted on behalf of a principal
     struct Vote {
         uint64 startDate;
         uint64 snapshotBlock;
@@ -68,11 +66,17 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
         uint256 votingPower;
         bytes executionScript;
         mapping (address => VoterState) voters;
+
+        // Delegation state
+        // The `casters` mapping is only used for voting delegation to store
+        // the address of the representative that voted on behalf of a principal
         mapping (address => address) casters;
         uint64 overruleWindow;
+
+        // Disputable state
         uint64 pausedAt;                        // Datetime when the vote was paused
         uint64 pauseDuration;                   // Duration in seconds while the vote has been paused
-        VoteStatus status;            // Status of the disputable vote
+        VoteStatus status;                      // Status of the disputable vote
         uint256 actionId;                       // Identification number of the disputable action in the context of the agreement
     }
 
@@ -81,7 +85,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     uint64 public minAcceptQuorumPct;
     uint64 public voteTime;
 
-    // We are mimicing an array, we use a mapping instead to make app upgrade more graceful
+    // We are mimicing an array, we use a mapping instead to make app upgrades more graceful
     mapping (uint256 => Vote) internal votes;
     uint256 public votesLength;
 
@@ -107,11 +111,11 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     }
 
     /**
-    * @notice Initialize Voting app with `_token.symbol(): string` for governance, minimum support of `@formatPct(_supportRequiredPct)`%, minimum acceptance quorum of `@formatPct(_minAcceptQuorumPct)`%, and a voting duration of `@transformTime(_voteTime)`
+    * @notice Initialize DisputableVoting app with `_token.symbol(): string` for governance, minimum support of `@formatPct(_supportRequiredPct)`%, minimum acceptance quorum of `@formatPct(_minAcceptQuorumPct)`%, and a voting duration of `@transformTime(_voteTime)`
     * @param _token MiniMeToken Address that will be used as governance token
     * @param _supportRequiredPct Percentage of yeas in cast votes for a vote to succeed (expressed as a percentage of 10^18; eg. 10^16 = 1%, 10^18 = 100%)
     * @param _minAcceptQuorumPct Percentage of yeas in total possible votes for a vote to succeed (expressed as a percentage of 10^18; eg. 10^16 = 1%, 10^18 = 100%)
-    * @param _voteTime Seconds that a vote will be open for token holders to vote (unless enough yeas or nays have been cast to make an early decision)
+    * @param _voteTime Seconds that a vote will be open for tokenholders to vote
     */
     function initialize(MiniMeToken _token, uint64 _supportRequiredPct, uint64 _minAcceptQuorumPct, uint64 _voteTime) external onlyInit {
         initialized();
@@ -155,7 +159,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     }
 
     /**
-    * @notice Change overrule window to a duration of `@transformTime(_newOverruleWindow)`
+    * @notice Change overrule window to `@transformTime(_newOverruleWindow)`
     * @param _newOverruleWindow New overrule window in seconds
     */
     function changeOverruleWindow(uint64 _newOverruleWindow)
@@ -169,7 +173,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
 
     /**
     * @notice `_representative == 0x0 ? 'Set your voting representative to ' + _representative : 'Remove your representative'`
-    * @param _representative Address of the representative to be allowed on behalf of the sender. Use the zero address for none.
+    * @param _representative Address of the representative who is allowed to vote on behalf of the sender. Use the zero address for none.
     */
     function setRepresentative(address _representative) external isInitialized {
         representatives[msg.sender] = _representative;
@@ -180,7 +184,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     * @notice Create a new vote about "`_metadata`"
     * @param _executionScript EVM script to be executed on approval
     * @param _metadata Vote metadata
-    * @return voteId id for newly created vote
+    * @return voteId Id for newly created vote
     */
     function newVote(bytes _executionScript, string _metadata) external auth(CREATE_VOTES_ROLE) returns (uint256 voteId) {
         return _newVote(_executionScript, _metadata);
@@ -199,12 +203,12 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     }
 
     /**
-    * @notice Vote `_supports ? 'yes' : 'no'` in vote #`_voteId` on behalf of a set of voters
+    * @notice Vote `_supports ? 'yes' : 'no'` in vote #`_voteId` on behalf of multiple voters
     * @dev Initialization check is implicitly provided by `voteExists()` as new votes can only be
     *      created via `newVote()`, which requires initialization
     * @param _voteId Id for vote
     * @param _supports Whether the representative supports the vote
-    * @param _voters Addresses of the voters voting on behalf of
+    * @param _voters Addresses of the voters to vote on behalf of
     */
     function voteOnBehalfOf(uint256 _voteId, bool _supports, address[] _voters) external voteExists(_voteId) {
         require(_voters.length <= MAX_VOTES_DELEGATION_SET_LENGTH, ERROR_DELEGATES_EXCEEDS_MAX_LEN);
@@ -225,8 +229,12 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
         _closeAgreementAction(vote_.actionId);
 
         bytes memory input = new bytes(0); // TODO: Consider input for voting scripts
+
+        // Add Agreement to blacklist to disallow the stored EVMScript from directly calling the
+        // linked Agreement from this app's context (e.g. maliciously creating a new action)
         address[] memory blacklist = new address[](1);
         blacklist[0] = address(_getAgreement());
+
         runScript(vote_.executionScript, input, blacklist);
         emit ExecuteVote(_voteId);
     }
@@ -234,23 +242,31 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     // Disputable getter fns
 
     /**
-    * @dev Tells whether a vote can be challenged or not
-    * @return True if the given vote can be challenged, false otherwise
+    * @dev Tells whether vote #`_voteId` can be challenged
+    * @param _voteId Id for vote
+    * @return True if the given vote can be challenged
     */
     function canChallenge(uint256 _voteId) external view returns (bool) {
         return _voteExists(_voteId) && _isVoteOpen(votes[_voteId]);
     }
 
     /**
-    * @dev Tells whether a vote can be closed or not
-    * @return True if the given vote can be closed, false otherwise
+    * @dev Tells whether vote #`_voteId` can be closed
+    * @param _voteId Id for vote
+    * @return True if the given vote can be closed
     */
     function canClose(uint256 _voteId) external view returns (bool) {
         return _voteExists(_voteId) && !_isVoteOpen(votes[_voteId]);
     }
 
     /**
-    * @dev Tell disputable information related to a vote
+    * @dev Tell disputable information related to vote #`_voteId`
+    *      Initialization check is implicitly provided by `voteExists()` as new votes can only be
+    *      created via `newVote()`, which requires initialization
+    * @param _voteId Id for vote
+    * @return Vote end date
+    * @return Vote is challenged
+    * @return Vote is finished
     */
     function getDisputableAction(uint256 _voteId) external view voteExists(_voteId) returns (uint64 endDate, bool challenged, bool finished) {
         Vote storage vote_ = votes[_voteId];
@@ -262,10 +278,11 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     // Getter fns
 
     /**
-    * @notice Tells whether a vote #`_voteId` can be executed or not
-    * @dev Initialization check is implicitly provided by `voteExists()` as new votes can only be
+    * @dev Tells whether vote #`_voteId` can be executed
+    *      Initialization check is implicitly provided by `voteExists()` as new votes can only be
     *      created via `newVote()`, which requires initialization
-    * @return True if the given vote can be executed, false otherwise
+    * @param _voteId Id for vote
+    * @return True if the given vote can be executed
     */
     function canExecute(uint256 _voteId) external view voteExists(_voteId) returns (bool) {
         Vote storage vote_ = votes[_voteId];
@@ -273,10 +290,12 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     }
 
     /**
-    * @notice Tells whether `_sender` can participate in the vote #`_voteId` or not
-    * @dev Initialization check is implicitly provided by `voteExists()` as new votes can only be
+    * @dev Tells whether `_sender` can participate in the vote #`_voteId`
+    *      Initialization check is implicitly provided by `voteExists()` as new votes can only be
     *      created via `newVote()`, which requires initialization
-    * @return True if the given voter can participate a certain vote, false otherwise
+    * @param _voteId Id for vote
+    * @param _voter Address of the voter
+    * @return True if the given voter can participate a certain vote
     */
     function canVote(uint256 _voteId, address _voter) external view voteExists(_voteId) returns (bool) {
         Vote storage vote_ = votes[_voteId];
@@ -284,10 +303,13 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     }
 
     /**
-    * @notice Tells whether `_representative` can vote on behalf of `_voter` in vote #`_voteId` or not
-    * @dev Initialization check is implicitly provided by `voteExists()` as new votes can only be
+    * @dev Tells whether `_representative` can vote on behalf of `_voter` in vote #`_voteId`
+    *      Initialization check is implicitly provided by `voteExists()` as new votes can only be
     *      created via `newVote()`, which requires initialization
-    * @return True if the given representative can vote on behalf of the given voter in a certain vote, false otherwise
+    * @param _voteId Id for vote
+    * @param _voter Address of the voter
+    * @param _voter Address of the representative
+    * @return True if the given representative can vote on behalf of the given voter in a certain vote
     */
     function canVoteOnBehalfOf(uint256 _voteId, address _voter, address _representative) external view voteExists(_voteId) returns (bool) {
         Vote storage vote_ = votes[_voteId];
@@ -298,7 +320,9 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     }
 
     /**
-    * @dev Return all information for a vote by its ID
+    * @dev Return the main information for vote #`_voteId`
+    *      Initialization check is implicitly provided by `voteExists()` as new votes can only be
+    *      created via `newVote()`, which requires initialization
     * @param _voteId Vote identifier
     * @return Vote executed status
     * @return Vote start date
@@ -343,7 +367,9 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     }
 
     /**
-    * @dev Return the disputable information for a vote by its ID
+    * @dev Return the disputable information for vote #`_voteId`
+    *      Initialization check is implicitly provided by `voteExists()` as new votes can only be
+    *      created via `newVote()`, which requires initialization
     * @param _voteId Vote identifier
     * @return Vote agreement action ID
     * @return Vote paused date
@@ -369,11 +395,11 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     }
 
     /**
-    * @notice Tells whether a vote #`_voteId` is open or not
-    * @dev Initialization check is implicitly provided by `voteExists()` as new votes can only be
+    * @dev Tells whether vote #`_voteId` is open
+    *      Initialization check is implicitly provided by `voteExists()` as new votes can only be
     *      created via `newVote()`, which requires initialization
     * @param _voteId Id for vote
-    * @return True if the vote is still open, false otherwise
+    * @return True if the vote is still open
     */
     function isVoteOpen(uint256 _voteId) external view voteExists(_voteId) returns (bool) {
         return _isVoteOpen(votes[_voteId]);
@@ -381,6 +407,8 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
 
     /**
     * @dev Return the state of a voter for a given vote by its ID
+    *      Initialization check is implicitly provided by `voteExists()` as new votes can only be
+    *      created via `newVote()`, which requires initialization
     * @param _voteId Vote identifier
     * @param _voter Address of the voter
     * @return VoterState of the requested voter for a certain vote
@@ -390,7 +418,9 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     }
 
     /**
-    * @dev Return the caster of a given vote by its ID
+    * @dev Return the caster of a given voter's vote
+    *      Initialization check is implicitly provided by `voteExists()` as new votes can only be
+    *      created via `newVote()`, which requires initialization
     * @param _voteId Vote identifier
     * @param _voter Address of the voter
     * @return Address of the caster of the voter's vote
@@ -400,18 +430,21 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     }
 
     /**
-    * @notice Tells whether `_representative` is `_voter`'s representative or not
-    * @return True if the given representative was allowed by a certain voter, false otherwise
+    * @dev Tells whether `_representative` is `_voter`'s representative
+    * @param _voter Address of the voter
+    * @param _representative Address of the representative
+    * @return True if the given representative was allowed by a certain voter
     */
     function isRepresentativeOf(address _voter, address _representative) external view isInitialized returns (bool) {
         return _isRepresentativeOf(_voter, _representative);
     }
 
     /**
-    * @notice Tells whether vote #`_voteId` is within the overrule period for delegated votes or not
-    * @dev Initialization check is implicitly provided by `voteExists()` as new votes can only be
-    *      created via `newVote(),` which requires initialization
-    * @return True if the requested vote is within the overrule window for delegated votes, false otherwise
+    * @dev Tells whether vote #`_voteId` is within the overrule period for delegated votes
+    *      Initialization check is implicitly provided by `voteExists()` as new votes can only be
+    *      created via `newVote()`, which requires initialization
+    * @param _voteId Vote identifier
+    * @return True if the requested vote is within the overrule window for delegated votes
     */
     function withinOverruleWindow(uint256 _voteId) external view voteExists(_voteId) returns (bool) {
         Vote storage vote_ = votes[_voteId];
@@ -421,7 +454,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     // Forwarding fns
 
     /**
-    * @notice Tells whether the Voting app is a forwarder or not
+    * @dev Tells whether the DisputableVoting app is a forwarder
     * @dev IForwarder interface conformance
     * @return Always true
     */
@@ -430,7 +463,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     }
 
     /**
-    * @notice Creates a vote to execute the desired action, and casts a support vote if possible
+    * @notice Creates a vote to execute the desired action
     * @dev IForwarder interface conformance
     *      Disputable apps are required to be the initial step in the forwarding chain
     * @param _evmScript EVM script to be executed on approval
@@ -442,10 +475,10 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     }
 
     /**
-    * @notice Tells whether `_sender` can forward actions or not
+    * @dev Tells whether `_sender` can forward actions
     * @dev IForwarder interface conformance
     * @param _sender Address of the account intending to forward an action
-    * @return True if the given address can create votes, false otherwise
+    * @return True if the given address can create votes
     */
     function canForward(address _sender, bytes) public view returns (bool) {
         // TODO: Handle the case where a Disputable app doesn't have an Agreement set
@@ -453,11 +486,11 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
         return canPerform(_sender, CREATE_VOTES_ROLE, arr(_sender));
     }
 
-    // Disputable app callbacks
+    // DisputableAragonApp callback implementations
 
     /**
     * @dev Challenge a vote
-    * @param _voteId Identification number of the vote to be challenged
+    * @param _voteId Id for vote to be challenged
     * @param _challengeId Identification number of the challenge associated to the vote in the Agreement app
     */
     function _onDisputableActionChallenged(uint256 _voteId, uint256 _challengeId, address /* _challenger */) internal {
@@ -471,7 +504,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
 
     /**
     * @dev Allow a vote
-    * @param _voteId Identification number of the vote to be allowed
+    * @param _voteId Id for vote to be allowed
     */
     function _onDisputableActionAllowed(uint256 _voteId) internal {
         Vote storage vote_ = votes[_voteId];
@@ -484,7 +517,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
 
     /**
     * @dev Reject a vote
-    * @param _voteId Identification number of the vote to be rejected
+    * @param _voteId Id for vote to be rejected
     */
     function _onDisputableActionRejected(uint256 _voteId) internal {
         Vote storage vote_ = votes[_voteId];
@@ -497,7 +530,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
 
     /**
     * @dev Void a vote
-    * @param _voteId Identification number of the entry to be voided
+    * @param _voteId Id for vote to be voided
     */
     function _onDisputableActionVoided(uint256 _voteId) internal {
         // When a challenged vote is voided, it is considered as being allowed.
@@ -536,7 +569,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     }
 
     /**
-    * @dev Internal function to cast a vote. It assumes the queried vote exists.
+    * @dev Internal function to cast a vote directly. It assumes the queried vote exists.
     */
     function _vote(uint256 _voteId, bool _supports, address _voter) internal {
         Vote storage vote_ = votes[_voteId];
@@ -566,8 +599,9 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     }
 
     /**
-    * @dev Internal function to check if a vote can be executed. It assumes the queried vote exists.
-    * @return True if the given vote can be executed, false otherwise
+    * @dev Internal function to check if a vote can be executed
+    *      It assumes the pointer to the vote is valid
+    * @return True if the given vote can be executed
     */
     function _canExecute(Vote storage vote_) internal view returns (bool) {
         // If vote is already executed, it cannot be executed again
@@ -596,8 +630,9 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     }
 
     /**
-    * @dev Internal function to check if a voter can participate on a vote. It assumes the queried vote exists.
-    * @return True if the given voter can participate a certain vote, false otherwise
+    * @dev Internal function to check if a voter can participate in a vote
+    *      It assumes the pointer to the vote is valid
+    * @return True if the given voter can participate a certain vote
     */
     function _canVote(Vote storage vote_, address _voter) internal view returns (bool) {
         return _isVoteOpen(vote_) && token.balanceOfAt(_voter, vote_.snapshotBlock) > 0;
@@ -605,34 +640,37 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
 
     /**
     * @dev Internal function to check if a representative is allowed to vote on behalf of a voter
-    * @return True if the given representative is allowed by a certain voter, false otherwise
+    * @return True if the given representative is allowed by a certain voter
     */
     function _isRepresentativeOf(address _voter, address _representative) internal view returns (bool) {
         return representatives[_voter] == _representative;
     }
 
     /**
-    * @dev Tell whether a vote is executed or not
+    * @dev Tell whether a vote is executed
+    *      It assumes the pointer to the vote is valid
     * @param vote_ Vote action instance being queried
-    * @return True if the given vote is executed, false otherwise
+    * @return True if the given vote is executed
     */
     function _isExecuted(Vote storage vote_) internal view returns (bool) {
         return vote_.status == VoteStatus.Executed;
     }
 
     /**
-    * @dev Tell whether a vote is paused or not
+    * @dev Tell whether a vote is paused
+    *      It assumes the pointer to the vote is valid
     * @param vote_ Vote action instance being queried
-    * @return True if the given vote is paused, false otherwise
+    * @return True if the given vote is paused
     */
     function _isPaused(Vote storage vote_) internal view returns (bool) {
         return vote_.status == VoteStatus.Paused;
     }
 
     /**
-    * @dev Tell whether a vote is paused or cancelled, or not
+    * @dev Tell whether a vote is paused or cancelled
+    *      It assumes the pointer to the vote is valid
     * @param vote_ Vote action instance being queried
-    * @return True if the given vote is paused or cancelled, false otherwise
+    * @return True if the given vote is paused or cancelled
     */
     function _isPausedOrCancelled(Vote storage vote_) internal view returns (bool) {
         VoteStatus status = vote_.status;
@@ -640,16 +678,18 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     }
 
     /**
-    * @dev Internal function to check if a voter has already voted on a certain vote. It assumes the queried vote exists.
-    * @return True if the given voter has not voted on the requested vote, false otherwise
+    * @dev Internal function to check if a voter has already voted on a certain vote
+    *      It assumes the pointer to the vote is valid
+    * @return True if the given voter has not voted on the requested vote
     */
     function _hasNotVotedYet(Vote storage vote_, address _voter) internal view returns (bool) {
         return _voteCaster(vote_, _voter) != _voter;
     }
 
     /**
-    * @dev Internal function to check if a vote is still open. It assumes the queried vote exists.
-    * @return True if the given vote is open, false otherwise
+    * @dev Internal function to check if a vote is still open
+    *      It assumes the pointer to the vote is valid
+    * @return True if the given vote is open
     */
     function _isVoteOpen(Vote storage vote_) internal view returns (bool) {
         if (_isPausedOrCancelled(vote_)) {
@@ -660,8 +700,9 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     }
 
     /**
-    * @dev Internal function to check if a vote is within its overrule window. It assumes the queried vote exists.
-    * @return True if the given vote is within its overrule window, false otherwise
+    * @dev Internal function to check if a vote is within its overrule window
+    *      It assumes the pointer to the vote is valid
+    * @return True if the given vote is within its overrule window
     */
     function _withinOverruleWindow(Vote storage vote_) internal view returns (bool) {
         if (_isPausedOrCancelled(vote_)) {
@@ -672,8 +713,9 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     }
 
     /**
-    * @dev Internal function to calculate the end date of a vote. It assumes the queried vote exists.
-    *      This function contemplates a pause duration if the vote was paused before.
+    * @dev Internal function to calculate the end date of a vote
+    *      The pause duration will be included only after the vote has "returned" from being paused
+    *      It assumes the pointer to the vote is valid
     */
     function _voteEndDate(Vote storage vote_) internal view returns (uint64) {
         uint64 endDate = vote_.startDate.add(voteTime);
@@ -681,14 +723,16 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     }
 
     /**
-    * @dev Internal function to get the state of a voter. It assumes the queried vote exists.
+    * @dev Internal function to get the state of a voter
+    *      It assumes the pointer to the vote is valid
     */
     function _voterState(Vote storage vote_, address _voter) internal view returns (VoterState) {
         return vote_.voters[_voter];
     }
 
     /**
-    * @dev Internal function to get the caster of a vote. It assumes the queried vote exists.
+    * @dev Internal function to get the caster of a vote
+    *      It assumes the pointer to the vote is valid
     */
     function _voteCaster(Vote storage vote_, address _voter) internal view returns (address) {
         if (_voterState(vote_, _voter) == VoterState.Absent) {
@@ -701,7 +745,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
 
     /**
     * @dev Internal function to check if a certain vote id exists
-    * @return True if the given vote id was already registered, false otherwise
+    * @return True if the given vote id was already registered
     */
     function _voteExists(uint256 _voteId) internal view returns (bool) {
         return _voteId < votesLength;
@@ -719,6 +763,10 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
         return computedPct > _pct;
     }
 
+    /**
+    * @dev Private function to cast a vote
+    *      It assumes the pointer to the vote is valid
+    */
     function _castVote(Vote storage vote_, uint256 _voteId, bool _supports, address _voter) private {
         uint256 voterStake = token.balanceOfAt(_voter, vote_.snapshotBlock);
         VoterState state = _voterState(vote_, _voter);
@@ -740,6 +788,10 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
         emit CastVote(_voteId, _voter, _supports, voterStake);
     }
 
+    /**
+    * @dev Private function to remove any previous caster state when voting directly
+    *      It assumes the pointer to the vote is valid
+    */
     function _overwriteCasterIfNecessary(Vote storage vote_, address _voter) private {
         address _currentCaster = vote_.casters[_voter];
         if (_currentCaster != address(0)) {
