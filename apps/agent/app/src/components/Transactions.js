@@ -29,7 +29,7 @@ import TransactionFilters from './TransactionFilters'
 import { TRANSACTION_TYPES_LABELS } from '../transaction-types'
 import useDownloadData from './useDownloadData'
 import useFilteredTransactions from './useFilteredTransactions'
-import { ISO_SHORT_FORMAT } from '../lib/date-utils'
+import { ISO_SHORT_FORMAT, ISO_LONG_FORMAT } from '../lib/date-utils'
 import { addressesEqual, toChecksumAddress } from '../lib/web3-utils'
 import AgentSvg from './assets/agent_badge.svg'
 
@@ -176,19 +176,20 @@ const Transactions = React.memo(function Transactions({
         const onlyOne = tokenTransfers.length === 1
         const entity = to || from
         const formattedDate = format(date, ISO_SHORT_FORMAT)
+        const formattedLongDate = format(date, ISO_LONG_FORMAT)
         const isValidEntity =
           typeof targetContract === 'string' && tokenTransfers.length > 0
 
         const dateNode = (
           <time
             dateTime={formattedDate}
-            title={formattedDate}
+            title={formattedLongDate}
             css={`
               ${textStyle('body2')};
               color: ${theme.surfaceContent};
             `}
           >
-            {format(date, ISO_SHORT_FORMAT)}
+            {formattedDate}
           </time>
         )
         const badgeNode = onlyOne ? (
