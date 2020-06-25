@@ -173,7 +173,6 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
                       let token
                       beforeEach('set transaction fees', async () => {
                         token = await deployer.deployToken({})
-                        //token = await MiniMeToken.new(ZERO_ADDRESS, ZERO_ADDRESS, 0, 'Another token', 18, 'AOT', true)
                         await deployer.transactionFeesOracle.setFee('0x', token.address, feeAmount)
                       })
 
