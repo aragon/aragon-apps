@@ -3,7 +3,7 @@ import { useAragonApi } from '@aragon/api-react'
 import { Header, Main, SyncIndicator } from '@aragon/ui'
 import Balances from './components/Balances'
 import { IdentityProvider } from './components/IdentityManager/IdentityManager'
-import InstallFrame from './components/InstallFrame'
+import AgentHelp from './components/AgentHelp'
 import Transactions from './components/Transactions'
 
 function App() {
@@ -33,7 +33,7 @@ function App() {
       >
         <SyncIndicator visible={isSyncing} shift={50} />
         <Header primary="Agent" />
-        <InstallFrame />
+        <AgentHelp />
         <Balances balances={balances} />
         <Transactions
           agentAddress={proxyAddress}
