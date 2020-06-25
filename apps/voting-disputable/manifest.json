@@ -1,7 +1,7 @@
 {
   "name": "Disputable Voting",
   "author": "Aragon Association",
-  "description": "Create and participate in disputable votes",
+  "description": "Create and participate in votes that may be disputed",
   "changelog_url": "https://github.com/aragon/aragon-apps/releases",
   "details_url": "/meta/details.md",
   "source_url": "https://github.com/aragon/aragon-apps/blob/master/apps/voting-disputable",
