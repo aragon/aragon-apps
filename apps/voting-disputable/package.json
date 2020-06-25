@@ -34,7 +34,6 @@
     "@aragon/contract-test-helpers": "^0.0.1",
     "@aragon/truffle-config-v5": "^1.0.0",
     "eth-gas-reporter": "^0.2.0",
-    "ethereumjs-testrpc-sc": "^6.5.1-sc.0",
     "ganache-cli": "^6.9.1",
     "solidity-coverage": "^0.7.5",
     "solium": "^1.2.3",
