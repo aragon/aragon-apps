@@ -66,7 +66,6 @@ contract Agreement is IAgreement, AragonApp {
     string internal constant ERROR_CANNOT_SUBMIT_EVIDENCE = "AGR_CANNOT_SUBMIT_EVIDENCE";
     string internal constant ERROR_SUBMITTER_FINISHED_EVIDENCE = "AGR_SUBMITTER_FINISHED_EVIDENCE";
     string internal constant ERROR_CHALLENGER_FINISHED_EVIDENCE = "AGR_CHALLENGER_FINISHED_EVIDENCE";
-    string internal constant ERROR_TX_FEES_MODULE_NOT_FOUND = "AGR_TX_FEES_MODULE_NOT_FOUND";
 
     // bytes32 public constant CHALLENGE_ROLE = keccak256("CHALLENGE_ROLE");
     bytes32 public constant CHALLENGE_ROLE = 0xef025787d7cd1a96d9014b8dc7b44899b8c1350859fb9e1e05f5a546dd65158d;
@@ -275,7 +274,8 @@ contract Agreement is IAgreement, AragonApp {
         // An initial collateral requirement is created when disputable apps are activated, thus length will be always greater than 0
         uint256 currentCollateralRequirementId = disputableInfo.nextCollateralRequirementsId - 1;
         CollateralRequirement storage requirement = _getCollateralRequirement(disputableInfo, currentCollateralRequirementId);
-        _lockBalance(requirement.staking, _submitter, requirement.actionAmount);
+        Staking staking = requirement.staking;
+        _lockBalance(staking, _submitter, requirement.actionAmount);
 
         // Pay court transaction fees
         IDisputable disputable = IDisputable(msg.sender);
@@ -720,24 +720,24 @@ contract Agreement is IAgreement, AragonApp {
 
     // Internal fns
 
-    function _payTransactionFees(uint256 settingId, IDisputable _disputable, Staking _staking, address _submitter) internal {
+    function _payTransactionFees(uint256 _settingId, IDisputable _disputable, Staking _staking, address _submitter) internal {
         // Get fees
-        IArbitrator arbitrator = settings[settingId].arbitrator;
+        IArbitrator arbitrator = settings[_settingId].arbitrator;
         address transactionFeesOracleAddress = arbitrator.getModule(TRANSACTION_FEES_MODULE);
-        require(transactionFeesOracleAddress != address(0), ERROR_TX_FEES_MODULE_NOT_FOUND);
+
+        if (transactionFeesOracleAddress == address(0)) {
+            return;
+        }
+
         ITransactionFeesOracle transactionFeesOracle = ITransactionFeesOracle(transactionFeesOracleAddress);
         bytes32 appId = _disputable.appId();
         (ERC20 token, uint256 amount, address beneficiary) = transactionFeesOracle.getFee(appId);
 
-        if (amount == 0) {
-            return;
-        }
-
         // Pay fees
         if (token == _staking.token()) {
-            _staking.lock(_submitter, address(this), amount);
-            _staking.slashAndUnstake(_submitter, beneficiary, amount);
-        } else {
+            _lockBalance(_staking, _submitter, amount);
+            _slashBalance(_staking, _submitter, beneficiary, amount);
+        } else if (amount > 0) {
             require(token.safeTransferFrom(_submitter, beneficiary, amount), ERROR_TOKEN_TRANSFER_FAILED);
         }
     }

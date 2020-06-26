@@ -8,6 +8,9 @@ import "@aragon/os/contracts/lib/arbitration/IArbitrator.sol";
 contract ArbitratorMock is IArbitrator {
     string internal constant ERROR_DISPUTE_NOT_RULED_YET = "ARBITRATOR_DISPUTE_NOT_RULED_YET";
 
+    // Transaction fees oracle module ID - keccak256(abi.encodePacked("TRANSACTION_FEES"))
+    bytes32 internal constant TRANSACTION_FEES_MODULE = 0x5ad82e07a3131a2e6a5f70dcd6174d074efb2b1eda63b07d0625721114bab36d;
+
     struct Dispute {
         IArbitrable arbitrable;
         uint256 ruling;
@@ -26,9 +29,10 @@ contract ArbitratorMock is IArbitrator {
     event NewDispute(uint256 disputeId, uint256 possibleRulings, bytes metadata);
     event EvidencePeriodClosed(uint256 indexed disputeId);
 
-    constructor(ERC20 _feeToken, uint256 _feeAmount) public {
+    constructor(ERC20 _feeToken, uint256 _feeAmount, address _transactionFeesOracle) public {
         fee.token = _feeToken;
         fee.amount = _feeAmount;
+        modules[TRANSACTION_FEES_MODULE] = _transactionFeesOracle;
         disputesLength++;
     }
 

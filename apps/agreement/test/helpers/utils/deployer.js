@@ -192,15 +192,14 @@ class AgreementDeployer {
     let { feeToken, feeAmount } = { ...DEFAULT_AGREEMENT_INITIALIZATION_PARAMS.arbitrator, ...options }
     if (!feeToken.address) feeToken = await this.deployToken(feeToken)
 
-    const Arbitrator = this._getContract('ArbitratorMock')
-    const arbitrator = await Arbitrator.new(feeToken.address, feeAmount)
-    this.previousDeploy = { ...this.previousDeploy, arbitrator }
-
-    // add transaction fees module
+    // transaction fees module
     const TransactionFeesOracle = this._getContract('TransactionFeesOracleMock')
     const transactionFeesOracle = await TransactionFeesOracle.new()
-    await arbitrator.setModule(TRANSACTION_FEES_MODULE, transactionFeesOracle.address)
     this.previousDeploy = { ...this.previousDeploy, transactionFeesOracle }
+
+    const Arbitrator = this._getContract('ArbitratorMock')
+    const arbitrator = await Arbitrator.new(feeToken.address, feeAmount, transactionFeesOracle.address)
+    this.previousDeploy = { ...this.previousDeploy, arbitrator }
 
     return arbitrator
   }

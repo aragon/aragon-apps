@@ -43,7 +43,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
               })
 
               context('when the signer has enough balance', () => {
-                const newActionFlow = (collateralTokenTransactionFeeAmount) => {
+                const newActionFlow = (transactionFeeAmount) => {
                   context('when the agreement settings did not change', () => {
                     it('creates a new scheduled action', async () => {
                       const currentSettingId = await disputable.getCurrentSettingId()
@@ -67,7 +67,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
 
                       const { locked: currentLockedBalance, available: currentAvailableBalance } = await disputable.getBalance(submitter)
                       assertBn(currentLockedBalance, previousLockedBalance.add(actionCollateral), 'locked balance does not match')
-                      assertBn(currentAvailableBalance, previousAvailableBalance.sub(actionCollateral).sub(collateralTokenTransactionFeeAmount), 'available balance does not match')
+                      assertBn(currentAvailableBalance, previousAvailableBalance.sub(actionCollateral).sub(transactionFeeAmount), 'available balance does not match')
                     })
 
                     it('does not affect token balances', async () => {
@@ -83,7 +83,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
                       assertBn(currentSubmitterBalance, previousSubmitterBalance, 'submitter balance does not match')
 
                       const currentStakingBalance = await collateralToken.balanceOf(stakingAddress)
-                      assertBn(currentStakingBalance.add(collateralTokenTransactionFeeAmount), previousStakingBalance, 'staking balance does not match')
+                      assertBn(currentStakingBalance.add(transactionFeeAmount), previousStakingBalance, 'staking balance does not match')
                     })
 
                     it('emits an event', async () => {
@@ -115,7 +115,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
 
                     it('still have available balance', async () => {
                       const { available } = await disputable.getBalance(submitter)
-                      assertBn(available, actionCollateral.add(collateralTokenTransactionFeeAmount), 'submitter does not have enough staked balance')
+                      assertBn(available, actionCollateral.add(transactionFeeAmount), 'submitter does not have enough staked balance')
                     })
 
                     it('can not schedule actions', async () => {
@@ -139,27 +139,28 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
                     assertEvent({ logs }, AGREEMENT_EVENTS.ACTION_SUBMITTED, { actionId, disputable: disputable.disputable.address })
                   })
                 }
+
                 context('when the transaction fees module is set', () => {
                   context('when the transaction fee is zero', () => {
                     newActionFlow(bn(0))
                   })
 
                   context('when the transaction fee is not zero', () => {
-                    const feeAmount = bigExp(15, 18)
+                    const transactionFeeAmount = bigExp(15, 18)
 
                     context('when the transaction fee token is the staking token', () => {
                       beforeEach('set transaction fees', async () => {
                         const { collateralToken } = disputable
-                        await deployer.transactionFeesOracle.setFee('0x', collateralToken.address, feeAmount)
+                        await deployer.transactionFeesOracle.setFee('0x', collateralToken.address, transactionFeeAmount)
                       })
 
                       context('when the transaction fee payment succeeds', () => {
                         beforeEach('stake, allow', async () => {
-                          await disputable.stake({ amount: feeAmount, user: submitter })
-                          await disputable.allowManager({ owner: submitter, amount: feeAmount })
+                          await disputable.stake({ amount: transactionFeeAmount, user: submitter })
+                          await disputable.allowManager({ owner: submitter, amount: transactionFeeAmount })
                         })
 
-                        newActionFlow(feeAmount)
+                        newActionFlow(transactionFeeAmount)
                       })
 
                       context('when the transaction fee payment doesn’t succeed', () => {
@@ -173,13 +174,13 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
                       let token
                       beforeEach('set transaction fees', async () => {
                         token = await deployer.deployToken({})
-                        await deployer.transactionFeesOracle.setFee('0x', token.address, feeAmount)
+                        await deployer.transactionFeesOracle.setFee('0x', token.address, transactionFeeAmount)
                       })
 
                       context('when the transaction fee payment succeeds', () => {
                         beforeEach('', async () => {
-                          token.generateTokens(submitter, feeAmount)
-                          token.approve(disputable.agreement.address, feeAmount, { from: submitter })
+                          token.generateTokens(submitter, transactionFeeAmount)
+                          token.approve(disputable.agreement.address, transactionFeeAmount, { from: submitter })
                         })
 
                         newActionFlow(bn(0))
@@ -199,9 +200,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
                     await deployer.arbitrator.setModule(deployer.TRANSACTION_FEES_MODULE, ZERO_ADDRESS)
                   })
 
-                  it('reverts', async () => {
-                    await assertRevert(disputable.newAction({ submitter, actionContext, stake, sign }), AGREEMENT_ERRORS.ERROR_TX_FEES_MODULE_NOT_FOUND)
-                  })
+                  newActionFlow(bn(0))
                 })
               })
 
@@ -234,9 +233,6 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
 
         context('when the app is unregistered', () => {
           beforeEach('mark as unregistered', async () => {
-            await deployer.arbitrator.setModule(deployer.TRANSACTION_FEES_MODULE, deployer.transactionFeesOracle.address)
-            const { collateralToken } = disputable
-            await deployer.transactionFeesOracle.setFee('0x', collateralToken.address, 0)
             await disputable.sign(submitter)
             await disputable.newAction({ submitter })
             await disputable.deactivate({ from: owner })
