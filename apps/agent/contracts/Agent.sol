@@ -256,12 +256,13 @@ contract Agent is IERC165, IERC721Receiver, IERC1155Receiver, ERC1271Bytes, IFor
      * @param _interfaceId Interface bytes to check
      * @return True if this contract supports the interface
      */
-    function supportsInterface(bytes4 _interfaceId) external pure returns (bool) {
-        return
+    function supportsInterface(bytes4 _interfaceId) external view returns (bool) {
+        return hasInitialized() && (
             _interfaceId == ERC1271_INTERFACE_ID ||
             _interfaceId == ERC721_RECEIVED_INTERFACE_ID ||
             _interfaceId == ERC1155_RECEIVER_INTERFACE_ID ||
-            _interfaceId == ERC165_INTERFACE_ID;
+            _interfaceId == ERC165_INTERFACE_ID
+        );
     }
 
     /**

@@ -125,6 +125,10 @@ module.exports = (
         assert.isTrue(await agent.hasInitialized())
       })
 
+      it('does not support ERC165', async () => {
+        assert.isFalse(await agent.supportsInterface(ERC165_SUPPORT_INTERFACE_ID))
+      })
+
       it('does not support ERC721 receipt callback', async () => {
         const callbackReturn = await agent.onERC721Received.call(accounts[1], accounts[2], 0, NO_DATA)
         assert.notEqual(callbackReturn, ERC721_RECEIVED_INTERFACE_ID, 'expected to fail ERC721 receipt')
