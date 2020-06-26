@@ -79,7 +79,7 @@ contract Agreement is IAgreement, AragonApp {
     struct Setting {
         string title;
         bytes content;
-        IArbitrator arbitrator;
+        IAragonCourtArbitrator arbitrator;
     }
 
     struct Action {
@@ -140,10 +140,10 @@ contract Agreement is IAgreement, AragonApp {
     * @notice Initialize Agreement app for "`_title`" and content "`_content`", with arbitrator `_arbitrator` and staking factory `_factory`
     * @param _title String indicating a short description
     * @param _content Link to a human-readable text that describes the initial rules for the Agreements instance
-    * @param _arbitrator Address of the IArbitrator that will be used to resolve disputes
+    * @param _arbitrator Address of the IAragonCourtArbitrator that will be used to resolve disputes
     * @param _stakingFactory Staking factory to be used for the collateral staking pools
     */
-    function initialize(string _title, bytes _content, IArbitrator _arbitrator, StakingFactory _stakingFactory) external {
+    function initialize(string _title, bytes _content, IAragonCourtArbitrator _arbitrator, StakingFactory _stakingFactory) external {
         initialized();
         require(isContract(address(_stakingFactory)), ERROR_STAKING_FACTORY_NOT_CONTRACT);
 
@@ -232,11 +232,11 @@ contract Agreement is IAgreement, AragonApp {
     /**
     * @notice Update Agreement to title "`_title`" and content "`_content`", with arbitrator `_arbitrator`
     * @dev Initialization check is implicitly provided by the `auth()` modifier
-    * @param _arbitrator Address of the IArbitrator that will be used to resolve disputes
+    * @param _arbitrator Address of the IAragonCourtArbitrator that will be used to resolve disputes
     * @param _title String indicating a short description
     * @param _content Link to a human-readable text that describes the rules for the Agreements instance
     */
-    function changeSetting(IArbitrator _arbitrator, string _title, bytes _content) external auth(CHANGE_AGREEMENT_ROLE) {
+    function changeSetting(IAragonCourtArbitrator _arbitrator, string _title, bytes _content) external auth(CHANGE_AGREEMENT_ROLE) {
         _newSetting(_arbitrator, _title, _content);
     }
 
@@ -390,7 +390,7 @@ contract Agreement is IAgreement, AragonApp {
         address submitter = action.submitter;
         require(msg.sender == submitter, ERROR_SENDER_NOT_ALLOWED);
 
-        IArbitrator arbitrator = _getArbitratorFor(action);
+        IAragonCourtArbitrator arbitrator = _getArbitratorFor(action);
         bytes memory metadata = _buildDisputeMetadata(action);
         uint256 disputeId = _createDispute(action, challenge, arbitrator, metadata);
         _submitEvidence(arbitrator, disputeId, submitter, action.context, _submitterFinishedEvidence);
@@ -415,7 +415,7 @@ contract Agreement is IAgreement, AragonApp {
         (, Action storage action, , Challenge storage challenge) = _getDisputedAction(_disputeId);
         require(_isDisputed(challenge), ERROR_CANNOT_SUBMIT_EVIDENCE);
 
-        IArbitrator arbitrator = _getArbitratorFor(action);
+        IAragonCourtArbitrator arbitrator = _getArbitratorFor(action);
         bool submitterAndChallengerFinished = _updateEvidenceSubmissionStatus(action, challenge, msg.sender, _finished);
         _submitEvidence(arbitrator, _disputeId, msg.sender, _evidence, _finished);
 
@@ -435,8 +435,8 @@ contract Agreement is IAgreement, AragonApp {
         (uint256 actionId, Action storage action, uint256 challengeId, Challenge storage challenge) = _getDisputedAction(_disputeId);
         require(_isDisputed(challenge), ERROR_CANNOT_RULE_ACTION);
 
-        IArbitrator arbitrator = _getArbitratorFor(action);
-        require(arbitrator == IArbitrator(msg.sender), ERROR_SENDER_NOT_ALLOWED);
+        IAragonCourtArbitrator arbitrator = _getArbitratorFor(action);
+        require(arbitrator == IAragonCourtArbitrator(msg.sender), ERROR_SENDER_NOT_ALLOWED);
 
         challenge.ruling = _ruling;
         emit Ruled(arbitrator, _disputeId, _ruling);
@@ -476,9 +476,9 @@ contract Agreement is IAgreement, AragonApp {
     * @param _settingId Identification number of the setting being queried
     * @return title String indicating a short description
     * @return content Link to a human-readable text that describes the rules for the Agreements instance
-    * @return arbitrator Address of the IArbitrator that will be used to resolve disputes
+    * @return arbitrator Address of the IAragonCourtArbitrator that will be used to resolve disputes
     */
-    function getSetting(uint256 _settingId) external view returns (IArbitrator arbitrator, string title, bytes content) {
+    function getSetting(uint256 _settingId) external view returns (IAragonCourtArbitrator arbitrator, string title, bytes content) {
         Setting storage setting = _getSetting(_settingId);
         arbitrator = setting.arbitrator;
         title = setting.title;
@@ -624,7 +624,7 @@ contract Agreement is IAgreement, AragonApp {
     */
     function getMissingArbitratorFees(uint256 _actionId) external view returns (ERC20 feeToken, uint256 missingFees, uint256 totalFees) {
         (Action storage action, Challenge storage challenge, ) = _getChallengedAction(_actionId);
-        IArbitrator arbitrator = _getArbitratorFor(action);
+        IAragonCourtArbitrator arbitrator = _getArbitratorFor(action);
         ERC20 challengerFeeToken = challenge.arbitratorFeeToken;
         uint256 challengerFeeAmount = challenge.arbitratorFeeAmount;
 
@@ -722,7 +722,7 @@ contract Agreement is IAgreement, AragonApp {
 
     function _payTransactionFees(uint256 _settingId, IDisputable _disputable, Staking _staking, address _submitter) internal {
         // Get fees
-        IArbitrator arbitrator = settings[_settingId].arbitrator;
+        IAragonCourtArbitrator arbitrator = settings[_settingId].arbitrator;
         address transactionFeesOracleAddress = arbitrator.getModule(TRANSACTION_FEES_MODULE);
 
         if (transactionFeesOracleAddress == address(0)) {
@@ -789,7 +789,7 @@ contract Agreement is IAgreement, AragonApp {
         _depositFrom(_requirement.token, _challenger, _requirement.challengeAmount);
 
         // Transfer half of the Arbitrator fees
-        IArbitrator arbitrator = _getArbitratorFor(_action);
+        IAragonCourtArbitrator arbitrator = _getArbitratorFor(_action);
         (, ERC20 feeToken, uint256 feeAmount) = arbitrator.getDisputeFees();
         uint256 arbitratorFees = feeAmount / 2;
         challenge.arbitratorFeeToken = feeToken;
@@ -802,11 +802,11 @@ contract Agreement is IAgreement, AragonApp {
     * @dev Dispute an action
     * @param _action Action instance to be disputed
     * @param _challenge Current challenge instance for the action
-    * @return _arbitrator Address of the IArbitrator applicable for the action
+    * @return _arbitrator Address of the IAragonCourtArbitrator applicable for the action
     * @return _metadata Metadata content to be used for the dispute
     * @return Identification number of the dispute created in the arbitrator
     */
-    function _createDispute(Action storage _action, Challenge storage _challenge, IArbitrator _arbitrator, bytes memory _metadata)
+    function _createDispute(Action storage _action, Challenge storage _challenge, IAragonCourtArbitrator _arbitrator, bytes memory _metadata)
         internal
         returns (uint256)
     {
@@ -878,7 +878,7 @@ contract Agreement is IAgreement, AragonApp {
     * @param _evidence Evidence data submitted for the dispute
     * @param _finished Whether the submitter is finished submitting evidence
     */
-    function _submitEvidence(IArbitrator _arbitrator, uint256 _disputeId, address _submitter, bytes _evidence, bool _finished) internal {
+    function _submitEvidence(IAragonCourtArbitrator _arbitrator, uint256 _disputeId, address _submitter, bytes _evidence, bool _finished) internal {
         if (_evidence.length > 0) {
             emit EvidenceSubmitted(_arbitrator, _disputeId, _submitter, _evidence, _finished);
         }
@@ -1029,11 +1029,11 @@ contract Agreement is IAgreement, AragonApp {
 
     /**
     * @dev Change Agreement settings
-    * @param _arbitrator Address of the IArbitrator that will be used to resolve disputes
+    * @param _arbitrator Address of the IAragonCourtArbitrator that will be used to resolve disputes
     * @param _title String indicating a short description
     * @param _content Link to a human-readable text that describes the initial rules for the Agreements instance
     */
-    function _newSetting(IArbitrator _arbitrator, string _title, bytes _content) internal {
+    function _newSetting(IAragonCourtArbitrator _arbitrator, string _title, bytes _content) internal {
         require(isContract(address(_arbitrator)), ERROR_ARBITRATOR_NOT_CONTRACT);
 
         uint256 id = nextSettingId++;
@@ -1283,9 +1283,9 @@ contract Agreement is IAgreement, AragonApp {
     /**
     * @dev Tell the arbitrator to be used for an action
     * @param _action Action instance to query
-    * @return arbitrator Address of the IArbitrator that will be used to resolve disputes
+    * @return arbitrator Address of the IAragonCourtArbitrator that will be used to resolve disputes
     */
-    function _getArbitratorFor(Action storage _action) internal view returns (IArbitrator) {
+    function _getArbitratorFor(Action storage _action) internal view returns (IAragonCourtArbitrator) {
         Setting storage setting = _getSetting(_action.settingId);
         return setting.arbitrator;
     }
@@ -1358,9 +1358,7 @@ contract Agreement is IAgreement, AragonApp {
     * @return Total amount of arbitration fees required by the arbitrator to raise a dispute
     * @return Total amount of challenger fee tokens to be refunded to the challenger
     */
-    function _getMissingArbitratorFees(IArbitrator _arbitrator, ERC20 _challengerFeeToken, uint256 _challengerFeeAmount)
-        internal
-        view
+    function _getMissingArbitratorFees(IAragonCourtArbitrator _arbitrator, ERC20 _challengerFeeToken, uint256 _challengerFeeAmount) internal view
         returns (address, ERC20, uint256, uint256, uint256)
     {
         (address disputeFeeRecipient, ERC20 feeToken, uint256 disputeFees) = _arbitrator.getDisputeFees();
