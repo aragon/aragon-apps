@@ -176,20 +176,21 @@ const Transactions = React.memo(function Transactions({
         const [{ token, amount, to, from } = {}] = tokenTransfers
         const onlyOne = tokenTransfers.length === 1
         const entity = to || from
-        const formattedDate = format(date, ISO_FORMAT)
+        const formattedDate = format(date, ISO_SHORT_FORMAT)
+        const formattedLongDate = format(date, ISO_LONG_FORMAT)
         const isValidEntity =
           typeof targetContract === 'string' && tokenTransfers.length > 0
 
         const dateNode = (
           <time
             dateTime={formattedDate}
-            title={formattedDate}
+            title={formattedLongDate}
             css={`
               ${textStyle('body2')};
               color: ${theme.surfaceContent};
             `}
           >
-            {format(date, MMDDYY_FUNC_FORMAT)}
+            {formattedDate}
           </time>
         )
         const badgeNode = onlyOne ? (

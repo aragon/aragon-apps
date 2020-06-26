@@ -1,16 +1,12 @@
-import React, { useState } from 'react'
-import { GU, Info, Link } from '@aragon/ui'
-import FrameSvg from './FrameSvg'
-import FrameModal from './FrameModal'
+import React from 'react'
+import { GU, Info, Link, useTheme } from '@aragon/ui'
+import AgentSvg from './AgentSvg'
 
-function InstallFrame() {
-  const [opened, setOpened] = useState(false)
-  const handleInstallFrameClick = () => setOpened(true)
-  const handleClose = () => setOpened(false)
+function AgentHelp() {
+  const theme = useTheme()
 
   return (
     <React.Fragment>
-      <FrameModal visible={opened} onClose={handleClose} />
       <Info
         css={`
           margin-bottom: ${2 * GU}px;
@@ -25,8 +21,13 @@ function InstallFrame() {
             align-items: center;
           `}
         >
-          <div>
-            <FrameSvg />
+          <div
+            css={`
+              width: ${6 * GU}px;
+              height: ${6 * GU}px;
+            `}
+          >
+            <AgentSvg />
           </div>
           <div>
             <div
@@ -34,10 +35,10 @@ function InstallFrame() {
                 margin-bottom: ${0.5 * GU}px;
               `}
             >
-              To interact with the Agent app you must install Frame.
+              The Agent app can be used to interact with external contracts.
             </div>
             <div>
-              <Link onClick={handleInstallFrameClick}>Install Frame</Link>
+              <Link href="https://help.aragon.org/article/37-agent">Learn More</Link>
             </div>
           </div>
         </div>
@@ -46,4 +47,4 @@ function InstallFrame() {
   )
 }
 
-export default InstallFrame
+export default AgentHelp

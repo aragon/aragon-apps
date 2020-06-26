@@ -1,67 +1,9 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useMemo } from 'react'
 import BN from 'bn.js'
 import { Box, GU, textStyle, useTheme, useLayout } from '@aragon/ui'
 import BalanceToken from './BalanceToken'
-
-const CONVERT_API_RETRY_DELAY = 2 * 1000
-const CONVERT_API_RETRY_DELAY_MAX = 60 * 1000
-
-function convertRatesUrl(symbolsQuery) {
-  return `https://min-api.cryptocompare.com/data/price?fsym=USD&tsyms=${symbolsQuery}`
-}
-
-function useConvertRates(symbols) {
-  const [rates, setRates] = useState({})
-  const retryDelay = useRef(CONVERT_API_RETRY_DELAY)
-
-  const symbolsQuery = symbols.join(',')
-
-  useEffect(() => {
-    let cancelled = false
-    let retryTimer = null
-
-    const update = async () => {
-      if (!symbolsQuery) {
-        setRates({})
-        return
-      }
-
-      try {
-        const response = await fetch(convertRatesUrl(symbolsQuery))
-        const rates = await response.json()
-        if (!cancelled) {
-          setRates(rates)
-          retryDelay.current = CONVERT_API_RETRY_DELAY
-        }
-      } catch (err) {
-        // The !cancelled check is needed in case:
-        //  1. The fetch() request is ongoing.
-        //  2. The component gets unmounted.
-        //  3. An error gets thrown.
-        //
-        //  Assuming the fetch() request keeps throwing, it would create new
-        //  requests even though the useEffect() got cancelled.
-        if (!cancelled) {
-          // Add more delay after every failed attempt
-          retryDelay.current = Math.min(
-            CONVERT_API_RETRY_DELAY_MAX,
-            retryDelay.current * 1.2
-          )
-          retryTimer = setTimeout(update, retryDelay.current)
-        }
-      }
-    }
-    update()
-
-    return () => {
-      cancelled = true
-      clearTimeout(retryTimer)
-      retryDelay.current = CONVERT_API_RETRY_DELAY
-    }
-  }, [symbolsQuery])
-
-  return rates
-}
+import { getConvertedAmount } from '../lib/conversion-utils'
+import { useConvertRates } from './useConvertRates'
 
 // Prepare the balances for the BalanceToken component
 function useBalanceItems(balances) {
@@ -72,18 +14,22 @@ function useBalanceItems(balances) {
   const convertRates = useConvertRates(verifiedSymbols)
 
   const balanceItems = useMemo(() => {
-    return balances.map(({ address, amount, decimals, symbol, verified }) => ({
-      address,
-      amount,
-      convertedAmount: convertRates[symbol]
-        ? amount.divn(convertRates[symbol])
-        : new BN(-1),
-      decimals,
-      symbol,
-      verified,
-    }))
-  }, [balances, convertRates])
-
+    return balances.map(
+      ({ address, amount, decimals, symbol, verified }) => {
+        return {
+          address,
+          amount,
+          convertedAmount: convertRates[symbol]
+            ? getConvertedAmount(amount, convertRates[symbol], decimals)
+            : new BN('-1'),
+          decimals,
+          symbol,
+          verified,
+        }
+      },
+      [balances, convertRates]
+    )
+  })
   return balanceItems
 }
 

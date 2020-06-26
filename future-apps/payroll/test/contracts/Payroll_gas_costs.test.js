@@ -35,27 +35,30 @@ contract('Payroll gas costs', ([owner, employee, anotherEmployee]) => {
     })
 
     context('when there is only one allowed token', function () {
-      it('expends ~337k gas for a single allowed token', async () => {
+      const gas = 382
+      it(`expends ~${gas}k gas for a single allowed token`, async () => {
         await payroll.determineAllocation([DAI.address], [100], { from: employee })
 
         const { receipt: { cumulativeGasUsed } } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, [], { from: employee })
 
         console.log('cumulativeGasUsed:', cumulativeGasUsed)
-        assert.isAtMost(cumulativeGasUsed, 337000, 'payout gas cost for a single allowed token should be ~338k')
+        assert.isAtMost(cumulativeGasUsed, gas * 1000, `payout gas cost for a single allowed token should be ~${gas}k`)
       })
     })
 
     context('when there are two allowed token', function () {
-      it('expends ~49k gas in setting a allocation tokens per token', async () => {
+      const gas_set_allocation = 49
+      it(`expends ~${gas_set_allocation}k gas in setting a allocation tokens per token`, async () => {
         const { receipt: { cumulativeGasUsed: oneTokenAllocationGasUsed } } = await payroll.determineAllocation([DAI.address], [100], { from: employee })
         const { receipt: { cumulativeGasUsed: twoTokensAllocationGasUsed } } = await payroll.determineAllocation([DAI.address, ANT.address], [60, 40], { from: anotherEmployee })
 
         const gasPerAllocationToken = twoTokensAllocationGasUsed - oneTokenAllocationGasUsed
         console.log('gasPerAllocationToken:', gasPerAllocationToken)
-        assert.isAtMost(gasPerAllocationToken, 49000, 'gas cost increment of setting allocation token sets should be ~49k per token')
+        assert.isAtMost(gasPerAllocationToken, gas_set_allocation * 1000, `gas cost increment of setting allocation token sets should be ~${gas_set_allocation}k per token`)
       })
 
-      it('expends ~30k gas in overwriting an allocation set per token', async () => {
+      const gas_overwrite_allocation = 30
+      it(`expends ~${gas_overwrite_allocation}k gas in overwriting an allocation set per token`, async () => {
         await payroll.determineAllocation([DAI.address], [100], { from: employee })
         const { receipt: { cumulativeGasUsed: oneTokenAllocationOverwriteGasUsed } } = await payroll.determineAllocation([ANT.address], [100], { from: employee })
 
@@ -64,10 +67,11 @@ contract('Payroll gas costs', ([owner, employee, anotherEmployee]) => {
 
         const gasPerAllocationToken = twoTokensAllocationOverwriteGasUsed - oneTokenAllocationOverwriteGasUsed
         console.log('gasPerAllocationToken:', gasPerAllocationToken)
-        assert.isAtMost(gasPerAllocationToken, 30000, 'gas cost increment of overwriting allocation token sets should be ~30k per token')
+        assert.isAtMost(gasPerAllocationToken, gas_overwrite_allocation * 1000, `gas cost increment of overwriting allocation token sets should be ~${gas_overwrite_allocation}k per token`)
       })
 
-      it('expends ~295k gas in payday per allowed token', async () => {
+      const gas_payday = 323
+      it(`expends ~${gas_payday}k gas in payday per allowed token`, async () => {
         await payroll.determineAllocation([DAI.address], [100], { from: employee })
         const { receipt: { cumulativeGasUsed: employeePayoutGasUsed } } = await payroll.payday(PAYMENT_TYPES.PAYROLL, 0, [], { from: employee })
 
@@ -76,7 +80,7 @@ contract('Payroll gas costs', ([owner, employee, anotherEmployee]) => {
 
         const gasPerAllowedToken = anotherEmployeePayoutGasUsed - employeePayoutGasUsed
         console.log('gasPerAllowedToken:', gasPerAllowedToken)
-        assert.isAtMost(gasPerAllowedToken, 295000, 'payroll payday gas cost increment per allowed token should be ~295k')
+        assert.isAtMost(gasPerAllowedToken, gas_payday * 1000, `payroll payday gas cost increment per allowed token should be ~${gas_payday}k`)
       })
     })
   })

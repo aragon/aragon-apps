@@ -63,9 +63,6 @@ function Holders({
           fields={groupMode ? ['Owner'] : ['Holder', 'Balance']}
           entries={mappedEntries}
           renderEntry={([address, balance, vestings]) => {
-            const theme = useTheme()
-            const { totalLocked } = useTotalVestedTokensInfo(vestings)
-
             const isCurrentUser = addressesEqual(address, connectedAccount)
 
             const values = [
@@ -89,25 +86,11 @@ function Holders({
 
             if (!groupMode) {
               values.push(
-                <div
-                  css={`
-                    display: flex;
-                    align-items: center;
-                  `}
-                >
-                  {formatTokenAmount(balance, tokenDecimals)}
-                  {!totalLocked.isZero() && (
-                    <div
-                      css={`
-                        padding-left: ${1 * GU}px;
-                        ${textStyle('label1')};
-                        color: ${theme.surfaceContentSecondary};
-                      `}
-                    >
-                      ({formatTokenAmount(totalLocked, tokenDecimals)} locked)
-                    </div>
-                  )}
-                </div>
+                <TokenAmount
+                  balance={balance}
+                  tokenDecimals={tokenDecimals}
+                  vestings={vestings}
+                />
               )
             }
 
@@ -221,6 +204,33 @@ function EntryActions({
         </ContextMenuItem>
       ))}
     </ContextMenu>
+  )
+}
+
+function TokenAmount({ balance, tokenDecimals, vestings }) {
+  const theme = useTheme()
+  const { totalLocked } = useTotalVestedTokensInfo(vestings)
+
+  return (
+    <div
+      css={`
+        display: flex;
+        align-items: center;
+      `}
+    >
+      {formatTokenAmount(balance, tokenDecimals)}
+      {!totalLocked.isZero() && (
+        <div
+          css={`
+            padding-left: ${1 * GU}px;
+            ${textStyle('label1')};
+            color: ${theme.surfaceContentSecondary};
+          `}
+        >
+          ({formatTokenAmount(totalLocked, tokenDecimals)} locked)
+        </div>
+      )}
+    </div>
   )
 }
 

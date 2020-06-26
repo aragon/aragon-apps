@@ -140,6 +140,7 @@ const Votes = React.memo(function Votes({
               startDate={voteDateRangeFilter.start}
               endDate={voteDateRangeFilter.end}
               onChange={handleVoteDateRangeFilterChange}
+              format={'YYYY/MM/DD'}
             />
           </div>
         </Bar>
