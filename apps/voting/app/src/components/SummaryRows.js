@@ -69,7 +69,7 @@ function SummaryRow({ color, label, pct, token, youVoted }) {
         `}
       >
         {formatTokenAmount(token.amount, 0, {
-          symbol: token.symbol
+          symbol: token.symbol,
         })}
       </div>
     </div>
