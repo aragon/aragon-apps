@@ -3,7 +3,7 @@ const ethUtil = require('ethereumjs-util')
 const ethABI = require('web3-eth-abi')
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
 const { assertAmountOfEvents } = require('@aragon/test-helpers/assertEvent')(web3)
-const { getEventArgument, getNewProxyAddress } = require('@aragon/test-helpers/events')
+const { getEvents, getEventArgument, getNewProxyAddress } = require('@aragon/test-helpers/events')
 const { encodeCallScript } = require('@aragon/test-helpers/evmScript')
 const { makeErrorMappingProxy } = require('@aragon/test-helpers/utils')
 
@@ -37,6 +37,9 @@ module.exports = (
   const ERC165_SUPPORT_INVALID_ID = '0xffffffff'
   const ERC165_SUPPORT_INTERFACE_ID = '0x01ffc9a7'
   const ERC721_RECEIVED_INTERFACE_ID = '0x150b7a02'
+  const ERC1155_RECEIVER_INTERFACE_ID = '0x4e2312e0'
+  const ERC1155_SINGLE_RECEIVED_INTERFACE_ID = '0xf23a6e61'
+  const ERC1155_BATCH_RECEIVED_INTERFACE_ID = '0xbc197c81'
 
   const AgentLike = artifacts.require(agentName)
 
@@ -122,6 +125,21 @@ module.exports = (
         assert.isTrue(await agent.hasInitialized())
       })
 
+      it('does not support ERC721 receipt callback', async () => {
+        const callbackReturn = await agent.onERC721Received.call(accounts[1], accounts[2], 0, NO_DATA)
+        assert.notEqual(callbackReturn, ERC721_RECEIVED_INTERFACE_ID, 'expected to fail ERC721 receipt')
+      })
+
+      it('does not support ERC1155 single receipt callback', async () => {
+        const callbackReturn = await agent.onERC1155Received.call(accounts[1], accounts[2], 0, 1, NO_DATA)
+        assert.notEqual(callbackReturn, ERC1155_SINGLE_RECEIVED_INTERFACE_ID, 'expected to fail ERC1155 single receipt')
+      })
+
+      it('does not support ERC1155 batch receipt callback', async () => {
+        const callbackReturn = await agent.onERC1155BatchReceived.call(accounts[1], accounts[2], [0], [1], NO_DATA)
+        assert.notEqual(callbackReturn, ERC1155_BATCH_RECEIVED_INTERFACE_ID, 'expected to fail ERC1155 batch receipt')
+      })
+
       it('cannot execute actions', async () => {
         await acl.createPermission(root, agent.address, EXECUTE_ROLE, root, { from: root })
         await assertRevert(agent.execute(accounts[8], 0, NO_DATA), errors.APP_AUTH_FAILED)
@@ -170,6 +188,72 @@ module.exports = (
 
       it('fails on reinitialization', async () => {
         await assertRevert(agent.initialize(), errors.INIT_ALREADY_INITIALIZED)
+      })
+
+      context('> ERC165', () => {
+        it('supports base ERC165 interface', async () => {
+          assert.isTrue(await agent.supportsInterface(ERC165_SUPPORT_INTERFACE_ID))
+          assert.isFalse(await agent.supportsInterface(ERC165_SUPPORT_INVALID_ID))
+        })
+
+        it('supports ERC1271 interface', async () => {
+          assert.isTrue(await agent.supportsInterface(ERC1271_INTERFACE_ID))
+        })
+
+        it('supports ERC721Receiver interface', async () => {
+          assert.isTrue(await agent.supportsInterface(ERC721_RECEIVED_INTERFACE_ID))
+        })
+
+        it('supports ERC1155Receiver interface', async () => {
+          assert.isTrue(await agent.supportsInterface(ERC1155_RECEIVER_INTERFACE_ID))
+        })
+
+        it("doesn't support any other interface", async () => {
+          assert.isFalse(await agent.supportsInterface('0x12345678'))
+          assert.isFalse(await agent.supportsInterface('0x'))
+        })
+      })
+
+      context('> ERC721', () => {
+        it('supports ERC721 receiver callback', async () => {
+          const [token, operator, from] = accounts
+          const tokenId = 5
+          const data = '0x12345678'
+
+          const callbackReturn = await agent.onERC721Received.call(operator, from, tokenId, data)
+          assert.equal(callbackReturn, ERC721_RECEIVED_INTERFACE_ID, 'expected ERC721 receipt magic return')
+
+          const receipt = await agent.onERC721Received(operator, from, tokenId, data)
+          assertAmountOfEvents(receipt, 'ReceiveERC721')
+        })
+      })
+
+      context('> ERC1155', () => {
+        it('supports ERC1155 single receipt callback', async () => {
+          const [token, operator, from] = accounts
+          const id = 5
+          const value = 10
+          const data = '0x12345678'
+
+          const callbackReturn = await agent.onERC1155Received.call(operator, from, id, value, data)
+          assert.equal(callbackReturn, ERC1155_SINGLE_RECEIVED_INTERFACE_ID, 'expected ERC1155 single receipt magic return')
+
+          const receipt = await agent.onERC1155Received(operator, from, id, value, data)
+          assertAmountOfEvents(receipt, 'ReceiveERC1155')
+        })
+
+        it('supports ERC1155 batch receipt callback', async () => {
+          const [token, operator, from] = accounts
+          const ids = [5, 6]
+          const values = [10, 11]
+          const data = '0x12345678'
+
+          const callbackReturn = await agent.onERC1155BatchReceived.call(operator, from, ids, values, data)
+          assert.equal(callbackReturn, ERC1155_BATCH_RECEIVED_INTERFACE_ID, 'expected ERC1155 batch receipt magic return')
+
+          const receipt = await agent.onERC1155BatchReceived(operator, from, ids, values, data)
+          assertAmountOfEvents(receipt, 'ReceiveERC1155', ids.length)
+        })
       })
 
       context('> Executing actions', () => {
@@ -749,24 +833,6 @@ module.exports = (
         beforeEach(async () => {
           await acl.createPermission(presigner, agent.address, ADD_PRESIGNED_HASH_ROLE, root, { from: root })
           await acl.createPermission(signerDesignator, agent.address, DESIGNATE_SIGNER_ROLE, root, { from: root })
-        })
-
-        it('complies with ERC165', async () => {
-          assert.isTrue(await agent.supportsInterface(ERC165_SUPPORT_INTERFACE_ID))
-          assert.isFalse(await agent.supportsInterface(ERC165_SUPPORT_INVALID_ID))
-        })
-
-        it('supports ERC1271 interface', async () => {
-          assert.isTrue(await agent.supportsInterface(ERC1271_INTERFACE_ID))
-        })
-
-        it('supports ERC721Receiver interface', async () => {
-          assert.isTrue(await agent.supportsInterface(ERC721_RECEIVED_INTERFACE_ID))
-        })
-
-        it('doesn\'t support any other interface', async () => {
-          assert.isFalse(await agent.supportsInterface('0x12345678'))
-          assert.isFalse(await agent.supportsInterface('0x'))
         })
 
         it('isValidSignature returns false if there is not designated signer and hash isn\'t presigned', async () => {
