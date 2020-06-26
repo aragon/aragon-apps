@@ -30,7 +30,7 @@ import TransactionFilters from './TransactionFilters'
 import { TRANSACTION_TYPES_LABELS } from '../transaction-types'
 import useDownloadData from './useDownloadData'
 import useFilteredTransactions from './useFilteredTransactions'
-import { ISO_FORMAT, MMDDYY_FUNC_FORMAT } from '../lib/date-utils'
+import { ISO_SHORT_FORMAT, ISO_LONG_FORMAT } from '../lib/date-utils'
 import { toChecksumAddress } from '../lib/web3-utils'
 import AgentSvg from './assets/agent_badge.svg'
 
