@@ -313,7 +313,7 @@ contract Agent is IERC165, IERC721Receiver, ERC1271Bytes, IForwarder, IsContract
     }
 
     function _protectedTokenIndex(address _token) internal view returns (uint256) {
-        for (uint i = 0; i < protectedTokens.length; i++) {
+        for (uint256 i = 0; i < protectedTokens.length; i++) {
             if (protectedTokens[i] == _token) {
               return i;
             }
