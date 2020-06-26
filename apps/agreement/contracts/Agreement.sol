@@ -114,7 +114,7 @@ contract Agreement is IAgreement, AragonApp {
     }
 
     struct DisputableInfo {
-        bool activated;                                                    // Whether a Disputable app is activated
+        bool activated;                                                     // Whether a Disputable app is activated
         uint256 nextCollateralRequirementsId;                               // Identification number of the next collateral requirement instance
         mapping (uint256 => CollateralRequirement) collateralRequirements;  // List of collateral requirements indexed by id
     }
@@ -151,9 +151,9 @@ contract Agreement is IAgreement, AragonApp {
     }
 
     /**
-    * @notice Activate disputable app `_disputableAddress`
+    * @notice Activate Disputable app `_disputableAddress`
     * @dev Initialization check is implicitly provided by the `auth()` modifier
-    * @param _disputableAddress Address of the disputable app
+    * @param _disputableAddress Address of the Disputable app
     * @param _collateralToken Address of the ERC20 token to be used for collateral
     * @param _challengeDuration Challenge duration in seconds, during which the submitter can raise a dispute
     * @param _actionAmount Amount of collateral tokens that will be locked every time an action is submitted
@@ -185,7 +185,7 @@ contract Agreement is IAgreement, AragonApp {
     /**
     * @notice Deactivate `_disputable`
     * @dev Initialization check is implicitly provided by the `auth()` modifier
-    * @param _disputableAddress of the disputable app to be deactivated
+    * @param _disputableAddress of the Disputable app to be deactivated
     */
     function deactivate(address _disputableAddress) external auth(MANAGE_DISPUTABLE_ROLE) {
         DisputableInfo storage disputableInfo = disputableInfos[_disputableAddress];
@@ -245,9 +245,9 @@ contract Agreement is IAgreement, AragonApp {
 
     /**
     * @notice Register action #`_disputableActionId` from disputable `msg.sender` for submitter `_submitter` with context `_context`
-    * @dev This function should be called from disputable apps every time a new disputable action is created in the app.
+    * @dev This function should be called from Disputable apps every time a new disputable action is created in the app.
     *      Each disputable action ID must only be registered once; this is how the Agreement gets notified about each disputable action.
-    *      Initialization check is implicitly provided by `_ensureActiveDisputable()` as disputable apps can activate only
+    *      Initialization check is implicitly provided by `_ensureActiveDisputable()` as Disputable apps can activate only
     *      via `activate()` which already requires initialization
     * @param _disputableActionId Identification number of the disputable action in the context of the disputable instance
     * @param _submitter Address of the user that has submitted the action
@@ -281,7 +281,7 @@ contract Agreement is IAgreement, AragonApp {
 
     /**
     * @notice Close action #`_actionId`
-    * @dev If allowed by the originating disputable app, this function allows users to close actions that are not:
+    * @dev If allowed by the originating Disputable app, this function allows users to close actions that are not:
     *      - Closed
     *      - Currently challenged
     *      - Ruled as voided
@@ -301,7 +301,7 @@ contract Agreement is IAgreement, AragonApp {
 
     /**
     * @notice Challenge action #`_actionId`
-    *      Initialization check is implicitly provided by `_canChallenge()` as disputable actions can be created only
+    * @dev Initialization check is implicitly provided by `_canChallenge()` as disputable actions can be created only
     *      via `newAction()` which already requires initialization implicitly through `activate()`
     * @param _actionId Identification number of the action to be challenged
     * @param _settlementOffer Amount of collateral tokens the challenger would accept for resolving the dispute without involving the arbitrator
@@ -325,7 +325,7 @@ contract Agreement is IAgreement, AragonApp {
 
     /**
     * @notice Settle challenged action #`_actionId`, accepting the settlement offer
-    *      Initialization check is implicitly provided by `_canChallenge()` as disputable actions can be created only
+    * @dev Initialization check is implicitly provided by `_getChallengedAction()` as disputable actions can be created only
     *      via `_canSettle()` or `_canClaimSettlement()` which already require initialization implicitly through `activate()`
     * @param _actionId Identification number of the action to be settled
     */
@@ -390,7 +390,7 @@ contract Agreement is IAgreement, AragonApp {
 
     /**
     * @notice Submit evidence for dispute #`_disputeId`
-    *      Initialization check is implicitly provided by `_isDisputed()` as disputable actions can be created only
+    * @dev Initialization check is implicitly provided by `_isDisputed()` as disputable actions can be created only
     *      via `newAction()` which already requires initialization implicitly through `activate()`
     * @param _disputeId Identification number of the dispute on the arbitrator
     * @param _evidence Evidence data submitted for the dispute
@@ -411,7 +411,7 @@ contract Agreement is IAgreement, AragonApp {
 
     /**
     * @notice Rule the action associated to dispute #`_disputeId` with ruling `_ruling`
-    *      Initialization check is implicitly provided by `_isDisputed()` as disputable actions can be created only
+    * @dev Initialization check is implicitly provided by `_isDisputed()` as disputable actions can be created only
     *      via `newAction()` which already requires initialization implicitly through `activate()`
     * @param _disputeId Identification number of the dispute on the arbitrator
     * @param _ruling Ruling given by the arbitrator
@@ -471,8 +471,8 @@ contract Agreement is IAgreement, AragonApp {
     }
 
     /**
-    * @dev Tell the information related to a disputable app
-    * @param _disputable Address of the disputable app being queried
+    * @dev Tell the information related to a Disputable app
+    * @param _disputable Address of the Disputable app being queried
     * @return activated Whether the Disputable app is activated
     * @return currentCollateralRequirementId Identification number of the current collateral requirement
     */
@@ -484,8 +484,8 @@ contract Agreement is IAgreement, AragonApp {
     }
 
     /**
-    * @dev Tell the information related to a collateral requirement of a disputable app
-    * @param _disputable Address of the disputable app querying the collateral requirements of
+    * @dev Tell the information related to a collateral requirement of a Disputable app
+    * @param _disputable Address of the Disputable app querying the collateral requirements of
     * @param _collateralRequirementId Identification number of the collateral being queried
     * @return collateralToken Address of the ERC20 token to be used for collateral
     * @return actionAmount Amount of collateral tokens that will be locked every time an action is created
@@ -516,7 +516,7 @@ contract Agreement is IAgreement, AragonApp {
     * @return collateralRequirementId Identification number of the collateral requirements applicable to the action
     * @return settingId Identification number of the agreement setting at the moment the action was submitted
     * @return submitter Address that has submitted the action
-    * @return closed Whether the action was manually closed by the disputable app
+    * @return closed Whether the action was manually closed by the Disputable app
     * @return context Link to a human-readable text providing context for the action
     * @return currentChallengeId Identification number of the current challenge for the action
     */
@@ -647,7 +647,7 @@ contract Agreement is IAgreement, AragonApp {
     * @dev Tell whether an action can be closed.
     * @dev An action can be closed if it is allowed to:
     * @dev  - Proceed in the context of this Agreement (see `_canProceed()`)
-    * @dev  - Be closed in the context of the originating disputable app
+    * @dev  - Be closed in the context of the originating Disputable app
     * @param _actionId Identification number of the action to be queried
     * @return True if the action can be closed, false otherwise
     */
@@ -848,7 +848,7 @@ contract Agreement is IAgreement, AragonApp {
     }
 
     /**
-    * @dev Reject an action ("reject challenge")
+    * @dev Reject an action ("accept challenge")
     * @param _actionId Identification number of the action to be rejected
     * @param _action Action instance to be rejected
     * @param _challengeId Current challenge identification number for the action
@@ -868,7 +868,7 @@ contract Agreement is IAgreement, AragonApp {
     }
 
     /**
-    * @dev Accept an action ("accept challenge")
+    * @dev Accept an action ("reject challenge")
     * @param _actionId Identification number of the action to be accepted
     * @param _action Action instance to be accepted
     * @param _challengeId Current challenge identification number for the action
@@ -1008,9 +1008,9 @@ contract Agreement is IAgreement, AragonApp {
     }
 
     /**
-    * @dev Change the collateral requirements of a activated disputable app
+    * @dev Change the collateral requirements of an activated Disputable app
     * @param _disputable Disputable app
-    * @param _disputableInfo Disputable info instance for the disputable app
+    * @param _disputableInfo Disputable info instance for the Disputable app
     * @param _collateralToken Address of the ERC20 token to be used for collateral
     * @param _actionAmount Amount of collateral tokens that will be locked every time an action is submitted
     * @param _challengeAmount Amount of collateral tokens that will be locked every time an action is challenged
@@ -1041,10 +1041,10 @@ contract Agreement is IAgreement, AragonApp {
     }
 
     /**
-    * @dev Tell whether an address has permission to challenge actions on a specific disputable app
+    * @dev Tell whether an address has permission to challenge actions on a specific Disputable app
     * @param _disputable Disputable app being queried
     * @param _challenger Address of the challenger
-    * @return True if the challenger can be challenge actions on the disputable app, false otherwise
+    * @return True if the challenger can be challenge actions on the Disputable app, false otherwise
     */
     function _canPerformChallenge(IDisputable _disputable, address _challenger) internal view returns (bool) {
         IKernel currentKernel = kernel();
