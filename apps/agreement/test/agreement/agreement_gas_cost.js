@@ -31,7 +31,7 @@ contract('Agreement', ([_, user]) => {
     })
 
     context('newAction', () => {
-      itCostsAtMost(266e3, async () => (await disputable.newAction({})).receipt)
+      itCostsAtMost(290e3, async () => (await disputable.newAction({})).receipt)
     })
 
     context('closeAction', () => {
@@ -47,7 +47,7 @@ contract('Agreement', ([_, user]) => {
         ({ actionId } = await disputable.newAction({}))
       })
 
-      itCostsAtMost(413e3, async () => (await disputable.challenge({ actionId })).receipt)
+      itCostsAtMost(436e3, async () => (await disputable.challenge({ actionId })).receipt)
     })
 
     context('settle', () => {
@@ -65,7 +65,7 @@ contract('Agreement', ([_, user]) => {
         await disputable.challenge({ actionId })
       })
 
-      itCostsAtMost(295e3, () => disputable.dispute({ actionId }))
+      itCostsAtMost(313e3, () => disputable.dispute({ actionId }))
     })
 
     context('executeRuling', () => {

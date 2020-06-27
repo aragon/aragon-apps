@@ -47,7 +47,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
 
             context('when the challenge was not answered', () => {
               context('at the beginning of the answer period', () => {
-                itCannotSubmitEvidence()
+                itCannotSubmitEvidenceForNonExistingDispute()
               })
 
               context('in the middle of the answer period', () => {
@@ -55,7 +55,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                   await disputable.moveBeforeChallengeEndDate(challengeId)
                 })
 
-                itCannotSubmitEvidence()
+                itCannotSubmitEvidenceForNonExistingDispute()
               })
 
               context('at the end of the answer period', () => {
@@ -63,7 +63,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                   await disputable.moveToChallengeEndDate(challengeId)
                 })
 
-                itCannotSubmitEvidence()
+                itCannotSubmitEvidenceForNonExistingDispute()
               })
 
               context('after the answer period', () => {
@@ -71,7 +71,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                   await disputable.moveAfterChallengeEndDate(challengeId)
                 })
 
-                itCannotSubmitEvidence()
+                itCannotSubmitEvidenceForNonExistingDispute()
               })
             })
 
@@ -81,7 +81,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                   await disputable.settle({ actionId })
                 })
 
-                itCannotSubmitEvidence()
+                itCannotSubmitEvidenceForNonExistingDispute()
               })
 
               context('when the challenge was disputed', () => {
@@ -255,7 +255,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
 
     context('when the given action does not exist', () => {
       it('reverts', async () => {
-        await assertRevert(disputable.submitEvidence({ actionId: 0, from: submitter }), AGREEMENT_ERRORS.ERROR_CHALLENGE_DOES_NOT_EXIST)
+        await assertRevert(disputable.submitEvidence({ actionId: 0, from: submitter }), AGREEMENT_ERRORS.ERROR_ACTION_DOES_NOT_EXIST)
       })
     })
   })

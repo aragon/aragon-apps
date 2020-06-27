@@ -50,7 +50,7 @@ contract('Agreement', ([_, submitter, challenger]) => {
 
             context('when the challenge was not answered', () => {
               context('at the beginning of the answer period', () => {
-                itCannotRuleDispute()
+                itCannotRuleNonExistingDispute()
               })
 
               context('in the middle of the answer period', () => {
@@ -58,7 +58,7 @@ contract('Agreement', ([_, submitter, challenger]) => {
                   await disputable.moveBeforeChallengeEndDate(challengeId)
                 })
 
-                itCannotRuleDispute()
+                itCannotRuleNonExistingDispute()
               })
 
               context('at the end of the answer period', () => {
@@ -66,7 +66,7 @@ contract('Agreement', ([_, submitter, challenger]) => {
                   await disputable.moveToChallengeEndDate(challengeId)
                 })
 
-                itCannotRuleDispute()
+                itCannotRuleNonExistingDispute()
               })
 
               context('after the answer period', () => {
@@ -74,7 +74,7 @@ contract('Agreement', ([_, submitter, challenger]) => {
                   await disputable.moveAfterChallengeEndDate(challengeId)
                 })
 
-                itCannotRuleDispute()
+                itCannotRuleNonExistingDispute()
               })
             })
 
@@ -84,7 +84,7 @@ contract('Agreement', ([_, submitter, challenger]) => {
                   await disputable.settle({ actionId })
                 })
 
-                itCannotRuleDispute()
+                itCannotRuleNonExistingDispute()
               })
 
               context('when the challenge was disputed', () => {
@@ -370,7 +370,7 @@ contract('Agreement', ([_, submitter, challenger]) => {
 
     context('when the given action does not exist', () => {
       it('reverts', async () => {
-        await assertRevert(disputable.executeRuling({ actionId: 0, ruling: RULINGS.REFUSED }), AGREEMENT_ERRORS.ERROR_CHALLENGE_DOES_NOT_EXIST)
+        await assertRevert(disputable.executeRuling({ actionId: 0, ruling: RULINGS.REFUSED }), AGREEMENT_ERRORS.ERROR_ACTION_DOES_NOT_EXIST)
       })
     })
   })

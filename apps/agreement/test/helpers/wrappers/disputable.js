@@ -52,7 +52,7 @@ class DisputableWrapper extends AgreementWrapper {
   }
 
   async getCollateralRequirement(id = undefined) {
-    if (!id) id = await this.getCurrentCollateralRequirementId()
+    if (id === undefined) id = await this.getCurrentCollateralRequirementId()
     return super.getCollateralRequirement(this.disputable, id)
   }
 

@@ -27,16 +27,18 @@ contract('Agreement', ([_, someone, owner]) => {
 
           const { activated, currentCollateralRequirementId } = await disputable.getDisputableInfo()
           assert.isTrue(activated, 'disputable state does not match')
-          assertBn(currentCollateralRequirementId, 0, 'disputable current collateral requirement ID does not match')
+          assertBn(currentCollateralRequirementId, 1, 'disputable current collateral requirement ID does not match')
         })
 
         it('sets up the initial collateral requirements for the disputable', async () => {
           const receipt = await disputable.activate({ from })
 
           assertAmountOfEvents(receipt, AGREEMENT_EVENTS.COLLATERAL_REQUIREMENT_CHANGED)
-          assertEvent(receipt, AGREEMENT_EVENTS.COLLATERAL_REQUIREMENT_CHANGED, { disputable: disputable.disputable.address, collateralRequirementId: 0 })
+          assertEvent(receipt, AGREEMENT_EVENTS.COLLATERAL_REQUIREMENT_CHANGED, { disputable: disputable.disputable.address, collateralRequirementId: 1 })
 
-          const { collateralToken, actionCollateral, challengeCollateral, challengeDuration } = await disputable.getCollateralRequirement(0)
+          await assertRevert(disputable.getCollateralRequirement(0), AGREEMENT_ERRORS.ERROR_COLLATERAL_REQUIREMENT_DOES_NOT_EXIST)
+
+          const { collateralToken, actionCollateral, challengeCollateral, challengeDuration } = await disputable.getCollateralRequirement(1)
           assert.equal(collateralToken.address, disputable.collateralToken.address, 'collateral token does not match')
           assertBn(actionCollateral, disputable.actionCollateral, 'action collateral does not match')
           assertBn(challengeCollateral, disputable.challengeCollateral, 'challenge collateral does not match')
@@ -68,7 +70,7 @@ contract('Agreement', ([_, someone, owner]) => {
 
             const { activated, currentCollateralRequirementId } = await disputable.getDisputableInfo()
             assert.isTrue(activated, 'disputable state does not match')
-            assertBn(currentCollateralRequirementId, 1, 'disputable current collateral requirement ID does not match')
+            assertBn(currentCollateralRequirementId, 2, 'disputable current collateral requirement ID does not match')
           })
 
           it('sets up another collateral requirement for the disputable', async () => {
@@ -116,7 +118,7 @@ contract('Agreement', ([_, someone, owner]) => {
 
             const { activated, currentCollateralRequirementId } = await disputable.getDisputableInfo()
             assert.isFalse(activated, 'disputable state does not match')
-            assertBn(currentCollateralRequirementId, 0, 'disputable current collateral requirement ID does not match')
+            assertBn(currentCollateralRequirementId, 1, 'disputable current collateral requirement ID does not match')
           })
         }
 
