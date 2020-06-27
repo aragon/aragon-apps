@@ -32,7 +32,7 @@ contract('Agreement', ([_, submitter, challenger]) => {
 
         const itCannotRuleNonExistingDispute = () => {
           it('reverts', async () => {
-            await assertRevert(disputable.executeRuling({ actionId, ruling: RULINGS.REFUSED, mockRuling: false }), AGREEMENT_ERRORS.ERROR_DISPUTE_DOES_NOT_EXIST)
+            await assertRevert(disputable.executeRuling({ actionId, ruling: RULINGS.REFUSED, mockRuling: false }), AGREEMENT_ERRORS.ERROR_CHALLENGE_DOES_NOT_EXIST)
           })
         }
 
@@ -370,7 +370,7 @@ contract('Agreement', ([_, submitter, challenger]) => {
 
     context('when the given action does not exist', () => {
       it('reverts', async () => {
-        await assertRevert(disputable.executeRuling({ actionId: 0, ruling: RULINGS.REFUSED }), AGREEMENT_ERRORS.ERROR_DISPUTE_DOES_NOT_EXIST)
+        await assertRevert(disputable.executeRuling({ actionId: 0, ruling: RULINGS.REFUSED }), AGREEMENT_ERRORS.ERROR_CHALLENGE_DOES_NOT_EXIST)
       })
     })
   })

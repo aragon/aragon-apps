@@ -56,7 +56,7 @@ contract Registry is DisputableAragonApp {
         external
     {
         initialized();
-        _agreement.activate(IDisputable(this), _collateralToken, _challengeDuration, _actionCollateral, _challengeCollateral);
+        _agreement.activate(IDisputable(this), _collateralToken, _actionCollateral, _challengeCollateral, _challengeDuration);
     }
 
     /**
@@ -95,20 +95,6 @@ contract Registry is DisputableAragonApp {
         submitter = entry.submitter;
         value = entry.value;
         actionId = entry.actionId;
-    }
-
-    /**
-    * @dev Tell the disputable action information for a given action
-    * @param _id Identification number of the entry being queried
-    * @return endDate Timestamp when the disputable action ends so it cannot be challenged anymore, unless it's finished beforehand
-    * @return challenged True if the disputable action is being challenged
-    * @return finished True if the disputable action is finished
-    */
-    function getDisputableAction(uint256 _id) external view returns (uint64 endDate, bool challenged, bool finished) {
-        Entry storage entry = entries[bytes32(_id)];
-        endDate = 0;
-        challenged = entry.challenged;
-        finished = !_isRegistered(entry);
     }
 
     /**

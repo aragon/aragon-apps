@@ -46,12 +46,6 @@ class DisputableWrapper extends AgreementWrapper {
     return super.getDisputableInfo(this.disputable)
   }
 
-  async getDisputableAction(actionId) {
-    const { disputableActionId } = await this.getAction(actionId)
-    const { challenged, endDate, finished } = await this.disputable.getDisputableAction(disputableActionId)
-    return { challenged, endDate, finished }
-  }
-
   async getCurrentCollateralRequirementId() {
     const { currentCollateralRequirementId } = await this.getDisputableInfo()
     return currentCollateralRequirementId

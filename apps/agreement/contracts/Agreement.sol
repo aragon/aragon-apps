@@ -37,12 +37,11 @@ contract Agreement is IAgreement, AragonApp {
     string internal constant ERROR_INVALID_SETTLEMENT_OFFER = "AGR_INVALID_SETTLEMENT_OFFER";
     string internal constant ERROR_ACTION_DOES_NOT_EXIST = "AGR_ACTION_DOES_NOT_EXIST";
     string internal constant ERROR_CHALLENGE_DOES_NOT_EXIST = "AGR_CHALLENGE_DOES_NOT_EXIST";
-    string internal constant ERROR_DISPUTE_DOES_NOT_EXIST = "AGR_DISPUTE_DOES_NOT_EXIST";
     string internal constant ERROR_TOKEN_DEPOSIT_FAILED = "AGR_TOKEN_DEPOSIT_FAILED";
     string internal constant ERROR_TOKEN_TRANSFER_FAILED = "AGR_TOKEN_TRANSFER_FAILED";
     string internal constant ERROR_TOKEN_APPROVAL_FAILED = "AGR_TOKEN_APPROVAL_FAILED";
     string internal constant ERROR_TOKEN_NOT_CONTRACT = "AGR_TOKEN_NOT_CONTRACT";
-    string internal constant ERROR_MISSING_AGREEMENT_SETTING = "AGR_MISSING_AGREEMENT_SETTING";
+    string internal constant ERROR_SETTING_DOES_NOT_EXIST = "AGR_SETTING_DOES_NOT_EXIST";
     string internal constant ERROR_ARBITRATOR_NOT_CONTRACT = "AGR_ARBITRATOR_NOT_CONTRACT";
     string internal constant ERROR_STAKING_FACTORY_NOT_CONTRACT = "AGR_STAKING_FACTORY_NOT_CONTRACT";
     string internal constant ERROR_ACL_SIGNER_MISSING = "AGR_ACL_ORACLE_SIGNER_MISSING";
@@ -50,9 +49,9 @@ contract Agreement is IAgreement, AragonApp {
 
     /* Disputable related errors */
     string internal constant ERROR_SENDER_CANNOT_CHALLENGE_ACTION = "AGR_SENDER_CANT_CHALLENGE_ACTION";
-    string internal constant ERROR_MISSING_COLLATERAL_REQUIREMENT = "AGR_MISSING_COLLATERAL_REQ";
     string internal constant ERROR_DISPUTABLE_APP_NOT_ACTIVE = "AGR_DISPUTABLE_NOT_ACTIVE";
     string internal constant ERROR_DISPUTABLE_APP_ALREADY_EXISTS = "AGR_DISPUTABLE_ALREADY_EXISTS";
+    string internal constant ERROR_COLLATERAL_REQUIREMENT_DOES_NOT_EXIST = "AGR_COL_REQ_DOES_NOT_EXIST";
 
     /* Action related errors */
     string internal constant ERROR_CANNOT_CHALLENGE_ACTION = "AGR_CANNOT_CHALLENGE_ACTION";
@@ -108,8 +107,8 @@ contract Agreement is IAgreement, AragonApp {
     struct CollateralRequirement {
         ERC20 token;                        // ERC20 token to be used for collateral
         uint64 challengeDuration;           // Challenge duration in seconds, during which the submitter can raise a dispute
-        uint256 actionAmount;               // Amount of collateral token that will be locked from the submitter's staking pool every time an action is created
-        uint256 challengeAmount;            // Amount of collateral token that will be locked from the challenger's own balance every time an action is challenged
+        uint256 actionAmount;               // Amount of collateral token to be locked from the submitter's staking pool when creating actions
+        uint256 challengeAmount;            // Amount of collateral token to be locked from the challenger's own balance when challenging actions
         Staking staking;                    // Staking pool cache for the collateral token
     }
 
@@ -121,15 +120,15 @@ contract Agreement is IAgreement, AragonApp {
 
     StakingFactory public stakingFactory;                           // Staking factory to be used for the collateral staking pools
 
-    uint256 private nextSettingsId;
+    uint256 private nextSettingId;
     mapping (uint256 => Setting) private settings;                  // List of historic settings indexed by ID
     mapping (address => uint256) private lastSettingSignedBy;       // List of last setting signed by user
     mapping (address => DisputableInfo) private disputableInfos;    // Mapping of disputable address => disputable infos
 
-    uint256 private nextActionsId;
+    uint256 private nextActionId;
     mapping (uint256 => Action) private actions;                    // List of actions indexed by ID
 
-    uint256 private nextChallengesId;
+    uint256 private nextChallengeId;
     mapping (uint256 => Challenge) private challenges;              // List of challenges indexed by ID
     mapping (uint256 => uint256) private challengeByDispute;        // Mapping of arbitrator's dispute ID => challenge ID
 
@@ -146,7 +145,9 @@ contract Agreement is IAgreement, AragonApp {
 
         stakingFactory = _stakingFactory;
 
-        nextSettingsId++; // Setting ID zero is considered the null setting for further validations
+        nextActionId = 1;    // Action ID zero is considered the null action for further validations
+        nextChallengeId = 1; // Challenge ID zero is considered the null challenge for further validations
+        nextSettingId = 1;   // Setting ID zero is considered the null setting for further validations
         _newSetting(_arbitrator, _title, _content);
     }
 
@@ -162,9 +163,9 @@ contract Agreement is IAgreement, AragonApp {
     function activate(
         address _disputableAddress,
         ERC20 _collateralToken,
-        uint64 _challengeDuration,
         uint256 _actionAmount,
-        uint256 _challengeAmount
+        uint256 _challengeAmount,
+        uint64 _challengeDuration
     )
         external
         auth(MANAGE_DISPUTABLE_ROLE)
@@ -176,10 +177,11 @@ contract Agreement is IAgreement, AragonApp {
         disputableInfo.activated = true;
         emit DisputableAppActivated(disputable);
 
-        _changeCollateralRequirement(disputable, disputableInfo, _collateralToken, _actionAmount, _challengeAmount, _challengeDuration);
         if (disputable.getAgreement() != IAgreement(this)) {
             disputable.setAgreement(IAgreement(this));
+            disputableInfo.nextCollateralRequirementsId = 1;
         }
+        _changeCollateralRequirement(disputable, disputableInfo, _collateralToken, _actionAmount, _challengeAmount, _challengeDuration);
     }
 
     /**
@@ -207,9 +209,9 @@ contract Agreement is IAgreement, AragonApp {
     function changeCollateralRequirement(
         IDisputable _disputable,
         ERC20 _collateralToken,
-        uint64 _challengeDuration,
         uint256 _actionAmount,
-        uint256 _challengeAmount
+        uint256 _challengeAmount,
+        uint64 _challengeDuration
     )
         external
         auth(MANAGE_DISPUTABLE_ROLE)
@@ -261,12 +263,13 @@ contract Agreement is IAgreement, AragonApp {
         DisputableInfo storage disputableInfo = disputableInfos[msg.sender];
         _ensureActiveDisputable(disputableInfo);
 
-        uint256 currentCollateralRequirementId = disputableInfo.nextCollateralRequirementsId.sub(1);
-        CollateralRequirement storage requirement = disputableInfo.collateralRequirements[currentCollateralRequirementId];
+        // An initial collateral requirement is created when disputable apps are activated, thus length will be always greater than 0
+        uint256 currentCollateralRequirementId = disputableInfo.nextCollateralRequirementsId - 1;
+        CollateralRequirement storage requirement = _getCollateralRequirement(disputableInfo, currentCollateralRequirementId);
         _lockBalance(requirement.staking, _submitter, requirement.actionAmount);
         // TODO: pay court transaction fees
 
-        uint256 id = nextActionsId++;
+        uint256 id = nextActionId++;
         Action storage action = actions[id];
         action.disputable = IDisputable(msg.sender);
         action.collateralRequirementId = currentCollateralRequirementId;
@@ -275,7 +278,7 @@ contract Agreement is IAgreement, AragonApp {
         action.context = _context;
         action.settingId = _getCurrentSettingId();
 
-        emit ActionSubmitted(id);
+        emit ActionSubmitted(id, msg.sender);
         return id;
     }
 
@@ -292,7 +295,7 @@ contract Agreement is IAgreement, AragonApp {
     */
     function closeAction(uint256 _actionId) external {
         Action storage action = _getAction(_actionId);
-        require(_canClose(_actionId, action), ERROR_CANNOT_CLOSE_ACTION);
+        require(_canClose(action), ERROR_CANNOT_CLOSE_ACTION);
 
         (, CollateralRequirement storage requirement) = _getDisputableFor(action);
         _unlockBalance(requirement.staking, action.submitter, requirement.actionAmount);
@@ -310,7 +313,7 @@ contract Agreement is IAgreement, AragonApp {
     */
     function challengeAction(uint256 _actionId, uint256 _settlementOffer, bool _finishedEvidence, bytes _context) external {
         Action storage action = _getAction(_actionId);
-        require(_canChallenge(_actionId, action), ERROR_CANNOT_CHALLENGE_ACTION);
+        require(_canChallenge(action), ERROR_CANNOT_CHALLENGE_ACTION);
 
         (IDisputable disputable, CollateralRequirement storage requirement) = _getDisputableFor(action);
         require(_canPerformChallenge(disputable, msg.sender), ERROR_SENDER_CANNOT_CHALLENGE_ACTION);
@@ -329,14 +332,14 @@ contract Agreement is IAgreement, AragonApp {
     *      via `_canSettle()` or `_canClaimSettlement()` which already require initialization implicitly through `activate()`
     * @param _actionId Identification number of the action to be settled
     */
-    function settle(uint256 _actionId) external {
+    function settleAction(uint256 _actionId) external {
         (Action storage action, Challenge storage challenge, uint256 challengeId) = _getChallengedAction(_actionId);
         address submitter = action.submitter;
 
         if (msg.sender == submitter) {
-            require(_canSettle(_actionId, challenge), ERROR_CANNOT_SETTLE_ACTION);
+            require(_canSettle(challenge), ERROR_CANNOT_SETTLE_ACTION);
         } else {
-            require(_canClaimSettlement(_actionId, challenge), ERROR_CANNOT_SETTLE_ACTION);
+            require(_canClaimSettlement(challenge), ERROR_CANNOT_SETTLE_ACTION);
         }
 
         (IDisputable disputable, CollateralRequirement storage requirement) = _getDisputableFor(action);
@@ -370,7 +373,7 @@ contract Agreement is IAgreement, AragonApp {
     */
     function disputeAction(uint256 _actionId, bool _submitterFinishedEvidence) external {
         (Action storage action, Challenge storage challenge, uint256 challengeId) = _getChallengedAction(_actionId);
-        require(_canDispute(_actionId, challenge), ERROR_CANNOT_DISPUTE_ACTION);
+        require(_canDispute(challenge), ERROR_CANNOT_DISPUTE_ACTION);
 
         address submitter = action.submitter;
         require(msg.sender == submitter, ERROR_SENDER_NOT_ALLOWED);
@@ -385,7 +388,7 @@ contract Agreement is IAgreement, AragonApp {
         challenge.disputeId = disputeId;
         challenge.submitterFinishedEvidence = _submitterFinishedEvidence;
         challengeByDispute[disputeId] = challengeId;
-        emit ActionDisputed(_actionId, challengeId, disputeId);
+        emit ActionDisputed(_actionId, challengeId);
     }
 
     /**
@@ -397,8 +400,8 @@ contract Agreement is IAgreement, AragonApp {
     * @param _finished Whether the submitter is finished submitting evidence
     */
     function submitEvidence(uint256 _disputeId, bytes _evidence, bool _finished) external {
-        (uint256 _actionId, Action storage action, , Challenge storage challenge) = _getDisputedAction(_disputeId);
-        require(_isDisputed(_actionId, challenge), ERROR_CANNOT_SUBMIT_EVIDENCE);
+        (, Action storage action, , Challenge storage challenge) = _getDisputedAction(_disputeId);
+        require(_isDisputed(challenge), ERROR_CANNOT_SUBMIT_EVIDENCE);
 
         IArbitrator arbitrator = _getArbitratorFor(action);
         bool submitterAndChallengerFinished = _updateEvidenceSubmissionStatus(action, challenge, msg.sender, _finished);
@@ -418,7 +421,7 @@ contract Agreement is IAgreement, AragonApp {
     */
     function rule(uint256 _disputeId, uint256 _ruling) external {
         (uint256 actionId, Action storage action, uint256 challengeId, Challenge storage challenge) = _getDisputedAction(_disputeId);
-        require(_isDisputed(actionId, challenge), ERROR_CANNOT_RULE_ACTION);
+        require(_isDisputed(challenge), ERROR_CANNOT_RULE_ACTION);
 
         IArbitrator arbitrator = _getArbitratorFor(action);
         require(arbitrator == IArbitrator(msg.sender), ERROR_SENDER_NOT_ALLOWED);
@@ -464,7 +467,7 @@ contract Agreement is IAgreement, AragonApp {
     * @return arbitrator Address of the IArbitrator that will be used to resolve disputes
     */
     function getSetting(uint256 _settingId) external view returns (IArbitrator arbitrator, string title, bytes content) {
-        Setting storage setting = settings[_settingId];
+        Setting storage setting = _getSetting(_settingId);
         arbitrator = setting.arbitrator;
         title = setting.title;
         content = setting.content;
@@ -479,8 +482,8 @@ contract Agreement is IAgreement, AragonApp {
     function getDisputableInfo(address _disputable) external view returns (bool activated, uint256 currentCollateralRequirementId) {
         DisputableInfo storage disputableInfo = disputableInfos[_disputable];
         activated = disputableInfo.activated;
-        uint256 length = disputableInfo.nextCollateralRequirementsId;
-        currentCollateralRequirementId = length == 0 ? 0 : length - 1;
+        uint256 nextId = disputableInfo.nextCollateralRequirementsId;
+        currentCollateralRequirementId = nextId == 0 ? 0 : nextId - 1;
     }
 
     /**
@@ -501,7 +504,7 @@ contract Agreement is IAgreement, AragonApp {
         )
     {
         DisputableInfo storage disputableInfo = disputableInfos[_disputable];
-        CollateralRequirement storage collateral = disputableInfo.collateralRequirements[_collateralRequirementId];
+        CollateralRequirement storage collateral = _getCollateralRequirement(disputableInfo, _collateralRequirementId);
         collateralToken = collateral.token;
         actionAmount = collateral.actionAmount;
         challengeAmount = collateral.challengeAmount;
@@ -532,7 +535,7 @@ contract Agreement is IAgreement, AragonApp {
             uint256 currentChallengeId
         )
     {
-        Action storage action = actions[_actionId];
+        Action storage action = _getAction(_actionId);
 
         disputable = action.disputable;
         disputableActionId = action.disputableActionId;
@@ -576,7 +579,7 @@ contract Agreement is IAgreement, AragonApp {
             uint256 ruling
         )
     {
-        Challenge storage challenge = challenges[_challengeId];
+        Challenge storage challenge = _getChallenge(_challengeId);
 
         actionId = challenge.actionId;
         challenger = challenge.challenger;
@@ -600,13 +603,12 @@ contract Agreement is IAgreement, AragonApp {
     * @return totalFees Total amount of arbitration fees required by the arbitrator to raise a dispute
     */
     function getMissingArbitratorFees(uint256 _actionId) external view returns (ERC20 feeToken, uint256 missingFees, uint256 totalFees) {
-        Action storage action = _getAction(_actionId);
-        Challenge storage challenge = challenges[action.currentChallengeId];
+        (Action storage action, Challenge storage challenge, ) = _getChallengedAction(_actionId);
         IArbitrator arbitrator = _getArbitratorFor(action);
         ERC20 challengerFeeToken = challenge.arbitratorFeeToken;
         uint256 challengerFeeAmount = challenge.arbitratorFeeAmount;
 
-        (, feeToken, missingFees, totalFees) = _getMissingArbitratorFees(arbitrator, challengerFeeToken, challengerFeeAmount);
+        (, feeToken, missingFees, totalFees, ) = _getMissingArbitratorFees(arbitrator, challengerFeeToken, challengerFeeAmount);
     }
 
     /**
@@ -640,7 +642,7 @@ contract Agreement is IAgreement, AragonApp {
     */
     function canChallenge(uint256 _actionId) external view returns (bool) {
         Action storage action = _getAction(_actionId);
-        return _canChallenge(_actionId, action);
+        return _canChallenge(action);
     }
 
     /**
@@ -653,7 +655,7 @@ contract Agreement is IAgreement, AragonApp {
     */
     function canClose(uint256 _actionId) external view returns (bool) {
         Action storage action = _getAction(_actionId);
-        return _canClose(_actionId, action);
+        return _canClose(action);
     }
 
     /**
@@ -663,7 +665,7 @@ contract Agreement is IAgreement, AragonApp {
     */
     function canSettle(uint256 _actionId) external view returns (bool) {
         (, Challenge storage challenge, ) = _getChallengedAction(_actionId);
-        return _canSettle(_actionId, challenge);
+        return _canSettle(challenge);
     }
 
     /**
@@ -673,7 +675,7 @@ contract Agreement is IAgreement, AragonApp {
     */
     function canDispute(uint256 _actionId) external view returns (bool) {
         (, Challenge storage challenge, ) = _getChallengedAction(_actionId);
-        return _canDispute(_actionId, challenge);
+        return _canDispute(challenge);
     }
 
     /**
@@ -683,7 +685,7 @@ contract Agreement is IAgreement, AragonApp {
     */
     function canClaimSettlement(uint256 _actionId) external view returns (bool) {
         (, Challenge storage challenge, ) = _getChallengedAction(_actionId);
-        return _canClaimSettlement(_actionId, challenge);
+        return _canClaimSettlement(challenge);
     }
 
     /**
@@ -693,7 +695,7 @@ contract Agreement is IAgreement, AragonApp {
     */
     function canRuleDispute(uint256 _actionId) external view returns (bool) {
         (, Challenge storage challenge, ) = _getChallengedAction(_actionId);
-        return _isDisputed(_actionId, challenge);
+        return _isDisputed(challenge);
     }
 
     // Internal fns
@@ -732,7 +734,7 @@ contract Agreement is IAgreement, AragonApp {
         returns (uint256)
     {
         // Store challenge
-        uint256 challengeId = nextChallengesId++;
+        uint256 challengeId = nextChallengeId++;
         Challenge storage challenge = challenges[challengeId];
         challenge.actionId = _actionId;
         challenge.challenger = _challenger;
@@ -769,31 +771,24 @@ contract Agreement is IAgreement, AragonApp {
         // Compute missing fees for dispute
         ERC20 challengerFeeToken = _challenge.arbitratorFeeToken;
         uint256 challengerFeeAmount = _challenge.arbitratorFeeAmount;
-        (address disputeFeeRecipient, ERC20 feeToken, uint256 missingFees, uint256 totalFees) = _getMissingArbitratorFees(
-            _arbitrator,
-            challengerFeeToken,
-            challengerFeeAmount
-        );
+        (address disputeFeeRecipient, ERC20 feeToken, uint256 missingFees, uint256 totalFees, uint256 challengerRefund) =
+            _getMissingArbitratorFees(_arbitrator, challengerFeeToken, challengerFeeAmount); // solium-disable-previous-line operator-whitespace
 
         // Pull arbitration fees from submitter, note that if missing fees is zero this doesn't revert
         address submitter = _action.submitter;
         _depositFrom(feeToken, submitter, missingFees);
 
         // Create dispute. The arbitrator should pull any arbitration fees from this Agreement here.
-        // To be safe, We first set the allowance to zero in case there is a remaining approval for the arbitrator.
+        // To be safe, we first set the allowance to zero in case there is a remaining approval for the arbitrator.
         // This is not strictly necessary for ERC20s, but some tokens, e.g. MiniMe (ANT and ANJ),
         // revert on an approval if an outstanding allowance exists
         _approveFor(feeToken, disputeFeeRecipient, 0);
         _approveFor(feeToken, disputeFeeRecipient, totalFees);
         uint256 disputeId = _arbitrator.createDispute(DISPUTES_POSSIBLE_OUTCOMES, _metadata);
 
-        if (challengerFeeToken != feeToken) {
-            // Return any remaining portion of the pre-paid arbitrator fees to the challenger, if necessary
-            _transferTo(challengerFeeToken, _challenge.challenger, challengerFeeAmount);
-        } else if (missingFees == 0) {
-            // If token are the same and missing fees is zero, then challenger fees are greater than or equal to the total fees
-            uint256 reimbursement = challengerFeeAmount.sub(totalFees);
-            _transferTo(challengerFeeToken, _challenge.challenger, reimbursement);
+        // Return any remaining portion of the pre-paid arbitrator fees to the challenger, if necessary
+        if (challengerRefund != 0) {
+            _transferTo(challengerFeeToken, _challenge.challenger, challengerRefund);
         }
 
         return disputeId;
@@ -999,7 +994,7 @@ contract Agreement is IAgreement, AragonApp {
     function _newSetting(IArbitrator _arbitrator, string _title, bytes _content) internal {
         require(isContract(address(_arbitrator)), ERROR_ARBITRATOR_NOT_CONTRACT);
 
-        uint256 id = nextSettingsId++;
+        uint256 id = nextSettingId++;
         Setting storage setting = settings[id];
         setting.title = _title;
         setting.content = _content;
@@ -1059,22 +1054,20 @@ contract Agreement is IAgreement, AragonApp {
 
     /**
     * @dev Tell whether an action can be challenged
-    * @param _actionId Identification number of the action to be queried
     * @param _action Action instance to be queried
     * @return True if the action can be challenged, false otherwise
     */
-    function _canChallenge(uint256 _actionId, Action storage _action) internal view returns (bool) {
-        return _canProceed(_actionId, _action) && _action.disputable.canChallenge(_action.disputableActionId);
+    function _canChallenge(Action storage _action) internal view returns (bool) {
+        return _canProceed(_action) && _action.disputable.canChallenge(_action.disputableActionId);
     }
 
     /**
     * @dev Tell whether an action can be closed
-    * @param _actionId Identification number of the action to be queried
     * @param _action Action instance to be queried
     * @return True if the action can be closed, false otherwise
     */
-    function _canClose(uint256 _actionId, Action storage _action) internal view returns (bool) {
-        return _canProceed(_actionId, _action) && _action.disputable.canClose(_action.disputableActionId);
+    function _canClose(Action storage _action) internal view returns (bool) {
+        return _canProceed(_action) && _action.disputable.canClose(_action.disputableActionId);
     }
 
     /**
@@ -1084,11 +1077,10 @@ contract Agreement is IAgreement, AragonApp {
     * @dev  - Currently challenged
     * @dev  - Ruled as voided
     * @dev  - Ruled in favour of the submitter
-    * @param _actionId Identification number of the action to be queried
     * @param _action Action instance to be queried
     * @return True if the action can proceed, false otherwise
     */
-    function _canProceed(uint256 _actionId, Action storage _action) internal view returns (bool) {
+    function _canProceed(Action storage _action) internal view returns (bool) {
         // If the action was already closed, return false
         if (_action.closed) {
             return false;
@@ -1098,7 +1090,7 @@ contract Agreement is IAgreement, AragonApp {
         Challenge storage challenge = challenges[challengeId];
 
         // If the action was not challenged, return true
-        if (!_existChallenge(challengeId) || _actionId != challenge.actionId) {
+        if (!_existChallenge(challengeId)) {
             return true;
         }
 
@@ -1109,23 +1101,21 @@ contract Agreement is IAgreement, AragonApp {
     }
 
     /**
-    * @dev Tell whether an action can be settled
-    * @param _actionId Identification number of the action to be queried
-    * @param _challenge Current challenge instance for the action
-    * @return True if the action can be settled, false otherwise
+    * @dev Tell whether a challenge can be settled
+    * @param _challenge Challenge instance to be queried
+    * @return True if the challenge can be settled, false otherwise
     */
-    function _canSettle(uint256 _actionId, Challenge storage _challenge) internal view returns (bool) {
-        return _isWaitingChallengeAnswer(_actionId, _challenge);
+    function _canSettle(Challenge storage _challenge) internal view returns (bool) {
+        return _isWaitingChallengeAnswer(_challenge);
     }
 
     /**
-    * @dev Tell whether an action can be disputed
-    * @param _actionId Identification number of the action to be queried
-    * @param _challenge Current challenge instance for the action
-    * @return True if the action can be disputed, false otherwise
+    * @dev Tell whether a challenge can be disputed
+    * @param _challenge Challenge instance to be queried
+    * @return True if the challenge can be disputed, false otherwise
     */
-    function _canDispute(uint256 _actionId, Challenge storage _challenge) internal view returns (bool) {
-        if (!_isWaitingChallengeAnswer(_actionId, _challenge)) {
+    function _canDispute(Challenge storage _challenge) internal view returns (bool) {
+        if (!_isWaitingChallengeAnswer(_challenge)) {
             return false;
         }
 
@@ -1133,13 +1123,12 @@ contract Agreement is IAgreement, AragonApp {
     }
 
     /**
-    * @dev Tell whether an action settlement can be claimed
-    * @param _actionId Identification number of the action to be queried
-    * @param _challenge Current challenge instance for the action
-    * @return True if the action settlement can be claimed, false otherwise
+    * @dev Tell whether a challenge settlement can be claimed
+    * @param _challenge Challenge instance to be queried
+    * @return True if the challenge settlement can be claimed, false otherwise
     */
-    function _canClaimSettlement(uint256 _actionId, Challenge storage _challenge) internal view returns (bool) {
-        if (!_isWaitingChallengeAnswer(_actionId, _challenge)) {
+    function _canClaimSettlement(Challenge storage _challenge) internal view returns (bool) {
+        if (!_isWaitingChallengeAnswer(_challenge)) {
             return false;
         }
 
@@ -1147,23 +1136,21 @@ contract Agreement is IAgreement, AragonApp {
     }
 
     /**
-    * @dev Tell whether an action is challenged and if it's waiting to be answered
-    * @param _actionId Identification number of the action to be queried
-    * @param _challenge Current challenge instance for the action
-    * @return True if the action is challenged and it's waiting to be answered, false otherwise
+    * @dev Tell whether a challenge is waiting to be answered
+    * @param _challenge Challenge instance being queried
+    * @return True if the challenge is waiting to be answered, false otherwise
     */
-    function _isWaitingChallengeAnswer(uint256 _actionId, Challenge storage _challenge) internal view returns (bool) {
-        return _actionId == _challenge.actionId && _challenge.state == ChallengeState.Waiting;
+    function _isWaitingChallengeAnswer(Challenge storage _challenge) internal view returns (bool) {
+        return _challenge.state == ChallengeState.Waiting;
     }
 
     /**
-    * @dev Tell whether an action is disputed
-    * @param _actionId Identification number of the action to be queried
-    * @param _challenge Current challenge instance for the action
-    * @return True if the action is disputed, false otherwise
+    * @dev Tell whether a challenge is disputed
+    * @param _challenge Challenge instance being queried
+    * @return True if the challenge is disputed, false otherwise
     */
-    function _isDisputed(uint256 _actionId, Challenge storage _challenge) internal view returns (bool) {
-        return _actionId == _challenge.actionId && _challenge.state == ChallengeState.Disputed;
+    function _isDisputed(Challenge storage _challenge) internal view returns (bool) {
+        return _challenge.state == ChallengeState.Disputed;
     }
 
     /**
@@ -1172,8 +1159,18 @@ contract Agreement is IAgreement, AragonApp {
     * @return Action instance associated to the given identification number
     */
     function _getAction(uint256 _actionId) internal view returns (Action storage) {
-        require(_actionId < nextActionsId, ERROR_ACTION_DOES_NOT_EXIST);
+        require(_actionId > 0 && _actionId < nextActionId, ERROR_ACTION_DOES_NOT_EXIST);
         return actions[_actionId];
+    }
+
+    /**
+    * @dev Fetch a challenge instance by identification number
+    * @param _challengeId Identification number of the challenge being queried
+    * @return Challenge instance associated to the given identification number
+    */
+    function _getChallenge(uint256 _challengeId) internal view returns (Challenge storage) {
+        require(_existChallenge(_challengeId), ERROR_CHALLENGE_DOES_NOT_EXIST);
+        return challenges[_challengeId];
     }
 
     /**
@@ -1192,8 +1189,7 @@ contract Agreement is IAgreement, AragonApp {
     {
         action = _getAction(_actionId);
         challengeId = action.currentChallengeId;
-        require(_existChallenge(challengeId), ERROR_CHALLENGE_DOES_NOT_EXIST);
-        challenge = challenges[challengeId];
+        challenge = _getChallenge(challengeId);
     }
 
     /**
@@ -1213,12 +1209,19 @@ contract Agreement is IAgreement, AragonApp {
         )
     {
         challengeId = challengeByDispute[_disputeId];
-        require(_existChallenge(challengeId), ERROR_DISPUTE_DOES_NOT_EXIST);
-
-        challenge = challenges[challengeId];
+        challenge = _getChallenge(challengeId);
         actionId = challenge.actionId;
         action = _getAction(actionId);
-        require(action.currentChallengeId == challengeId, ERROR_DISPUTE_DOES_NOT_EXIST);
+    }
+
+    /**
+    * @dev Fetch a setting instance by identification number
+    * @param _settingId Identification number of the setting being queried
+    * @return Setting instance associated to the given identification number
+    */
+    function _getSetting(uint256 _settingId) internal view returns (Setting storage) {
+        require(_settingId > 0 && _settingId < nextSettingId, ERROR_SETTING_DOES_NOT_EXIST);
+        return settings[_settingId];
     }
 
     /**
@@ -1226,7 +1229,7 @@ contract Agreement is IAgreement, AragonApp {
     * @return Identification number of the current Agreement setting
     */
     function _getCurrentSettingId() internal view returns (uint256) {
-        return nextSettingsId - 1; // an initial setting is created during initialization, thus length will be always greater than 0
+        return nextSettingId - 1; // an initial setting is created during initialization, thus length will be always greater than 0
     }
 
     /**
@@ -1246,9 +1249,8 @@ contract Agreement is IAgreement, AragonApp {
     * @return arbitrator Address of the IArbitrator that will be used to resolve disputes
     */
     function _getArbitratorFor(Action storage _action) internal view returns (IArbitrator) {
-        uint256 settingId = _action.settingId;
-        require(settingId < nextSettingsId, ERROR_MISSING_AGREEMENT_SETTING);
-        return settings[settingId].arbitrator;
+        Setting storage setting = _getSetting(_action.settingId);
+        return setting.arbitrator;
     }
 
     /**
@@ -1264,10 +1266,22 @@ contract Agreement is IAgreement, AragonApp {
         )
     {
         disputable = _action.disputable;
-        uint256 collateralRequirementId = _action.collateralRequirementId;
         DisputableInfo storage disputableInfo = disputableInfos[address(disputable)];
-        requirement = disputableInfo.collateralRequirements[collateralRequirementId];
-        require(collateralRequirementId < disputableInfo.nextCollateralRequirementsId, ERROR_MISSING_COLLATERAL_REQUIREMENT);
+        requirement = _getCollateralRequirement(disputableInfo, _action.collateralRequirementId);
+    }
+
+    /**
+    * @dev Fetch the collateral requirement instance by identification number for a disputable app
+    * @param _disputableInfo Disputable instance being queried
+    * @param _collateralRequirementId Identification number of the collateral requirement being queried
+    * @return Collateral requirement instance associated to the given identification number
+    */
+    function _getCollateralRequirement(DisputableInfo storage _disputableInfo, uint256 _collateralRequirementId) internal view
+        returns (CollateralRequirement storage)
+    {
+        bool exists = _collateralRequirementId > 0 && _collateralRequirementId < _disputableInfo.nextCollateralRequirementsId;
+        require(exists, ERROR_COLLATERAL_REQUIREMENT_DOES_NOT_EXIST);
+        return _disputableInfo.collateralRequirements[_collateralRequirementId];
     }
 
     /**
@@ -1276,7 +1290,7 @@ contract Agreement is IAgreement, AragonApp {
     * @return True if the requested challenge exists, false otherwise
     */
     function _existChallenge(uint256 _challengeId) internal view returns (bool) {
-        return _challengeId < nextChallengesId;
+        return _challengeId > 0 && _challengeId < nextChallengeId;
     }
 
     /**
@@ -1304,20 +1318,30 @@ contract Agreement is IAgreement, AragonApp {
     * @return ERC20 token to be used for the arbitration fees
     * @return Amount of arbitration fees missing
     * @return Total amount of arbitration fees required by the arbitrator to raise a dispute
+    * @return Total amount of challenger fee tokens to be refunded to the challenger
     */
     function _getMissingArbitratorFees(IArbitrator _arbitrator, ERC20 _challengerFeeToken, uint256 _challengerFeeAmount) internal view
-        returns (address, ERC20, uint256, uint256)
+        returns (address, ERC20, uint256, uint256, uint256)
     {
         (address disputeFeeRecipient, ERC20 feeToken, uint256 disputeFees) = _arbitrator.getDisputeFees();
 
         uint256 missingFees;
+        uint256 challengerRefund;
+
         if (_challengerFeeToken == feeToken) {
-            missingFees = _challengerFeeAmount >= disputeFees ? 0 : (disputeFees - _challengerFeeAmount);
+            if (_challengerFeeAmount >= disputeFees) {
+                missingFees = 0;
+                challengerRefund = _challengerFeeAmount - disputeFees;
+            } else {
+                missingFees = disputeFees - _challengerFeeAmount;
+                challengerRefund = 0;
+            }
         } else {
             missingFees = disputeFees;
+            challengerRefund = _challengerFeeAmount;
         }
 
-        return (disputeFeeRecipient, feeToken, missingFees, disputeFees);
+        return (disputeFeeRecipient, feeToken, missingFees, disputeFees, challengerRefund);
     }
 
     /**

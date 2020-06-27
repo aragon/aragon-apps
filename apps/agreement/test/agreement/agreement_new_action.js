@@ -86,7 +86,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
                     const logs = decodeEventsOfType(receipt, disputable.abi, AGREEMENT_EVENTS.ACTION_SUBMITTED)
 
                     assertAmountOfEvents({ logs }, AGREEMENT_EVENTS.ACTION_SUBMITTED, 1)
-                    assertEvent({ logs }, AGREEMENT_EVENTS.ACTION_SUBMITTED, { actionId })
+                    assertEvent({ logs }, AGREEMENT_EVENTS.ACTION_SUBMITTED, { actionId, disputable: disputable.disputable.address })
                   })
 
                   it('can be challenged or closed', async () => {

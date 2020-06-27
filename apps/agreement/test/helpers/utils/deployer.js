@@ -171,7 +171,7 @@ class AgreementDeployer {
     if (options.activate || options.activate === undefined) {
       const collateralToken = options.collateralToken || this.collateralToken
       const { actionCollateral, challengeCollateral, challengeDuration } = { ...DEFAULT_DISPUTABLE_INITIALIZATION_PARAMS, ...options }
-      await this.agreement.activate(disputable.address, collateralToken.address, challengeDuration, actionCollateral, challengeCollateral, { from: owner })
+      await this.agreement.activate(disputable.address, collateralToken.address, actionCollateral, challengeCollateral, challengeDuration, { from: owner })
     }
 
     if (currentTimestamp) await this.mockTime(disputable, currentTimestamp)

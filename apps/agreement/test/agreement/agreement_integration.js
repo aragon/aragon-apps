@@ -68,8 +68,8 @@ contract('Agreement', ([_, challenger, holder0, holder1, holder2, holder3, holde
         const { id, settlementOffer } = action
         const { challengeId } = await disputable.challenge({ actionId: id, settlementOffer, challenger, challengeDuration: 10 })
         action.challengeId = challengeId
-        const { challenged } = await disputable.getDisputableAction(id)
-        assert.isTrue(challenged, `action ${id} is not challenged`)
+        const { challenger } = await disputable.getChallenge(challengeId)
+        assert.isTrue(challenger !== undefined, `action ${id} is not challenged`)
       }
     })
 

@@ -29,7 +29,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
 
         const itCannotSubmitEvidenceForNonExistingDispute = () => {
           it('reverts', async () => {
-            await assertRevert(disputable.submitEvidence({ actionId, from: submitter }), AGREEMENT_ERRORS.ERROR_DISPUTE_DOES_NOT_EXIST)
+            await assertRevert(disputable.submitEvidence({ actionId, from: submitter }), AGREEMENT_ERRORS.ERROR_CHALLENGE_DOES_NOT_EXIST)
           })
         }
 
@@ -255,7 +255,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
 
     context('when the given action does not exist', () => {
       it('reverts', async () => {
-        await assertRevert(disputable.submitEvidence({ actionId: 0, from: submitter }), AGREEMENT_ERRORS.ERROR_DISPUTE_DOES_NOT_EXIST)
+        await assertRevert(disputable.submitEvidence({ actionId: 0, from: submitter }), AGREEMENT_ERRORS.ERROR_CHALLENGE_DOES_NOT_EXIST)
       })
     })
   })

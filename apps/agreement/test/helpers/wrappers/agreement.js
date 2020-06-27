@@ -116,7 +116,7 @@ class AgreementWrapper {
     return this.agreement.closeAction(actionId)
   }
 
-  async challenge({ actionId, challenger = undefined, settlementOffer = 0, challengeDuration = undefined, challengeContext = '0xdcba', finishedSubmittingEvidence = false, arbitrationFees = undefined }) {
+  async challenge({ actionId, challenger = undefined, settlementOffer = 0, challengeContext = '0xdcba', finishedSubmittingEvidence = false, arbitrationFees = undefined }) {
     if (!challenger) challenger = await this._getSender()
 
     if (arbitrationFees === undefined) arbitrationFees = await this.halfArbitrationFees()
@@ -124,13 +124,12 @@ class AgreementWrapper {
 
     const receipt = await this.agreement.challengeAction(actionId, settlementOffer, finishedSubmittingEvidence, challengeContext, { from: challenger })
     const challengeId = getEventArgument(receipt, AGREEMENT_EVENTS.ACTION_CHALLENGED, 'challengeId')
-    // TODO: if (challengeDuration) await this.increaseTime(challengeDuration)
     return { receipt, challengeId }
   }
 
   async settle({ actionId, from = undefined }) {
     if (!from) from = (await this.getAction(actionId)).submitter
-    return this.agreement.settle(actionId, { from })
+    return this.agreement.settleAction(actionId, { from })
   }
 
   async dispute({ actionId, from = undefined, finishedSubmittingEvidence = false, arbitrationFees = undefined }) {
@@ -169,7 +168,7 @@ class AgreementWrapper {
 
   async activate({ disputable, collateralToken, actionCollateral, challengeCollateral, challengeDuration, from = undefined }) {
     if (!from) from = await this._getSender()
-    return this.agreement.activate(disputable.address, collateralToken.address, challengeDuration, actionCollateral, challengeCollateral, { from })
+    return this.agreement.activate(disputable.address, collateralToken.address, actionCollateral, challengeCollateral, challengeDuration, { from })
   }
 
   async deactivate({ disputable, from = undefined }) {
@@ -186,7 +185,7 @@ class AgreementWrapper {
     const challengeCollateral = options.challengeCollateral || currentRequirements.challengeCollateral
     const challengeDuration = options.challengeDuration || currentRequirements.challengeDuration
 
-    return this.agreement.changeCollateralRequirement(options.disputable.address, collateralToken.address, challengeDuration, actionCollateral, challengeCollateral, { from })
+    return this.agreement.changeCollateralRequirement(options.disputable.address, collateralToken.address, actionCollateral, challengeCollateral, challengeDuration, { from })
   }
 
   async changeSetting({ title = 'title', content = '0x1234', arbitrator = undefined, from = undefined }) {
