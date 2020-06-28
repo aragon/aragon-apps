@@ -38,7 +38,7 @@ contract Agent is IERC165, IERC721Receiver, IERC1155Receiver, ERC1271Bytes, IFor
 
     bytes4 private constant ERC165_INTERFACE_ID = 0x01ffc9a7;
     bytes4 private constant ERC721_RECEIVED_INTERFACE_ID = 0x150b7a02; // bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))
-    bytes4 private constant ERC1155_RECEIVER_INTERFACE_ID= 0x4e2312e0; // IERC721Receiver.onERC1155Received.selector ^ IERC721Receiver.onERC1155BatchReceived.selector
+    bytes4 private constant ERC1155_RECEIVER_INTERFACE_ID = 0x4e2312e0; // IERC721Receiver.onERC1155Received.selector ^ IERC721Receiver.onERC1155BatchReceived.selector
     bytes4 private constant ERC1155_SINGLE_RECEIVED_INTERFACE_ID = 0xf23a6e61; // bytes4(keccak256("onERC1155Received(address,address,uint256,uint256,bytes)"))
     bytes4 private constant ERC1155_BATCH_RECEIVED_INTERFACE_ID = 0xbc197c81; // bytes4(keccak256("onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)"))
 

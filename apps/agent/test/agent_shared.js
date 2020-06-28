@@ -215,6 +215,7 @@ module.exports = (
         it("doesn't support any other interface", async () => {
           assert.isFalse(await agent.supportsInterface('0x12345678'))
           assert.isFalse(await agent.supportsInterface('0x'))
+          assert.isFalse(await agent.supportsInterface('0xffffffff'))
         })
       })
 
