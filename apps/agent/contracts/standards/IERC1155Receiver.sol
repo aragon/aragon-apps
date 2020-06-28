@@ -1,7 +1,11 @@
 pragma solidity 0.4.24;
 
 
-// See https://eips.ethereum.org/EIPS/eip-1155
+/**
+* @title ERC-1155 Multi Token Receiver
+* @dev See https://eips.ethereum.org/EIPS/eip-1155
+*      Note: The ERC-165 identifier for this interface is `0x4e2312e0`
+*/
 interface IERC1155Receiver {
     /**
     * @notice Handle the receipt of a single ERC1155 token type.

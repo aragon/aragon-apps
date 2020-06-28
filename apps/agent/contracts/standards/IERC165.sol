@@ -1,7 +1,10 @@
 pragma solidity 0.4.24;
 
 
-// See https://eips.ethereum.org/EIPS/eip-165
+/**
+* @title ERC-165 Standard Interface Detection
+* @dev See https://eips.ethereum.org/EIPS/eip-165
+*/
 interface IERC165 {
     /**
     * @notice Query if a contract implements an interface

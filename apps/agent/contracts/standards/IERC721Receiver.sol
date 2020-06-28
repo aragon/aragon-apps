@@ -1,7 +1,11 @@
 pragma solidity 0.4.24;
 
 
-// See https://eips.ethereum.org/EIPS/eip-721
+/**
+* @title ERC-721 Non-Fungible Token Standard
+* @dev See https://eips.ethereum.org/EIPS/eip-721
+*      Note: The ERC-165 identifier for this interface is `0x80ac58cd`
+*/
 interface IERC721Receiver {
     /**
     * @notice Handle the receipt of an NFT
