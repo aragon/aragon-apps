@@ -178,6 +178,7 @@ contract Agreement is IAgreement, AragonApp {
         emit DisputableAppActivated(disputable);
 
         if (disputable.getAgreement() != IAgreement(this)) {
+            require(disputableInfo.nextCollateralRequirementsId == 0, ERROR_DISPUTABLE_APP_ALREADY_EXISTS);
             disputable.setAgreement(IAgreement(this));
             disputableInfo.nextCollateralRequirementsId = 1;
         }
@@ -257,8 +258,9 @@ contract Agreement is IAgreement, AragonApp {
     * @return Unique identification number for the created action in the context of the agreement
     */
     function newAction(uint256 _disputableActionId, bytes _context, address _submitter) external returns (uint256) {
+        uint256 currentSettingId = _getCurrentSettingId();
         uint256 lastSettingIdSigned = lastSettingSignedBy[_submitter];
-        require(lastSettingIdSigned >= _getCurrentSettingId(), ERROR_SIGNER_MUST_SIGN);
+        require(lastSettingIdSigned >= currentSettingId, ERROR_SIGNER_MUST_SIGN);
 
         DisputableInfo storage disputableInfo = disputableInfos[msg.sender];
         _ensureActiveDisputable(disputableInfo);
@@ -276,7 +278,7 @@ contract Agreement is IAgreement, AragonApp {
         action.disputableActionId = _disputableActionId;
         action.submitter = _submitter;
         action.context = _context;
-        action.settingId = _getCurrentSettingId();
+        action.settingId = currentSettingId;
 
         emit ActionSubmitted(id, msg.sender);
         return id;
@@ -483,6 +485,8 @@ contract Agreement is IAgreement, AragonApp {
         DisputableInfo storage disputableInfo = disputableInfos[_disputable];
         activated = disputableInfo.activated;
         uint256 nextId = disputableInfo.nextCollateralRequirementsId;
+        // Since `nextCollateralRequirementsId` is initialized on 1 when disputable apps are activated, it is safe to consider the
+        // current collateral requirement ID of disputable app as 0 if it has not been set yet, which means it was not activated yet.
         currentCollateralRequirementId = nextId == 0 ? 0 : nextId - 1;
     }
 
@@ -495,7 +499,9 @@ contract Agreement is IAgreement, AragonApp {
     * @return challengeAmount Amount of collateral tokens that will be locked every time an action is challenged
     * @return challengeDuration Challenge duration in seconds, during which the submitter can raise a dispute
     */
-    function getCollateralRequirement(address _disputable, uint256 _collateralRequirementId) external view
+    function getCollateralRequirement(address _disputable, uint256 _collateralRequirementId)
+        external
+        view
         returns (
             ERC20 collateralToken,
             uint256 actionAmount,
@@ -523,7 +529,9 @@ contract Agreement is IAgreement, AragonApp {
     * @return context Link to a human-readable text providing context for the action
     * @return currentChallengeId Identification number of the current challenge for the action
     */
-    function getAction(uint256 _actionId) external view
+    function getAction(uint256 _actionId)
+        external
+        view
         returns (
             address disputable,
             uint256 disputableActionId,
@@ -563,7 +571,9 @@ contract Agreement is IAgreement, AragonApp {
     * @return disputeId Identification number of the dispute on the arbitrator
     * @return ruling Ruling given for the action's dispute
     */
-    function getChallenge(uint256 _challengeId) external view
+    function getChallenge(uint256 _challengeId)
+        external
+        view
         returns (
             uint256 actionId,
             address challenger,
@@ -1180,12 +1190,10 @@ contract Agreement is IAgreement, AragonApp {
     * @return challenge Current challenge instance for the action
     * @return challengeId Identification number of the current challenge for the action
     */
-    function _getChallengedAction(uint256 _actionId) internal view
-        returns (
-            Action storage action,
-            Challenge storage challenge,
-            uint256 challengeId
-        )
+    function _getChallengedAction(uint256 _actionId)
+        internal
+        view
+        returns (Action storage action, Challenge storage challenge, uint256 challengeId)
     {
         action = _getAction(_actionId);
         challengeId = action.currentChallengeId;
@@ -1200,13 +1208,10 @@ contract Agreement is IAgreement, AragonApp {
     * @return challengeId Identification number of the challenge associated with the dispute
     * @return challenge Current challenge instance associated with the dispute
     */
-    function _getDisputedAction(uint256 _disputeId) internal view
-        returns (
-            uint256 actionId,
-            Action storage action,
-            uint256 challengeId,
-            Challenge storage challenge
-        )
+    function _getDisputedAction(uint256 _disputeId)
+        internal
+        view
+        returns (uint256 actionId, Action storage action, uint256 challengeId, Challenge storage challenge)
     {
         challengeId = challengeByDispute[_disputeId];
         challenge = _getChallenge(challengeId);
@@ -1259,11 +1264,10 @@ contract Agreement is IAgreement, AragonApp {
     * @return disputable Disputable app associated with the action
     * @return requirement Collateral requirements applicable to the action
     */
-    function _getDisputableFor(Action storage _action) internal view
-        returns (
-            IDisputable disputable,
-            CollateralRequirement storage requirement
-        )
+    function _getDisputableFor(Action storage _action)
+        internal
+        view
+        returns (IDisputable disputable, CollateralRequirement storage requirement)
     {
         disputable = _action.disputable;
         DisputableInfo storage disputableInfo = disputableInfos[address(disputable)];
@@ -1276,7 +1280,9 @@ contract Agreement is IAgreement, AragonApp {
     * @param _collateralRequirementId Identification number of the collateral requirement being queried
     * @return Collateral requirement instance associated to the given identification number
     */
-    function _getCollateralRequirement(DisputableInfo storage _disputableInfo, uint256 _collateralRequirementId) internal view
+    function _getCollateralRequirement(DisputableInfo storage _disputableInfo, uint256 _collateralRequirementId)
+        internal
+        view
         returns (CollateralRequirement storage)
     {
         bool exists = _collateralRequirementId > 0 && _collateralRequirementId < _disputableInfo.nextCollateralRequirementsId;
@@ -1320,7 +1326,9 @@ contract Agreement is IAgreement, AragonApp {
     * @return Total amount of arbitration fees required by the arbitrator to raise a dispute
     * @return Total amount of challenger fee tokens to be refunded to the challenger
     */
-    function _getMissingArbitratorFees(IArbitrator _arbitrator, ERC20 _challengerFeeToken, uint256 _challengerFeeAmount) internal view
+    function _getMissingArbitratorFees(IArbitrator _arbitrator, ERC20 _challengerFeeToken, uint256 _challengerFeeAmount)
+        internal
+        view
         returns (address, ERC20, uint256, uint256, uint256)
     {
         (address disputeFeeRecipient, ERC20 feeToken, uint256 disputeFees) = _arbitrator.getDisputeFees();
