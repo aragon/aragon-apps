@@ -133,10 +133,13 @@ class AgreementDeployer {
     if (!options.stakingFactory && !this.stakingFactory) await this.deployStakingFactory()
     const stakingFactory = options.stakingFactory || this.stakingFactory
 
+    if (!options.transactionFeesOracle && !this.transactionFeesOracle) await this.deployTransactionFeesOracle()
+    const transactionFeesOracle = options.transactionFeesOracle || this.transactionFeesOracle
+
     const defaultOptions = { ...DEFAULT_AGREEMENT_INITIALIZATION_PARAMS, ...options }
     const { title, content } = defaultOptions
 
-    await this.agreement.initialize(title, content, arbitrator.address, stakingFactory.address)
+    await this.agreement.initialize(title, content, arbitrator.address, stakingFactory.address, transactionFeesOracle.address)
     return this.agreement
   }
 
@@ -149,7 +152,7 @@ class AgreementDeployer {
     const receipt = await this.dao.newAppInstance(appId, this.base.address, '0x', false, { from: owner })
     const agreement = await this.base.constructor.at(getNewProxyAddress(receipt))
 
-    const permissions = ['CHANGE_AGREEMENT_ROLE', 'MANAGE_DISPUTABLE_ROLE']
+    const permissions = ['CHANGE_AGREEMENT_ROLE', 'MANAGE_DISPUTABLE_ROLE', 'MODIFY_TRANSACTION_FEES_ORACLE_ROLE']
     await this._createPermissions(agreement, permissions, owner)
 
     if (currentTimestamp) await this.mockTime(agreement, currentTimestamp)
@@ -192,13 +195,8 @@ class AgreementDeployer {
     let { feeToken, feeAmount } = { ...DEFAULT_AGREEMENT_INITIALIZATION_PARAMS.arbitrator, ...options }
     if (!feeToken.address) feeToken = await this.deployToken(feeToken)
 
-    // transaction fees module
-    const TransactionFeesOracle = this._getContract('TransactionFeesOracleMock')
-    const transactionFeesOracle = await TransactionFeesOracle.new()
-    this.previousDeploy = { ...this.previousDeploy, transactionFeesOracle }
-
     const Arbitrator = this._getContract('ArbitratorMock')
-    const arbitrator = await Arbitrator.new(feeToken.address, feeAmount, transactionFeesOracle.address)
+    const arbitrator = await Arbitrator.new(feeToken.address, feeAmount)
     this.previousDeploy = { ...this.previousDeploy, arbitrator }
 
     return arbitrator
@@ -226,6 +224,14 @@ class AgreementDeployer {
     const collateralToken = await this.deployToken(options)
     this.previousDeploy = { ...this.previousDeploy, collateralToken }
     return collateralToken
+  }
+
+  async deployTransactionFeesOracle() {
+    // transaction fees module
+    const TransactionFeesOracle = this._getContract('TransactionFeesOracleMock')
+    const transactionFeesOracle = await TransactionFeesOracle.new()
+    this.previousDeploy = { ...this.previousDeploy, transactionFeesOracle }
+    return transactionFeesOracle
   }
 
   async deployBase() {
