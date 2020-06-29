@@ -180,7 +180,8 @@ contract Agreement is IAgreement, AragonApp {
         if (disputable.getAgreement() != IAgreement(this)) {
             require(disputableInfo.nextCollateralRequirementsId == 0, ERROR_DISPUTABLE_APP_ALREADY_EXISTS);
             disputable.setAgreement(IAgreement(this));
-            disputableInfo.nextCollateralRequirementsId = 1;
+            uint256 nextId = disputableInfo.nextCollateralRequirementsId;
+            disputableInfo.nextCollateralRequirementsId = nextId > 0 ? nextId : 1;
         }
         _changeCollateralRequirement(disputable, disputableInfo, _collateralToken, _actionAmount, _challengeAmount, _challengeDuration);
     }
