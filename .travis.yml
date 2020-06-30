@@ -3,6 +3,7 @@ cache:
   timeout: 600
   directories:
     - node_modules
+    - apps/agreement/node_modules
     - apps/agent/node_modules
     - apps/finance/node_modules
     - apps/survey/node_modules
@@ -30,6 +31,8 @@ jobs:
     - stage: tests
       script: npm run lint
       name: "Lint"
+    - script: npm run test:agreement
+      name: "Agreement"
     - script: npm run test:agent
       name: "Agent"
     - script: npm run test:finance
@@ -52,7 +55,9 @@ jobs:
       name: "Shared"
 
     - stage: coverage
-      script: npm run coverage:agent
+      script: npm run coverage:agreement
+      name: "Agreement"
+    - script: npm run coverage:agent
       name: "Agent"
     - script: npm run coverage:finance
       name: "Finance"
