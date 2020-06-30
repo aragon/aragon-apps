@@ -205,7 +205,14 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
                 />
               </section>
             </Box>
-            <VoteInfoBoxes vote={vote} />
+            <VoteInfoBoxes
+              minAcceptQuorum={minAcceptQuorum}
+              quorumProgress={quorumProgress}
+              supportRequired={supportRequired}
+              vote={vote}
+              votesYeaVotersSize={votesYeaVotersSize}
+              yeaPct={round(votesYeaVotersSize * 100, 2)}
+            />
           </React.Fragment>
         }
         secondary={<Box>Disputable action status</Box>}

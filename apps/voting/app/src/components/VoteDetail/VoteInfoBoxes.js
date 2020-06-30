@@ -14,21 +14,21 @@ import {
 import { format } from 'date-fns'
 import SummaryBar from '../SummaryBar'
 import VoteStatus from '../VoteStatus'
-import { round, safeDiv } from '../../math-utils'
-import { getQuorumProgress } from '../../vote-utils'
+import { round } from '../../math-utils'
 
 const formatDate = date => `${format(date, 'do MMM yy, HH:mm')}`
 
-function VoteInfoBoxes({ vote }) {
+function VoteInfoBoxes({
+  minAcceptQuorum,
+  quorumProgress,
+  supportRequired,
+  vote,
+  votesYeaVotersSize,
+  yeaPct,
+}) {
   const theme = useTheme()
   const { layoutName } = useLayout()
   const compact = layoutName === 'small'
-  const { numData } = vote
-  const { minAcceptQuorum, supportRequired, yea, nay } = numData
-  const quorumProgress = getQuorumProgress(vote)
-  const totalVotes = yea + nay
-  const votesYeaVotersSize = safeDiv(yea, totalVotes)
-  const votesNayVotersSize = safeDiv(nay, totalVotes)
 
   return (
     <div
@@ -72,7 +72,7 @@ function VoteInfoBoxes({ vote }) {
               ${textStyle('body2')};
             `}
           >
-            {round(votesYeaVotersSize * 100, 2)}%{' '}
+            {yeaPct}%{' '}
             <span
               css={`
                 color: ${theme.surfaceContentSecondary};
