@@ -177,8 +177,9 @@ contract Agreement is IAgreement, AragonApp {
         disputableInfo.activated = true;
         emit DisputableAppActivated(disputable);
 
+        // If the disputable app is being activated for the first time, then we need to set-up its initial collateral
+        // requirement, along with setting its Agreement reference to this instance.
         if (disputable.getAgreement() != IAgreement(this)) {
-            require(disputableInfo.nextCollateralRequirementsId == 0, ERROR_DISPUTABLE_APP_ALREADY_EXISTS);
             disputable.setAgreement(IAgreement(this));
             uint256 nextId = disputableInfo.nextCollateralRequirementsId;
             disputableInfo.nextCollateralRequirementsId = nextId > 0 ? nextId : 1;
