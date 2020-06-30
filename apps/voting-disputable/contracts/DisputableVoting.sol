@@ -26,12 +26,10 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
 
     // Validation errors
     string private constant ERROR_NO_VOTE = "VOTING_NO_VOTE";
-    string private constant ERROR_INIT_PCTS = "VOTING_INIT_PCTS";
     string private constant ERROR_VOTE_TIME_ZERO = "VOTING_VOTE_TIME_ZERO";
     string private constant ERROR_TOKEN_NOT_CONTRACT = "VOTING_TOKEN_NOT_CONTRACT";
     string private constant ERROR_CHANGE_QUORUM_PCTS = "VOTING_CHANGE_QUORUM_PCTS";
     string private constant ERROR_CHANGE_SUPPORT_PCTS = "VOTING_CHANGE_SUPPORT_PCTS";
-    string private constant ERROR_INIT_SUPPORT_TOO_BIG = "VOTING_INIT_SUPPORT_TOO_BIG";
     string private constant ERROR_CHANGE_SUPPORT_TOO_BIG = "VOTING_CHANGE_SUPP_TOO_BIG";
     string private constant ERROR_INVALID_OVERRULE_WINDOW = "VOTING_INVALID_OVERRULE_WINDOW";
     string private constant ERROR_DELEGATES_EXCEEDS_MAX_LEN = "VOTING_DELEGATES_EXCEEDS_MAX_LEN";
@@ -102,7 +100,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     event ExecuteVote(uint256 indexed voteId);
     event ChangeSupportRequired(uint64 supportRequiredPct);
     event ChangeMinQuorum(uint64 minAcceptQuorumPct);
-    event ChangeOverruleWindow(uint64 newOverruleWindow);
+    event ChangeOverruleWindow(uint64 overruleWindow);
     event ChangeRepresentative(address indexed voter, address indexed newRepresentative);
 
     modifier voteExists(uint256 _voteId) {
@@ -111,24 +109,27 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     }
 
     /**
-    * @notice Initialize DisputableVoting app with `_token.symbol(): string` for governance, minimum support of `@formatPct(_supportRequiredPct)`%, minimum acceptance quorum of `@formatPct(_minAcceptQuorumPct)`%, and a voting duration of `@transformTime(_voteTime)`
+    * @notice Initialize DisputableVoting app with `_token.symbol(): string` for governance, minimum support of `@formatPct(_supportRequiredPct)`%, minimum acceptance quorum of `@formatPct(_minAcceptQuorumPct)`%, a voting duration of `@transformTime(_voteTime)`, and an overrule window of `@transformTime(_overruleWindow)`
     * @param _token MiniMeToken Address that will be used as governance token
     * @param _supportRequiredPct Percentage of yeas in cast votes for a vote to succeed (expressed as a percentage of 10^18; eg. 10^16 = 1%, 10^18 = 100%)
     * @param _minAcceptQuorumPct Percentage of yeas in total possible votes for a vote to succeed (expressed as a percentage of 10^18; eg. 10^16 = 1%, 10^18 = 100%)
-    * @param _voteTime Seconds that a vote will be open for tokenholders to vote
+    * @param _voteTime Seconds that a vote will be open for token holders to vote
+    * @param _overruleWindow New overrule window in seconds
     */
-    function initialize(MiniMeToken _token, uint64 _supportRequiredPct, uint64 _minAcceptQuorumPct, uint64 _voteTime) external onlyInit {
+    function initialize(MiniMeToken _token, uint64 _supportRequiredPct, uint64 _minAcceptQuorumPct, uint64 _voteTime, uint64 _overruleWindow)
+        external
+    {
         initialized();
 
         require(isContract(_token), ERROR_TOKEN_NOT_CONTRACT);
         require(_voteTime > 0, ERROR_VOTE_TIME_ZERO);
-        require(_minAcceptQuorumPct <= _supportRequiredPct, ERROR_INIT_PCTS);
-        require(_supportRequiredPct < PCT_BASE, ERROR_INIT_SUPPORT_TOO_BIG);
 
         token = _token;
-        supportRequiredPct = _supportRequiredPct;
-        minAcceptQuorumPct = _minAcceptQuorumPct;
         voteTime = _voteTime;
+
+        _changeSupportRequiredPct(_supportRequiredPct);
+        _changeMinAcceptQuorumPct(_minAcceptQuorumPct);
+        _changeOverruleWindow(_overruleWindow);
     }
 
     /**
@@ -139,10 +140,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
         external
         authP(MODIFY_SUPPORT_ROLE, arr(uint256(_supportRequiredPct), uint256(supportRequiredPct)))
     {
-        require(minAcceptQuorumPct <= _supportRequiredPct, ERROR_CHANGE_SUPPORT_PCTS);
-        require(_supportRequiredPct < PCT_BASE, ERROR_CHANGE_SUPPORT_TOO_BIG);
-        supportRequiredPct = _supportRequiredPct;
-        emit ChangeSupportRequired(_supportRequiredPct);
+        _changeSupportRequiredPct(_supportRequiredPct);
     }
 
     /**
@@ -153,22 +151,18 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
         external
         authP(MODIFY_QUORUM_ROLE, arr(uint256(_minAcceptQuorumPct), uint256(minAcceptQuorumPct)))
     {
-        require(_minAcceptQuorumPct <= supportRequiredPct, ERROR_CHANGE_QUORUM_PCTS);
-        minAcceptQuorumPct = _minAcceptQuorumPct;
-        emit ChangeMinQuorum(_minAcceptQuorumPct);
+        _changeMinAcceptQuorumPct(_minAcceptQuorumPct);
     }
 
     /**
-    * @notice Change overrule window to `@transformTime(_newOverruleWindow)`
-    * @param _newOverruleWindow New overrule window in seconds
+    * @notice Change overrule window to `@transformTime(_overruleWindow)`
+    * @param _overruleWindow New overrule window in seconds
     */
-    function changeOverruleWindow(uint64 _newOverruleWindow)
+    function changeOverruleWindow(uint64 _overruleWindow)
         external
-        authP(MODIFY_OVERRULE_WINDOW_ROLE, arr(uint256(_newOverruleWindow), uint256(overruleWindow)))
+        authP(MODIFY_OVERRULE_WINDOW_ROLE, arr(uint256(_overruleWindow), uint256(overruleWindow)))
     {
-        require(_newOverruleWindow <= voteTime, ERROR_INVALID_OVERRULE_WINDOW);
-        overruleWindow = _newOverruleWindow;
-        emit ChangeOverruleWindow(_newOverruleWindow);
+        _changeOverruleWindow(_overruleWindow);
     }
 
     /**
@@ -539,6 +533,37 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     }
 
     // Internal fns
+
+    /**
+    * @dev Internal function to change the required support
+    * @param _supportRequiredPct New required support
+    */
+    function _changeSupportRequiredPct(uint64 _supportRequiredPct) internal {
+        require(minAcceptQuorumPct <= _supportRequiredPct, ERROR_CHANGE_SUPPORT_PCTS);
+        require(_supportRequiredPct < PCT_BASE, ERROR_CHANGE_SUPPORT_TOO_BIG);
+        supportRequiredPct = _supportRequiredPct;
+        emit ChangeSupportRequired(_supportRequiredPct);
+    }
+
+    /**
+    * @dev Internal function to change the minimum acceptance quorum
+    * @param _minAcceptQuorumPct New acceptance quorum
+    */
+    function _changeMinAcceptQuorumPct(uint64 _minAcceptQuorumPct) internal {
+        require(_minAcceptQuorumPct <= supportRequiredPct, ERROR_CHANGE_QUORUM_PCTS);
+        minAcceptQuorumPct = _minAcceptQuorumPct;
+        emit ChangeMinQuorum(_minAcceptQuorumPct);
+    }
+
+    /**
+    * @dev Internal function to change the overrule window
+    * @param _overruleWindow New overrule window in seconds
+    */
+    function _changeOverruleWindow(uint64 _overruleWindow) internal {
+        require(_overruleWindow <= voteTime, ERROR_INVALID_OVERRULE_WINDOW);
+        overruleWindow = _overruleWindow;
+        emit ChangeOverruleWindow(_overruleWindow);
+    }
 
     /**
     * @dev Internal function to create a new vote

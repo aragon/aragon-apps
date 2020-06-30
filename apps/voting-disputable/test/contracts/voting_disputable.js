@@ -31,6 +31,7 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
   const MIN_QUORUM = pct(20)
   const MIN_SUPPORT = pct(50)
   const VOTING_DURATION = ONE_DAY * 5
+  const OVERRULE_WINDOW = ONE_DAY
 
   before('deploy agreement and base voting', async () => {
     votingBase = await Voting.new()
@@ -59,7 +60,7 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
     await deployer.acl.createPermission(ANY_ADDR, voting.address, CHALLENGE_ROLE, owner, { from: owner })
 
     await voting.mockSetTimestamp(await agreement.currentTimestamp())
-    await voting.initialize(token.address, MIN_SUPPORT, MIN_QUORUM, VOTING_DURATION, { from: owner })
+    await voting.initialize(token.address, MIN_SUPPORT, MIN_QUORUM, VOTING_DURATION, OVERRULE_WINDOW, { from: owner })
     await agreement.activate({ disputable: voting, collateralToken, actionCollateral: 0, challengeCollateral: 0, challengeDuration: ONE_DAY, from: owner })
   })
 

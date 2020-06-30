@@ -33,6 +33,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
     const NOW = 1553703809  // random fixed timestamp in seconds
     const ONE_DAY = 60 * 60 * 24
     const VOTING_DURATION = ONE_DAY * 5
+    const OVERRULE_WINDOW = ONE_DAY
 
     // Error strings
     const ERRORS = makeErrorMappingProxy({
@@ -44,10 +45,8 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
 
         // Voting errors
         VOTING_NO_VOTE: 'VOTING_NO_VOTE',
-        VOTING_INIT_PCTS: 'VOTING_INIT_PCTS',
         VOTING_CHANGE_SUPPORT_PCTS: 'VOTING_CHANGE_SUPPORT_PCTS',
         VOTING_CHANGE_QUORUM_PCTS: 'VOTING_CHANGE_QUORUM_PCTS',
-        VOTING_INIT_SUPPORT_TOO_BIG: 'VOTING_INIT_SUPPORT_TOO_BIG',
         VOTING_CHANGE_SUPP_TOO_BIG: 'VOTING_CHANGE_SUPP_TOO_BIG',
         VOTING_CANNOT_VOTE: 'VOTING_CANNOT_VOTE',
         VOTING_CANNOT_EXECUTE: 'VOTING_CANNOT_EXECUTE',
@@ -92,19 +91,19 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
         beforeEach(async () => {
             token = await MiniMeToken.new(ZERO_ADDRESS, ZERO_ADDRESS, 0, 'n', 0, 'n', true) // empty parameters minime
 
-            await voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, VOTING_DURATION)
+            await voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, VOTING_DURATION, OVERRULE_WINDOW)
 
             executionTarget = await ExecutionTarget.new()
         })
 
         it('fails on reinitialization', async () => {
-            await assertRevert(voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, VOTING_DURATION), ERRORS.INIT_ALREADY_INITIALIZED)
+            await assertRevert(voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, VOTING_DURATION, OVERRULE_WINDOW), ERRORS.INIT_ALREADY_INITIALIZED)
         })
 
         it('cannot initialize base app', async () => {
             const newVoting = await Voting.new()
             assert.isTrue(await newVoting.isPetrified())
-            await assertRevert(newVoting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, VOTING_DURATION), ERRORS.INIT_ALREADY_INITIALIZED)
+            await assertRevert(newVoting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, VOTING_DURATION, OVERRULE_WINDOW), ERRORS.INIT_ALREADY_INITIALIZED)
         })
 
         it('checks it is forwarder', async () => {
@@ -138,8 +137,8 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
             await assertRevert(voting.changeMinAcceptQuorumPct(neededSupport.add(bn(1))), ERRORS.VOTING_CHANGE_QUORUM_PCTS)
         })
 
-        it('does not have an overrule window by default', async () => {
-            assertBn(await voting.overruleWindow(), 0, 'overrule window does not match')
+        it('has an overrule window by default', async () => {
+            assertBn(await voting.overruleWindow(), OVERRULE_WINDOW, 'overrule window does not match')
         })
     })
 
@@ -155,7 +154,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
                 await token.generateTokens(holder29, bigExp(29, decimals))
                 await token.generateTokens(holder51, bigExp(51, decimals))
 
-                await voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, VOTING_DURATION)
+                await voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, VOTING_DURATION, OVERRULE_WINDOW)
 
                 executionTarget = await ExecutionTarget.new()
             })
@@ -222,7 +221,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
                     assertBn(snapshotBlock, await getBlockNumber() - 1, 'snapshot block should be correct')
                     assertBn(support, neededSupport, 'required support should be app required support')
                     assertBn(quorum, minimumAcceptanceQuorum, 'min quorum should be app min quorum')
-                    assertBn(overruleWindow, 0, 'default overrule window should be zero')
+                    assertBn(overruleWindow, OVERRULE_WINDOW, 'default overrule window should be correct')
                     assertBn(yeas, 0, 'initial yea should be 0')
                     assertBn(nays, 0, 'initial nay should be 0')
                     assertBn(votingPower, bigExp(100, decimals), 'voting power should be 100')
@@ -362,13 +361,13 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
         it('fails if min acceptance quorum is greater than min support', async () => {
             const neededSupport = pct(20)
             const minimumAcceptanceQuorum = pct(50)
-            await assertRevert(voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, VOTING_DURATION), ERRORS.VOTING_INIT_PCTS)
+            await assertRevert(voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, VOTING_DURATION, OVERRULE_WINDOW), ERRORS.VOTING_CHANGE_QUORUM_PCTS)
         })
 
         it('fails if min support is 100% or more', async () => {
             const minimumAcceptanceQuorum = pct(20)
-            await assertRevert(voting.initialize(token.address, pct(101), minimumAcceptanceQuorum, VOTING_DURATION), ERRORS.VOTING_INIT_SUPPORT_TOO_BIG)
-            await assertRevert(voting.initialize(token.address, pct(100), minimumAcceptanceQuorum, VOTING_DURATION), ERRORS.VOTING_INIT_SUPPORT_TOO_BIG)
+            await assertRevert(voting.initialize(token.address, pct(101), minimumAcceptanceQuorum, VOTING_DURATION, OVERRULE_WINDOW), ERRORS.VOTING_CHANGE_SUPP_TOO_BIG)
+            await assertRevert(voting.initialize(token.address, pct(100), minimumAcceptanceQuorum, VOTING_DURATION, OVERRULE_WINDOW), ERRORS.VOTING_CHANGE_SUPP_TOO_BIG)
         })
     })
 
@@ -379,7 +378,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
         beforeEach(async() => {
             token = await MiniMeToken.new(ZERO_ADDRESS, ZERO_ADDRESS, 0, 'n', 0, 'n', true) // empty parameters minime
 
-            await voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, VOTING_DURATION)
+            await voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, VOTING_DURATION, OVERRULE_WINDOW)
         })
 
         it('fails creating a vote if token has no holder', async () => {
@@ -396,7 +395,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
 
             await token.generateTokens(holder1, 1)
 
-            await voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, VOTING_DURATION)
+            await voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, VOTING_DURATION, OVERRULE_WINDOW)
         })
 
         it('new vote cannot be executed before voting', async () => {
@@ -437,7 +436,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
             await token.generateTokens(holder1, 1)
             await token.generateTokens(holder2, 2)
 
-            await voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, VOTING_DURATION)
+            await voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, VOTING_DURATION, OVERRULE_WINDOW)
         })
 
         it('new vote cannot be executed even after holder2 voting', async () => {
@@ -473,7 +472,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
             await token.generateTokens(holder1, 1)
             await token.generateTokens(holder2, 1)
 
-            await voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, VOTING_DURATION)
+            await voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, VOTING_DURATION, OVERRULE_WINDOW)
         })
 
         it('uses the correct snapshot value if tokens are minted afterwards', async () => {
