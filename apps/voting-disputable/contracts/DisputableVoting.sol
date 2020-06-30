@@ -599,7 +599,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     function _vote(uint256 _voteId, bool _supports, address _voter) internal {
         Vote storage vote_ = votes[_voteId];
         _castVote(vote_, _voteId, _supports, _voter);
-        _overwriteCasterIfNecessary(vote_, _voter);
+        _removeCasterIfNecessary(vote_, _voter);
     }
 
     /**
@@ -817,7 +817,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     * @dev Private function to remove any previous caster state when voting directly
     *      It assumes the pointer to the vote is valid
     */
-    function _overwriteCasterIfNecessary(Vote storage vote_, address _voter) private {
+    function _removeCasterIfNecessary(Vote storage vote_, address _voter) private {
         address _currentCaster = vote_.casters[_voter];
         if (_currentCaster != address(0)) {
             vote_.casters[_voter] = address(0);
