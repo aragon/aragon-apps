@@ -370,7 +370,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     * @return Vote paused duration
     * @return Vote status
     */
-    function getDisputableInfo(uint256 _voteId)
+    function getVoteDisputableInfo(uint256 _voteId)
         external
         view
         voteExists(_voteId)
