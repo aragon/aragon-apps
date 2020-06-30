@@ -1,6 +1,6 @@
 {
   "name": "@aragon/apps-agreement",
-  "version": "0.1.0",
+  "version": "0.1.0-beta.0",
   "author": "Aragon Association <legal@aragon.org>",
   "license": "(GPL-3.0-or-later OR AGPL-3.0-or-later)",
   "files": [
