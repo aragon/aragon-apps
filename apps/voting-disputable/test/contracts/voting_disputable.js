@@ -60,7 +60,7 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
 
     await voting.mockSetTimestamp(await agreement.currentTimestamp())
     await voting.initialize(token.address, MIN_SUPPORT, MIN_QUORUM, VOTING_DURATION, { from: owner })
-    await agreement.register({ disputable: voting, collateralToken, actionCollateral: 0, challengeCollateral: 0, challengeDuration: ONE_DAY, from: owner })
+    await agreement.activate({ disputable: voting, collateralToken, actionCollateral: 0, challengeCollateral: 0, challengeDuration: ONE_DAY, from: owner })
   })
 
   const createVote = async voter => {
@@ -80,18 +80,18 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
     it('saves the agreement action data', async () => {
       const { pausedAt, pauseDuration, status } = await voting.getDisputableInfo(voteId)
 
-      assertBn(actionId, 0, 'action ID does not match')
+      assertBn(actionId, 1, 'action ID does not match')
       assertBn(pausedAt, 0, 'paused at does not match')
       assertBn(pauseDuration, 0, 'pause duration does not match')
       assertBn(status, VOTE_STATUS.ACTIVE, 'vote status does not match')
     })
 
     it('registers a new action in the agreement', async () => {
-      const { disputable, disputableActionId, collateralId, context, closed, submitter } = await agreement.getAction(actionId)
+      const { disputable, disputableActionId, collateralRequirementId, context, closed, submitter } = await agreement.getAction(actionId)
 
       assertBn(disputableActionId, voteId, 'disputable ID does not match')
       assert.equal(disputable, voting.address, 'disputable address does not match')
-      assertBn(collateralId, 0, 'collateral ID does not match')
+      assertBn(collateralRequirementId, 1, 'collateral ID does not match')
       assert.equal(toAscii(context), 'metadata', 'context does not match')
       assert.equal(submitter, voter51, 'action submitter does not match')
       assert.isFalse(closed, 'action is not closed')
@@ -125,12 +125,12 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
     it('closes the action on the agreement and executed the vote', async () => {
       assertBn(await executionTarget.counter(), 1, 'vote was not executed')
 
-      const { disputable, disputableActionId, collateralId, context, closed, submitter } = await agreement.getAction(actionId)
+      const { disputable, disputableActionId, collateralRequirementId, context, closed, submitter } = await agreement.getAction(actionId)
       assert.isTrue(closed, 'action is not closed')
 
       assertBn(disputableActionId, voteId, 'disputable ID does not match')
       assert.equal(disputable, voting.address, 'disputable address does not match')
-      assertBn(collateralId, 0, 'collateral ID does not match')
+      assertBn(collateralRequirementId, 1, 'collateral ID does not match')
       assert.equal(toAscii(context), 'metadata', 'context does not match')
       assert.equal(submitter, voter51, 'action submitter does not match')
     })
