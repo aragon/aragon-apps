@@ -178,7 +178,6 @@ contract Agreement is IAgreement, AragonApp {
         emit DisputableAppActivated(disputable);
 
         if (disputable.getAgreement() != IAgreement(this)) {
-            require(disputableInfo.nextCollateralRequirementsId == 0, ERROR_DISPUTABLE_APP_ALREADY_EXISTS);
             disputable.setAgreement(IAgreement(this));
             uint256 nextId = disputableInfo.nextCollateralRequirementsId;
             disputableInfo.nextCollateralRequirementsId = nextId > 0 ? nextId : 1;
