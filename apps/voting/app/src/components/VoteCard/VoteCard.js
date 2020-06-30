@@ -1,13 +1,18 @@
 import React, { useState, useCallback, useMemo } from 'react'
 import { Card, GU, Timer, textStyle, useTheme } from '@aragon/ui'
 import { noop } from '../../utils'
+import { getDisputableVoteStatus } from '../../disputable-utils'
 import { VOTE_YEA, VOTE_NAY } from '../../vote-types'
-import LocalLabelAppBadge from '..//LocalIdentityBadge/LocalLabelAppBadge'
+import { VOTE_STATUS_ACTIVE } from '../../disputable-vote-statuses'
+import DisputableStatusLabel from '../DisputableStatusLabel'
+import LocalLabelAppBadge from '../LocalIdentityBadge/LocalLabelAppBadge'
 import VoteOptions from './VoteOptions'
 import VotedIndicator from './VotedIndicator'
 import VoteStatus from '../VoteStatus'
 import VoteDescription from '../VoteDescription'
 import You from '../You'
+//TODO: remove once we have real data
+import { getDisputableVoteById } from '../../agreementsMockData'
 
 function VoteCard({ vote, onOpen }) {
   const theme = useTheme()
@@ -18,6 +23,9 @@ function VoteCard({ vote, onOpen }) {
     numData,
     voteId,
   } = vote
+  //TODO: get real data
+  vote.disputable = getDisputableVoteById(voteId)
+  const disputableStatus = getDisputableVoteStatus(vote)
   const { votingPower, yea, nay } = numData
   const { open, metadata, description, endDate } = data
   const options = useMemo(
@@ -110,10 +118,14 @@ function VoteCard({ vote, onOpen }) {
           margin-top: ${2 * GU}px;
         `}
       >
-        {open ? (
-          <Timer end={endDate} maxUnits={4} />
+        {disputableStatus === VOTE_STATUS_ACTIVE ? (
+          open ? (
+            <Timer end={endDate} maxUnits={4} />
+          ) : (
+            <VoteStatus vote={vote} />
+          )
         ) : (
-          <VoteStatus vote={vote} />
+          <DisputableStatusLabel vote={vote} />
         )}
       </div>
     </Card>
