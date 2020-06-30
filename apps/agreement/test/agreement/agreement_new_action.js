@@ -197,7 +197,8 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
 
                 context('when the transaction fees module is not set', () => {
                   beforeEach('remove transactions module', async () => {
-                    await disputable.agreement.setTransactionFeesOracle(ZERO_ADDRESS, { from: owner })
+                    await disputable.changeSetting({ transactionFeesOracleAddress: ZERO_ADDRESS, from: owner })
+                    await disputable.sign(submitter)
                   })
 
                   newActionFlow(bn(0))
@@ -233,7 +234,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
 
         context('when the app is unregistered', () => {
           beforeEach('mark as unregistered', async () => {
-            await disputable.agreement.setTransactionFeesOracle(ZERO_ADDRESS, { from: owner })
+            await disputable.changeSetting({ transactionFeesOracleAddress: ZERO_ADDRESS, from: owner })
             await disputable.sign(submitter)
             await disputable.newAction({ submitter })
             await disputable.deactivate({ from: owner })

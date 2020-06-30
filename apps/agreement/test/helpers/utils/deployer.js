@@ -8,7 +8,6 @@ const { getEventArgument, getNewProxyAddress } = require('@aragon/contract-helpe
 
 const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff'
 const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
-const TRANSACTION_FEES_MODULE = '0x5ad82e07a3131a2e6a5f70dcd6174d074efb2b1eda63b07d0625721114bab36d'
 
 const DEFAULT_AGREEMENT_INITIALIZATION_PARAMS = {
   appId: '0xcafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234',
@@ -47,10 +46,6 @@ class AgreementDeployer {
     this.previousDeploy = {}
   }
 
-  get TRANSACTION_FEES_MODULE() {
-    return TRANSACTION_FEES_MODULE
-  }
- 
   get owner() {
     return this.previousDeploy.owner
   }
@@ -109,19 +104,21 @@ class AgreementDeployer {
 
     const disputable = options.disputable || this.disputable
     const arbitrator = options.arbitrator || this.arbitrator
+    const transactionFeesOracle = options.transactionFeesOracle || this.transactionFeesOracle
     const stakingFactory = options.stakingFactory || this.stakingFactory
     const collateralToken = options.collateralToken || this.collateralToken
     const { actionCollateral, challengeCollateral, challengeDuration } = { ...DEFAULT_DISPUTABLE_INITIALIZATION_PARAMS, ...options }
 
     const collateralRequirement = { collateralToken, actionCollateral, challengeCollateral, challengeDuration }
-    return new DisputableWrapper(this.artifacts, this.web3, this.agreement, arbitrator, stakingFactory, disputable, collateralRequirement)
+    return new DisputableWrapper(this.artifacts, this.web3, this.agreement, arbitrator, transactionFeesOracle, stakingFactory, disputable, collateralRequirement)
   }
 
   async deployAndInitializeWrapper(options = {}) {
     await this.deployAndInitialize(options)
     const arbitrator = options.arbitrator || this.arbitrator
+    const transactionFeesOracle = options.transactionFeesOracle || this.transactionFeesOracle
     const stakingFactory = options.stakingFactory || this.stakingFactory
-    return new AgreementWrapper(this.artifacts, this.web3, this.agreement, arbitrator, stakingFactory)
+    return new AgreementWrapper(this.artifacts, this.web3, this.agreement, arbitrator, transactionFeesOracle, stakingFactory)
   }
 
   async deployAndInitialize(options = {}) {
@@ -139,7 +136,7 @@ class AgreementDeployer {
     const defaultOptions = { ...DEFAULT_AGREEMENT_INITIALIZATION_PARAMS, ...options }
     const { title, content } = defaultOptions
 
-    await this.agreement.initialize(title, content, arbitrator.address, stakingFactory.address, transactionFeesOracle.address)
+    await this.agreement.initialize(title, content, arbitrator.address, transactionFeesOracle.address, stakingFactory.address)
     return this.agreement
   }
 
@@ -152,7 +149,7 @@ class AgreementDeployer {
     const receipt = await this.dao.newAppInstance(appId, this.base.address, '0x', false, { from: owner })
     const agreement = await this.base.constructor.at(getNewProxyAddress(receipt))
 
-    const permissions = ['CHANGE_AGREEMENT_ROLE', 'MANAGE_DISPUTABLE_ROLE', 'MODIFY_TRANSACTION_FEES_ORACLE_ROLE']
+    const permissions = ['CHANGE_AGREEMENT_ROLE', 'MANAGE_DISPUTABLE_ROLE']
     await this._createPermissions(agreement, permissions, owner)
 
     if (currentTimestamp) await this.mockTime(agreement, currentTimestamp)

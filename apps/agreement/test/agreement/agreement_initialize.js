@@ -8,13 +8,14 @@ const { ARAGON_OS_ERRORS, AGREEMENT_ERRORS } = require('../helpers/utils/errors'
 const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 
 contract('Agreement', ([_, EOA]) => {
-  let arbitrator, stakingFactory, agreement
+  let arbitrator, transactionFeesOracle, stakingFactory, agreement
 
   const title = 'Sample Agreement'
   const content = '0xabcd'
 
   before('deploy instances', async () => {
     arbitrator = await deployer.deployArbitrator()
+    transactionFeesOracle = await deployer.deployTransactionFeesOracle()
     stakingFactory = await deployer.deployStakingFactory()
     agreement = await deployer.deploy()
   })
@@ -24,20 +25,26 @@ contract('Agreement', ([_, EOA]) => {
       const base = deployer.base
 
       assert(await base.isPetrified(), 'base agreement contract should be petrified')
-      await assertRevert(base.initialize(title, content, arbitrator.address, stakingFactory.address), ARAGON_OS_ERRORS.ERROR_ALREADY_INITIALIZED)
+      await assertRevert(base.initialize(title, content, arbitrator.address, transactionFeesOracle.address, stakingFactory.address), ARAGON_OS_ERRORS.ERROR_ALREADY_INITIALIZED)
     })
 
     context('when the initialization fails', () => {
       it('fails when using a non-contract arbitrator', async () => {
         const court = EOA
 
-        await assertRevert(agreement.initialize(title, content, court, stakingFactory.address), AGREEMENT_ERRORS.ERROR_ARBITRATOR_NOT_CONTRACT)
+        await assertRevert(agreement.initialize(title, content, court, transactionFeesOracle.address, stakingFactory.address), AGREEMENT_ERRORS.ERROR_ARBITRATOR_NOT_CONTRACT)
+      })
+
+      it('fails when using a non-contract transaction fees oracle', async () => {
+        const oracle = EOA
+
+        await assertRevert(agreement.initialize(title, content, arbitrator.address, oracle, stakingFactory.address), AGREEMENT_ERRORS.ERROR_TX_FEES_ORACLE_NOT_CONTRACT)
       })
 
       it('fails when using a non-contract staking factory', async () => {
         const factory = EOA
 
-        await assertRevert(agreement.initialize(title, content, arbitrator.address, factory), AGREEMENT_ERRORS.ERROR_STAKING_FACTORY_NOT_CONTRACT)
+        await assertRevert(agreement.initialize(title, content, arbitrator.address, transactionFeesOracle.address, factory), AGREEMENT_ERRORS.ERROR_STAKING_FACTORY_NOT_CONTRACT)
       })
     })
 
@@ -45,11 +52,11 @@ contract('Agreement', ([_, EOA]) => {
       let receipt
 
       before('initialize agreement DAO', async () => {
-        receipt = await agreement.initialize(title, content, arbitrator.address, stakingFactory.address)
+        receipt = await agreement.initialize(title, content, arbitrator.address, transactionFeesOracle.address, stakingFactory.address)
       })
 
       it('cannot be initialized again', async () => {
-        await assertRevert(agreement.initialize(title, content, arbitrator.address, stakingFactory.address), ARAGON_OS_ERRORS.ERROR_ALREADY_INITIALIZED)
+        await assertRevert(agreement.initialize(title, content, arbitrator.address, transactionFeesOracle.address, stakingFactory.address), ARAGON_OS_ERRORS.ERROR_ALREADY_INITIALIZED)
       })
 
       it('initializes the first setting', async () => {
@@ -61,12 +68,13 @@ contract('Agreement', ([_, EOA]) => {
         assertEvent({ logs }, AGREEMENT_EVENTS.SETTING_CHANGED, { settingId: currentSettingId })
       })
 
-      it('initializes the first setting with the given title, content and arbitrator', async () => {
+      it('initializes the first setting with the given title, content, arbitrator and transaction fees oracle', async () => {
         const setting = await agreement.getSetting(1)
 
         assert.equal(setting.title, title, 'title does not match')
         assert.equal(setting.content, content, 'content does not match')
         assert.equal(setting.arbitrator, arbitrator.address, 'arbitrator does not match')
+        assert.equal(setting.transactionFeesOracle, transactionFeesOracle.address, 'transactionFeesOracle does not match')
       })
     })
   })
