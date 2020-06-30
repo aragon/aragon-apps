@@ -11,11 +11,11 @@ import "@aragon/contract-test-helpers/contracts/TimeHelpersMock.sol";
 */
 contract DisputableVotingMock is DisputableVoting, TimeHelpersMock {
     // Mint a token and create a vote in the same transaction to test snapshot block values are correct
-    function newTokenAndVote(address _holder, uint256 _tokenAmount, string _metadata) external returns (uint256) {
+    function newTokenAndVote(address _holder, uint256 _tokenAmount, bytes _context) external returns (uint256) {
         token.generateTokens(_holder, _tokenAmount);
 
         bytes memory noScript = new bytes(0);
-        return _newVote(noScript, _metadata);
+        return _newVote(noScript, _context);
     }
 
     // _isValuePct public wrapper

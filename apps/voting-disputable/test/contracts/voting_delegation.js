@@ -92,7 +92,7 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, repres
     executionTarget = await ExecutionTarget.new()
     script = encodeCallScript([{ to: executionTarget.address, calldata: executionTarget.contract.methods.execute().encodeABI() }])
 
-    const receipt = await voting.newVote(script, 'metadata', { from })
+    const receipt = await voting.newVote(script, '0x', { from })
     const events = decodeEventsOfType(receipt, Voting.abi, 'StartVote')
     assert.equal(events.length, 1, 'number of StartVote emitted events does not match')
     const startVoteEvent = events[0].args

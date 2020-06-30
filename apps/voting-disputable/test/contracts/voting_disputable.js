@@ -1,9 +1,9 @@
-const { toAscii } = require('web3-utils')
+const { toAscii, utf8ToHex } = require('web3-utils')
 const { bigExp, bn } = require('@aragon/apps-agreement/test/helpers/lib/numbers')
 const { assertBn } = require('@aragon/apps-agreement/test/helpers/assert/assertBn')
 const { assertRevert } = require('@aragon/apps-agreement/test/helpers/assert/assertThrow')
 const { decodeEventsOfType } = require('@aragon/apps-agreement/test/helpers/lib/decodeEvent')
-const { ACTIONS_STATE, RULINGS } = require('@aragon/apps-agreement/test/helpers/utils/enums')
+const { RULINGS } = require('@aragon/apps-agreement/test/helpers/utils/enums')
 
 const { pct, getVoteState } = require('../helpers/voting')
 const { encodeCallScript } = require('@aragon/contract-test-helpers/evmScript')
@@ -32,6 +32,8 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
   const MIN_SUPPORT = pct(50)
   const VOTING_DURATION = ONE_DAY * 5
   const OVERRULE_WINDOW = ONE_DAY
+
+  const CONTEXT = utf8ToHex('some context')
 
   before('deploy agreement and base voting', async () => {
     votingBase = await Voting.new()
@@ -68,7 +70,7 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
     executionTarget = await ExecutionTarget.new()
     script = encodeCallScript([{ to: executionTarget.address, calldata: executionTarget.contract.methods.execute().encodeABI() }])
 
-    const receipt = await voting.newVote(script, 'metadata', { from: voter })
+    const receipt = await voting.newVote(script, CONTEXT, { from: voter })
     const logs = decodeEventsOfType(receipt, Voting.abi, 'StartVote')
 
     voteId = getEventArgument({ logs }, 'StartVote', 'voteId')
@@ -93,7 +95,7 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
       assertBn(disputableActionId, voteId, 'disputable ID does not match')
       assert.equal(disputable, voting.address, 'disputable address does not match')
       assertBn(collateralRequirementId, 1, 'collateral ID does not match')
-      assert.equal(toAscii(context), 'metadata', 'context does not match')
+      assert.equal(toAscii(context), 'some context', 'context does not match')
       assert.equal(submitter, voter51, 'action submitter does not match')
       assert.isFalse(closed, 'action is not closed')
     })
@@ -132,7 +134,7 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
       assertBn(disputableActionId, voteId, 'disputable ID does not match')
       assert.equal(disputable, voting.address, 'disputable address does not match')
       assertBn(collateralRequirementId, 1, 'collateral ID does not match')
-      assert.equal(toAscii(context), 'metadata', 'context does not match')
+      assert.equal(toAscii(context), 'some context', 'context does not match')
       assert.equal(submitter, voter51, 'action submitter does not match')
     })
   })

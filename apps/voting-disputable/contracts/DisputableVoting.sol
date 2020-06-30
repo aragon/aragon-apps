@@ -90,7 +90,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     uint64 public overruleWindow;
     mapping (address => address) internal representatives;
 
-    event StartVote(uint256 indexed voteId, address indexed creator, string metadata);
+    event StartVote(uint256 indexed voteId, address indexed creator, bytes context);
     event CastVote(uint256 indexed voteId, address indexed voter, bool supports, uint256 stake);
     event PauseVote(uint256 indexed voteId, uint256 indexed challengeId);
     event ResumeVote(uint256 indexed voteId);
@@ -175,13 +175,13 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     }
 
     /**
-    * @notice Create a new vote about "`_metadata`"
+    * @notice Create a new vote about "`_context`"
     * @param _executionScript EVM script to be executed on approval
-    * @param _metadata Vote metadata
+    * @param _context Vote context
     * @return voteId Id for newly created vote
     */
-    function newVote(bytes _executionScript, string _metadata) external auth(CREATE_VOTES_ROLE) returns (uint256 voteId) {
-        return _newVote(_executionScript, _metadata);
+    function newVote(bytes _executionScript, bytes _context) external auth(CREATE_VOTES_ROLE) returns (uint256 voteId) {
+        return _newVote(_executionScript, _context);
     }
 
     /**
@@ -465,7 +465,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     function forward(bytes _evmScript) public {
         require(canForward(msg.sender, _evmScript), ERROR_CANNOT_FORWARD);
         // TODO: Use new forwarding interface with context information
-        _newVote(_evmScript, "");
+        _newVote(_evmScript, new bytes(0));
     }
 
     /**
@@ -569,7 +569,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     * @dev Internal function to create a new vote
     * @return voteId id for newly created vote
     */
-    function _newVote(bytes _executionScript, string _metadata) internal returns (uint256 voteId) {
+    function _newVote(bytes _executionScript, bytes _context) internal returns (uint256 voteId) {
         uint64 snapshotBlock = getBlockNumber64() - 1; // avoid double voting in this very block
         uint256 votingPower = token.totalSupplyAt(snapshotBlock);
         require(votingPower > 0, ERROR_NO_VOTING_POWER);
@@ -588,9 +588,9 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
 
         // Notify the Agreement app tied to the current voting app about the vote created.
         // This is mandatory to make the vote disputable, by storing a reference to it on the Agreement app.
-        vote_.actionId = _newAgreementAction(voteId, bytes(_metadata), msg.sender);
+        vote_.actionId = _newAgreementAction(voteId, _context, msg.sender);
 
-        emit StartVote(voteId, msg.sender, _metadata);
+        emit StartVote(voteId, msg.sender, _context);
     }
 
     /**
