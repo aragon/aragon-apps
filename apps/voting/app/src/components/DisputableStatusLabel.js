@@ -18,6 +18,7 @@ import {
   DISPUTABLE_VOTE_STATUSES,
 } from '../disputable-vote-statuses'
 
+<<<<<<< HEAD
 function getAttributes(status, theme) {
   const attributes = {
     [VOTE_STATUS_ACTIVE]: {
@@ -32,6 +33,28 @@ function getAttributes(status, theme) {
     },
     [VOTE_STATUS_CLOSED]: {
       background: String(theme.surfaceUnder),
+=======
+const getStatusAttributes = (status, theme) => {
+  if (status === VOTE_STATUS_PAUSED) {
+    return {
+      background: theme.warningSurface,
+      label: 'Challenged',
+      Icon: IconAttention,
+      color: theme.warningSurfaceContent,
+    }
+  }
+  if (status === VOTE_STATUS_CANCELLED) {
+    return {
+      background: theme.disabled,
+      label: 'Cancelled',
+      Icon: IconClosed,
+      color: theme.disabledContent,
+    }
+  }
+  if (status === VOTE_STATUS_CLOSED) {
+    return {
+      background: theme.disabled,
+>>>>>>> Different colors on the borders of the vote cards
       label: 'Closed',
       Icon: IconInfo,
       color: String(theme.disabledContent),

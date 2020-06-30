@@ -3,7 +3,12 @@ import { Card, GU, Timer, textStyle, useTheme } from '@aragon/ui'
 import { noop } from '../../utils'
 import { getDisputableVoteStatus } from '../../disputable-utils'
 import { VOTE_YEA, VOTE_NAY } from '../../vote-types'
-import { VOTE_STATUS_ACTIVE } from '../../disputable-vote-statuses'
+import {
+  VOTE_STATUS_ACTIVE,
+  VOTE_STATUS_PAUSED,
+  VOTE_STATUS_CANCELLED,
+  VOTE_STATUS_CLOSED,
+} from '../../disputable-vote-statuses'
 import DisputableStatusLabel from '../DisputableStatusLabel'
 import LocalLabelAppBadge from '../LocalIdentityBadge/LocalLabelAppBadge'
 import VoteOptions from './VoteOptions'
@@ -64,6 +69,19 @@ function VoteCard({ vote, onOpen }) {
   // “highlighted” means either focused or hovered
   const [highlighted, setHighlighted] = useState(false)
 
+  //TODO: update this part of the code once status function is updated
+  let border = theme.surface
+
+  if (disputableStatus === VOTE_STATUS_PAUSED) {
+    border = theme.warning
+  }
+  if (
+    disputableStatus === VOTE_STATUS_CANCELLED ||
+    disputableStatus === VOTE_STATUS_CLOSED
+  ) {
+    border = theme.disabledContent
+  }
+
   return (
     <Card
       onClick={handleOpen}
@@ -77,6 +95,7 @@ function VoteCard({ vote, onOpen }) {
         grid-template-rows: auto 1fr auto auto;
         grid-gap: ${1 * GU}px;
         padding: ${3 * GU}px;
+        border: solid ${border} 1px;
       `}
     >
       <div
