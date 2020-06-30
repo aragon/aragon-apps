@@ -27,7 +27,7 @@ contract('Agreement', ([_, user]) => {
         await disputable.stake({ user })
       })
 
-      itCostsAtMost(181e3, () => disputable.unstake({ user }))
+      itCostsAtMost(185e3, () => disputable.unstake({ user }))
     })
 
     context('newAction', () => {
@@ -84,7 +84,7 @@ contract('Agreement', ([_, user]) => {
       })
 
       context('in favor of the challenger', () => {
-        itCostsAtMost(338e3, () => disputable.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_CHALLENGER }))
+        itCostsAtMost(343e3, () => disputable.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_CHALLENGER }))
       })
     })
   })
