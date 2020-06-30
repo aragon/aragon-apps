@@ -4,6 +4,11 @@ import "../../DisputableVoting.sol";
 import "@aragon/contract-test-helpers/contracts/TimeHelpersMock.sol";
 
 
+/**
+* @dev This mock basically exposes a few functions to test edge cases of the disputable voting app.
+*      In particular it provides a function to simulate a token transfer + vote in the same block.
+*      It also exposes a function to compute vote pcts for testing purposes.
+*/
 contract DisputableVotingMock is DisputableVoting, TimeHelpersMock {
     // Mint a token and create a vote in the same transaction to test snapshot block values are correct
     function newTokenAndVote(address _holder, uint256 _tokenAmount, string _metadata) external returns (uint256) {
