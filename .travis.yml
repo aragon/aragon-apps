@@ -11,6 +11,7 @@ cache:
     - apps/token-manager/app/node_modules
     - apps/vault/node_modules
     - apps/voting/node_modules
+    - apps/voting-disputable/node_modules
     - future-apps/payroll/node_modules
     - shared/migrations/node_modules
     - shared/minime/node_modules
@@ -51,6 +52,8 @@ jobs:
       name: "Vault"
     - script: npm run test:voting
       name: "Voting"
+    - script: npm run test:voting-disputable
+      name: "Voting Disputable"
     - script: npm run test:shared
       name: "Shared"
 
@@ -71,6 +74,8 @@ jobs:
       name: "Vault"
     - script: npm run coverage:voting
       name: "Voting"
+    - script: npm run coverage:voting-disputable
+      name: "Voting Disputable"
 
     - stage: integration
       script: npm run test:payroll:only:payday
