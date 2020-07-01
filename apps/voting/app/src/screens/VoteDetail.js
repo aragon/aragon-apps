@@ -209,9 +209,8 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
               minAcceptQuorum={minAcceptQuorum}
               quorumProgress={quorumProgress}
               supportRequired={supportRequired}
-              vote={vote}
               votesYeaVotersSize={votesYeaVotersSize}
-              yeaPct={round(votesYeaVotersSize * 100, 2)}
+              vote={vote}
             />
           </React.Fragment>
         }

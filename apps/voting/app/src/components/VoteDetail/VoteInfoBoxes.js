@@ -1,8 +1,7 @@
 import React from 'react'
-import { useNetwork } from '@aragon/api-react'
+import { format } from 'date-fns'
 import {
   Box,
-  GU,
   Help,
   IconTime,
   Timer,
@@ -10,8 +9,9 @@ import {
   textStyle,
   useLayout,
   useTheme,
+  GU,
 } from '@aragon/ui'
-import { format } from 'date-fns'
+import { useNetwork } from '@aragon/api-react'
 import SummaryBar from '../SummaryBar'
 import VoteStatus from '../VoteStatus'
 import { round } from '../../math-utils'
@@ -22,20 +22,18 @@ function VoteInfoBoxes({
   minAcceptQuorum,
   quorumProgress,
   supportRequired,
-  vote,
   votesYeaVotersSize,
-  yeaPct,
+  vote,
 }) {
-  const theme = useTheme()
   const { layoutName } = useLayout()
-  const compact = layoutName === 'small'
+  const compactMode = layoutName === 'small'
 
   return (
     <div
       css={`
         margin-top: ${2 * GU}px;
         display: grid;
-        grid-auto-flow: ${compact ? 'row' : 'column'};
+        grid-auto-flow: ${compactMode ? 'row' : 'column'};
         grid-gap: ${2 * GU}px;
       `}
     >
@@ -67,26 +65,9 @@ function VoteInfoBoxes({
             height: 100%;
           `}
         >
-          <div
-            css={`
-              ${textStyle('body2')};
-            `}
-          >
-            {yeaPct}%{' '}
-            <span
-              css={`
-                color: ${theme.surfaceContentSecondary};
-              `}
-            >
-              (&gt;{round(supportRequired * 100, 2)}% needed)
-            </span>
-          </div>
-          <SummaryBar
+          <SummaryWithPercentages
             positiveSize={votesYeaVotersSize}
             requiredSize={supportRequired}
-            css={`
-              margin-top: ${2 * GU}px;
-            `}
           />
         </Box>
       </div>
@@ -108,30 +89,43 @@ function VoteInfoBoxes({
             height: 100%;
           `}
         >
-          <div
-            css={`
-              ${textStyle('body2')};
-            `}
-          >
-            {round(quorumProgress * 100, 2)}%{' '}
-            <span
-              css={`
-                color: ${theme.surfaceContentSecondary};
-              `}
-            >
-              (>{round(minAcceptQuorum * 100, 2)}% needed)
-            </span>
-          </div>
-          <SummaryBar
+          <SummaryWithPercentages
             positiveSize={quorumProgress}
             requiredSize={minAcceptQuorum}
-            css={`
-              margin-top: ${2 * GU}px;
-            `}
           />
         </Box>
       </div>
     </div>
+  )
+}
+
+function SummaryWithPercentages({ positiveSize, requiredSize }) {
+  const theme = useTheme()
+
+  return (
+    <React.Fragment>
+      <div
+        css={`
+          ${textStyle('body2')};
+        `}
+      >
+        {round(positiveSize * 100, 2)}%{' '}
+        <span
+          css={`
+            color: ${theme.surfaceContentSecondary};
+          `}
+        >
+          (&gt;{round(requiredSize * 100, 2)}% needed)
+        </span>
+      </div>
+      <SummaryBar
+        positiveSize={positiveSize}
+        requiredSize={requiredSize}
+        css={`
+          margin-top: ${2 * GU}px;
+        `}
+      />
+    </React.Fragment>
   )
 }
 
