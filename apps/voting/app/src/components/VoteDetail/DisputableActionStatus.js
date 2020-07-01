@@ -51,7 +51,21 @@ function DisputableActionStatus({ vote, connectedAccount }) {
         {new Date().getTime() > vote.disputable.action.endDate ? (
           formatDate(vote.disputable.action.endDate)
         ) : (
-          <Timer end={new Date(vote.disputable.action.endDate)} />
+          <div
+            css={`
+              display: inline-flex;
+            `}
+          >
+            <Timer end={new Date(vote.disputable.action.endDate)} />{' '}
+            <div
+              css={`
+                padding-left: ${1 * GU}px;
+                color: ${theme.contentSecondary};
+              `}
+            >
+              (48h)
+            </div>
+          </div>
         )}
       </Item>
       <Item>

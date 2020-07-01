@@ -54,7 +54,7 @@ let vote2 = {
     disputable: '', //Address of the disputable that created the action
     disputableActionId: '24',
     collateralId: '',
-    endDate: 1594913996969, //Timestamp when the disputable action ends unless it's closed beforehand
+    endDate: 1592913996969, //Timestamp when the disputable action ends unless it's closed beforehand
     state: 'Challenged', //Submitted, Challenged, Closed
     submitter: '0xff4643B0161F92b8b568Af62be313E41F32E4baD', //Facu's address
     context: 'Link',
@@ -86,6 +86,7 @@ let vote2 = {
   },
 }
 
+let date = new Date().getTime() + 3600 * 60 * 48
 let vote3 = {
   //DisputableVoting.sol: getDisputableInfo(voteId)
   pausedAt: '',
@@ -98,7 +99,7 @@ let vote3 = {
     disputable: '', //Address of the disputable that created the action
     disputableActionId: '24',
     collateralId: '',
-    endDate: 1594913996969, //Timestamp when the disputable action ends unless it's closed beforehand
+    endDate: date, //Timestamp when the disputable action ends unless it's closed beforehand
     state: 'Challenged', //Submitted, Challenged, Closed
     submitter: '0xff4643B0161F92b8b568Af62be313E41F32E4baD', //Facu's address
     context: 'Link',
