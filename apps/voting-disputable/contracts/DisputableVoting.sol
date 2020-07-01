@@ -363,7 +363,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     }
 
     /**
-    * @dev Tells whether vote #`_voteId` is open
+    * @dev Tells whether vote #`_voteId` is open for voting
     *      Initialization check is implicitly provided by `voteExists()` as new votes can only be
     *      created via `newVote()`, which requires initialization
     * @param _voteId Id for vote
@@ -696,7 +696,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     }
 
     /**
-    * @dev Internal function to check if a vote is still open
+    * @dev Internal function to check if a vote is still open for voting
     *      It assumes the pointer to the vote is valid
     * @return True if the given vote is open
     */
@@ -707,7 +707,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     /**
     * @dev Internal function to check if a vote is within its overrule window
     *      It assumes the pointer to the vote is valid.
-    *      This function doesn't ensure whether the vote is open or not. Note that it is always used along with `_isVoteOpen`
+    *      This function doesn't ensure whether the vote is open or not. Note that it must always be used along with `_isVoteOpen()`
     * @return True if the given vote is within its overrule window
     */
     function _withinOverruleWindow(Vote storage vote_) internal view returns (bool) {
