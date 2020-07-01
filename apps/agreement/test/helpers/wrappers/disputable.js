@@ -56,12 +56,14 @@ class DisputableWrapper extends AgreementWrapper {
     return super.getCollateralRequirement(this.disputable, id)
   }
 
-  async getStakingAddress() {
-    return super.getStakingAddress(this.collateralToken)
+  async getStakingAddress(token) {
+    if (!token) token = this.collateralToken
+    return super.getStakingAddress(token)
   }
 
-  async getStaking() {
-    return super.getStaking(this.collateralToken)
+  async getStaking(token) {
+    if (!token) token = this.collateralToken
+    return super.getStaking(token)
   }
 
   async activate(options = {}) {
@@ -71,17 +73,6 @@ class DisputableWrapper extends AgreementWrapper {
 
   async deactivate(options = {}) {
     return super.deactivate({ disputable: this.disputable, ...options })
-  }
-
-  async allowManager({ owner, amount}) {
-    // allow lock manager if needed
-    const staking = await this.getStaking()
-    const lock = await staking.getLock(owner, this.agreement.address)
-    if (lock._allowance.eq(bn(0))) {
-      await staking.allowManager(this.agreement.address, amount, EMPTY_DATA, { from: owner })
-    } else if (lock._allowance.sub(lock._amount).lt(amount)) {
-      await staking.increaseLockAllowance(this.agreement.address, amount, { from: owner })
-    }
   }
 
   async forward({ script = '0x', from = undefined }) {
@@ -118,16 +109,24 @@ class DisputableWrapper extends AgreementWrapper {
   }
 
   async approve(options = {}) {
-    return super.approve({ token: this.collateralToken, ...options })
+    if (!options.token) options.token = this.collateralToken
+    return super.approve(options)
   }
 
   async approveAndCall(options = {}) {
-    return super.approveAndCall({ token: this.collateralToken, ...options })
+    if (!options.token) options.token = this.collateralToken
+    return super.approveAndCall(options)
+  }
+
+  async allowManager({ token = undefined, owner, amount}) {
+    if (!token) token = this.collateralToken
+    return super.allowManager({ token, owner, amount })
   }
 
   async stake(options = {}) {
     if (!options.amount) options.amount = this.actionCollateral
-    return super.stake({ token: this.collateralToken, ...options })
+    if (!options.token) options.token = this.collateralToken
+    return super.stake(options)
   }
 
   async unstake(options = {}) {

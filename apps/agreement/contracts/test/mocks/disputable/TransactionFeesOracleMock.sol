@@ -42,10 +42,9 @@ contract TransactionFeesOracleMock is ITransactionFeesOracle, EtherTokenConstant
     * @notice Get fees for any app
     * @return Token for the fees
     * @return Amount of fee tokens
-    * @return Beneficiary to send the fees to
     */
-    function getTransactionFee(bytes32) external view returns (ERC20 feeToken, uint256 feeAmount, address beneficiary) {
-        return (token, amount, address(this));
+    function getTransactionFee(bytes32) external view returns (ERC20 feeToken, uint256 feeAmount) {
+        return (token, amount);
     }
 
     function _setTransactionFee(bytes32, ERC20 _token, uint256 _amount) internal {

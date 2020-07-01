@@ -178,9 +178,9 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
                       })
 
                       context('when the transaction fee payment succeeds', () => {
-                        beforeEach('', async () => {
-                          token.generateTokens(submitter, transactionFeeAmount)
-                          token.approve(disputable.agreement.address, transactionFeeAmount, { from: submitter })
+                        beforeEach('stake and allow manager for new staking pool for transaction fees', async () => {
+                          await disputable.stake({ token, amount: transactionFeeAmount, user: submitter })
+                          await disputable.allowManager({ token, owner: submitter, amount: transactionFeeAmount })
                         })
 
                         newActionFlow(bn(0))
@@ -188,7 +188,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
 
                       context('when the transaction fee payment doesn’t succeed', () => {
                         it('reverts', async () => {
-                          await assertRevert(disputable.newAction({ submitter, actionContext, stake, sign }), AGREEMENT_ERRORS.ERROR_TOKEN_DEPOSIT_FAILED)
+                          await assertRevert(disputable.newAction({ submitter, actionContext, stake, sign }), AGREEMENT_ERRORS.STAKING_NOT_ENOUGH_BALANCE)
                         })
                       })
                     })

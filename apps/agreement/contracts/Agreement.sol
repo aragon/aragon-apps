@@ -761,21 +761,26 @@ contract Agreement is IAgreement, AragonApp {
         }
 
         bytes32 appId = _disputable.appId();
-        (ERC20 token, uint256 amount, address beneficiary) = transactionFeesOracle.getTransactionFee(appId);
+        (ERC20 token, uint256 amount) = transactionFeesOracle.getTransactionFee(appId);
 
         if (amount == 0) {
             return;
         }
 
-        // Pay fees
+        // Get staking pool
+        Staking staking;
         if (token == _staking.token()) {
-            _lockBalance(_staking, _submitter, amount);
-            _slashBalance(_staking, _submitter, address(this), amount);
-        } else if (amount > 0) {
-            _depositFrom(token, _submitter, amount);
+            staking = _staking;
+        } else {
+            staking = stakingFactory.getOrCreateInstance(token);
         }
 
-        _approveFor(token, beneficiary, amount);
+        // Get amount from staking
+        _lockBalance(staking, _submitter, amount);
+        _slashBalance(staking, _submitter, address(this), amount);
+
+        // Pay fees
+        _approveFor(token, address(transactionFeesOracle), amount);
         transactionFeesOracle.payTransactionFees(appId, _actionId);
     }
 
