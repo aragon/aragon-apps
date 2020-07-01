@@ -10,7 +10,7 @@ let vote1 = {
     disputable: '', //Address of the disputable that created the action
     disputableActionId: '24',
     collateralId: '',
-    endDate: '', //Timestamp when the disputable action ends unless it's closed beforehand
+    endDate: 1593613596069, //Timestamp when the disputable action ends unless it's closed beforehand
     state: 'Closed', //Submitted, Challenged, Closed
     submitter: '0xff4643B0161F92b8b568Af62be313E41F32E4baD', //Facu's address
     context: 'Link',
@@ -54,7 +54,7 @@ let vote2 = {
     disputable: '', //Address of the disputable that created the action
     disputableActionId: '24',
     collateralId: '',
-    endDate: '', //Timestamp when the disputable action ends unless it's closed beforehand
+    endDate: 1594913996969, //Timestamp when the disputable action ends unless it's closed beforehand
     state: 'Challenged', //Submitted, Challenged, Closed
     submitter: '0xff4643B0161F92b8b568Af62be313E41F32E4baD', //Facu's address
     context: 'Link',
@@ -98,7 +98,7 @@ let vote3 = {
     disputable: '', //Address of the disputable that created the action
     disputableActionId: '24',
     collateralId: '',
-    endDate: '', //Timestamp when the disputable action ends unless it's closed beforehand
+    endDate: 1594913996969, //Timestamp when the disputable action ends unless it's closed beforehand
     state: 'Challenged', //Submitted, Challenged, Closed
     submitter: '0xff4643B0161F92b8b568Af62be313E41F32E4baD', //Facu's address
     context: 'Link',

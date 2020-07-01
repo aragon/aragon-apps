@@ -10,14 +10,16 @@ import {
   Timer,
   useTheme,
 } from '@aragon/ui'
+import { format } from 'date-fns'
 import { getAgreement } from '../../agreementsMockData'
 import { addressesEqual } from '../../web3-utils'
+
+const formatDate = date => `${format(date, 'yyyy-MM-dd, HH:mm')}`
 
 function DisputableActionStatus({ vote, connectedAccount }) {
   //TODO: get agreement and vote real data
   const theme = useTheme()
   const agreement = getAgreement()
-
   return (
     <Box heading="Disputable Action Status">
       <Item>
@@ -46,7 +48,11 @@ function DisputableActionStatus({ vote, connectedAccount }) {
       </Item>
       <Item>
         <Label>Challenge period</Label>
-        <Timer end={new Date(Date.now() + 48 * 1000 * 60 * 60)} />
+        {new Date().getTime() > vote.disputable.action.endDate ? (
+          formatDate(vote.disputable.action.endDate)
+        ) : (
+          <Timer end={new Date(vote.disputable.action.endDate)} />
+        )}
       </Item>
       <Item>
         <Label>Agreement</Label>
