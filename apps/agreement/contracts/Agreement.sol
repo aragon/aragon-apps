@@ -298,7 +298,7 @@ contract Agreement is IAgreement, AragonApp {
         IDisputable disputable = IDisputable(msg.sender);
 
         uint256 id = nextActionId++;
-        _payTransactionFees(settingId, disputable, staking, _submitter, id);
+        _payTransactionFees(currentSettingId, disputable, staking, _submitter, id);
 
         Action storage action = actions[id];
         action.disputable = disputable;
