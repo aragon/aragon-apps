@@ -5,6 +5,7 @@ import {
   GU,
   IconLock,
   Info,
+  Link,
   textStyle,
   Timer,
   useTheme,
@@ -49,26 +50,25 @@ function DisputableActionStatus({ vote, connectedAccount }) {
       </Item>
       <Item>
         <Label>Agreement</Label>
-        <div
+        <Link
           css={`
             ${textStyle('body2')};
-            color: ${theme.link};
           `}
         >
           {agreement.agreementTitle}
-        </div>
+        </Link>
       </Item>
       {vote.disputable && vote.disputable.action && (
         <Item>
           <Label>Dispute</Label>
-          <div
+          <Link
             css={`
               ${textStyle('body2')};
-              color: ${theme.link};
             `}
+            href={`https://court.aragon.org/disputes/${vote.disputable.action.currentChallengeId}`}
           >
             Dispute #{vote.disputable.action.currentChallengeId}
-          </div>
+          </Link>
         </Item>
       )}
       <Item>
