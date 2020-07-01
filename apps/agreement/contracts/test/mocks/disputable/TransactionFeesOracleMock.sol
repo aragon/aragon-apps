@@ -17,22 +17,25 @@ contract TransactionFeesOracleMock is ITransactionFeesOracle, EtherTokenConstant
     * @param _token Token for the fee
     * @param _amount Amount of fee tokens
     */
-    function setFee(bytes32 _appId, ERC20 _token, uint256 _amount) external {
-        _setFee(_appId, _token, _amount);
+    function setTransactionFee(bytes32 _appId, ERC20 _token, uint256 _amount) external {
+        _setTransactionFee(_appId, _token, _amount);
     }
 
-    function setFees(bytes32[], ERC20[], uint256[]) external {
+    function setTransactionFees(bytes32[], ERC20[], uint256[]) external {
     }
 
     /**
     * @notice Unset fees for app with id `_appId`
     * @param _appId Id of the app
     */
-    function unsetFee(bytes32 _appId) external {
-       _unsetFee(_appId);
+    function unsetTransactionFee(bytes32 _appId) external {
+       _unsetTransactionFee(_appId);
     }
 
-    function unsetFees(bytes32[]) external {
+    function unsetTransactionFees(bytes32[]) external {}
+
+    function payTransactionFees(bytes32, uint256) external {
+        token.transferFrom(msg.sender, address(this), amount);
     }
 
     /**
@@ -41,18 +44,18 @@ contract TransactionFeesOracleMock is ITransactionFeesOracle, EtherTokenConstant
     * @return Amount of fee tokens
     * @return Beneficiary to send the fees to
     */
-    function getFee(bytes32) external view returns (ERC20 feeToken, uint256 feeAmount, address beneficiary) {
+    function getTransactionFee(bytes32) external view returns (ERC20 feeToken, uint256 feeAmount, address beneficiary) {
         return (token, amount, address(this));
     }
 
-    function _setFee(bytes32, ERC20 _token, uint256 _amount) internal {
+    function _setTransactionFee(bytes32, ERC20 _token, uint256 _amount) internal {
         require(address(_token) == ETH || isContract(address(_token)), ERROR_WRONG_TOKEN);
 
         token = _token;
         amount = _amount;
     }
 
-    function _unsetFee(bytes32) internal {
+    function _unsetTransactionFee(bytes32) internal {
         delete token;
         delete amount;
     }

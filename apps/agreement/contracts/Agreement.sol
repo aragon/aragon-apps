@@ -296,9 +296,10 @@ contract Agreement is IAgreement, AragonApp {
 
         // Pay court transaction fees
         IDisputable disputable = IDisputable(msg.sender);
-        _payTransactionFees(settingId, disputable, staking, _submitter);
 
         uint256 id = nextActionId++;
+        _payTransactionFees(settingId, disputable, staking, _submitter, id);
+
         Action storage action = actions[id];
         action.disputable = disputable;
         action.collateralRequirementId = currentCollateralRequirementId;
@@ -749,28 +750,33 @@ contract Agreement is IAgreement, AragonApp {
     * @param _disputable Address of the Disputable app, used to determine fees
     * @param _staking Staking pool for the ERC20 token to transfer fees from
     * @param _submitter Address of the user that has submitted the action
+    * @param _actionId Identification number of the action to be paid for
     */
-    function _payTransactionFees(uint256 _settingId, IDisputable _disputable, Staking _staking, address _submitter) internal {
+    function _payTransactionFees(uint256 _settingId, IDisputable _disputable, Staking _staking, address _submitter, uint256 _actionId) internal {
         // Get fees
         Setting storage setting = _getSetting(_settingId);
         ITransactionFeesOracle transactionFeesOracle = setting.transactionFeesOracle;
         if (address(transactionFeesOracle) == address(0)) {
             return;
         }
-        (ERC20 token, uint256 amount, address beneficiary) = transactionFeesOracle.getFee(_disputable.appId());
+
+        bytes32 appId = _disputable.appId();
+        (ERC20 token, uint256 amount, address beneficiary) = transactionFeesOracle.getTransactionFee(appId);
 
         if (amount == 0) {
             return;
         }
 
-        // TODO: use subscriptions payFees!!!
         // Pay fees
         if (token == _staking.token()) {
             _lockBalance(_staking, _submitter, amount);
-            _slashBalance(_staking, _submitter, beneficiary, amount);
+            _slashBalance(_staking, _submitter, address(this), amount);
         } else if (amount > 0) {
-            require(token.safeTransferFrom(_submitter, beneficiary, amount), ERROR_TOKEN_TRANSFER_FAILED);
+            _depositFrom(token, _submitter, amount);
         }
+
+        _approveFor(token, beneficiary, amount);
+        transactionFeesOracle.payTransactionFees(appId, _actionId);
     }
 
     /**

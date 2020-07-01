@@ -151,7 +151,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
                     context('when the transaction fee token is the staking token', () => {
                       beforeEach('set transaction fees', async () => {
                         const { collateralToken } = disputable
-                        await deployer.transactionFeesOracle.setFee('0x', collateralToken.address, transactionFeeAmount)
+                        await deployer.transactionFeesOracle.setTransactionFee('0x', collateralToken.address, transactionFeeAmount)
                       })
 
                       context('when the transaction fee payment succeeds', () => {
@@ -174,7 +174,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
                       let token
                       beforeEach('set transaction fees', async () => {
                         token = await deployer.deployToken({})
-                        await deployer.transactionFeesOracle.setFee('0x', token.address, transactionFeeAmount)
+                        await deployer.transactionFeesOracle.setTransactionFee('0x', token.address, transactionFeeAmount)
                       })
 
                       context('when the transaction fee payment succeeds', () => {
@@ -188,7 +188,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
 
                       context('when the transaction fee payment doesn’t succeed', () => {
                         it('reverts', async () => {
-                          await assertRevert(disputable.newAction({ submitter, actionContext, stake, sign }), AGREEMENT_ERRORS.ERROR_TOKEN_TRANSFER_FAILED)
+                          await assertRevert(disputable.newAction({ submitter, actionContext, stake, sign }), AGREEMENT_ERRORS.ERROR_TOKEN_DEPOSIT_FAILED)
                         })
                       })
                     })
