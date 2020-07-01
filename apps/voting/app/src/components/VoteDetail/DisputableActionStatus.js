@@ -1,7 +1,6 @@
 import React from 'react'
 import {
   Box,
-  Button,
   GU,
   IconLock,
   Info,
@@ -12,11 +11,10 @@ import {
 } from '@aragon/ui'
 import { format } from 'date-fns'
 import { getAgreement } from '../../agreementsMockData'
-import { addressesEqual } from '../../web3-utils'
 
 const formatDate = date => `${format(date, 'yyyy-MM-dd, HH:mm')}`
 
-function DisputableActionStatus({ vote, connectedAccount }) {
+function DisputableActionStatus({ vote }) {
   //TODO: get agreement and vote real data
   const theme = useTheme()
   const agreement = getAgreement()

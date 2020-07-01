@@ -220,12 +220,7 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
             />
           </React.Fragment>
         }
-        secondary={
-          <DisputableActionStatus
-            vote={vote}
-            connectedAccount={connectedAccount}
-          />
-        }
+        secondary={<DisputableActionStatus vote={vote} />}
       />
     </React.Fragment>
   )
