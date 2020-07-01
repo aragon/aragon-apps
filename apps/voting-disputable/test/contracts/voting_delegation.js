@@ -148,7 +148,7 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, repres
             context('when the voter has not voted yet', () => {
               context('when the representative did not proxied a vote', () => {
                 it('returns true', async () => {
-                  assert.isTrue(await voting.canVoteOnBehalfOf(voteId, voter, representative), 'should not be able to vote')
+                  assert.isTrue(await voting.canVoteOnBehalfOf(voteId, [voter], representative), 'should not be able to vote')
                 })
               })
 
@@ -159,7 +159,7 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, repres
 
                 context('when the representative is still allowed', () => {
                   it('returns true', async () => {
-                    assert.isTrue(await voting.canVoteOnBehalfOf(voteId, voter, representative), 'should be able to vote')
+                    assert.isTrue(await voting.canVoteOnBehalfOf(voteId, [voter], representative), 'should be able to vote')
                   })
                 })
 
@@ -169,7 +169,7 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, repres
                   })
 
                   it('returns false', async () => {
-                    assert.isFalse(await voting.canVoteOnBehalfOf(voteId, voter, representative), 'should not be able to vote')
+                    assert.isFalse(await voting.canVoteOnBehalfOf(voteId, [voter], representative), 'should not be able to vote')
                   })
                 })
               })
@@ -181,7 +181,7 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, repres
               })
 
               it('returns false', async () => {
-                assert.isFalse(await voting.canVoteOnBehalfOf(voteId, voter, representative), 'should not be able to vote')
+                assert.isFalse(await voting.canVoteOnBehalfOf(voteId, [voter], representative), 'should not be able to vote')
               })
             })
           })
@@ -192,7 +192,7 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, repres
             })
 
             it('returns false', async () => {
-              assert.isFalse(await voting.canVoteOnBehalfOf(voteId, voter, representative), 'should not be able to vote')
+              assert.isFalse(await voting.canVoteOnBehalfOf(voteId, [voter], representative), 'should not be able to vote')
             })
           })
         })
@@ -205,20 +205,20 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, repres
           })
 
           it('returns false', async () => {
-            assert.isFalse(await voting.canVoteOnBehalfOf(voteId, invalidVoter, representative), 'should not be able to vote')
+            assert.isFalse(await voting.canVoteOnBehalfOf(voteId, [invalidVoter], representative), 'should not be able to vote')
           })
         })
       })
 
       context('when the sender is the voter', () => {
         it('returns false', async () => {
-          assert.isFalse(await voting.canVoteOnBehalfOf(voteId, voter, voter), 'should not be able to vote')
+          assert.isFalse(await voting.canVoteOnBehalfOf(voteId, [voter], voter), 'should not be able to vote')
         })
       })
 
       context('when the sender is not a representative', () => {
         it('returns false', async () => {
-          assert.isFalse(await voting.canVoteOnBehalfOf(voteId, voter, anyone), 'should not be able to vote')
+          assert.isFalse(await voting.canVoteOnBehalfOf(voteId, [voter], anyone), 'should not be able to vote')
         })
       })
     })
@@ -229,7 +229,7 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, repres
       })
 
       it('reverts', async () => {
-        await assertRevert(voting.canVoteOnBehalfOf(voteId, voter, representative, { from: representative }), ERRORS.VOTING_NO_VOTE)
+        await assertRevert(voting.canVoteOnBehalfOf(voteId, [voter], representative, { from: representative }), ERRORS.VOTING_NO_VOTE)
       })
     })
   })

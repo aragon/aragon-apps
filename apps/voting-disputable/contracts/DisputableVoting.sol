@@ -191,8 +191,11 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     * @param _supports Whether voter supports the vote
     */
     function vote(uint256 _voteId, bool _supports) external voteExists(_voteId) {
-        require(_canVote(votes[_voteId], msg.sender), ERROR_CANNOT_VOTE);
-        _vote(_voteId, _supports, msg.sender);
+        Vote storage vote_ = votes[_voteId];
+        require(_canVote(vote_, msg.sender), ERROR_CANNOT_VOTE);
+
+        _castVote(vote_, _voteId, _supports, msg.sender);
+        _removeCasterIfNecessary(vote_, msg.sender);
     }
 
     /**
@@ -238,7 +241,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     * @return True if the given vote can be challenged
     */
     function canChallenge(uint256 _voteId) external view voteExists(_voteId) returns (bool) {
-        return _isVoteOpen(votes[_voteId]);
+        return _isVoteOpenForVoting(votes[_voteId]);
     }
 
     /**
@@ -247,7 +250,8 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     * @return True if the given vote can be closed
     */
     function canClose(uint256 _voteId) external view voteExists(_voteId) returns (bool) {
-         return !_isVoteOpen(votes[_voteId]);
+        Vote storage vote_ = votes[_voteId];
+        return (_isActive(vote_) || _isExecuted(vote_)) && getTimestamp64() >= _voteEndDate(vote_);
     }
 
     // Getter fns
@@ -276,20 +280,29 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     }
 
     /**
-    * @dev Tells whether `_representative` can vote on behalf of `_voter` in vote #`_voteId`
+    * @dev Tells whether `_representative` can vote on behalf of `_voters` in vote #`_voteId`
     *      Initialization check is implicitly provided by `voteExists()` as new votes can only be
     *      created via `newVote()`, which requires initialization
     * @param _voteId Id for vote
-    * @param _voter Address of the voter
-    * @param _voter Address of the representative
+    * @param _voters List of addresses of the voters
+    * @param _representative Address of the representative
     * @return True if the given representative can vote on behalf of the given voter in a certain vote
     */
-    function canVoteOnBehalfOf(uint256 _voteId, address _voter, address _representative) external view voteExists(_voteId) returns (bool) {
+    function canVoteOnBehalfOf(uint256 _voteId, address[] _voters, address _representative) external view voteExists(_voteId) returns (bool) {
         Vote storage vote_ = votes[_voteId];
-        return _canVote(vote_, _voter) &&
-            _isRepresentativeOf(_voter, _representative) &&
-            _hasNotVotedYet(vote_, _voter) &&
-            !_withinOverruleWindow(vote_);
+
+        if (_withinOverruleWindow(vote_)) {
+            return false;
+        }
+
+        for (uint256 i = 0; i < _voters.length; i++) {
+            address voter = _voters[i];
+            if (!_canVote(vote_, voter) || !_isRepresentativeOf(voter, _representative) || !_hasNotVotedYet(vote_, voter)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -370,7 +383,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     * @return True if the vote is still open
     */
     function isVoteOpen(uint256 _voteId) external view voteExists(_voteId) returns (bool) {
-        return _isVoteOpen(votes[_voteId]);
+        return _isVoteOpenForVoting(votes[_voteId]);
     }
 
     /**
@@ -416,7 +429,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     */
     function withinOverruleWindow(uint256 _voteId) external view voteExists(_voteId) returns (bool) {
         Vote storage vote_ = votes[_voteId];
-        return _isVoteOpen(vote_) && _withinOverruleWindow(vote_);
+        return _isVoteOpenForVoting(vote_) && _withinOverruleWindow(vote_);
     }
 
     // Forwarding fns
@@ -568,20 +581,11 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     }
 
     /**
-    * @dev Internal function to cast a vote directly. It assumes the queried vote exists.
-    */
-    function _vote(uint256 _voteId, bool _supports, address _voter) internal {
-        Vote storage vote_ = votes[_voteId];
-        _castVote(vote_, _voteId, _supports, _voter);
-        _removeCasterIfNecessary(vote_, _voter);
-    }
-
-    /**
     * @dev Internal function for a representative to cast a vote on behalf of many voters. It assumes the queried vote exists.
     */
     function _voteOnBehalfOf(uint256 _voteId, bool _supports, address[] _voters) internal {
         Vote storage vote_ = votes[_voteId];
-        require(_isVoteOpen(vote_), ERROR_CANNOT_VOTE);
+        require(_isVoteOpenForVoting(vote_), ERROR_CANNOT_VOTE);
         require(!_withinOverruleWindow(vote_), ERROR_WITHIN_OVERRULE_WINDOW);
 
         for (uint256 i = 0; i < _voters.length; i++) {
@@ -611,7 +615,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
         }
 
         // If the vote is still open, it cannot be executed
-        if (_isVoteOpen(vote_)) {
+        if (_isVoteOpenForVoting(vote_)) {
             return false;
         }
 
@@ -636,7 +640,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     * @return True if the given voter can participate a certain vote
     */
     function _canVote(Vote storage vote_, address _voter) internal view returns (bool) {
-        return _isVoteOpen(vote_) && _hasVotingPower(vote_, _voter);
+        return _isVoteOpenForVoting(vote_) && _hasVotingPower(vote_, _voter);
     }
 
     /**
@@ -700,14 +704,14 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     *      It assumes the pointer to the vote is valid
     * @return True if the given vote is open
     */
-    function _isVoteOpen(Vote storage vote_) internal view returns (bool) {
+    function _isVoteOpenForVoting(Vote storage vote_) internal view returns (bool) {
         return _isActive(vote_) && getTimestamp64() < _voteEndDate(vote_);
     }
 
     /**
     * @dev Internal function to check if a vote is within its overrule window
     *      It assumes the pointer to the vote is valid.
-    *      This function doesn't ensure whether the vote is open or not. Note that it must always be used along with `_isVoteOpen()`
+    *      This function doesn't ensure whether the vote is open or not. Note that it must always be used along with `_isVoteOpenForVoting()`
     * @return True if the given vote is within its overrule window
     */
     function _withinOverruleWindow(Vote storage vote_) internal view returns (bool) {
