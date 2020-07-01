@@ -18,69 +18,67 @@ function DisputableActionStatus({ vote, connectedAccount }) {
   const agreement = getAgreement()
 
   return (
-    <React.Fragment>
-      <Box heading="Disputable Action Status">
-        <Item>
-          <Label>Status</Label>
-          <div>DisputableStatusTag</div>
-        </Item>
-        <Item>
-          <Label>Action collateral locked</Label>
-          <div
+    <Box heading="Disputable Action Status">
+      <Item>
+        <Label>Status</Label>
+        <div>DisputableStatusTag</div>
+      </Item>
+      <Item>
+        <Label>Action collateral locked</Label>
+        <div
+          css={`
+            display: flex;
+            align-items: center;
+          `}
+        >
+          {vote.disputable.action.collateral.challengeAmount}{' '}
+          {vote.disputable.action.collateral.collateralToken}
+          <span
             css={`
-              display: flex;
-              align-items: center;
+              display: inline-flex;
+              padding-left: ${1 * GU}px;
             `}
           >
-            {vote.disputable.action.collateral.challengeAmount}{' '}
-            {vote.disputable.action.collateral.collateralToken}
-            <span
-              css={`
-                padding-left: ${1 * GU}px;
-              `}
-            >
-              <IconLock size="small" />
-            </span>
-          </div>
-        </Item>
+            <IconLock size="small" />
+          </span>
+        </div>
+      </Item>
+      <Item>
+        <Label>Challenge period</Label>
+        <Timer end={new Date(Date.now() + 48 * 1000 * 60 * 60)} />
+      </Item>
+      <Item>
+        <Label>Agreement</Label>
+        <div
+          css={`
+            ${textStyle('body2')};
+            color: ${theme.link};
+          `}
+        >
+          {agreement.agreementTitle}
+        </div>
+      </Item>
+      {vote.disputable && vote.disputable.action && (
         <Item>
-          <Label>Challenge period</Label>
-          <Timer end={new Date(Date.now() + 48 * 1000 * 60 * 60)} />
-        </Item>
-        <Item>
-          <Label>Agreement</Label>
+          <Label>Dispute</Label>
           <div
             css={`
               ${textStyle('body2')};
               color: ${theme.link};
             `}
           >
-            {agreement.agreementTitle}
+            Dispute #{vote.disputable.action.currentChallengeId}
           </div>
         </Item>
-        {vote.disputable && vote.disputable.action && (
-          <Item>
-            <Label>Dispute</Label>
-            <div
-              css={`
-                ${textStyle('body2')};
-                color: ${theme.link};
-              `}
-            >
-              Dispute #{vote.disputable.action.currentChallengeId}
-            </div>
-          </Item>
-        )}
-        <Item>
-          <Info>
-            Exceeding reaction chamber thermal limit. We have begun power-supply
-            calibration. Force fields have been established on all turbo lifts
-            and crawlways. Warp drive within normal parameters. I read an ion
-            trail.
-          </Info>
-        </Item>
-      </Box>
-    </React.Fragment>
+      )}
+      <Item>
+        <Info>
+          Exceeding reaction chamber thermal limit. We have begun power-supply
+          calibration. Force fields have been established on all turbo lifts and
+          crawlways. Warp drive within normal parameters. I read an ion trail.
+        </Info>
+      </Item>
+    </Box>
   )
 }
 
