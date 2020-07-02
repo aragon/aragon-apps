@@ -660,7 +660,7 @@ contract Agreement is IAgreement, AragonApp {
     * @dev ACL oracle interface - Tells whether an address has already signed the Agreement
     * @return True if a parameterized address has signed the current version of the Agreement, false otherwise
     */
-    function canPerform(address, address, bytes32, uint256[] _how) external view returns (bool) {
+    function canPerform(address, address, address, bytes32, uint256[] _how) external view returns (bool) {
         require(_how.length > 0, ERROR_ACL_SIGNER_MISSING);
         require(_how[0] < 2**160, ERROR_ACL_SIGNER_NOT_ADDRESS);
 
