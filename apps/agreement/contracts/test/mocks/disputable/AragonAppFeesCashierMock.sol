@@ -6,7 +6,7 @@ import "@aragon/os/contracts/lib/arbitration/IAragonAppFeesCashier.sol";
 
 
 contract AragonAppFeesCashierMock is IAragonAppFeesCashier, EtherTokenConstant, IsContract {
-    string private constant ERROR_WRONG_TOKEN = "SFO_WRONG_TOKEN";
+    string private constant ERROR_WRONG_TOKEN = "AAFC_WRONG_TOKEN";
 
     ERC20 internal token;
     uint256 internal amount;

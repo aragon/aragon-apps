@@ -294,12 +294,9 @@ contract Agreement is IAgreement, AragonApp {
         Staking staking = requirement.staking;
         _lockBalance(staking, _submitter, requirement.actionAmount);
 
-        // Pay court transaction fees
         IDisputable disputable = IDisputable(msg.sender);
 
         uint256 id = nextActionId++;
-        _payAppFees(currentSettingId, disputable, staking, _submitter, id);
-
         Action storage action = actions[id];
         action.disputable = disputable;
         action.collateralRequirementId = currentCollateralRequirementId;
@@ -309,6 +306,10 @@ contract Agreement is IAgreement, AragonApp {
         action.settingId = currentSettingId;
 
         emit ActionSubmitted(id, msg.sender);
+
+        // Pay court transaction fees
+        _payAppFees(currentSettingId, disputable, staking, _submitter, id);
+
         return id;
     }
 
