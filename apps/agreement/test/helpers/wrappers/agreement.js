@@ -56,7 +56,7 @@ class AgreementWrapper {
   }
 
   async getTotalAvailableBalance(token, user) {
-    const staking = await this.getStaking(token.address)
+    const staking = await this.getStaking(token)
     const unlocked = await staking.unlockedBalanceOf(user)
     const tokenBalance = await token.balanceOf(user)
 
