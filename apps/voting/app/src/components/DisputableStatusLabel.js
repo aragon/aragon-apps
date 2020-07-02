@@ -1,4 +1,5 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 import {
   GU,
   IconAttention,
@@ -9,59 +10,50 @@ import {
   textStyle,
   useTheme,
 } from '@aragon/ui'
-import {
-  VOTE_STATUS_PAUSED,
-  VOTE_STATUS_ACTIVE,
-  VOTE_STATUS_CANCELLED,
-  VOTE_STATUS_CLOSED,
-  DISPUTABLE_VOTE_STATUSES,
-} from '../disputable-vote-statuses'
-
-const getStatusAttributes = (status, theme) => {
-  if (status === VOTE_STATUS_PAUSED) {
-    return {
-      background: theme.warningSurface,
-      label: 'Challenged',
-      Icon: IconAttention,
-      color: theme.warningSurfaceContent,
-    }
-  }
-  if (status === VOTE_STATUS_CANCELLED) {
-    return {
-      background: theme.surfaceUnder,
-      label: 'Cancelled',
-      Icon: IconClosed,
-      color: theme.disabledContent,
-    }
-  }
-  if (status === VOTE_STATUS_CLOSED) {
-    return {
-      background: theme.surfaceUnder,
-      label: 'Closed',
-      Icon: IconInfo,
-      color: theme.disabledContent,
-    }
-  }
-
-  if (status === VOTE_STATUS_ACTIVE) {
-    return {
-      background: null,
-      label: 'Scheduled',
-      Icon: IconClock,
-      color: null,
-    }
-  }
-  return {
-    background: null,
-    label: '',
-    Icon: null,
-    color: null,
-  }
-}
+import { DISPUTABLE_VOTE_STATUSES } from '../disputable-vote-statuses'
 
 function DisputableStatusLabel({ status }) {
   const theme = useTheme()
-  const { Icon, background, color, label } = getStatusAttributes(status, theme)
+  const statusAttributes = new Map([
+    [
+      DISPUTABLE_VOTE_STATUSES.get('Active'),
+      {
+        background: null,
+        label: 'Scheduled',
+        Icon: IconClock,
+        color: null,
+      },
+    ],
+    [
+      DISPUTABLE_VOTE_STATUSES.get('Cancelled'),
+      {
+        background: String(theme.surfaceUnder),
+        label: 'Cancelled',
+        Icon: IconClosed,
+        color: String(theme.disabledContent),
+      },
+    ],
+    [
+      DISPUTABLE_VOTE_STATUSES.get('Closed'),
+      {
+        background: String(theme.surfaceUnder),
+        label: 'Closed',
+        Icon: IconInfo,
+        color: String(theme.disabledContent),
+      },
+    ],
+    [
+      DISPUTABLE_VOTE_STATUSES.get('Paused'),
+      {
+        background: String(theme.warningSurface),
+        label: 'Challenged',
+        Icon: IconAttention,
+        color: String(theme.warningSurfaceContent),
+      },
+    ],
+  ])
+
+  const { Icon, background, color, label } = statusAttributes.get(status)
 
   return (
     <Tag
@@ -72,6 +64,15 @@ function DisputableStatusLabel({ status }) {
       icon={<Icon size="small" />}
     />
   )
+}
+
+DisputableStatusLabel.propTypes = {
+  status: PropTypes.oneOf([
+    DISPUTABLE_VOTE_STATUSES.get('Active'),
+    DISPUTABLE_VOTE_STATUSES.get('Cancelled'),
+    DISPUTABLE_VOTE_STATUSES.get('Closed'),
+    DISPUTABLE_VOTE_STATUSES.get('Paused'),
+  ]),
 }
 
 export default DisputableStatusLabel
