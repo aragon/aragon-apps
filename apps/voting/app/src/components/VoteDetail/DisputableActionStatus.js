@@ -12,6 +12,7 @@ import {
 import { format } from 'date-fns'
 import DisputableStatusLabel from '../DisputableStatusLabel'
 import { getAgreement } from '../../agreementsMockData'
+import { DISPUTABLE_VOTE_STATUSES } from '../../disputable-vote-statuses'
 
 const formatDate = date => `${format(date, 'yyyy-MM-dd, HH:mm')}`
 
@@ -29,12 +30,16 @@ function DisputableActionStatus({ vote }) {
   const agreement = getAgreement()
 
   const { challengeAmount, collateralToken } = vote.disputable.action.collateral
+  const disputableStatus =
+    vote.disputable && DISPUTABLE_VOTE_STATUSES.get(vote.disputable.status)
 
   return (
     <Box heading="Disputable Action Status">
       <ul>
         <Item label="Status">
-          <DisputableStatusLabel vote={vote} />
+          {disputableStatus && (
+            <DisputableStatusLabel status={disputableStatus} />
+          )}
         </Item>
         <Item label="Action collateral locked">
           <div

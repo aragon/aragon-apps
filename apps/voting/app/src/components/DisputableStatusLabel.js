@@ -14,8 +14,8 @@ import {
   VOTE_STATUS_ACTIVE,
   VOTE_STATUS_CANCELLED,
   VOTE_STATUS_CLOSED,
+  DISPUTABLE_VOTE_STATUSES,
 } from '../disputable-vote-statuses'
-import { getDisputableVoteStatus } from '../disputable-utils'
 
 const getStatusAttributes = (status, theme) => {
   if (status === VOTE_STATUS_PAUSED) {
@@ -59,13 +59,8 @@ const getStatusAttributes = (status, theme) => {
   }
 }
 
-function DisputableStatusLabel({ vote }) {
+function DisputableStatusLabel({ status }) {
   const theme = useTheme()
-  const status = getDisputableVoteStatus(vote)
-
-  if (!status) {
-    return null
-  }
   const { Icon, background, color, label } = getStatusAttributes(status, theme)
 
   return (
