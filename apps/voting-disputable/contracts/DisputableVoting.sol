@@ -241,7 +241,8 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     * @return True if the given vote can be challenged
     */
     function canChallenge(uint256 _voteId) external view voteExists(_voteId) returns (bool) {
-        return _isVoteOpenForVoting(votes[_voteId]);
+        Vote storage vote_ = votes[_voteId];
+        return _isVoteOpenForVoting(vote_) && vote_.pausedAt == 0;
     }
 
     /**
