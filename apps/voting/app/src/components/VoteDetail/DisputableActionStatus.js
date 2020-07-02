@@ -24,12 +24,10 @@ function DisputableActionStatus({ vote }) {
 
   return (
     <Box heading="Disputable Action Status">
-      <Item>
-        <Label>Status</Label>
+      <Item label="Status">
         <div>DisputableStatusTag</div>
       </Item>
-      <Item>
-        <Label>Action collateral locked</Label>
+      <Item label="Action collateral locked">
         <div
           css={`
             display: flex;
@@ -47,8 +45,7 @@ function DisputableActionStatus({ vote }) {
           </span>
         </div>
       </Item>
-      <Item>
-        <Label>Challenge period</Label>
+      <Item label="Challenge period">
         {new Date().getTime() > vote.disputable.action.endDate ? (
           formatDate(vote.disputable.action.endDate)
         ) : (
@@ -69,13 +66,11 @@ function DisputableActionStatus({ vote }) {
           </div>
         )}
       </Item>
-      <Item>
-        <Label>Agreement</Label>
+      <Item label="Agreement">
         <Link>{agreement.agreementTitle}</Link>
       </Item>
       {hasDispute(vote) && (
-        <Item>
-          <Label>Dispute</Label>
+        <Item label="Dispute">
           <Link
             href={`https://court.aragon.org/disputes/${vote.disputable.action.challenge.disputeId}`}
           >
@@ -94,32 +89,28 @@ function DisputableActionStatus({ vote }) {
   )
 }
 
-function Item({ children }) {
+function Item({ label, children }) {
+  const theme = useTheme()
   return (
     <div
       css={`
         margin-bottom: ${3 * GU}px;
       `}
     >
+      {label && (
+        <label
+          css={`
+            ${textStyle('label2')};
+            color: ${theme.surfaceContentSecondary};
+            display: block;
+            margin-bottom: ${1 * GU}px;
+          `}
+        >
+          {label}
+        </label>
+      )}
       {children}
     </div>
-  )
-}
-
-function Label({ children }) {
-  const theme = useTheme()
-
-  return (
-    <label
-      css={`
-        ${textStyle('label2')};
-        color: ${theme.surfaceContentSecondary};
-        display: block;
-        margin-bottom: ${1 * GU}px;
-      `}
-    >
-      {children}
-    </label>
   )
 }
 
