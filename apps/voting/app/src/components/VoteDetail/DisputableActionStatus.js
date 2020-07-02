@@ -18,6 +18,9 @@ function DisputableActionStatus({ vote }) {
   //TODO: get agreement and vote real data
   const theme = useTheme()
   const agreement = getAgreement()
+
+  const { challengeAmount, collateralToken } = vote.disputable.action.collateral
+
   return (
     <Box heading="Disputable Action Status">
       <Item>
@@ -32,8 +35,7 @@ function DisputableActionStatus({ vote }) {
             align-items: center;
           `}
         >
-          {vote.disputable.action.collateral.challengeAmount}{' '}
-          {vote.disputable.action.collateral.collateralToken}
+          {challengeAmount} {collateralToken}
           <span
             css={`
               display: inline-flex;
