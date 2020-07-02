@@ -775,7 +775,7 @@ contract Agreement is IAgreement, AragonApp {
             staking = stakingFactory.getOrCreateInstance(token);
         }
 
-        // Get amount from staking
+        // Pull required fee amount from staking pool
         _lockBalance(staking, _submitter, amount);
         _slashBalance(staking, _submitter, address(this), amount);
 
