@@ -755,7 +755,7 @@ contract Agreement is IAgreement, AragonApp {
         // Get fees
         Setting storage setting = _getSetting(_settingId);
         IAragonAppFeesCashier aragonAppFeesCashier = setting.aragonAppFeesCashier;
-        if (address(aragonAppFeesCashier) == address(0)) {
+        if (aragonAppFeesCashier == IAragonAppFeesCashier(0)) {
             return;
         }
 
@@ -1072,7 +1072,7 @@ contract Agreement is IAgreement, AragonApp {
     */
     function _newSetting(IArbitrator _arbitrator, IAragonAppFeesCashier _aragonAppFeesCashier, string _title, bytes _content) internal {
         require(isContract(address(_arbitrator)), ERROR_ARBITRATOR_NOT_CONTRACT);
-        require(address(_aragonAppFeesCashier) == address(0) || isContract(address(_aragonAppFeesCashier)), ERROR_APP_FEE_CASHIER_NOT_CONTRACT);
+        require(_aragonAppFeesCashier == IAragonAppFeesCashier(0) || isContract(address(_aragonAppFeesCashier)), ERROR_APP_FEE_CASHIER_NOT_CONTRACT);
 
         uint256 id = nextSettingId++;
         Setting storage setting = settings[id];
