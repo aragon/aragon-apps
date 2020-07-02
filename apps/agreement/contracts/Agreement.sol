@@ -291,8 +291,7 @@ contract Agreement is IAgreement, AragonApp {
         // An initial collateral requirement is created when disputable apps are activated, thus length will be always greater than 0
         uint256 currentCollateralRequirementId = disputableInfo.nextCollateralRequirementsId - 1;
         CollateralRequirement storage requirement = _getCollateralRequirement(disputableInfo, currentCollateralRequirementId);
-        Staking staking = requirement.staking;
-        _lockBalance(staking, _submitter, requirement.actionAmount);
+        _lockBalance(requirement.staking, _submitter, requirement.actionAmount);
 
         IDisputable disputable = IDisputable(msg.sender);
 
@@ -308,7 +307,7 @@ contract Agreement is IAgreement, AragonApp {
         emit ActionSubmitted(id, msg.sender);
 
         // Pay action submission fees
-        _payAppFees(currentSettingId, disputable, staking, _submitter, id);
+        _payAppFees(currentSettingId, disputable, _submitter, id);
 
         return id;
     }
@@ -749,11 +748,10 @@ contract Agreement is IAgreement, AragonApp {
     * @dev Pay transactions fees required for new actions
     * @param _settingId Identification number of the setting being queried
     * @param _disputable Address of the Disputable app, used to determine fees
-    * @param _staking Staking pool for the ERC20 token to transfer fees from
     * @param _submitter Address of the user that has submitted the action
     * @param _actionId Identification number of the action to be paid for
     */
-    function _payAppFees(uint256 _settingId, IDisputable _disputable, Staking _staking, address _submitter, uint256 _actionId) internal {
+    function _payAppFees(uint256 _settingId, IDisputable _disputable, address _submitter, uint256 _actionId) internal {
         // Get fees
         Setting storage setting = _getSetting(_settingId);
         IAragonAppFeesCashier aragonAppFeesCashier = setting.aragonAppFeesCashier;
@@ -769,12 +767,7 @@ contract Agreement is IAgreement, AragonApp {
         }
 
         // Get staking pool
-        Staking staking;
-        if (token == _staking.token()) {
-            staking = _staking;
-        } else {
-            staking = stakingFactory.getOrCreateInstance(token);
-        }
+        Staking staking = stakingFactory.getOrCreateInstance(token);
 
         // Pull required fee amount from staking pool
         _lockBalance(staking, _submitter, amount);
