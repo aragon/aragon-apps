@@ -78,7 +78,7 @@ contract Agreement is IAgreement, AragonApp {
         string title;
         bytes content;
         IArbitrator arbitrator;
-        IAragonAppFeesCashier aragonAppFeesCashier;                   // Arbitrator module to fetch fees for new actions from
+        IAragonAppFeesCashier aragonAppFeesCashier;                   // Cashier to deposit new action transaction fees (usually linked to the selected arbitrator)
     }
 
     struct Action {
