@@ -43,7 +43,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
               })
 
               context('when the signer has enough balance', () => {
-                const newActionFlow = (transactionFeeAmount) => {
+                const newActionFlow = (appFeeAmount) => {
                   context('when the agreement settings did not change', () => {
                     it('creates a new scheduled action', async () => {
                       const currentSettingId = await disputable.getCurrentSettingId()
@@ -67,7 +67,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
 
                       const { locked: currentLockedBalance, available: currentAvailableBalance } = await disputable.getBalance(submitter)
                       assertBn(currentLockedBalance, previousLockedBalance.add(actionCollateral), 'locked balance does not match')
-                      assertBn(currentAvailableBalance, previousAvailableBalance.sub(actionCollateral).sub(transactionFeeAmount), 'available balance does not match')
+                      assertBn(currentAvailableBalance, previousAvailableBalance.sub(actionCollateral).sub(appFeeAmount), 'available balance does not match')
                     })
 
                     it('does not affect token balances', async () => {
@@ -83,7 +83,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
                       assertBn(currentSubmitterBalance, previousSubmitterBalance, 'submitter balance does not match')
 
                       const currentStakingBalance = await collateralToken.balanceOf(stakingAddress)
-                      assertBn(currentStakingBalance.add(transactionFeeAmount), previousStakingBalance, 'staking balance does not match')
+                      assertBn(currentStakingBalance.add(appFeeAmount), previousStakingBalance, 'staking balance does not match')
                     })
 
                     it('emits an event', async () => {
@@ -115,7 +115,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
 
                     it('still have available balance', async () => {
                       const { available } = await disputable.getBalance(submitter)
-                      assertBn(available, actionCollateral.add(transactionFeeAmount), 'submitter does not have enough staked balance')
+                      assertBn(available, actionCollateral.add(appFeeAmount), 'submitter does not have enough staked balance')
                     })
 
                     it('can not schedule actions', async () => {
@@ -146,21 +146,21 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
                   })
 
                   context('when the transaction fee is not zero', () => {
-                    const transactionFeeAmount = bigExp(15, 18)
+                    const appFeeAmount = bigExp(15, 18)
 
                     context('when the transaction fee token is the staking token', () => {
                       beforeEach('set transaction fees', async () => {
                         const { collateralToken } = disputable
-                        await deployer.transactionFeesOracle.setTransactionFee('0x', collateralToken.address, transactionFeeAmount)
+                        await deployer.aragonAppFeesCashier.setAppFee('0x', collateralToken.address, appFeeAmount)
                       })
 
                       context('when the transaction fee payment succeeds', () => {
                         beforeEach('stake, allow', async () => {
-                          await disputable.stake({ amount: transactionFeeAmount, user: submitter })
-                          await disputable.allowManager({ owner: submitter, amount: transactionFeeAmount })
+                          await disputable.stake({ amount: appFeeAmount, user: submitter })
+                          await disputable.allowManager({ owner: submitter, amount: appFeeAmount })
                         })
 
-                        newActionFlow(transactionFeeAmount)
+                        newActionFlow(appFeeAmount)
                       })
 
                       context('when the transaction fee payment doesn’t succeed', () => {
@@ -174,13 +174,13 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
                       let token
                       beforeEach('set transaction fees', async () => {
                         token = await deployer.deployToken({})
-                        await deployer.transactionFeesOracle.setTransactionFee('0x', token.address, transactionFeeAmount)
+                        await deployer.aragonAppFeesCashier.setAppFee('0x', token.address, appFeeAmount)
                       })
 
                       context('when the transaction fee payment succeeds', () => {
                         beforeEach('stake and allow manager for new staking pool for transaction fees', async () => {
-                          await disputable.stake({ token, amount: transactionFeeAmount, user: submitter })
-                          await disputable.allowManager({ token, owner: submitter, amount: transactionFeeAmount })
+                          await disputable.stake({ token, amount: appFeeAmount, user: submitter })
+                          await disputable.allowManager({ token, owner: submitter, amount: appFeeAmount })
                         })
 
                         newActionFlow(bn(0))
@@ -197,7 +197,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
 
                 context('when the transaction fees module is not set', () => {
                   beforeEach('remove transactions module', async () => {
-                    await disputable.changeSetting({ transactionFeesOracleAddress: ZERO_ADDRESS, from: owner })
+                    await disputable.changeSetting({ aragonAppFeesCashierAddress: ZERO_ADDRESS, from: owner })
                     await disputable.sign(submitter)
                   })
 
@@ -234,7 +234,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
 
         context('when the app is unregistered', () => {
           beforeEach('mark as unregistered', async () => {
-            await disputable.changeSetting({ transactionFeesOracleAddress: ZERO_ADDRESS, from: owner })
+            await disputable.changeSetting({ aragonAppFeesCashierAddress: ZERO_ADDRESS, from: owner })
             await disputable.sign(submitter)
             await disputable.newAction({ submitter })
             await disputable.deactivate({ from: owner })

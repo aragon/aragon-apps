@@ -8,8 +8,8 @@ const { AGREEMENT_EVENTS, DISPUTABLE_EVENTS } = require('../utils/events')
 const EMPTY_DATA = '0x'
 
 class DisputableWrapper extends AgreementWrapper {
-  constructor(artifacts, web3, agreement, arbitrator, transactionFeesOracle, stakingFactory, disputable, collateralRequirement = {}) {
-    super(artifacts, web3, agreement, arbitrator, transactionFeesOracle, stakingFactory)
+  constructor(artifacts, web3, agreement, arbitrator, aragonAppFeesCashier, stakingFactory, disputable, collateralRequirement = {}) {
+    super(artifacts, web3, agreement, arbitrator, aragonAppFeesCashier, stakingFactory)
     this.disputable = disputable
     this.collateralRequirement = collateralRequirement
   }

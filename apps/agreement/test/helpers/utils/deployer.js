@@ -90,8 +90,8 @@ class AgreementDeployer {
     return this.previousDeploy.clockMock
   }
 
-  get transactionFeesOracle() {
-    return this.previousDeploy.transactionFeesOracle
+  get aragonAppFeesCashier() {
+    return this.previousDeploy.aragonAppFeesCashier
   }
 
   get abi() {
@@ -104,21 +104,21 @@ class AgreementDeployer {
 
     const disputable = options.disputable || this.disputable
     const arbitrator = options.arbitrator || this.arbitrator
-    const transactionFeesOracle = options.transactionFeesOracle || this.transactionFeesOracle
+    const aragonAppFeesCashier = options.aragonAppFeesCashier || this.aragonAppFeesCashier
     const stakingFactory = options.stakingFactory || this.stakingFactory
     const collateralToken = options.collateralToken || this.collateralToken
     const { actionCollateral, challengeCollateral, challengeDuration } = { ...DEFAULT_DISPUTABLE_INITIALIZATION_PARAMS, ...options }
 
     const collateralRequirement = { collateralToken, actionCollateral, challengeCollateral, challengeDuration }
-    return new DisputableWrapper(this.artifacts, this.web3, this.agreement, arbitrator, transactionFeesOracle, stakingFactory, disputable, collateralRequirement)
+    return new DisputableWrapper(this.artifacts, this.web3, this.agreement, arbitrator, aragonAppFeesCashier, stakingFactory, disputable, collateralRequirement)
   }
 
   async deployAndInitializeWrapper(options = {}) {
     await this.deployAndInitialize(options)
     const arbitrator = options.arbitrator || this.arbitrator
-    const transactionFeesOracle = options.transactionFeesOracle || this.transactionFeesOracle
+    const aragonAppFeesCashier = options.aragonAppFeesCashier || this.aragonAppFeesCashier
     const stakingFactory = options.stakingFactory || this.stakingFactory
-    return new AgreementWrapper(this.artifacts, this.web3, this.agreement, arbitrator, transactionFeesOracle, stakingFactory)
+    return new AgreementWrapper(this.artifacts, this.web3, this.agreement, arbitrator, aragonAppFeesCashier, stakingFactory)
   }
 
   async deployAndInitialize(options = {}) {
@@ -130,13 +130,13 @@ class AgreementDeployer {
     if (!options.stakingFactory && !this.stakingFactory) await this.deployStakingFactory()
     const stakingFactory = options.stakingFactory || this.stakingFactory
 
-    if (!options.transactionFeesOracle && !this.transactionFeesOracle) await this.deployTransactionFeesOracle()
-    const transactionFeesOracle = options.transactionFeesOracle || this.transactionFeesOracle
+    if (!options.aragonAppFeesCashier && !this.aragonAppFeesCashier) await this.deployAragonAppFeesCashier()
+    const aragonAppFeesCashier = options.aragonAppFeesCashier || this.aragonAppFeesCashier
 
     const defaultOptions = { ...DEFAULT_AGREEMENT_INITIALIZATION_PARAMS, ...options }
     const { title, content } = defaultOptions
 
-    await this.agreement.initialize(title, content, arbitrator.address, transactionFeesOracle.address, stakingFactory.address)
+    await this.agreement.initialize(title, content, arbitrator.address, aragonAppFeesCashier.address, stakingFactory.address)
     return this.agreement
   }
 
@@ -223,12 +223,12 @@ class AgreementDeployer {
     return collateralToken
   }
 
-  async deployTransactionFeesOracle() {
+  async deployAragonAppFeesCashier() {
     // transaction fees module
-    const TransactionFeesOracle = this._getContract('TransactionFeesOracleMock')
-    const transactionFeesOracle = await TransactionFeesOracle.new()
-    this.previousDeploy = { ...this.previousDeploy, transactionFeesOracle }
-    return transactionFeesOracle
+    const AragonAppFeesCashier = this._getContract('AragonAppFeesCashierMock')
+    const aragonAppFeesCashier = await AragonAppFeesCashier.new()
+    this.previousDeploy = { ...this.previousDeploy, aragonAppFeesCashier }
+    return aragonAppFeesCashier
   }
 
   async deployBase() {

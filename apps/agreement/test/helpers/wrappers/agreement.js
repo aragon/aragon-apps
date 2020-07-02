@@ -8,12 +8,12 @@ const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 const EMPTY_DATA = '0x'
 
 class AgreementWrapper {
-  constructor(artifacts, web3, agreement, arbitrator, transactionFeesOracle, stakingFactory) {
+  constructor(artifacts, web3, agreement, arbitrator, aragonAppFeesCashier, stakingFactory) {
     this.artifacts = artifacts
     this.web3 = web3
     this.agreement = agreement
     this.arbitrator = arbitrator
-    this.transactionFeesOracle = transactionFeesOracle
+    this.aragonAppFeesCashier = aragonAppFeesCashier
     this.stakingFactory = stakingFactory
   }
 
@@ -189,11 +189,11 @@ class AgreementWrapper {
     return this.agreement.changeCollateralRequirement(options.disputable.address, collateralToken.address, actionCollateral, challengeCollateral, challengeDuration, { from })
   }
 
-  async changeSetting({ title = 'title', content = '0x1234', arbitrator = undefined, transactionFeesOracleAddress = undefined, from = undefined }) {
+  async changeSetting({ title = 'title', content = '0x1234', arbitrator = undefined, aragonAppFeesCashierAddress = undefined, from = undefined }) {
     if (!from) from = await this._getSender()
     if (!arbitrator) arbitrator = this.arbitrator
-    if (!transactionFeesOracleAddress) transactionFeesOracleAddress = this.transactionFeesOracle.address
-    return this.agreement.changeSetting(arbitrator.address, transactionFeesOracleAddress, title, content, { from })
+    if (!aragonAppFeesCashierAddress) aragonAppFeesCashierAddress = this.aragonAppFeesCashier.address
+    return this.agreement.changeSetting(arbitrator.address, aragonAppFeesCashierAddress, title, content, { from })
   }
 
   async approveArbitrationFees({ amount = undefined, from = undefined, accumulate = false }) {

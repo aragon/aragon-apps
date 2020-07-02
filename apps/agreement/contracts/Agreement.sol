@@ -10,7 +10,7 @@ import "@aragon/os/contracts/apps/disputable/IDisputable.sol";
 import "@aragon/os/contracts/common/ConversionHelpers.sol";
 import "@aragon/os/contracts/common/SafeERC20.sol";
 import "@aragon/os/contracts/common/TimeHelpers.sol";
-import "@aragon/os/contracts/lib/arbitration/ITransactionFeesOracle.sol";
+import "@aragon/os/contracts/lib/arbitration/IAragonAppFeesCashier.sol";
 import "@aragon/os/contracts/lib/token/ERC20.sol";
 import "@aragon/os/contracts/lib/math/SafeMath.sol";
 import "@aragon/os/contracts/lib/math/SafeMath64.sol";
@@ -78,7 +78,7 @@ contract Agreement is IAgreement, AragonApp {
         string title;
         bytes content;
         IArbitrator arbitrator;
-        ITransactionFeesOracle transactionFeesOracle;                   // Arbitrator module to fetch fees for new actions from
+        IAragonAppFeesCashier aragonAppFeesCashier;                   // Arbitrator module to fetch fees for new actions from
     }
 
     struct Action {
@@ -140,14 +140,14 @@ contract Agreement is IAgreement, AragonApp {
     * @param _title String indicating a short description
     * @param _content Link to a human-readable text that describes the initial rules for the Agreements instance
     * @param _arbitrator Address of the IArbitrator that will be used to resolve disputes
-    * @param _transactionFeesOracle Transaction fees oracle to fetch fees for new actions
+    * @param _aragonAppFeesCashier Transaction fees oracle to fetch fees for new actions
     * @param _stakingFactory Staking factory to be used for the collateral staking pools
     */
     function initialize(
         string _title,
         bytes _content,
         IArbitrator _arbitrator,
-        ITransactionFeesOracle _transactionFeesOracle,
+        IAragonAppFeesCashier _aragonAppFeesCashier,
         StakingFactory _stakingFactory
     )
         external
@@ -160,7 +160,7 @@ contract Agreement is IAgreement, AragonApp {
         nextActionId = 1;    // Action ID zero is considered the null action for further validations
         nextChallengeId = 1; // Challenge ID zero is considered the null challenge for further validations
         nextSettingId = 1;   // Setting ID zero is considered the null setting for further validations
-        _newSetting(_arbitrator, _transactionFeesOracle, _title, _content);
+        _newSetting(_arbitrator, _aragonAppFeesCashier, _title, _content);
     }
 
     /**
@@ -241,20 +241,20 @@ contract Agreement is IAgreement, AragonApp {
     * @notice Update Agreement to title "`_title`" and content "`_content`", with arbitrator `_arbitrator`
     * @dev Initialization check is implicitly provided by the `auth()` modifier
     * @param _arbitrator Address of the IArbitrator that will be used to resolve disputes
-    * @param _transactionFeesOracle Transaction fees oracle to fetch fees for new actions
+    * @param _aragonAppFeesCashier Transaction fees oracle to fetch fees for new actions
     * @param _title String indicating a short description
     * @param _content Link to a human-readable text that describes the rules for the Agreements instance
     */
     function changeSetting(
         IArbitrator _arbitrator,
-        ITransactionFeesOracle _transactionFeesOracle,
+        IAragonAppFeesCashier _aragonAppFeesCashier,
         string _title,
         bytes _content
     )
         external
         auth(CHANGE_AGREEMENT_ROLE)
     {
-        _newSetting(_arbitrator, _transactionFeesOracle, _title, _content);
+        _newSetting(_arbitrator, _aragonAppFeesCashier, _title, _content);
     }
 
     /**
@@ -298,7 +298,7 @@ contract Agreement is IAgreement, AragonApp {
         IDisputable disputable = IDisputable(msg.sender);
 
         uint256 id = nextActionId++;
-        _payTransactionFees(currentSettingId, disputable, staking, _submitter, id);
+        _payAppFees(currentSettingId, disputable, staking, _submitter, id);
 
         Action storage action = actions[id];
         action.disputable = disputable;
@@ -495,16 +495,16 @@ contract Agreement is IAgreement, AragonApp {
     * @return title String indicating a short description
     * @return content Link to a human-readable text that describes the rules for the Agreements instance
     * @return arbitrator Address of the IArbitrator that will be used to resolve disputes
-    * @return transactionFeesOracle Transaction fees oracle to fetch fees for new actions
+    * @return aragonAppFeesCashier Transaction fees oracle to fetch fees for new actions
     */
     function getSetting(uint256 _settingId)
         external
         view
-        returns (IArbitrator arbitrator, ITransactionFeesOracle transactionFeesOracle, string title, bytes content)
+        returns (IArbitrator arbitrator, IAragonAppFeesCashier aragonAppFeesCashier, string title, bytes content)
     {
         Setting storage setting = _getSetting(_settingId);
         arbitrator = setting.arbitrator;
-        transactionFeesOracle = setting.transactionFeesOracle;
+        aragonAppFeesCashier = setting.aragonAppFeesCashier;
         title = setting.title;
         content = setting.content;
     }
@@ -752,16 +752,16 @@ contract Agreement is IAgreement, AragonApp {
     * @param _submitter Address of the user that has submitted the action
     * @param _actionId Identification number of the action to be paid for
     */
-    function _payTransactionFees(uint256 _settingId, IDisputable _disputable, Staking _staking, address _submitter, uint256 _actionId) internal {
+    function _payAppFees(uint256 _settingId, IDisputable _disputable, Staking _staking, address _submitter, uint256 _actionId) internal {
         // Get fees
         Setting storage setting = _getSetting(_settingId);
-        ITransactionFeesOracle transactionFeesOracle = setting.transactionFeesOracle;
-        if (address(transactionFeesOracle) == address(0)) {
+        IAragonAppFeesCashier aragonAppFeesCashier = setting.aragonAppFeesCashier;
+        if (address(aragonAppFeesCashier) == address(0)) {
             return;
         }
 
         bytes32 appId = _disputable.appId();
-        (ERC20 token, uint256 amount) = transactionFeesOracle.getTransactionFee(appId);
+        (ERC20 token, uint256 amount) = aragonAppFeesCashier.getAppFee(appId);
 
         if (amount == 0) {
             return;
@@ -780,8 +780,8 @@ contract Agreement is IAgreement, AragonApp {
         _slashBalance(staking, _submitter, address(this), amount);
 
         // Pay fees
-        _approveFor(token, address(transactionFeesOracle), amount);
-        transactionFeesOracle.payTransactionFees(appId, _actionId);
+        _approveFor(token, address(aragonAppFeesCashier), amount);
+        aragonAppFeesCashier.payAppFees(appId, abi.encodePacked(_actionId));
     }
 
     /**
@@ -1072,20 +1072,20 @@ contract Agreement is IAgreement, AragonApp {
     /**
     * @dev Change Agreement settings
     * @param _arbitrator Address of the IArbitrator that will be used to resolve disputes
-    * @param _transactionFeesOracle Transaction fees oracle to fetch fees for new actions
+    * @param _aragonAppFeesCashier Transaction fees oracle to fetch fees for new actions
     * @param _title String indicating a short description
     * @param _content Link to a human-readable text that describes the initial rules for the Agreements instance
     */
-    function _newSetting(IArbitrator _arbitrator, ITransactionFeesOracle _transactionFeesOracle, string _title, bytes _content) internal {
+    function _newSetting(IArbitrator _arbitrator, IAragonAppFeesCashier _aragonAppFeesCashier, string _title, bytes _content) internal {
         require(isContract(address(_arbitrator)), ERROR_ARBITRATOR_NOT_CONTRACT);
-        require(address(_transactionFeesOracle) == address(0) || isContract(address(_transactionFeesOracle)), ERROR_TX_FEES_ORACLE_NOT_CONTRACT);
+        require(address(_aragonAppFeesCashier) == address(0) || isContract(address(_aragonAppFeesCashier)), ERROR_TX_FEES_ORACLE_NOT_CONTRACT);
 
         uint256 id = nextSettingId++;
         Setting storage setting = settings[id];
         setting.title = _title;
         setting.content = _content;
         setting.arbitrator = _arbitrator;
-        setting.transactionFeesOracle = _transactionFeesOracle;
+        setting.aragonAppFeesCashier = _aragonAppFeesCashier;
         emit SettingChanged(id);
     }
 
