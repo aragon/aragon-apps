@@ -18,6 +18,7 @@ import {
 import { useAppState, useConnectedAccount, useNetwork } from '@aragon/api-react'
 import { format } from 'date-fns'
 import DetailedDescription from '../components/DetailedDescription'
+import DisputableActionStatus from '../components/VoteDetail/DisputableActionStatus'
 import LocalIdentityBadge from '../components/LocalIdentityBadge/LocalIdentityBadge'
 import LocalLabelAppBadge from '../components/LocalIdentityBadge/LocalLabelAppBadge'
 import SummaryBar from '../components/SummaryBar'
@@ -31,6 +32,7 @@ import { percentageList, round, safeDiv } from '../math-utils'
 import { getQuorumProgress } from '../vote-utils'
 import { VOTE_NAY, VOTE_YEA } from '../vote-types'
 import { addressesEqual } from '../web3-utils'
+import { getDisputableVoteById } from '../agreementsMockData'
 
 const formatDate = date => `${format(date, 'yyyy-MM-dd, HH:mm')}`
 
@@ -50,6 +52,10 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
     numData,
     voteId,
   } = vote
+
+  //TODO: get real disputable vote info. this is temporary
+  vote.disputable = getDisputableVoteById(vote.voteId)
+
   const { minAcceptQuorum, supportRequired, yea, nay } = numData
   const { creator, description, metadata, open, path: executionPath } = data
   const quorumProgress = getQuorumProgress(vote)
@@ -214,7 +220,7 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
             />
           </React.Fragment>
         }
-        secondary={<Box>Disputable action status</Box>}
+        secondary={<DisputableActionStatus vote={vote} />}
       />
     </React.Fragment>
   )
