@@ -71,21 +71,12 @@ function DisputableActionStatus({ vote }) {
       </Item>
       <Item>
         <Label>Agreement</Label>
-        <Link
-          css={`
-            ${textStyle('body2')};
-          `}
-        >
-          {agreement.agreementTitle}
-        </Link>
+        <Link>{agreement.agreementTitle}</Link>
       </Item>
       {hasDispute(vote) && (
         <Item>
           <Label>Dispute</Label>
           <Link
-            css={`
-              ${textStyle('body2')};
-            `}
             href={`https://court.aragon.org/disputes/${vote.disputable.action.challenge.disputeId}`}
           >
             Dispute #{vote.disputable.action.currentChallengeId}
