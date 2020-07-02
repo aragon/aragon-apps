@@ -11,6 +11,7 @@ import {
 } from '@aragon/ui'
 import { format } from 'date-fns'
 import { getAgreement } from '../../agreementsMockData'
+import { hasDispute } from '../../disputable-utils'
 
 const formatDate = date => `${format(date, 'yyyy-MM-dd, HH:mm')}`
 
@@ -78,14 +79,14 @@ function DisputableActionStatus({ vote }) {
           {agreement.agreementTitle}
         </Link>
       </Item>
-      {vote.disputable && vote.disputable.action && (
+      {hasDispute(vote) && (
         <Item>
           <Label>Dispute</Label>
           <Link
             css={`
               ${textStyle('body2')};
             `}
-            href={`https://court.aragon.org/disputes/${vote.disputable.action.currentChallengeId}`}
+            href={`https://court.aragon.org/disputes/${vote.disputable.action.challenge.disputeId}`}
           >
             Dispute #{vote.disputable.action.currentChallengeId}
           </Link>
