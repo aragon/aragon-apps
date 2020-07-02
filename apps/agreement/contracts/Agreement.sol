@@ -140,7 +140,7 @@ contract Agreement is IAgreement, AragonApp {
     * @param _title String indicating a short description
     * @param _content Link to a human-readable text that describes the initial rules for the Agreements instance
     * @param _arbitrator Address of the IArbitrator that will be used to resolve disputes
-    * @param _aragonAppFeesCashier Transaction fees oracle to fetch fees for new actions
+    * @param _aragonAppFeesCashier Cashier contract to handle app transaction fees for new actions
     * @param _stakingFactory Staking factory to be used for the collateral staking pools
     */
     function initialize(
@@ -241,7 +241,8 @@ contract Agreement is IAgreement, AragonApp {
     * @notice Update Agreement to title "`_title`" and content "`_content`", with arbitrator `_arbitrator`
     * @dev Initialization check is implicitly provided by the `auth()` modifier
     * @param _arbitrator Address of the IArbitrator that will be used to resolve disputes
-    * @param _aragonAppFeesCashier Transaction fees oracle to fetch fees for new actions
+    * @param _aragonAppFeesCashier Cashier contract to handle app transaction fees for new actions
+
     * @param _title String indicating a short description
     * @param _content Link to a human-readable text that describes the rules for the Agreements instance
     */
@@ -307,7 +308,7 @@ contract Agreement is IAgreement, AragonApp {
 
         emit ActionSubmitted(id, msg.sender);
 
-        // Pay court transaction fees
+        // Pay app transaction fees
         _payAppFees(currentSettingId, disputable, staking, _submitter, id);
 
         return id;
@@ -496,7 +497,7 @@ contract Agreement is IAgreement, AragonApp {
     * @return title String indicating a short description
     * @return content Link to a human-readable text that describes the rules for the Agreements instance
     * @return arbitrator Address of the IArbitrator that will be used to resolve disputes
-    * @return aragonAppFeesCashier Transaction fees oracle to fetch fees for new actions
+    * @return aragonAppFeesCashier Cashier contract to handle app transaction fees for new actions
     */
     function getSetting(uint256 _settingId)
         external
@@ -1073,7 +1074,7 @@ contract Agreement is IAgreement, AragonApp {
     /**
     * @dev Change Agreement settings
     * @param _arbitrator Address of the IArbitrator that will be used to resolve disputes
-    * @param _aragonAppFeesCashier Transaction fees oracle to fetch fees for new actions
+    * @param _aragonAppFeesCashier Cashier contract to handle app transaction fees for new actions
     * @param _title String indicating a short description
     * @param _content Link to a human-readable text that describes the initial rules for the Agreements instance
     */
@@ -1404,7 +1405,9 @@ contract Agreement is IAgreement, AragonApp {
     * @return Total amount of arbitration fees required by the arbitrator to raise a dispute
     * @return Total amount of challenger fee tokens to be refunded to the challenger
     */
-    function _getMissingArbitratorFees(IArbitrator _arbitrator, ERC20 _challengerFeeToken, uint256 _challengerFeeAmount) internal view
+    function _getMissingArbitratorFees(IArbitrator _arbitrator, ERC20 _challengerFeeToken, uint256 _challengerFeeAmount) 
+        internal
+        view
         returns (address, ERC20, uint256, uint256, uint256)
     {
         (address disputeFeeRecipient, ERC20 feeToken, uint256 disputeFees) = _arbitrator.getDisputeFees();

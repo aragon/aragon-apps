@@ -21,7 +21,10 @@ contract AragonAppFeesCashierMock is IAragonAppFeesCashier, EtherTokenConstant, 
         _setAppFee(_appId, _token, _amount);
     }
 
-    function setAppFees(bytes32[], ERC20[], uint256[]) external {
+    function setAppFees(bytes32[] _appIds, ERC20[] _tokens, uint256[] _amounts) external {
+        for (uint256 i = 0; i < _appIds.length; i++) {
+            _setAppFee(_appIds[i], _tokens[i], _amounts[i]);
+        }
     }
 
     /**
@@ -32,7 +35,11 @@ contract AragonAppFeesCashierMock is IAragonAppFeesCashier, EtherTokenConstant, 
        _unsetAppFee(_appId);
     }
 
-    function unsetAppFees(bytes32[]) external {}
+    function unsetAppFees(bytes32[] _appIds) external {
+        for (uint256 i = 0; i < _appIds.length; i++) {
+            _unsetAppFee(_appIds[i]);
+        }
+    }
 
     function payAppFees(bytes32, bytes) external {
         token.transferFrom(msg.sender, address(this), amount);

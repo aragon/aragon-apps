@@ -35,7 +35,7 @@ contract('Agreement', ([_, EOA]) => {
         await assertRevert(agreement.initialize(title, content, court, aragonAppFeesCashier.address, stakingFactory.address), AGREEMENT_ERRORS.ERROR_ARBITRATOR_NOT_CONTRACT)
       })
 
-      it('fails when using a non-contract transaction fees oracle', async () => {
+      it('fails when using a non-contract aragon app fees cashier', async () => {
         const oracle = EOA
 
         await assertRevert(agreement.initialize(title, content, arbitrator.address, oracle, stakingFactory.address), AGREEMENT_ERRORS.ERROR_TX_FEES_ORACLE_NOT_CONTRACT)
@@ -68,13 +68,13 @@ contract('Agreement', ([_, EOA]) => {
         assertEvent({ logs }, AGREEMENT_EVENTS.SETTING_CHANGED, { settingId: currentSettingId })
       })
 
-      it('initializes the first setting with the given title, content, arbitrator and transaction fees oracle', async () => {
+      it('initializes the first setting with the given title, content, arbitrator and app fees cashier', async () => {
         const setting = await agreement.getSetting(1)
 
         assert.equal(setting.title, title, 'title does not match')
         assert.equal(setting.content, content, 'content does not match')
         assert.equal(setting.arbitrator, arbitrator.address, 'arbitrator does not match')
-        assert.equal(setting.aragonAppFeesCashier, aragonAppFeesCashier.address, 'aragonAppFeesCashier does not match')
+        assert.equal(setting.aragonAppFeesCashier, aragonAppFeesCashier.address, 'aragon app fees cashier does not match')
       })
     })
   })

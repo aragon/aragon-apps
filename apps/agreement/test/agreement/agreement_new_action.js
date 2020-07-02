@@ -172,6 +172,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
 
                     context('when the transaction fee token is not the staking token', () => {
                       let token
+                      
                       beforeEach('set transaction fees', async () => {
                         token = await deployer.deployToken({})
                         await deployer.aragonAppFeesCashier.setAppFee('0x', token.address, appFeeAmount)
@@ -186,7 +187,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
                         newActionFlow(bn(0))
                       })
 
-                      context('when the transaction fee payment doesn’t succeed', () => {
+                      context('when the transaction fee payment does not succeed', () => {
                         it('reverts', async () => {
                           await assertRevert(disputable.newAction({ submitter, actionContext, stake, sign }), AGREEMENT_ERRORS.STAKING_NOT_ENOUGH_BALANCE)
                         })

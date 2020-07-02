@@ -224,7 +224,6 @@ class AgreementDeployer {
   }
 
   async deployAragonAppFeesCashier() {
-    // transaction fees module
     const AragonAppFeesCashier = this._getContract('AragonAppFeesCashierMock')
     const aragonAppFeesCashier = await AragonAppFeesCashier.new()
     this.previousDeploy = { ...this.previousDeploy, aragonAppFeesCashier }
