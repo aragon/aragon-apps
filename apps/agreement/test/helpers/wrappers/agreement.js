@@ -277,14 +277,14 @@ class AgreementWrapper {
     return token.approveAndCall(to, amount, EMPTY_DATA, { from })
   }
 
-  async allowManager({ token, owner, amount}) {
+  async allowManager({ token, user, amount}) {
     // allow lock manager if needed
     const staking = await this.getStaking(token)
-    const lock = await staking.getLock(owner, this.agreement.address)
+    const lock = await staking.getLock(user, this.agreement.address)
     if (lock._allowance.eq(bn(0))) {
-      await staking.allowManager(this.agreement.address, amount, EMPTY_DATA, { from: owner })
+      await staking.allowManager(this.agreement.address, amount, EMPTY_DATA, { from: user })
     } else if (lock._allowance.sub(lock._amount).lt(amount)) {
-      await staking.increaseLockAllowance(this.agreement.address, amount, { from: owner })
+      await staking.increaseLockAllowance(this.agreement.address, amount, { from: user })
     }
   }
 

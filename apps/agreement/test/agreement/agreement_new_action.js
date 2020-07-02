@@ -157,7 +157,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
                       context('when the transaction fee payment succeeds', () => {
                         beforeEach('stake, allow', async () => {
                           await disputable.stake({ amount: appFeeAmount, user: submitter })
-                          await disputable.allowManager({ owner: submitter, amount: appFeeAmount })
+                          await disputable.allowManager({ user: submitter, amount: appFeeAmount })
                         })
 
                         newActionFlow(appFeeAmount)
@@ -181,7 +181,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
                       context('when the transaction fee payment succeeds', () => {
                         beforeEach('stake and allow manager for new staking pool for transaction fees', async () => {
                           await disputable.stake({ token, amount: appFeeAmount, user: submitter })
-                          await disputable.allowManager({ token, owner: submitter, amount: appFeeAmount })
+                          await disputable.allowManager({ token, user: submitter, amount: appFeeAmount })
                         })
 
                         newActionFlow(bn(0))

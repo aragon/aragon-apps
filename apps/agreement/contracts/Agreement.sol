@@ -44,7 +44,7 @@ contract Agreement is IAgreement, AragonApp {
     string internal constant ERROR_TOKEN_NOT_CONTRACT = "AGR_TOKEN_NOT_CONTRACT";
     string internal constant ERROR_SETTING_DOES_NOT_EXIST = "AGR_SETTING_DOES_NOT_EXIST";
     string internal constant ERROR_ARBITRATOR_NOT_CONTRACT = "AGR_ARBITRATOR_NOT_CONTRACT";
-    string internal constant ERROR_TX_FEES_ORACLE_NOT_CONTRACT = "AGR_TX_FEES_ORACLE_NOT_CONTRACT";
+    string internal constant ERROR_APP_FEE_CASHIER_NOT_CONTRACT = "AGR_APP_FEE_CASHIER_NOT_CONTRACT";
     string internal constant ERROR_STAKING_FACTORY_NOT_CONTRACT = "AGR_STAKING_FACTORY_NOT_CONTRACT";
     string internal constant ERROR_ACL_SIGNER_MISSING = "AGR_ACL_ORACLE_SIGNER_MISSING";
     string internal constant ERROR_ACL_SIGNER_NOT_ADDRESS = "AGR_ACL_ORACLE_SIGNER_NOT_ADDR";
@@ -242,7 +242,6 @@ contract Agreement is IAgreement, AragonApp {
     * @dev Initialization check is implicitly provided by the `auth()` modifier
     * @param _arbitrator Address of the IArbitrator that will be used to resolve disputes
     * @param _aragonAppFeesCashier Cashier contract to handle app transaction fees for new actions
-
     * @param _title String indicating a short description
     * @param _content Link to a human-readable text that describes the rules for the Agreements instance
     */
@@ -308,7 +307,7 @@ contract Agreement is IAgreement, AragonApp {
 
         emit ActionSubmitted(id, msg.sender);
 
-        // Pay app transaction fees
+        // Pay action submission fees
         _payAppFees(currentSettingId, disputable, staking, _submitter, id);
 
         return id;
@@ -1080,7 +1079,7 @@ contract Agreement is IAgreement, AragonApp {
     */
     function _newSetting(IArbitrator _arbitrator, IAragonAppFeesCashier _aragonAppFeesCashier, string _title, bytes _content) internal {
         require(isContract(address(_arbitrator)), ERROR_ARBITRATOR_NOT_CONTRACT);
-        require(address(_aragonAppFeesCashier) == address(0) || isContract(address(_aragonAppFeesCashier)), ERROR_TX_FEES_ORACLE_NOT_CONTRACT);
+        require(address(_aragonAppFeesCashier) == address(0) || isContract(address(_aragonAppFeesCashier)), ERROR_APP_FEE_CASHIER_NOT_CONTRACT);
 
         uint256 id = nextSettingId++;
         Setting storage setting = settings[id];

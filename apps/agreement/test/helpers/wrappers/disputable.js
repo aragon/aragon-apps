@@ -78,7 +78,7 @@ class DisputableWrapper extends AgreementWrapper {
   async forward({ script = '0x', from = undefined }) {
     if (!from) from = await this._getSender()
 
-    await this.allowManager({ owner: from, amount: this.actionCollateral })
+    await this.allowManager({ user: from, amount: this.actionCollateral })
 
     const receipt = await this.disputable.forward(script, { from })
     const logs = decodeEventsOfType(receipt, this.abi, AGREEMENT_EVENTS.ACTION_SUBMITTED)
@@ -118,9 +118,9 @@ class DisputableWrapper extends AgreementWrapper {
     return super.approveAndCall(options)
   }
 
-  async allowManager({ token = undefined, owner, amount}) {
+  async allowManager({ token = undefined, user, amount}) {
     if (!token) token = this.collateralToken
-    return super.allowManager({ token, owner, amount })
+    return super.allowManager({ token, user, amount })
   }
 
   async stake(options = {}) {
