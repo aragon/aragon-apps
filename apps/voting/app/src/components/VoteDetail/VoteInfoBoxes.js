@@ -16,7 +16,7 @@ import SummaryBar from '../SummaryBar'
 import VoteStatus from '../VoteStatus'
 import { round } from '../../math-utils'
 
-const formatDate = date => `${format(date, 'do MMM yy, HH:mm')}`
+const formatDate = date => `${format(date, 'yyyy-MM-dd, HH:mm')}`
 
 function VoteInfoBoxes({
   minAcceptQuorum,
