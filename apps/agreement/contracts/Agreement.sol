@@ -307,7 +307,7 @@ contract Agreement is IAgreement, AragonApp {
         emit ActionSubmitted(id, msg.sender);
 
         // Pay action submission fees
-        _payAppFees(id, action);
+        _payAppFees(currentSettingId, disputable, _submitter, id);
 
         return id;
     }
@@ -746,18 +746,20 @@ contract Agreement is IAgreement, AragonApp {
 
     /**
     * @dev Pay transactions fees required for new actions
-    * @param _actionId Identification number of the action whose fees are being paid
-    * @param _action Action instance whose fees are being paid
+    * @param _settingId Identification number of the setting being queried
+    * @param _disputable Address of the Disputable app, used to determine fees
+    * @param _submitter Address of the user that has submitted the action
+    * @param _actionId Identification number of the action to be paid for
     */
-    function _payAppFees(uint256 _actionId, Action storage _action) internal {
+    function _payAppFees(uint256 _settingId, IDisputable _disputable, address _submitter, uint256 _actionId) internal {
         // Get fees
-        Setting storage setting = _getSetting(_action.settingId);
+        Setting storage setting = _getSetting(_settingId);
         IAragonAppFeesCashier aragonAppFeesCashier = setting.aragonAppFeesCashier;
         if (aragonAppFeesCashier == IAragonAppFeesCashier(0)) {
             return;
         }
 
-        bytes32 appId = _action.disputable.appId();
+        bytes32 appId = _disputable.appId();
         (ERC20 token, uint256 amount) = aragonAppFeesCashier.getAppFee(appId);
 
         if (amount == 0) {
@@ -768,8 +770,8 @@ contract Agreement is IAgreement, AragonApp {
         Staking staking = stakingFactory.getOrCreateInstance(token);
 
         // Pull required fee amount from staking pool
-        _lockBalance(staking, _action.submitter, amount);
-        _slashBalance(staking, _action.submitter, address(this), amount);
+        _lockBalance(staking, _submitter, amount);
+        _slashBalance(staking, _submitter, address(this), amount);
 
         // Pay fees
         _approveFor(token, address(aragonAppFeesCashier), amount);
