@@ -8,8 +8,8 @@ const { AGREEMENT_EVENTS, DISPUTABLE_EVENTS } = require('../utils/events')
 const EMPTY_DATA = '0x'
 
 class DisputableWrapper extends AgreementWrapper {
-  constructor(artifacts, web3, agreement, arbitrator, stakingFactory, disputable, collateralRequirement = {}) {
-    super(artifacts, web3, agreement, arbitrator, stakingFactory)
+  constructor(artifacts, web3, agreement, arbitrator, aragonAppFeesCashier, stakingFactory, disputable, collateralRequirement = {}) {
+    super(artifacts, web3, agreement, arbitrator, aragonAppFeesCashier, stakingFactory)
     this.disputable = disputable
     this.collateralRequirement = collateralRequirement
   }
@@ -56,12 +56,14 @@ class DisputableWrapper extends AgreementWrapper {
     return super.getCollateralRequirement(this.disputable, id)
   }
 
-  async getStakingAddress() {
-    return super.getStakingAddress(this.collateralToken)
+  async getStakingAddress(token) {
+    if (!token) token = this.collateralToken
+    return super.getStakingAddress(token)
   }
 
-  async getStaking() {
-    return super.getStaking(this.collateralToken)
+  async getStaking(token) {
+    if (!token) token = this.collateralToken
+    return super.getStaking(token)
   }
 
   async activate(options = {}) {
@@ -73,21 +75,10 @@ class DisputableWrapper extends AgreementWrapper {
     return super.deactivate({ disputable: this.disputable, ...options })
   }
 
-  async allowManager({ owner, amount}) {
-    // allow lock manager if needed
-    const staking = await this.getStaking()
-    const lock = await staking.getLock(owner, this.agreement.address)
-    if (lock._allowance.eq(bn(0))) {
-      await staking.allowManager(this.agreement.address, amount, EMPTY_DATA, { from: owner })
-    } else if (lock._allowance.sub(lock._amount).lt(amount)) {
-      await staking.increaseLockAllowance(this.agreement.address, amount, { from: owner })
-    }
-  }
-
   async forward({ script = '0x', from = undefined }) {
     if (!from) from = await this._getSender()
 
-    await this.allowManager({ owner: from, amount: this.actionCollateral })
+    await this.allowManager({ user: from, amount: this.actionCollateral })
 
     const receipt = await this.disputable.forward(script, { from })
     const logs = decodeEventsOfType(receipt, this.abi, AGREEMENT_EVENTS.ACTION_SUBMITTED)
@@ -118,16 +109,24 @@ class DisputableWrapper extends AgreementWrapper {
   }
 
   async approve(options = {}) {
-    return super.approve({ token: this.collateralToken, ...options })
+    if (!options.token) options.token = this.collateralToken
+    return super.approve(options)
   }
 
   async approveAndCall(options = {}) {
-    return super.approveAndCall({ token: this.collateralToken, ...options })
+    if (!options.token) options.token = this.collateralToken
+    return super.approveAndCall(options)
+  }
+
+  async allowManager({ token = undefined, user, amount}) {
+    if (!token) token = this.collateralToken
+    return super.allowManager({ token, user, amount })
   }
 
   async stake(options = {}) {
     if (!options.amount) options.amount = this.actionCollateral
-    return super.stake({ token: this.collateralToken, ...options })
+    if (!options.token) options.token = this.collateralToken
+    return super.stake(options)
   }
 
   async unstake(options = {}) {

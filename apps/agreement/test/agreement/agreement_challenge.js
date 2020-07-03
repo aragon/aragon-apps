@@ -166,7 +166,7 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
                 })
 
                 it('reverts', async () => {
-                  await assertRevert(disputable.challenge({ actionId, challenger, arbitrationFees }), AGREEMENT_ERRORS.ERROR_TOKEN_TRANSFER_FAILED)
+                  await assertRevert(disputable.challenge({ actionId, challenger, arbitrationFees }), AGREEMENT_ERRORS.ERROR_TOKEN_DEPOSIT_FAILED)
                 })
               })
 
@@ -176,7 +176,7 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
                 })
 
                 it('reverts', async () => {
-                  await assertRevert(disputable.challenge({ actionId, challenger, arbitrationFees }), AGREEMENT_ERRORS.ERROR_TOKEN_TRANSFER_FAILED)
+                  await assertRevert(disputable.challenge({ actionId, challenger, arbitrationFees }), AGREEMENT_ERRORS.ERROR_TOKEN_DEPOSIT_FAILED)
                 })
               })
             })

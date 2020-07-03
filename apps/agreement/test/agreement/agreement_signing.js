@@ -27,7 +27,7 @@ contract('Agreement', ([_, signer]) => {
       })
 
       it('is not allowed through ACL oracle', async () => {
-        assert.isFalse(await agreement.canPerform(ANY_ADDR, ANY_ADDR, '0x', [from]), 'signer can perform through ACL')
+        assert.isFalse(await agreement.canPerform(ANY_ADDR, ANY_ADDR, ANY_ADDR, '0x', [from]), 'signer can perform through ACL')
       })
 
       it('can sign the agreement', async () => {
@@ -43,7 +43,7 @@ contract('Agreement', ([_, signer]) => {
       it('is allowed through ACL oracle after signing the agreement', async () => {
         await agreement.sign(from)
 
-        assert.isTrue(await agreement.canPerform(ANY_ADDR, ANY_ADDR, '0x', [from]), 'signer cannot perform through ACL')
+        assert.isTrue(await agreement.canPerform(ANY_ADDR, ANY_ADDR, ANY_ADDR, '0x', [from]), 'signer cannot perform through ACL')
       })
 
       it('emits an event', async () => {
@@ -83,11 +83,11 @@ contract('Agreement', ([_, signer]) => {
 
   describe('canPerform', () => {
     it('reverts when the signer is missing', async () => {
-      await assertRevert(agreement.canPerform(ANY_ADDR, ANY_ADDR, '0x', []), AGREEMENT_ERRORS.ERROR_ACL_SIGNER_MISSING)
+      await assertRevert(agreement.canPerform(ANY_ADDR, ANY_ADDR, ANY_ADDR, '0x', []), AGREEMENT_ERRORS.ERROR_ACL_SIGNER_MISSING)
     })
 
     it('reverts when an invalid signer is given', async () => {
-      await assertRevert(agreement.canPerform(ANY_ADDR, ANY_ADDR, '0x', [bigExp(2, 161)]), AGREEMENT_ERRORS.ERROR_ACL_SIGNER_NOT_ADDRESS)
+      await assertRevert(agreement.canPerform(ANY_ADDR, ANY_ADDR, ANY_ADDR, '0x', [bigExp(2, 161)]), AGREEMENT_ERRORS.ERROR_ACL_SIGNER_NOT_ADDRESS)
     })
   })
 })
