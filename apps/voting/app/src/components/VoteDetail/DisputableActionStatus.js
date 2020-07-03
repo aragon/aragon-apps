@@ -10,6 +10,7 @@ import {
   useTheme,
 } from '@aragon/ui'
 import { format } from 'date-fns'
+import DisputableActions from './DisputableActions'
 import DisputableStatusLabel from '../DisputableStatusLabel'
 import { getAgreement } from '../../agreementsMockData'
 import { DISPUTABLE_VOTE_STATUSES } from '../../disputable-vote-statuses'
@@ -100,6 +101,14 @@ function DisputableActionStatus({ vote }) {
             trail.
           </Info>
         </Item>
+        <Item>
+          {disputableStatus && (
+            <DisputableActions
+              status={disputableStatus}
+              submitter={vote.disputable.action.submitter}
+            />
+          )}
+        </Item>
       </ul>
     </Box>
   )
@@ -110,8 +119,10 @@ function Item({ label, children }) {
   return (
     <li
       css={`
-        margin-bottom: ${3 * GU}px;
         list-style-type: none;
+        & + li {
+          margin-top: ${3 * GU}px;
+        }
       `}
     >
       {label && (
