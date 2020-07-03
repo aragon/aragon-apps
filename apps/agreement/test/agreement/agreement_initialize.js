@@ -38,7 +38,7 @@ contract('Agreement', ([_, EOA]) => {
       it('fails when using a non-contract aragon app fees cashier', async () => {
         const cashier = EOA
 
-        await assertRevert(agreement.initialize(title, content, arbitrator.address, oracle, stakingFactory.address), AGREEMENT_ERRORS.ERROR_APP_FEE_CASHIER_NOT_CONTRACT)
+        await assertRevert(agreement.initialize(title, content, arbitrator.address, cashier, stakingFactory.address), AGREEMENT_ERRORS.ERROR_APP_FEE_CASHIER_NOT_CONTRACT)
       })
 
       it('fails when using a non-contract staking factory', async () => {
