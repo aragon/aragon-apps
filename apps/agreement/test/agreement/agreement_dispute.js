@@ -110,9 +110,8 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                       assert.isFalse(challengerFinishedEvidence, 'challenger finished evidence')
 
                       const appId = '0xcafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234'
-                      const colonChar = utf8ToHex(':').slice(2)
                       const paddedActionId = padLeft(actionId, 64)
-                      const expectedMetadata = `${appId}${colonChar}${paddedActionId}`
+                      const expectedMetadata = `${appId}${paddedActionId}`
 
                       const IArbitrator = artifacts.require('ArbitratorMock')
                       const logs = decodeEventsOfType(receipt, IArbitrator.abi, 'NewDispute')
