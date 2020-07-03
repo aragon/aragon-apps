@@ -137,6 +137,10 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
       assert.equal(toAscii(context), 'some context', 'context does not match')
       assert.equal(submitter, voter51, 'action submitter does not match')
     })
+
+    it('cannot be paused', async () => {
+      await assertRevert(agreement.challenge({ actionId }), 'AGR_CANNOT_CHALLENGE_ACTION')
+    })
   })
 
   describe('challenge', () => {
@@ -178,6 +182,10 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
 
       assert.isFalse(isOpen, 'vote is open')
       assert.isFalse(isExecuted, 'vote is executed')
+    })
+
+    it('cannot be paused twice', async () => {
+      await assertRevert(agreement.challenge({ actionId }), 'AGR_CANNOT_CHALLENGE_ACTION')
     })
   })
 
@@ -240,6 +248,12 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
 
         const { isOpen: isOpenAtAfterEndDate } = await getVoteState(voting, voteId)
         assert.isFalse(isOpenAtAfterEndDate, 'vote is open after end date')
+      })
+
+      it('cannot be challenged again', async () => {
+        assert.isFalse(await voting.canChallenge(voteId), 'vote should not be challenged')
+
+        await assertRevert(agreement.challenge({ actionId }), 'AGR_CANNOT_CHALLENGE_ACTION')
       })
     }
 
@@ -313,6 +327,12 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
 
         const { isOpen: isOpenAtAfterEndDate } = await getVoteState(voting, voteId)
         assert.isFalse(isOpenAtAfterEndDate, 'vote is open after end date')
+      })
+
+      it('cannot be challenged again', async () => {
+        assert.isFalse(await voting.canChallenge(voteId), 'vote can be challenged')
+
+        await assertRevert(agreement.challenge({ actionId }), 'AGR_CANNOT_CHALLENGE_ACTION')
       })
     }
 
