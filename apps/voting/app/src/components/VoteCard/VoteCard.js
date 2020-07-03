@@ -84,7 +84,6 @@ function VoteCard({ vote, onOpen }) {
   const disputableStatus =
     vote.disputable && DISPUTABLE_VOTE_STATUSES.get(vote.disputable.status)
 
-  //TODO: update this part of the code once status function is updated
   const border = getCardBorderColor(
     DISPUTABLE_VOTE_STATUSES.get(vote.disputable.status),
     theme
