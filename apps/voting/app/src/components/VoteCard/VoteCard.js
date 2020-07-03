@@ -81,13 +81,9 @@ function VoteCard({ vote, onOpen }) {
   // “highlighted” means either focused or hovered
   const [highlighted, setHighlighted] = useState(false)
 
-  const disputableStatus =
-    vote.disputable && DISPUTABLE_VOTE_STATUSES.get(vote.disputable.status)
+  const disputableStatus = DISPUTABLE_VOTE_STATUSES.get(vote.disputable.status)
 
-  const border = getCardBorderColor(
-    DISPUTABLE_VOTE_STATUSES.get(vote.disputable.status),
-    theme
-  )
+  const border = getCardBorderColor(disputableStatus, theme)
 
   return (
     <Card
@@ -151,9 +147,7 @@ function VoteCard({ vote, onOpen }) {
             <VoteStatus vote={vote} />
           )
         ) : (
-          disputableStatus && (
-            <DisputableStatusLabel status={disputableStatus} />
-          )
+          <DisputableStatusLabel status={disputableStatus} />
         )}
       </div>
     </Card>
