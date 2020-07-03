@@ -17,14 +17,11 @@ import "@aragon/os/contracts/lib/math/SafeMath64.sol";
 import "@aragon/staking/contracts/Staking.sol";
 import "@aragon/staking/contracts/StakingFactory.sol";
 
-import "./lib/BytesHelper.sol";
-
 
 contract Agreement is IAgreement, AragonApp {
     using SafeMath for uint256;
     using SafeMath64 for uint64;
     using SafeERC20 for ERC20;
-    using BytesHelper for bytes;
 
     /* Arbitrator outcomes constants */
     uint256 internal constant DISPUTES_POSSIBLE_OUTCOMES = 2;
@@ -410,7 +407,7 @@ contract Agreement is IAgreement, AragonApp {
         require(msg.sender == submitter, ERROR_SENDER_NOT_ALLOWED);
 
         IArbitrator arbitrator = _getArbitratorFor(action);
-        bytes memory metadata = _buildDisputeMetadata(action);
+        bytes memory metadata = abi.encodePacked(appId(), action.currentChallengeId);
         uint256 disputeId = _createDispute(action, challenge, arbitrator, metadata);
         _submitEvidence(arbitrator, disputeId, submitter, action.context, _submitterFinishedEvidence);
         _submitEvidence(arbitrator, disputeId, challenge.challenger, challenge.context, challenge.challengerFinishedEvidence);
@@ -1421,21 +1418,5 @@ contract Agreement is IAgreement, AragonApp {
         }
 
         return (disputeFeeRecipient, feeToken, missingFees, disputeFees, challengerRefund);
-    }
-
-    /**
-    * @dev Helper to build an agreement dispute metadata as "[APP_ID]:[CHALLENGE_ID]"
-    * @param _action Action instance to create a dispute for
-    * @return dispute metadata for the requested action current challenge
-    */
-    function _buildDisputeMetadata(Action storage _action) internal view returns (bytes memory) {
-        bytes32 id = appId();
-        bytes memory metadataHeader = new bytes(33);                                                 // Header "[APP_ID]:"
-        assembly {
-            let ptr := add(metadataHeader, 32)                                                       // Init ptr for header
-            mstore(ptr, id)                                                                          // Store app ID
-            mstore(add(ptr, 32), 0x3A00000000000000000000000000000000000000000000000000000000000000) // Store colon char
-        }
-        return metadataHeader.concat(_action.currentChallengeId);
     }
 }
