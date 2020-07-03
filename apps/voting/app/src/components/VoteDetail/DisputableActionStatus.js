@@ -119,8 +119,10 @@ function Item({ label, children }) {
   return (
     <li
       css={`
-        margin-bottom: ${3 * GU}px;
         list-style-type: none;
+        & + li {
+          margin-top: ${3 * GU}px;
+        }
       `}
     >
       {label && (
