@@ -307,7 +307,8 @@ contract Agreement is IAgreement, AragonApp {
         emit ActionSubmitted(id, msg.sender);
 
         // Pay action submission fees
-        _payAppFees(currentSettingId, disputable, _submitter, id);
+        Setting storage setting = _getSetting(currentSettingId);
+        _payAppFees(setting, disputable, _submitter, id);
 
         return id;
     }
@@ -746,15 +747,14 @@ contract Agreement is IAgreement, AragonApp {
 
     /**
     * @dev Pay transactions fees required for new actions
-    * @param _settingId Identification number of the setting being queried
+    * @param _setting Setting used to get Aragon App Fees Cashier
     * @param _disputable Address of the Disputable app, used to determine fees
     * @param _submitter Address of the user that has submitted the action
     * @param _actionId Identification number of the action to be paid for
     */
-    function _payAppFees(uint256 _settingId, IDisputable _disputable, address _submitter, uint256 _actionId) internal {
+    function _payAppFees(Setting storage _setting, IDisputable _disputable, address _submitter, uint256 _actionId) internal {
         // Get fees
-        Setting storage setting = _getSetting(_settingId);
-        IAragonAppFeesCashier aragonAppFeesCashier = setting.aragonAppFeesCashier;
+        IAragonAppFeesCashier aragonAppFeesCashier = _setting.aragonAppFeesCashier;
         if (aragonAppFeesCashier == IAragonAppFeesCashier(0)) {
             return;
         }
