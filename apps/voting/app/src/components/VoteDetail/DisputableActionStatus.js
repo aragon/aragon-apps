@@ -36,23 +36,17 @@ function DisputableActionStatus({ vote }) {
 
   return (
     <Box heading="Disputable Action Status">
-      <Item>
-        <Label>Status</Label>
-        <DisputableStatusLabel vote={vote} />
-      </Item>
-      <Item>
-        <Label>Action collateral locked</Label>
-        <div
-          css={`
-            display: flex;
-            align-items: center;
-          `}
-        >
-          {vote.disputable.action.collateral.challengeAmount}{' '}
-          {vote.disputable.action.collateral.collateralToken}
-          <span
+      <ul>
+        <Item label="Status">
+          {disputableStatus && (
+            <DisputableStatusLabel status={disputableStatus} />
+          )}
+        </Item>
+        <Item label="Action collateral locked">
+          <div
             css={`
-              padding-left: ${1 * GU}px;
+              display: flex;
+              align-items: center;
             `}
           >
             {challengeAmount} {collateralToken}
@@ -108,7 +102,12 @@ function DisputableActionStatus({ vote }) {
           </Info>
         </Item>
         <Item>
-          <DisputableActions vote={vote} />
+          {disputableStatus && (
+            <DisputableActions
+              status={disputableStatus}
+              submitter={vote.disputable.action.submitter}
+            />
+          )}
         </Item>
       </ul>
     </Box>

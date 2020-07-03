@@ -10,10 +10,14 @@ import { getDisputableVoteStatus } from '../../disputable-utils'
 import { useConnectedAccount } from '@aragon/api-react'
 import { addressesEqual } from '../../web3-utils'
 
-const getActions = (status, vote, connectedAccount, theme) => {
-  //TODO: claim collateral action
+function DisputableActions({ status, submitter }) {
+  const theme = useTheme()
+  const connectedAccount = useConnectedAccount()
+
+  //TODO: add claim collateral action validation
+
   if (status === VOTE_STATUS_PAUSED) {
-    if (addressesEqual(vote.disputable.action.submitter, connectedAccount)) {
+    if (addressesEqual(submitter, connectedAccount)) {
       return (
         <React.Fragment>
           <Button
@@ -30,25 +34,12 @@ const getActions = (status, vote, connectedAccount, theme) => {
     }
   }
   if (status === VOTE_STATUS_ACTIVE) {
-    if (addressesEqual(vote.disputable.action.submitter, connectedAccount)) {
+    if (addressesEqual(submitter, connectedAccount)) {
       return <Button mode="strong" wide label="Cancel vote" />
     }
     return <Button mode="strong" wide label="Challenge vote" />
   }
   return <Button mode="strong" wide label="Review details" />
-}
-
-function DisputableActions({ vote }) {
-  const theme = useTheme()
-  const status = getDisputableVoteStatus(vote)
-  const connectedAccount = useConnectedAccount()
-
-  if (!status) {
-    return null
-  }
-  const actions = getActions(status, vote, connectedAccount, theme)
-
-  return <React.Fragment>{actions}</React.Fragment>
 }
 
 export default DisputableActions
