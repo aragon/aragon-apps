@@ -19,6 +19,17 @@ import You from '../You'
 //TODO: remove once we have real data
 import { getDisputableVoteById } from '../../agreementsMockData'
 
+function getCardBorderColor(status, theme) {
+  const borderColor = {
+    [VOTE_STATUS_ACTIVE]: theme.surface,
+    [VOTE_STATUS_CANCELLED]: theme.disabledContent,
+    [VOTE_STATUS_CLOSED]: theme.disabledContent,
+    [VOTE_STATUS_PAUSED]: theme.warning,
+  }
+
+  return borderColor[status]
+}
+
 function VoteCard({ vote, onOpen }) {
   const theme = useTheme()
   const {
@@ -28,7 +39,8 @@ function VoteCard({ vote, onOpen }) {
     numData,
     voteId,
   } = vote
-  //TODO: get real data
+
+  //TODO: Remove this once we have real data
   vote.disputable = getDisputableVoteById(voteId)
 
   const { votingPower, yea, nay } = numData
@@ -73,17 +85,10 @@ function VoteCard({ vote, onOpen }) {
     vote.disputable && DISPUTABLE_VOTE_STATUSES.get(vote.disputable.status)
 
   //TODO: update this part of the code once status function is updated
-  let border = theme.surface
-
-  if (disputableStatus === VOTE_STATUS_PAUSED) {
-    border = theme.warning
-  }
-  if (
-    disputableStatus === VOTE_STATUS_CANCELLED ||
-    disputableStatus === VOTE_STATUS_CLOSED
-  ) {
-    border = theme.disabledContent
-  }
+  const border = getCardBorderColor(
+    DISPUTABLE_VOTE_STATUSES.get(vote.disputable.status),
+    theme
+  )
 
   return (
     <Card
@@ -98,7 +103,7 @@ function VoteCard({ vote, onOpen }) {
         grid-template-rows: auto 1fr auto auto;
         grid-gap: ${1 * GU}px;
         padding: ${3 * GU}px;
-        border: solid ${border} 1px;
+        ${border && `border: solid ${border} 1px;`}
       `}
     >
       <div
