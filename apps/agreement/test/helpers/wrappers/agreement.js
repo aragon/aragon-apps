@@ -8,11 +8,12 @@ const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 const EMPTY_DATA = '0x'
 
 class AgreementWrapper {
-  constructor(artifacts, web3, agreement, arbitrator, stakingFactory) {
+  constructor(artifacts, web3, agreement, arbitrator, aragonAppFeesCashier, stakingFactory) {
     this.artifacts = artifacts
     this.web3 = web3
     this.agreement = agreement
     this.arbitrator = arbitrator
+    this.aragonAppFeesCashier = aragonAppFeesCashier
     this.stakingFactory = stakingFactory
   }
 
@@ -24,8 +25,8 @@ class AgreementWrapper {
     return this.agreement.address
   }
 
-  async canPerform(who, where, what, how) {
-    return this.agreement.canPerform(who, where, what, how)
+  async canPerform(who, grantee, where, what, how) {
+    return this.agreement.canPerform(who, grantee, where, what, how)
   }
 
   async getCurrentSettingId() {
@@ -55,7 +56,7 @@ class AgreementWrapper {
   }
 
   async getTotalAvailableBalance(token, user) {
-    const staking = await this.getStaking(token.address)
+    const staking = await this.getStaking(token)
     const unlocked = await staking.unlockedBalanceOf(user)
     const tokenBalance = await token.balanceOf(user)
 
@@ -188,10 +189,11 @@ class AgreementWrapper {
     return this.agreement.changeCollateralRequirement(options.disputable.address, collateralToken.address, actionCollateral, challengeCollateral, challengeDuration, { from })
   }
 
-  async changeSetting({ title = 'title', content = '0x1234', arbitrator = undefined, from = undefined }) {
+  async changeSetting({ title = 'title', content = '0x1234', arbitrator = undefined, aragonAppFeesCashierAddress = undefined, from = undefined }) {
     if (!from) from = await this._getSender()
     if (!arbitrator) arbitrator = this.arbitrator
-    return this.agreement.changeSetting(arbitrator.address, title, content, { from })
+    if (!aragonAppFeesCashierAddress) aragonAppFeesCashierAddress = this.aragonAppFeesCashier.address
+    return this.agreement.changeSetting(arbitrator.address, aragonAppFeesCashierAddress, title, content, { from })
   }
 
   async approveArbitrationFees({ amount = undefined, from = undefined, accumulate = false }) {
@@ -273,6 +275,17 @@ class AgreementWrapper {
 
     if (mint) await token.generateTokens(from, amount)
     return token.approveAndCall(to, amount, EMPTY_DATA, { from })
+  }
+
+  async allowManager({ token, user, amount}) {
+    // allow lock manager if needed
+    const staking = await this.getStaking(token)
+    const lock = await staking.getLock(user, this.agreement.address)
+    if (lock._allowance.eq(bn(0))) {
+      await staking.allowManager(this.agreement.address, amount, EMPTY_DATA, { from: user })
+    } else if (lock._allowance.sub(lock._amount).lt(amount)) {
+      await staking.increaseLockAllowance(this.agreement.address, amount, { from: user })
+    }
   }
 
   async stake({ token, amount, user = undefined, from = undefined, approve = undefined }) {

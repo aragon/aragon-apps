@@ -10,6 +10,7 @@ import "@aragon/os/contracts/apps/disputable/IDisputable.sol";
 import "@aragon/os/contracts/common/ConversionHelpers.sol";
 import "@aragon/os/contracts/common/SafeERC20.sol";
 import "@aragon/os/contracts/common/TimeHelpers.sol";
+import "@aragon/os/contracts/lib/arbitration/IAragonAppFeesCashier.sol";
 import "@aragon/os/contracts/lib/token/ERC20.sol";
 import "@aragon/os/contracts/lib/math/SafeMath.sol";
 import "@aragon/os/contracts/lib/math/SafeMath64.sol";
@@ -43,6 +44,7 @@ contract Agreement is IAgreement, AragonApp {
     string internal constant ERROR_TOKEN_NOT_CONTRACT = "AGR_TOKEN_NOT_CONTRACT";
     string internal constant ERROR_SETTING_DOES_NOT_EXIST = "AGR_SETTING_DOES_NOT_EXIST";
     string internal constant ERROR_ARBITRATOR_NOT_CONTRACT = "AGR_ARBITRATOR_NOT_CONTRACT";
+    string internal constant ERROR_APP_FEE_CASHIER_NOT_CONTRACT = "AGR_APP_FEE_CASHIER_NOT_CONTRACT";
     string internal constant ERROR_STAKING_FACTORY_NOT_CONTRACT = "AGR_STAKING_FACTORY_NOT_CONTRACT";
     string internal constant ERROR_ACL_SIGNER_MISSING = "AGR_ACL_ORACLE_SIGNER_MISSING";
     string internal constant ERROR_ACL_SIGNER_NOT_ADDRESS = "AGR_ACL_ORACLE_SIGNER_NOT_ADDR";
@@ -76,6 +78,7 @@ contract Agreement is IAgreement, AragonApp {
         string title;
         bytes content;
         IArbitrator arbitrator;
+        IAragonAppFeesCashier aragonAppFeesCashier;                   // Cashier to deposit new action transaction fees (usually linked to the selected arbitrator)
     }
 
     struct Action {
@@ -137,9 +140,18 @@ contract Agreement is IAgreement, AragonApp {
     * @param _title String indicating a short description
     * @param _content Link to a human-readable text that describes the initial rules for the Agreements instance
     * @param _arbitrator Address of the IArbitrator that will be used to resolve disputes
+    * @param _aragonAppFeesCashier Cashier contract to handle app transaction fees for new actions
     * @param _stakingFactory Staking factory to be used for the collateral staking pools
     */
-    function initialize(string _title, bytes _content, IArbitrator _arbitrator, StakingFactory _stakingFactory) external {
+    function initialize(
+        string _title,
+        bytes _content,
+        IArbitrator _arbitrator,
+        IAragonAppFeesCashier _aragonAppFeesCashier,
+        StakingFactory _stakingFactory
+    )
+        external
+    {
         initialized();
         require(isContract(address(_stakingFactory)), ERROR_STAKING_FACTORY_NOT_CONTRACT);
 
@@ -148,7 +160,7 @@ contract Agreement is IAgreement, AragonApp {
         nextActionId = 1;    // Action ID zero is considered the null action for further validations
         nextChallengeId = 1; // Challenge ID zero is considered the null challenge for further validations
         nextSettingId = 1;   // Setting ID zero is considered the null setting for further validations
-        _newSetting(_arbitrator, _title, _content);
+        _newSetting(_arbitrator, _aragonAppFeesCashier, _title, _content);
     }
 
     /**
@@ -229,11 +241,20 @@ contract Agreement is IAgreement, AragonApp {
     * @notice Update Agreement to title "`_title`" and content "`_content`", with arbitrator `_arbitrator`
     * @dev Initialization check is implicitly provided by the `auth()` modifier
     * @param _arbitrator Address of the IArbitrator that will be used to resolve disputes
+    * @param _aragonAppFeesCashier Cashier contract to handle app transaction fees for new actions
     * @param _title String indicating a short description
     * @param _content Link to a human-readable text that describes the rules for the Agreements instance
     */
-    function changeSetting(IArbitrator _arbitrator, string _title, bytes _content) external auth(CHANGE_AGREEMENT_ROLE) {
-        _newSetting(_arbitrator, _title, _content);
+    function changeSetting(
+        IArbitrator _arbitrator,
+        IAragonAppFeesCashier _aragonAppFeesCashier,
+        string _title,
+        bytes _content
+    )
+        external
+        auth(CHANGE_AGREEMENT_ROLE)
+    {
+        _newSetting(_arbitrator, _aragonAppFeesCashier, _title, _content);
     }
 
     /**
@@ -271,11 +292,12 @@ contract Agreement is IAgreement, AragonApp {
         uint256 currentCollateralRequirementId = disputableInfo.nextCollateralRequirementsId - 1;
         CollateralRequirement storage requirement = _getCollateralRequirement(disputableInfo, currentCollateralRequirementId);
         _lockBalance(requirement.staking, _submitter, requirement.actionAmount);
-        // TODO: pay court transaction fees
+
+        IDisputable disputable = IDisputable(msg.sender);
 
         uint256 id = nextActionId++;
         Action storage action = actions[id];
-        action.disputable = IDisputable(msg.sender);
+        action.disputable = disputable;
         action.collateralRequirementId = currentCollateralRequirementId;
         action.disputableActionId = _disputableActionId;
         action.submitter = _submitter;
@@ -283,6 +305,11 @@ contract Agreement is IAgreement, AragonApp {
         action.settingId = currentSettingId;
 
         emit ActionSubmitted(id, msg.sender);
+
+        // Pay action submission fees
+        Setting storage setting = _getSetting(currentSettingId);
+        _payAppFees(setting, disputable, _submitter, id);
+
         return id;
     }
 
@@ -469,10 +496,16 @@ contract Agreement is IAgreement, AragonApp {
     * @return title String indicating a short description
     * @return content Link to a human-readable text that describes the rules for the Agreements instance
     * @return arbitrator Address of the IArbitrator that will be used to resolve disputes
+    * @return aragonAppFeesCashier Cashier contract to handle app transaction fees for new actions
     */
-    function getSetting(uint256 _settingId) external view returns (IArbitrator arbitrator, string title, bytes content) {
+    function getSetting(uint256 _settingId)
+        external
+        view
+        returns (IArbitrator arbitrator, IAragonAppFeesCashier aragonAppFeesCashier, string title, bytes content)
+    {
         Setting storage setting = _getSetting(_settingId);
         arbitrator = setting.arbitrator;
+        aragonAppFeesCashier = setting.aragonAppFeesCashier;
         title = setting.title;
         content = setting.content;
     }
@@ -627,7 +660,7 @@ contract Agreement is IAgreement, AragonApp {
     * @dev ACL oracle interface - Tells whether an address has already signed the Agreement
     * @return True if a parameterized address has signed the current version of the Agreement, false otherwise
     */
-    function canPerform(address, address, bytes32, uint256[] _how) external view returns (bool) {
+    function canPerform(address, address, address, bytes32, uint256[] _how) external view returns (bool) {
         require(_how.length > 0, ERROR_ACL_SIGNER_MISSING);
         require(_how[0] < 2**160, ERROR_ACL_SIGNER_NOT_ADDRESS);
 
@@ -711,6 +744,39 @@ contract Agreement is IAgreement, AragonApp {
     }
 
     // Internal fns
+
+    /**
+    * @dev Pay transactions fees required for new actions
+    * @param _setting Setting used to get Aragon App Fees Cashier
+    * @param _disputable Address of the Disputable app, used to determine fees
+    * @param _submitter Address of the user that has submitted the action
+    * @param _actionId Identification number of the action to be paid for
+    */
+    function _payAppFees(Setting storage _setting, IDisputable _disputable, address _submitter, uint256 _actionId) internal {
+        // Get fees
+        IAragonAppFeesCashier aragonAppFeesCashier = _setting.aragonAppFeesCashier;
+        if (aragonAppFeesCashier == IAragonAppFeesCashier(0)) {
+            return;
+        }
+
+        bytes32 appId = _disputable.appId();
+        (ERC20 token, uint256 amount) = aragonAppFeesCashier.getAppFee(appId);
+
+        if (amount == 0) {
+            return;
+        }
+
+        // Get staking pool
+        Staking staking = stakingFactory.getOrCreateInstance(token);
+
+        // Pull required fee amount from staking pool
+        _lockBalance(staking, _submitter, amount);
+        _slashBalance(staking, _submitter, address(this), amount);
+
+        // Pay fees
+        _approveFor(token, address(aragonAppFeesCashier), amount);
+        aragonAppFeesCashier.payAppFees(appId, abi.encodePacked(_actionId));
+    }
 
     /**
     * @dev Close an action
@@ -1000,17 +1066,20 @@ contract Agreement is IAgreement, AragonApp {
     /**
     * @dev Change Agreement settings
     * @param _arbitrator Address of the IArbitrator that will be used to resolve disputes
+    * @param _aragonAppFeesCashier Cashier contract to handle app transaction fees for new actions
     * @param _title String indicating a short description
     * @param _content Link to a human-readable text that describes the initial rules for the Agreements instance
     */
-    function _newSetting(IArbitrator _arbitrator, string _title, bytes _content) internal {
+    function _newSetting(IArbitrator _arbitrator, IAragonAppFeesCashier _aragonAppFeesCashier, string _title, bytes _content) internal {
         require(isContract(address(_arbitrator)), ERROR_ARBITRATOR_NOT_CONTRACT);
+        require(_aragonAppFeesCashier == IAragonAppFeesCashier(0) || isContract(address(_aragonAppFeesCashier)), ERROR_APP_FEE_CASHIER_NOT_CONTRACT);
 
         uint256 id = nextSettingId++;
         Setting storage setting = settings[id];
         setting.title = _title;
         setting.content = _content;
         setting.arbitrator = _arbitrator;
+        setting.aragonAppFeesCashier = _aragonAppFeesCashier;
         emit SettingChanged(id);
     }
 
@@ -1328,7 +1397,7 @@ contract Agreement is IAgreement, AragonApp {
     * @return Total amount of arbitration fees required by the arbitrator to raise a dispute
     * @return Total amount of challenger fee tokens to be refunded to the challenger
     */
-    function _getMissingArbitratorFees(IArbitrator _arbitrator, ERC20 _challengerFeeToken, uint256 _challengerFeeAmount)
+    function _getMissingArbitratorFees(IArbitrator _arbitrator, ERC20 _challengerFeeToken, uint256 _challengerFeeAmount) 
         internal
         view
         returns (address, ERC20, uint256, uint256, uint256)
