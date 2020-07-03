@@ -1,13 +1,13 @@
 import React, { useState, useCallback, useMemo } from 'react'
 import { Card, GU, Timer, textStyle, useTheme } from '@aragon/ui'
 import { noop } from '../../utils'
-import { getDisputableVoteStatus } from '../../disputable-utils'
 import { VOTE_YEA, VOTE_NAY } from '../../vote-types'
 import {
   VOTE_STATUS_ACTIVE,
   VOTE_STATUS_PAUSED,
   VOTE_STATUS_CANCELLED,
   VOTE_STATUS_CLOSED,
+  DISPUTABLE_VOTE_STATUSES,
 } from '../../disputable-vote-statuses'
 import DisputableStatusLabel from '../DisputableStatusLabel'
 import LocalLabelAppBadge from '../LocalIdentityBadge/LocalLabelAppBadge'
@@ -30,7 +30,7 @@ function VoteCard({ vote, onOpen }) {
   } = vote
   //TODO: get real data
   vote.disputable = getDisputableVoteById(voteId)
-  const disputableStatus = getDisputableVoteStatus(vote)
+
   const { votingPower, yea, nay } = numData
   const { open, metadata, description, endDate } = data
   const options = useMemo(
@@ -68,6 +68,9 @@ function VoteCard({ vote, onOpen }) {
 
   // “highlighted” means either focused or hovered
   const [highlighted, setHighlighted] = useState(false)
+
+  const disputableStatus =
+    vote.disputable && DISPUTABLE_VOTE_STATUSES.get(vote.disputable.status)
 
   //TODO: update this part of the code once status function is updated
   let border = theme.surface
@@ -144,7 +147,9 @@ function VoteCard({ vote, onOpen }) {
             <VoteStatus vote={vote} />
           )
         ) : (
-          <DisputableStatusLabel vote={vote} />
+          disputableStatus && (
+            <DisputableStatusLabel status={disputableStatus} />
+          )
         )}
       </div>
     </Card>
