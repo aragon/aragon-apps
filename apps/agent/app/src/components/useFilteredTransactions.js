@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import { endOfDay, isWithinInterval, startOfDay } from 'date-fns'
 import { TRANSACTION_TYPES } from '../transaction-types'
 import { addressesEqual } from '../lib/web3-utils'
@@ -14,20 +14,23 @@ function useFilteredTransactions({ transactions, tokens }) {
     INITIAL_TRANSACTION_TYPE
   )
   const [selectedToken, setSelectedToken] = useState(INITIAL_TOKEN)
+
+  useEffect(() => setPage(0), [
+    selectedDateRange,
+    selectedToken,
+    selectedTransactionType,
+  ])
+
   const handleSelectedDateRangeChange = useCallback(range => {
-    setPage(0)
     setSelectedDateRange(range)
   }, [])
   const handleTokenChange = useCallback(index => {
-    setPage(0)
     setSelectedToken(index || INITIAL_TOKEN)
   }, [])
   const handleTransactionTypeChange = useCallback(index => {
-    setPage(0)
     setSelectedTransactionType(index || INITIAL_TRANSACTION_TYPE)
   }, [])
   const handleClearFilters = useCallback(() => {
-    setPage(0)
     setSelectedTransactionType(INITIAL_TRANSACTION_TYPE)
     setSelectedToken(INITIAL_TOKEN)
     setSelectedDateRange(INITIAL_DATE_RANGE)
