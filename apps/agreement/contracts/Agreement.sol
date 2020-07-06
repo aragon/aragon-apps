@@ -62,6 +62,8 @@ contract Agreement is IAgreement, AragonApp {
     string internal constant ERROR_SUBMITTER_FINISHED_EVIDENCE = "AGR_SUBMITTER_FINISHED_EVIDENCE";
     string internal constant ERROR_CHALLENGER_FINISHED_EVIDENCE = "AGR_CHALLENGER_FINISHED_EVIDENCE";
 
+    // This role is checked against the disputable apps when users try to challenge disuptable actions. 
+    // Thus, it must be configured per disputable app. Please take a look at `canPerformChallenge` for reference.
     // bytes32 public constant CHALLENGE_ROLE = keccak256("CHALLENGE_ROLE");
     bytes32 public constant CHALLENGE_ROLE = 0xef025787d7cd1a96d9014b8dc7b44899b8c1350859fb9e1e05f5a546dd65158d;
 
