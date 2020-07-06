@@ -35,9 +35,7 @@
     {
       "name": "Challenge votes",
       "id": "CHALLENGE_ROLE",
-      "params": [
-        "Challenger"
-      ]
+      "params": []
     },
     {
       "name": "Modify support",
