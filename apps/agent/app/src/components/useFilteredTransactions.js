@@ -1,6 +1,9 @@
 import { useState, useCallback, useEffect, useMemo } from 'react'
 import { endOfDay, isWithinInterval, startOfDay } from 'date-fns'
-import { TRANSACTION_TYPES } from '../transaction-types'
+import {
+  TRANSACTION_TYPES,
+  TRANSACTION_TYPES_LABELS,
+} from '../transaction-types'
 import { addressesEqual } from '../lib/web3-utils'
 
 const INITIAL_DATE_RANGE = { start: null, end: null }
@@ -10,10 +13,10 @@ const INITIAL_TOKEN = -1
 function useFilteredTransactions({ transactions, tokens }) {
   const [page, setPage] = useState(0)
   const [selectedDateRange, setSelectedDateRange] = useState(INITIAL_DATE_RANGE)
+  const [selectedToken, setSelectedToken] = useState(INITIAL_TOKEN)
   const [selectedTransactionType, setSelectedTransactionType] = useState(
     INITIAL_TRANSACTION_TYPE
   )
-  const [selectedToken, setSelectedToken] = useState(INITIAL_TOKEN)
 
   useEffect(() => setPage(0), [
     selectedDateRange,
@@ -103,6 +106,7 @@ function useFilteredTransactions({ transactions, tokens }) {
     selectedToken,
     selectedTransactionType,
     symbols,
+    transactionTypes: TRANSACTION_TYPES_LABELS,
   }
 }
 
