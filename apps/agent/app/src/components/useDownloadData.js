@@ -1,7 +1,7 @@
 import { useContext, useCallback } from 'react'
 import { format } from 'date-fns'
 import { saveAs } from 'file-saver'
-import { formatTokenAmount } from '@aragon/ui'
+import { formatTokenAmount, useToast } from '@aragon/ui'
 import { IdentityContext } from './IdentityManager/IdentityManager'
 import { toChecksumAddress } from '../lib/web3-utils'
 import { ISO_SHORT_FORMAT } from '../lib/date-utils'
@@ -90,6 +90,7 @@ function useDownloadData({
   selectedDateRange,
 }) {
   const { resolve } = useContext(IdentityContext)
+  const toast = useToast()
 
   const onDownload = useCallback(async () => {
     const downloadData = await getDownloadData({
@@ -103,11 +104,13 @@ function useDownloadData({
       new Blob([downloadData], { type: 'text/csv;charset=utf-8' }),
       getDownloadFilename(agentAddress, selectedDateRange)
     )
+    toast('Transactions data exported')
   }, [
     agentAddress,
     filteredTransactions,
     resolve,
     selectedDateRange,
+    toast,
     tokenDetails,
     tokens,
   ])
