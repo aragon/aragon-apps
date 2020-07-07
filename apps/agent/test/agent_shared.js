@@ -2,7 +2,7 @@ const { hash: namehash } = require('eth-ens-namehash')
 const ethUtil = require('ethereumjs-util')
 const ethABI = require('web3-eth-abi')
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
-const { assertAmountOfEvents } = require('@aragon/test-helpers/assertEvent')(web3)
+const { assertEvent, assertAmountOfEvents } = require('@aragon/test-helpers/assertEvent')(web3)
 const { getEvents, getEventArgument, getNewProxyAddress } = require('@aragon/test-helpers/events')
 const { encodeCallScript } = require('@aragon/test-helpers/evmScript')
 const { makeErrorMappingProxy } = require('@aragon/test-helpers/utils')
@@ -221,43 +221,56 @@ module.exports = (
 
       context('> ERC721', () => {
         it('supports ERC721 receiver callback', async () => {
-          const [token, operator, from] = accounts
+          const [_, token, operator, from] = accounts
           const tokenId = 5
           const data = '0x12345678'
 
-          const callbackReturn = await agent.onERC721Received.call(operator, from, tokenId, data)
+          const callbackReturn = await agent.onERC721Received.call(operator, from, tokenId, data, { from: token })
           assert.equal(callbackReturn, ERC721_RECEIVED_INTERFACE_ID, 'expected ERC721 receipt magic return')
 
-          const receipt = await agent.onERC721Received(operator, from, tokenId, data)
+          const receipt = await agent.onERC721Received(operator, from, tokenId, data, { from: token })
           assertAmountOfEvents(receipt, 'ReceiveERC721')
+          assertEvent(receipt, 'ReceiveERC721', { token, operator, from, tokenId, data })
         })
       })
 
       context('> ERC1155', () => {
         it('supports ERC1155 single receipt callback', async () => {
-          const [token, operator, from] = accounts
+          const [_, token, operator, from] = accounts
           const id = 5
           const value = 10
           const data = '0x12345678'
 
-          const callbackReturn = await agent.onERC1155Received.call(operator, from, id, value, data)
+          const callbackReturn = await agent.onERC1155Received.call(operator, from, id, value, data, { from: token })
           assert.equal(callbackReturn, ERC1155_SINGLE_RECEIVED_INTERFACE_ID, 'expected ERC1155 single receipt magic return')
 
-          const receipt = await agent.onERC1155Received(operator, from, id, value, data)
+          const receipt = await agent.onERC1155Received(operator, from, id, value, data, { from: token })
           assertAmountOfEvents(receipt, 'ReceiveERC1155')
+          assertEvent(receipt, 'ReceiveERC1155', { token, operator, from, id, value, data })
         })
 
         it('supports ERC1155 batch receipt callback', async () => {
-          const [token, operator, from] = accounts
+          const [_, token, operator, from] = accounts
           const ids = [5, 6]
           const values = [10, 11]
           const data = '0x12345678'
 
-          const callbackReturn = await agent.onERC1155BatchReceived.call(operator, from, ids, values, data)
+          const callbackReturn = await agent.onERC1155BatchReceived.call(operator, from, ids, values, data, { from: token })
           assert.equal(callbackReturn, ERC1155_BATCH_RECEIVED_INTERFACE_ID, 'expected ERC1155 batch receipt magic return')
 
-          const receipt = await agent.onERC1155BatchReceived(operator, from, ids, values, data)
+          const receipt = await agent.onERC1155BatchReceived(operator, from, ids, values, data, { from: token })
           assertAmountOfEvents(receipt, 'ReceiveERC1155', ids.length)
+          ids.forEach((_, index) => {
+            const eventParams = {
+              token,
+              operator,
+              from,
+              id: ids[index],
+              value: values[index],
+              data
+            }
+            assertEvent(receipt, 'ReceiveERC1155', eventParams, index)
+          })
         })
       })
 
