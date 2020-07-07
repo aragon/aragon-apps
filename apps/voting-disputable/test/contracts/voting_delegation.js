@@ -457,55 +457,6 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, repres
     })
   })
 
-  describe('changeOverruleWindow', () => {
-    context('when the sender is allowed', () => {
-      const from = root
-
-      context('when the new window is valid', () => {
-        const newWindow = ONE_DAY
-
-        beforeEach('create a vote', createVote)
-
-        it('changes the overrule window', async () => {
-          await voting.changeOverruleWindow(newWindow, { from })
-
-          assert.equal((await voting.overruleWindow()).toString(), newWindow)
-        })
-
-        it('emits an event', async () => {
-          const receipt = await voting.changeOverruleWindow(newWindow, { from })
-
-          assertAmountOfEvents(receipt, 'ChangeOverruleWindow')
-          assertEvent(receipt, 'ChangeOverruleWindow', { overruleWindow: newWindow })
-        })
-
-        it('does not affect previous created votes', async () => {
-          await voting.changeOverruleWindow(newWindow, { from })
-
-          const { overruleWindow } = await getVoteState(voting, voteId)
-          assertBn(overruleWindow, OVERRULE_WINDOW, 'overrule window does not match')
-        })
-      })
-
-      context('when the new window is not valid', () => {
-        const newWindow = VOTING_DURATION + 1
-
-        it('reverts', async () => {
-          await assertRevert(voting.changeOverruleWindow(newWindow, { from }), ERRORS.VOTING_INVALID_OVERRULE_WINDOW)
-        })
-      })
-    })
-
-    context('when the sender is not allowed', () => {
-      const from = anyone
-      const newWindow = VOTING_DURATION
-
-      it('reverts', async () => {
-        await assertRevert(voting.changeOverruleWindow(newWindow, { from }), ERRORS.APP_AUTH_FAILED)
-      })
-    })
-  })
-
   describe('withinOverruleWindow', () => {
     beforeEach('create a vote', createVote)
 
