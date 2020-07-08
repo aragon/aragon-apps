@@ -16,6 +16,13 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
   const REQUIRED_SUPPORT = pct(50)
   const MINIMUM_ACCEPTANCE_QUORUM = pct(20)
 
+  before('deploy and mint tokens', async () => {
+    const token = await deployer.deployToken({})
+    await token.generateTokens(holder51, bigExp(51, 18))
+    await token.generateTokens(holder20, bigExp(20, 18))
+    await token.generateTokens(holder29, bigExp(29, 18))
+  })
+
   beforeEach('deploy voting', async () => {
     voting = await deployer.deployAndInitialize({ owner, supportRequired: REQUIRED_SUPPORT, minimumAcceptanceQuorum: MINIMUM_ACCEPTANCE_QUORUM, voteDuration: VOTE_DURATION, overruleWindow: OVERRULE_WINDOW })
   })
@@ -49,18 +56,17 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
         })
 
         it('does not affect vote required support', async () => {
-          await deployer.token.generateTokens(holder51, bigExp(51, 18))
           const { voteId } = await createVote({ voting, from: holder51 })
           await voting.changeSupportRequiredPct(pct(70), { from })
 
           // With previous required support at 50%, vote should be approved
-          // with new quorum at 70% it shouldn't have, but since min quorum is snapshotted
-          // it will succeed
+          // with new required support at 70% it shouldn't have,
+          // but since min quorum is snapshotted it will succeed
 
           await voting.vote(voteId, true, { from: holder51 })
-          await voting.vote(voteId, true, { from: holder20 })
+          await voting.vote(voteId, false, { from: holder20 })
           await voting.vote(voteId, false, { from: holder29 })
-          await voting.mockIncreaseTime(VOTE_DURATION + 1)
+          await voting.mockIncreaseTime(VOTE_DURATION)
 
           const { support } = await getVoteState(voting, voteId)
           assertBn(support, REQUIRED_SUPPORT, 'required support in vote should stay equal')
@@ -113,16 +119,15 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
         })
 
         it('does not affect the vote min quorum', async () => {
-          await deployer.token.generateTokens(holder51, bigExp(51, 18))
           const { voteId } = await createVote({ voting, from: holder51 })
           await voting.changeMinAcceptQuorumPct(pct(50), { from })
 
           // With previous min acceptance quorum at 20%, vote should be approved
-          // with new quorum at 50% it shouldn't have, but since min quorum is snapshotted
-          // it will succeed
+          // with new minimum acceptance quorum at 50% it shouldn't have,
+          // but since min quorum is snapshotted it will succeed
 
           await voting.vote(voteId, true, { from: holder29 })
-          await voting.mockIncreaseTime(VOTE_DURATION + 1)
+          await voting.mockIncreaseTime(VOTE_DURATION)
 
           const { quorum } = await getVoteState(voting, voteId)
           assertBn(quorum, MINIMUM_ACCEPTANCE_QUORUM, 'acceptance quorum in vote should stay equal')
@@ -181,7 +186,6 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
         })
 
         it('does not affect previous created votes', async () => {
-          await deployer.token.generateTokens(holder51, bigExp(51, 18))
           const { voteId } = await createVote({ voting, from: holder51 })
 
           await voting.changeOverruleWindow(newWindow, { from })

@@ -2,8 +2,8 @@ const { DAY } = require('@aragon/apps-agreement/test/helpers/lib/time')
 const { bigExp } = require('@aragon/apps-agreement/test/helpers/lib/numbers')
 const { assertBn } = require('@aragon/apps-agreement/test/helpers/assert/assertBn')
 const { assertRevert } = require('@aragon/apps-agreement/test/helpers/assert/assertThrow')
-const { VOTING_ERRORS } = require('../helpers/errors')
 const { pct, voteScript, createVote } = require('../helpers/voting')(web3, artifacts)
+const { VOTING_ERRORS, ARAGON_OS_ERRORS } = require('../helpers/errors')
 
 const deployer = require('../helpers/deployer')(web3, artifacts)
 
@@ -53,21 +53,21 @@ contract('Voting', ([_, owner, holder20, holder29, holder51]) => {
         })
 
         it('is not automatically executed', async () => {
-          assertBn(await executionTarget.counter(), 0, 'should have received execution call')
+          assertBn(await executionTarget.counter(), 0, 'should not have received execution call')
         })
 
         it('cannot be executed immediately executed', async () => {
           await assertRevert(voting.executeVote(voteId), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
         })
 
-        it('cannot execute vote if not enough quorum met', async () => {
+        it('cannot execute vote if the minimum acceptance quorum is not met', async () => {
           await voting.vote(voteId, true, { from: holder20 })
           await voting.mockIncreaseTime(VOTE_DURATION)
 
           await assertRevert(voting.executeVote(voteId), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
         })
 
-        it('cannot execute vote if not support met', async () => {
+        it('cannot execute vote if the required support is not met', async () => {
           await voting.vote(voteId, false, { from: holder29 })
           await voting.vote(voteId, false, { from: holder20 })
           await voting.mockIncreaseTime(VOTE_DURATION)
@@ -113,7 +113,7 @@ contract('Voting', ([_, owner, holder20, holder29, holder51]) => {
         await voting.vote(voteId, true, { from: holder51 })
         await voting.mockIncreaseTime(VOTE_DURATION)
 
-        await assertRevert(voting.executeVote(voteId), 'EVMCALLS_INVALID_LENGTH')
+        await assertRevert(voting.executeVote(voteId), ARAGON_OS_ERRORS.EVMCALLS_INVALID_LENGTH)
       })
     })
   })

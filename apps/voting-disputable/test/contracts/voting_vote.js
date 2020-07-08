@@ -110,12 +110,19 @@ contract('Voting', ([_, owner, holder1, holder2, holder20, holder29, holder51, n
 
           it('holder can modify vote', async () => {
             await voting.vote(voteId, true, { from: holder29 })
-            await voting.vote(voteId, false, { from: holder29 })
-            await voting.vote(voteId, true, { from: holder29 })
-            const { yeas, nays } = await getVoteState(voting, voteId)
+            const firstTime = await getVoteState(voting, voteId)
+            assertBn(firstTime.nays, 0, 'nay vote should have been removed')
+            assertBn(firstTime.yeas, bigExp(29, 18), 'yea vote should have been counted')
 
-            assertBn(nays, 0, 'nay vote should have been removed')
-            assertBn(yeas, bigExp(29, 18), 'yea vote should have been counted')
+            await voting.vote(voteId, false, { from: holder29 })
+            const secondTime = await getVoteState(voting, voteId)
+            assertBn(secondTime.nays, bigExp(29, 18), 'nay vote should have been removed')
+            assertBn(secondTime.yeas, 0, 'yea vote should have been counted')
+
+            await voting.vote(voteId, true, { from: holder29 })
+            const thirdTime = await getVoteState(voting, voteId)
+            assertBn(thirdTime.nays, 0, 'nay vote should have been removed')
+            assertBn(thirdTime.yeas, bigExp(29, 18), 'yea vote should have been counted')
           })
 
           it('token transfers dont affect voting', async () => {
@@ -133,7 +140,7 @@ contract('Voting', ([_, owner, holder1, holder2, holder20, holder29, holder51, n
           })
 
           it('throws when voting after voting closes', async () => {
-            await voting.mockIncreaseTime(VOTE_DURATION + 1)
+            await voting.mockIncreaseTime(VOTE_DURATION)
             await assertRevert(voting.vote(voteId, true, { from: holder29 }), VOTING_ERRORS.VOTING_CANNOT_VOTE)
           })
 
@@ -258,7 +265,7 @@ contract('Voting', ([_, owner, holder1, holder2, holder20, holder29, holder51, n
 
     it('tests value = 0', async () => {
       const result1 = await voting.isValuePct(0, 10, pct(50))
-      assert.equal(result1, false, 'value 0 should false if pct is non-zero')
+      assert.equal(result1, false, 'value 0 should return false if pct is non-zero')
 
       const result2 = await voting.isValuePct(0, 10, 0)
       assert.equal(result2, false, 'value 0 should return false if pct is zero')
