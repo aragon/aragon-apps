@@ -42,7 +42,6 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     string private constant ERROR_CHANGE_SUPPORT_PCTS = "VOTING_CHANGE_SUPPORT_PCTS";
     string private constant ERROR_CHANGE_SUPPORT_TOO_BIG = "VOTING_CHANGE_SUPP_TOO_BIG";
     string private constant ERROR_INVALID_OVERRULE_WINDOW = "VOTING_INVALID_OVERRULE_WINDOW";
-    string private constant ERROR_INVALID_EXECUTION_DELAY = "VOTING_INVALID_EXECUTION_DELAY";
     string private constant ERROR_DELEGATES_EXCEEDS_MAX_LEN = "VOTING_DELEGATES_EXCEEDS_MAX_LEN";
 
     // Workflow errors
@@ -593,7 +592,6 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     * @param _executionDelay New execution delay in seconds
     */
     function _changeExecutionDelay(uint64 _executionDelay) internal {
-        require(_executionDelay <= voteTime, ERROR_INVALID_EXECUTION_DELAY);
         executionDelay = _executionDelay;
         emit ChangeExecutionDelay(_executionDelay);
     }

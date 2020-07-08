@@ -8,7 +8,7 @@ const { VOTING_ERRORS, ARAGON_OS_ERRORS } = require('../helpers/errors')
 const deployer = require('../helpers/deployer')(web3, artifacts)
 
 contract('Voting', ([_, owner, holder20, holder29, holder51]) => {
-  let voting
+  let voting, voteId, executionTarget, script
 
   const VOTE_DURATION = 5 * DAY
   const OVERRULE_WINDOW = DAY
@@ -22,10 +22,46 @@ contract('Voting', ([_, owner, holder20, holder29, holder51]) => {
     await token.generateTokens(holder20, bigExp(20, 18))
   })
 
-  describe('execute', () => {
-    const from = holder51
-    let voteId, executionTarget, script
+  const itCanBeExecuted = (expectedExecutions, testSuccessfulExecution) => {
+    beforeEach('create script', async () => {
+      ({ executionTarget, script } = await voteScript(expectedExecutions))
+    })
 
+    beforeEach('create vote', async () => {
+      ({ voteId } = await createVote({ voting, script, from: holder51 }))
+    })
+
+    context('when support and quorum are not met', async () => {
+      it('is not automatically executed', async () => {
+        assertBn(await executionTarget.counter(), 0, 'should not have received execution call')
+      })
+
+      it('cannot be executed immediately executed', async () => {
+        await assertRevert(voting.executeVote(voteId), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
+      })
+
+      it('cannot execute vote if the minimum acceptance quorum is not met', async () => {
+        await voting.vote(voteId, true, { from: holder20 })
+        await voting.mockIncreaseTime(VOTE_DURATION)
+
+        await assertRevert(voting.executeVote(voteId), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
+      })
+
+      it('cannot execute vote if the required support is not met', async () => {
+        await voting.vote(voteId, false, { from: holder29 })
+        await voting.vote(voteId, false, { from: holder20 })
+        await voting.mockIncreaseTime(VOTE_DURATION)
+
+        await assertRevert(voting.executeVote(voteId), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
+      })
+    })
+
+    context('when support and quorum are met', async () => {
+      testSuccessfulExecution(expectedExecutions)
+    })
+  }
+
+  describe('execute', () => {
     context('without delayed execution', () => {
       const DELAYED_EXECUTION = 0
 
@@ -33,51 +69,8 @@ contract('Voting', ([_, owner, holder20, holder29, holder51]) => {
         voting = await deployer.deployAndInitialize({ owner, supportRequired: REQUIRED_SUPPORT, minimumAcceptanceQuorum: MINIMUM_ACCEPTANCE_QUORUM, voteDuration: VOTE_DURATION, overruleWindow: OVERRULE_WINDOW, executionDelay: DELAYED_EXECUTION })
       })
 
-      context('with an empty script', () => {
-        beforeEach('create script', async () => {
-          ({ script } = await voteScript(0))
-        })
-
-        it('cannot be executed', async () => {
-          ({ voteId } = await createVote({ voting, script, from }))
-
-          await assertRevert(voting.executeVote(voteId), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
-        })
-      })
-
       context('with an executable script', () => {
-        const itCanBeExecuted = expectedExecutions => {
-          beforeEach('create script', async () => {
-            ({ executionTarget, script } = await voteScript(expectedExecutions))
-          })
-
-          beforeEach('create vote', async () => {
-            ({ voteId } = await createVote({ voting, script, from }))
-          })
-
-          it('is not automatically executed', async () => {
-            assertBn(await executionTarget.counter(), 0, 'should not have received execution call')
-          })
-
-          it('cannot be executed immediately executed', async () => {
-            await assertRevert(voting.executeVote(voteId), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
-          })
-
-          it('cannot execute vote if the minimum acceptance quorum is not met', async () => {
-            await voting.vote(voteId, true, { from: holder20 })
-            await voting.mockIncreaseTime(VOTE_DURATION)
-
-            await assertRevert(voting.executeVote(voteId), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
-          })
-
-          it('cannot execute vote if the required support is not met', async () => {
-            await voting.vote(voteId, false, { from: holder29 })
-            await voting.vote(voteId, false, { from: holder20 })
-            await voting.mockIncreaseTime(VOTE_DURATION)
-
-            await assertRevert(voting.executeVote(voteId), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
-          })
-
+        const testSuccessfulExecution = expectedExecutions => {
           it('can be executed if quorum and support are met', async () => {
             await voting.vote(voteId, true, { from: holder51 })
             await voting.mockIncreaseTime(VOTE_DURATION)
@@ -98,11 +91,23 @@ contract('Voting', ([_, owner, holder20, holder29, holder51]) => {
         }
 
         context('with a single action script', () => {
-          itCanBeExecuted(1)
+          itCanBeExecuted(1, testSuccessfulExecution)
         })
 
         context('with a multiple action script', () => {
-          itCanBeExecuted(3)
+          itCanBeExecuted(3, testSuccessfulExecution)
+        })
+      })
+
+      context('with an empty script', () => {
+        beforeEach('create script', async () => {
+          ({ script } = await voteScript(0))
+        })
+
+        it('cannot be executed', async () => {
+          ({ voteId } = await createVote({ voting, script, from: holder51 }))
+
+          await assertRevert(voting.executeVote(voteId), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
         })
       })
 
@@ -113,7 +118,7 @@ contract('Voting', ([_, owner, holder20, holder29, holder51]) => {
         })
 
         it('reverts', async () => {
-          ({ voteId } = await createVote({ voting, script, from }))
+          ({ voteId } = await createVote({ voting, script, from: holder51 }))
 
           await voting.vote(voteId, true, { from: holder51 })
           await voting.mockIncreaseTime(VOTE_DURATION)
@@ -130,60 +135,41 @@ contract('Voting', ([_, owner, holder20, holder29, holder51]) => {
         voting = await deployer.deployAndInitialize({ owner, supportRequired: REQUIRED_SUPPORT, minimumAcceptanceQuorum: MINIMUM_ACCEPTANCE_QUORUM, voteDuration: VOTE_DURATION, overruleWindow: OVERRULE_WINDOW, executionDelay: EXECUTION_DELAY })
       })
 
-      beforeEach('create script', async () => {
-        ({ executionTarget, script } = await voteScript())
-      })
+      context('with an executable script', () => {
+        const testSuccessfulExecution = expectedExecutions => {
+          it('cannot be executed if quorum and support are met before the delayed execution', async () => {
+            await voting.vote(voteId, true, { from: holder51 })
+            await voting.mockIncreaseTime(VOTE_DURATION)
 
-      beforeEach('create vote', async () => {
-        ({ voteId } = await createVote({ voting, script, from }))
-      })
+            await assertRevert(voting.executeVote(voteId), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
+          })
 
-      it('is not automatically executed', async () => {
-        assertBn(await executionTarget.counter(), 0, 'should have received execution call')
-      })
+          it('can be executed if quorum and support are met after the delayed execution', async () => {
+            await voting.vote(voteId, true, { from: holder51 })
+            await voting.mockIncreaseTime(VOTE_DURATION + EXECUTION_DELAY)
 
-      it('cannot be executed immediately executed', async () => {
-        await assertRevert(voting.executeVote(voteId), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
-      })
+            await voting.executeVote(voteId)
 
-      it('cannot execute vote if not enough quorum met', async () => {
-        await voting.vote(voteId, true, { from: holder20 })
-        await voting.mockIncreaseTime(VOTE_DURATION + EXECUTION_DELAY)
+            assertBn(await executionTarget.counter(), expectedExecutions, 'execution times do not match')
+          })
 
-        await assertRevert(voting.executeVote(voteId), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
-      })
+          it('cannot be executed twice', async () => {
+            await voting.vote(voteId, true, { from: holder51 })
+            await voting.mockIncreaseTime(VOTE_DURATION + EXECUTION_DELAY)
 
-      it('cannot execute vote if not support met', async () => {
-        await voting.vote(voteId, false, { from: holder29 })
-        await voting.vote(voteId, false, { from: holder20 })
-        await voting.mockIncreaseTime(VOTE_DURATION + EXECUTION_DELAY)
+            await voting.executeVote(voteId)
 
-        await assertRevert(voting.executeVote(voteId), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
-      })
+            await assertRevert(voting.executeVote(voteId), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
+          })
+        }
 
-      it('cannot be executed if quorum and support are met before the delayed execution', async () => {
-        await voting.vote(voteId, true, { from: holder51 })
-        await voting.mockIncreaseTime(VOTE_DURATION)
+        context('with a single action script', () => {
+          itCanBeExecuted(1, testSuccessfulExecution)
+        })
 
-        await assertRevert(voting.executeVote(voteId), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
-      })
-
-      it('can be executed if quorum and support are met after the delayed execution', async () => {
-        await voting.vote(voteId, true, { from: holder51 })
-        await voting.mockIncreaseTime(VOTE_DURATION + EXECUTION_DELAY)
-
-        await voting.executeVote(voteId)
-
-        assertBn(await executionTarget.counter(), 1, 'execution times do not match')
-      })
-
-      it('cannot be executed twice', async () => {
-        await voting.vote(voteId, true, { from: holder51 })
-        await voting.mockIncreaseTime(VOTE_DURATION + EXECUTION_DELAY)
-
-        await voting.executeVote(voteId)
-
-        await assertRevert(voting.executeVote(voteId), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
+        context('with a multiple action script', () => {
+          itCanBeExecuted(3, testSuccessfulExecution)
+        })
       })
     })
   })
