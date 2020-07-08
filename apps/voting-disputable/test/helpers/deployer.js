@@ -1,4 +1,4 @@
-const { pct } = require('./voting')
+const { pct } = require('./voting')()
 const { NOW, DAY } = require('@aragon/apps-agreement/test/helpers/lib/time')
 const { getEventArgument, getNewProxyAddress } = require('@aragon/contract-helpers-test/events')
 
@@ -6,7 +6,7 @@ const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff'
 const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
 
 const DEFAULT_VOTING_INITIALIZATION_PARAMS = {
-  appId: '0xcafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234',
+  appId: '0x1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe',
   currentTimestamp: NOW,
   voteDuration: DAY * 5,
   overruleWindow: DAY,
@@ -76,9 +76,11 @@ class VotingDeployer {
     const receipt = await this.dao.newAppInstance(appId, this.base.address, '0x', false, { from: owner })
     const voting = await this.base.constructor.at(getNewProxyAddress(receipt))
 
-    const permissions = ['MODIFY_SUPPORT_ROLE', 'MODIFY_QUORUM_ROLE', 'MODIFY_OVERRULE_WINDOW_ROLE']
-    await this._createPermissions(voting, permissions, owner)
-    await this._createPermissions(voting, ['CREATE_VOTES_ROLE'], ANY_ADDR, owner)
+    const restrictedPermissions = ['MODIFY_SUPPORT_ROLE', 'MODIFY_QUORUM_ROLE', 'MODIFY_OVERRULE_WINDOW_ROLE']
+    await this._createPermissions(voting, restrictedPermissions, owner)
+
+    const openPermissions = ['CREATE_VOTES_ROLE', 'CHALLENGE_ROLE']
+    await this._createPermissions(voting, openPermissions, ANY_ADDR, owner)
 
     if (currentTimestamp) await voting.mockSetTimestamp(currentTimestamp)
     this.previousDeploy = { ...this.previousDeploy, voting }

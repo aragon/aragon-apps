@@ -1,4 +1,4 @@
-const { pct } = require('../helpers/voting')
+const { pct } = require('../helpers/voting')()
 const { DAY } = require('@aragon/apps-agreement/test/helpers/lib/time')
 const { assertBn } = require('@aragon/apps-agreement/test/helpers/assert/assertBn')
 const { assertRevert } = require('@aragon/apps-agreement/test/helpers/assert/assertThrow')

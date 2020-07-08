@@ -2,38 +2,19 @@ const { DAY } = require('@aragon/apps-agreement/test/helpers/lib/time')
 const { assertBn } = require('@aragon/apps-agreement/test/helpers/assert/assertBn')
 const { bn, bigExp } = require('@aragon/apps-agreement/test/helpers/lib/numbers')
 const { assertRevert } = require('@aragon/apps-agreement/test/helpers/assert/assertThrow')
-const { encodeCallScript } = require('@aragon/contract-test-helpers/evmScript')
-const { pct, getVoteState } = require('../helpers/voting')
-const { decodeEventsOfType } = require('@aragon/apps-agreement/test/helpers/lib/decodeEvent')
+const { pct, createVote, getVoteState } = require('../helpers/voting')(web3, artifacts)
 const { ARAGON_OS_ERRORS, VOTING_ERRORS } = require('../helpers/errors')
 const { assertEvent, assertAmountOfEvents } = require('@aragon/apps-agreement/test/helpers/assert/assertEvent')
 
 const deployer = require('../helpers/deployer')(web3, artifacts)
 
-const ExecutionTarget = artifacts.require('ExecutionTarget')
-
 contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) => {
-  let voting, voteId
+  let voting
 
   const VOTE_DURATION = 5 * DAY
   const OVERRULE_WINDOW = DAY
   const REQUIRED_SUPPORT = pct(50)
   const MINIMUM_ACCEPTANCE_QUORUM = pct(20)
-
-  const createVote = async (from = holder51) => {
-    const executionTarget = await ExecutionTarget.new()
-    const script = encodeCallScript([{ to: executionTarget.address, calldata: executionTarget.contract.methods.execute().encodeABI() }])
-
-    await deployer.token.generateTokens(holder51, bigExp(51, 18))
-    await deployer.token.generateTokens(holder29, bigExp(29, 18))
-    await deployer.token.generateTokens(holder20, bigExp(20, 18))
-
-    const receipt = await voting.newVote(script, '0x', { from })
-    const events = decodeEventsOfType(receipt, deployer.abi, 'StartVote')
-    assert.equal(events.length, 1, 'number of StartVote emitted events does not match')
-    const startVoteEvent = events[0].args
-    voteId = startVoteEvent.voteId
-  }
 
   beforeEach('deploy voting', async () => {
     voting = await deployer.deployAndInitialize({ owner, supportRequired: REQUIRED_SUPPORT, minimumAcceptanceQuorum: MINIMUM_ACCEPTANCE_QUORUM, voteDuration: VOTE_DURATION, overruleWindow: OVERRULE_WINDOW })
@@ -68,7 +49,8 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
         })
 
         it('does not affect vote required support', async () => {
-          await createVote()
+          await deployer.token.generateTokens(holder51, bigExp(51, 18))
+          const { voteId } = await createVote({ voting, from: holder51 })
           await voting.changeSupportRequiredPct(pct(70), { from })
 
           // With previous required support at 50%, vote should be approved
@@ -131,7 +113,8 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
         })
 
         it('does not affect the vote min quorum', async () => {
-          await createVote()
+          await deployer.token.generateTokens(holder51, bigExp(51, 18))
+          const { voteId } = await createVote({ voting, from: holder51 })
           await voting.changeMinAcceptQuorumPct(pct(50), { from })
 
           // With previous min acceptance quorum at 20%, vote should be approved
@@ -184,8 +167,6 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
       context('when the new window is valid', () => {
         const newWindow = DAY
 
-        beforeEach('create a vote', createVote)
-
         it('changes the overrule window', async () => {
           await voting.changeOverruleWindow(newWindow, { from })
 
@@ -200,6 +181,9 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
         })
 
         it('does not affect previous created votes', async () => {
+          await deployer.token.generateTokens(holder51, bigExp(51, 18))
+          const { voteId } = await createVote({ voting, from: holder51 })
+
           await voting.changeOverruleWindow(newWindow, { from })
 
           const { overruleWindow } = await getVoteState(voting, voteId)
