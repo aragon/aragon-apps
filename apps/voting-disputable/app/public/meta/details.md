@@ -1,6 +1,7 @@
-The Voting app is used to create and participate in votes. Votes can be linked to an action, such as issuing a new token or transferring funds, or be purely informative.
+The Disputable voting app is used to create and participate in votes. Votes can be linked to an action, such as issuing a new token or transferring funds, or be purely informative.
 
 ## Features
+
 - Create a new informative vote.
 - Vote "yes" or "no" on open votes.
 - See details about open and past votes, including how many tokens have voted and how much time is left before a vote is over.
