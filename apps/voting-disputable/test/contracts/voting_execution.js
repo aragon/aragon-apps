@@ -36,7 +36,7 @@ contract('Voting', ([_, owner, holder20, holder29, holder51]) => {
         assertBn(await executionTarget.counter(), 0, 'should not have received execution call')
       })
 
-      it('cannot be executed immediately executed', async () => {
+      it('cannot be immediately executed', async () => {
         await assertRevert(voting.executeVote(voteId), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
       })
 
