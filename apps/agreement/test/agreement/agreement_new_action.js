@@ -1,7 +1,7 @@
 const { assertBn } = require('@aragon/contract-helpers-test/src/assert/assertBn')
 const { assertRevert } = require('@aragon/contract-helpers-test/src/assert/assertThrow')
 const { decodeEventsOfType } = require('../helpers/lib/decodeEvent')
-const { assertAmountOfEvents, assertEvent } = require('../helpers/assert/assertEvent')
+const { assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/assert/assertEvent')
 const { bn, bigExp } = require('@aragon/contract-helpers-test/src/utils/numbers')
 const { AGREEMENT_EVENTS } = require('../helpers/utils/events')
 const { AGREEMENT_ERRORS, DISPUTABLE_ERRORS } = require('../helpers/utils/errors')
