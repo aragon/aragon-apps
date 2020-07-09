@@ -1,21 +1,13 @@
 const { toAscii, utf8ToHex } = require('web3-utils')
-const { bigExp, bn } = require('@aragon/apps-agreement/test/helpers/lib/numbers')
-const { assertBn } = require('@aragon/apps-agreement/test/helpers/assert/assertBn')
-const { assertRevert } = require('@aragon/apps-agreement/test/helpers/assert/assertThrow')
-const { decodeEventsOfType } = require('@aragon/apps-agreement/test/helpers/lib/decodeEvent')
+const { DAY } = require('@aragon/apps-agreement/test/helpers/lib/time')
 const { RULINGS } = require('@aragon/apps-agreement/test/helpers/utils/enums')
+const { assertBn } = require('@aragon/apps-agreement/test/helpers/assert/assertBn')
+const { bigExp, bn } = require('@aragon/apps-agreement/test/helpers/lib/numbers')
+const { assertRevert } = require('@aragon/apps-agreement/test/helpers/assert/assertThrow')
+const { pct, createVote, voteScript, getVoteState } = require('../helpers/voting')(web3, artifacts)
 
-const { pct, getVoteState } = require('../helpers/voting')
-const { encodeCallScript } = require('@aragon/contract-test-helpers/evmScript')
-const { getEventArgument, getNewProxyAddress } = require('@aragon/contract-test-helpers/events')
-
-const deployer = require('@aragon/apps-agreement/test/helpers/utils/deployer')(web3, artifacts)
-
-const Voting = artifacts.require('DisputableVotingMock')
-const ExecutionTarget = artifacts.require('ExecutionTarget')
-
-const ONE_DAY = 60 * 60 * 24
-const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff'
+const votingDeployer = require('../helpers/deployer')(web3, artifacts)
+const agreementDeployer = require('@aragon/apps-agreement/test/helpers/utils/deployer')(web3, artifacts)
 
 const VOTE_STATUS = {
   ACTIVE: 0,
@@ -25,61 +17,48 @@ const VOTE_STATUS = {
 }
 
 contract('Voting disputable', ([_, owner, voter51, voter49]) => {
-  let votingBase, agreement, voting, token, collateralToken, executionTarget, script
-  let voteId, actionId
+  let voting, token, agreement, voteId, actionId, collateralToken, executionTarget, script
 
   const MIN_QUORUM = pct(20)
   const MIN_SUPPORT = pct(50)
-  const VOTING_DURATION = ONE_DAY * 5
-  const OVERRULE_WINDOW = ONE_DAY
-
+  const VOTING_DURATION = DAY * 5
+  const OVERRULE_WINDOW = DAY
   const CONTEXT = utf8ToHex('some context')
 
   before('deploy agreement and base voting', async () => {
-    votingBase = await Voting.new()
-    agreement = await deployer.deployAndInitializeWrapper({ owner })
-    collateralToken = await deployer.deployCollateralToken()
+    agreement = await agreementDeployer.deployAndInitializeWrapper({ owner })
+    collateralToken = await agreementDeployer.deployCollateralToken()
+    votingDeployer.previousDeploy = agreementDeployer.previousDeploy
+
     await agreement.sign(voter51)
+    await votingDeployer.deployBase({ owner, agreement: true })
   })
 
   before('mint vote tokens', async () => {
-    token = await deployer.deployToken({})
+    token = await votingDeployer.deployToken({})
     await token.generateTokens(voter51, bigExp(51, 18))
     await token.generateTokens(voter49, bigExp(49, 18))
   })
 
   beforeEach('create voting app', async () => {
-    const receipt = await deployer.dao.newAppInstance('0x1234', votingBase.address, '0x', false, { from: owner })
-    voting = await Voting.at(getNewProxyAddress(receipt))
+    voting = await votingDeployer.deployAndInitialize({ owner, agreement: true, requiredSupport: MIN_SUPPORT, minimumAcceptanceQuorum: MIN_QUORUM, voteDuration: VOTING_DURATION, overruleWindow: OVERRULE_WINDOW })
+    await voting.mockSetTimestamp(await agreement.currentTimestamp())
 
     const SET_AGREEMENT_ROLE = await voting.SET_AGREEMENT_ROLE()
-    await deployer.acl.createPermission(agreement.address, voting.address, SET_AGREEMENT_ROLE, owner, { from: owner })
-
-    const CREATE_VOTES_ROLE = await voting.CREATE_VOTES_ROLE()
-    await deployer.acl.createPermission(ANY_ADDR, voting.address, CREATE_VOTES_ROLE, owner, { from: owner })
-
-    const CHALLENGE_ROLE = await deployer.base.CHALLENGE_ROLE()
-    await deployer.acl.createPermission(ANY_ADDR, voting.address, CHALLENGE_ROLE, owner, { from: owner })
-
-    await voting.mockSetTimestamp(await agreement.currentTimestamp())
-    await voting.initialize(token.address, MIN_SUPPORT, MIN_QUORUM, VOTING_DURATION, OVERRULE_WINDOW, { from: owner })
-    await agreement.activate({ disputable: voting, collateralToken, actionCollateral: 0, challengeCollateral: 0, challengeDuration: ONE_DAY, from: owner })
+    await votingDeployer.acl.createPermission(agreement.address, voting.address, SET_AGREEMENT_ROLE, owner, { from: owner })
+    await agreement.activate({ disputable: voting, collateralToken, actionCollateral: 0, challengeCollateral: 0, challengeDuration: DAY, from: owner })
   })
 
-  const createVote = async voter => {
-    executionTarget = await ExecutionTarget.new()
-    script = encodeCallScript([{ to: executionTarget.address, calldata: executionTarget.contract.methods.execute().encodeABI() }])
+  beforeEach('create script', async () => {
+    ({ executionTarget, script } = await voteScript())
+  })
 
-    const receipt = await voting.newVote(script, CONTEXT, { from: voter })
-    const logs = decodeEventsOfType(receipt, Voting.abi, 'StartVote')
-
-    voteId = getEventArgument({ logs }, 'StartVote', 'voteId')
+  beforeEach('create vote', async () => {
+    ({ voteId } = await createVote({ voting, script, voteContext: CONTEXT, from: voter51 }))
     actionId = (await voting.getVoteDisputableInfo(voteId))[0]
-  }
+  })
 
   describe('newVote', () => {
-    beforeEach(async () => await createVote(voter51))
-
     it('saves the agreement action data', async () => {
       const { pausedAt, pauseDuration, status } = await voting.getVoteDisputableInfo(voteId)
 
@@ -109,8 +88,7 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
   })
 
   describe('execute', () => {
-    beforeEach(async () => {
-      await createVote(voter51)
+    beforeEach('vote', async () => {
       await voting.vote(voteId, true, { from: voter51 })
       await voting.mockIncreaseTime(VOTING_DURATION)
       await voting.executeVote(voteId)
@@ -146,8 +124,7 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
   describe('challenge', () => {
     let currentTimestamp
 
-    beforeEach(async () => {
-      await createVote(voter51)
+    beforeEach('challenge vote', async () => {
       currentTimestamp = await voting.getTimestampPublic()
       await agreement.challenge({ actionId })
     })
@@ -192,12 +169,11 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
   describe('resumes', () => {
     let pauseTimestamp, currentTimestamp
 
-    beforeEach('create vote and challenge', async () => {
-      await createVote(voter51)
+    beforeEach('challenge vote', async () => {
       pauseTimestamp = await voting.getTimestampPublic()
       await agreement.challenge({ actionId })
 
-      currentTimestamp = pauseTimestamp.add(bn(ONE_DAY))
+      currentTimestamp = pauseTimestamp.add(bn(DAY))
       await voting.mockSetTimestamp(currentTimestamp)
     })
 
@@ -208,7 +184,7 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
 
         assertBn(voteActionId, actionId, 'action ID does not match')
         assertBn(pausedAt, pauseTimestamp, 'paused at does not match')
-        assertBn(pauseDuration, ONE_DAY, 'pause duration does not match')
+        assertBn(pauseDuration, DAY, 'pause duration does not match')
       })
 
       it('allows voter to vote and execute', async () => {
@@ -279,12 +255,11 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
   describe('cancelled', () => {
     let pauseTimestamp, currentTimestamp
 
-    beforeEach('create vote and challenge', async () => {
-      await createVote(voter51)
+    beforeEach('challenge vote', async () => {
       pauseTimestamp = await voting.getTimestampPublic()
       await agreement.challenge({ actionId })
 
-      currentTimestamp = pauseTimestamp.add(bn(ONE_DAY))
+      currentTimestamp = pauseTimestamp.add(bn(DAY))
       await voting.mockSetTimestamp(currentTimestamp)
     })
 
@@ -295,7 +270,7 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
 
         assertBn(voteActionId, actionId, 'action ID does not match')
         assertBn(pausedAt, pauseTimestamp, 'paused at does not match')
-        assertBn(pauseDuration, ONE_DAY, 'pause duration does not match')
+        assertBn(pauseDuration, DAY, 'pause duration does not match')
       })
 
       it('does not allow a voter to vote', async () => {

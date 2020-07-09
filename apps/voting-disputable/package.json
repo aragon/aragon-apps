@@ -31,6 +31,7 @@
     "@aragon/apps-shared-migrations": "1.0.0",
     "@aragon/cli": "^7.1.3",
     "@aragon/contract-test-helpers": "^0.0.1",
+    "@aragon/contract-helpers-test": "^0.0.3",
     "@aragon/minime": "^1.0.0",
     "@aragon/staking": "^0.2.3",
     "@aragon/truffle-config-v5": "^1.0.0",
