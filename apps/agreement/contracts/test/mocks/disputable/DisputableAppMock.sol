@@ -2,7 +2,7 @@ pragma solidity 0.4.24;
 
 import "@aragon/os/contracts/lib/math/SafeMath64.sol";
 import "@aragon/os/contracts/apps/disputable/DisputableAragonApp.sol";
-import "../helpers/TimeHelpersMock.sol";
+import "@aragon/contract-helpers-test/contracts/time/TimeHelpersMock.sol";
 
 
 contract DisputableAppMock is DisputableAragonApp, TimeHelpersMock {
