@@ -1,7 +1,8 @@
-const { bn } = require('@aragon/contract-helpers-test/src/utils/numbers')
 const { CHALLENGES_STATE } = require('../utils/enums')
 const { AGREEMENT_EVENTS } = require('../utils/events')
 const { AGREEMENT_ERRORS } = require('../utils/errors')
+
+const { bn } = require('@aragon/contract-helpers-test/src/utils/numbers')
 const { getEventArgument } = require('@aragon/contract-helpers-test/src/utils/events')
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'

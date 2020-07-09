@@ -1,15 +1,15 @@
-const { utf8ToHex, padLeft } = require('web3-utils')
+const deployer = require('../helpers/utils/deployer')(web3, artifacts)
+const { AGREEMENT_ERRORS } = require('../helpers/utils/errors')
+const { AGREEMENT_EVENTS } = require('../helpers/utils/events')
+const { RULINGS, CHALLENGES_STATE } = require('../helpers/utils/enums')
+
+const { padLeft } = require('web3-utils')
 const { bn } = require('@aragon/contract-helpers-test/src/utils/numbers')
 const { assertBn } = require('@aragon/contract-helpers-test/src/assert/assertBn')
 const { assertRevert } = require('@aragon/contract-helpers-test/src/assert/assertThrow')
 const { getEventArgument } = require('@aragon/contract-helpers-test/src/utils/events')
 const { decodeEvents } = require('@aragon/contract-helpers-test/src/utils/events')
 const { assertEvent, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/assert/assertEvent')
-const { AGREEMENT_ERRORS } = require('../helpers/utils/errors')
-const { AGREEMENT_EVENTS } = require('../helpers/utils/events')
-const { RULINGS, CHALLENGES_STATE } = require('../helpers/utils/enums')
-
-const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 
 contract('Agreement', ([_, someone, submitter, challenger]) => {
   let disputable, actionId

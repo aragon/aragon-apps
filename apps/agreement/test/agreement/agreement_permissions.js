@@ -1,6 +1,6 @@
-const { bn, bigExp } = require('@aragon/contract-helpers-test/src/utils/numbers')
-
 const deployer = require('../helpers/utils/deployer')(web3, artifacts)
+
+const { bn, bigExp } = require('@aragon/contract-helpers-test/src/utils/numbers')
 
 const TokenBalanceOracle = artifacts.require('TokenBalanceOracle')
 

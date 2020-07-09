@@ -1,7 +1,7 @@
 const AgreementWrapper = require('./agreement')
+const { AGREEMENT_EVENTS, DISPUTABLE_EVENTS } = require('../utils/events')
 
 const { getEventArgument, decodeEvents } = require('@aragon/contract-helpers-test/src/utils/events')
-const { AGREEMENT_EVENTS, DISPUTABLE_EVENTS } = require('../utils/events')
 
 class DisputableWrapper extends AgreementWrapper {
   constructor(artifacts, web3, agreement, arbitrator, aragonAppFeesCashier, stakingFactory, disputable, collateralRequirement = {}) {

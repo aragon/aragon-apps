@@ -1,11 +1,11 @@
+const deployer = require('../helpers/utils/deployer')(web3, artifacts)
+const { AGREEMENT_EVENTS } = require('../helpers/utils/events')
+const { ARAGON_OS_ERRORS, AGREEMENT_ERRORS } = require('../helpers/utils/errors')
+
 const { assertBn } = require('@aragon/contract-helpers-test/src/assert/assertBn')
 const { assertEvent } = require('@aragon/contract-helpers-test/src/assert/assertEvent')
 const { assertRevert } = require('@aragon/contract-helpers-test/src/assert/assertThrow')
 const { decodeEvents } = require('@aragon/contract-helpers-test/src/utils/events')
-const { AGREEMENT_EVENTS } = require('../helpers/utils/events')
-const { ARAGON_OS_ERRORS, AGREEMENT_ERRORS } = require('../helpers/utils/errors')
-
-const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 
 contract('Agreement', ([_, EOA]) => {
   let arbitrator, aragonAppFeesCashier, stakingFactory, agreement

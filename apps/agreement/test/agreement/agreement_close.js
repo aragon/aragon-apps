@@ -1,14 +1,14 @@
-const { assertBn } = require('@aragon/contract-helpers-test/src/assert/assertBn')
-const { assertRevert } = require('@aragon/contract-helpers-test/src/assert/assertThrow')
-const { decodeEvents } = require('@aragon/contract-helpers-test/src/utils/events')
-const { assertEvent, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/assert/assertEvent')
+const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 const { RULINGS } = require('../helpers/utils/enums')
 const { AGREEMENT_ERRORS } = require('../helpers/utils/errors')
 const { AGREEMENT_EVENTS } = require('../helpers/utils/events')
 
-const deployer = require('../helpers/utils/deployer')(web3, artifacts)
+const { assertBn } = require('@aragon/contract-helpers-test/src/assert/assertBn')
+const { assertRevert } = require('@aragon/contract-helpers-test/src/assert/assertThrow')
+const { decodeEvents } = require('@aragon/contract-helpers-test/src/utils/events')
+const { assertEvent, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/assert/assertEvent')
 
-contract('Agreement', ([_, submitter, someone]) => {
+contract('Agreement', ([_, submitter]) => {
   let disputable, actionId
 
   beforeEach('deploy agreement instance', async () => {

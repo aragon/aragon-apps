@@ -1,11 +1,11 @@
+const deployer = require('../helpers/utils/deployer')(web3, artifacts)
+const { RULINGS } = require('../helpers/utils/enums')
+const { AGREEMENT_ERRORS } = require('../helpers/utils/errors')
+
 const { assertBn } = require('@aragon/contract-helpers-test/src/assert/assertBn')
 const { assertRevert } = require('@aragon/contract-helpers-test/src/assert/assertThrow')
 const { decodeEvents } = require('@aragon/contract-helpers-test/src/utils/events')
 const { assertEvent, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/assert/assertEvent')
-const { RULINGS } = require('../helpers/utils/enums')
-const { AGREEMENT_ERRORS } = require('../helpers/utils/errors')
-
-const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 
 contract('Agreement', ([_, someone, submitter, challenger]) => {
   let disputable, actionId

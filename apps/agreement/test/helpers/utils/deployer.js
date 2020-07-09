@@ -1,9 +1,9 @@
 const AgreementWrapper = require('../wrappers/agreement')
 const DisputableWrapper = require('../wrappers/disputable')
 
-const { NOW, ONE_DAY } = require('@aragon/contract-helpers-test/src/utils/time')
 const { utf8ToHex } = require('web3-utils')
 const { bigExp, bn } = require('@aragon/contract-helpers-test/src/utils/numbers')
+const { NOW, ONE_DAY } = require('@aragon/contract-helpers-test/src/utils/time')
 const { getEventArgument, getNewProxyAddress } = require('@aragon/contract-helpers-test/src/utils/events')
 
 const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff'

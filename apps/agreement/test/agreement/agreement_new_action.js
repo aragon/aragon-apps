@@ -1,19 +1,18 @@
+const deployer = require('../helpers/utils/deployer')(web3, artifacts)
+const { AGREEMENT_EVENTS } = require('../helpers/utils/events')
+const { AGREEMENT_ERRORS, DISPUTABLE_ERRORS } = require('../helpers/utils/errors')
+
+const { bn, bigExp } = require('@aragon/contract-helpers-test/src/utils/numbers')
 const { assertBn } = require('@aragon/contract-helpers-test/src/assert/assertBn')
 const { assertRevert } = require('@aragon/contract-helpers-test/src/assert/assertThrow')
 const { decodeEvents } = require('@aragon/contract-helpers-test/src/utils/events')
 const { assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/assert/assertEvent')
-const { bn, bigExp } = require('@aragon/contract-helpers-test/src/utils/numbers')
-const { AGREEMENT_EVENTS } = require('../helpers/utils/events')
-const { AGREEMENT_ERRORS, DISPUTABLE_ERRORS } = require('../helpers/utils/errors')
-
-const deployer = require('../helpers/utils/deployer')(web3, artifacts)
-
-const ZERO_ADDRESS = '0x' + '0'.repeat(40)
 
 contract('Agreement', ([_, owner, submitter, someone]) => {
   let disputable, actionCollateral
 
   const actionContext = '0x123456'
+  const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
   beforeEach('deploy agreement instance', async () => {
     await deployer.deployStakingFactory()

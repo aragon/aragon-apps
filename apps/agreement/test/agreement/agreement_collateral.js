@@ -1,12 +1,12 @@
+const deployer = require('../helpers/utils/deployer')(web3, artifacts)
+const { AGREEMENT_EVENTS } = require('../helpers/utils/events')
+const { ARAGON_OS_ERRORS } = require('../helpers/utils/errors')
+
 const { ONE_DAY } = require('@aragon/contract-helpers-test/src/utils/time')
 const { assertBn } = require('@aragon/contract-helpers-test/src/assert/assertBn')
 const { bigExp, bn } = require('@aragon/contract-helpers-test/src/utils/numbers')
 const { assertRevert } = require('@aragon/contract-helpers-test/src/assert/assertThrow')
 const { assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/assert/assertEvent')
-const { AGREEMENT_EVENTS } = require('../helpers/utils/events')
-const { ARAGON_OS_ERRORS } = require('../helpers/utils/errors')
-
-const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 
 contract('Agreement', ([_, owner, someone]) => {
   let disputable

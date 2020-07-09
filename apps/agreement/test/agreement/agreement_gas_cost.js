@@ -1,6 +1,5 @@
-const { RULINGS } = require('../helpers/utils/enums')
-
 const deployer = require('../helpers/utils/deployer')(web3, artifacts)
+const { RULINGS } = require('../helpers/utils/enums')
 
 contract('Agreement', ([_, user]) => {
   let disputable, actionId
