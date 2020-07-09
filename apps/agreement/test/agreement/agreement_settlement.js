@@ -1,9 +1,11 @@
 const { assertBn } = require('../helpers/assert/assertBn')
 const { assertRevert } = require('../helpers/assert/assertThrow')
-const { assertEvent, assertAmountOfEvents } = require('../helpers/assert/assertEvent')
+const { assertEvent, assertAmountOfEvents, assertAmountOfRawEvents } = require('../helpers/assert/assertEvent')
 const { AGREEMENT_ERRORS } = require('../helpers/utils/errors')
-const { AGREEMENT_EVENTS } = require('../helpers/utils/events')
+const { AGREEMENT_EVENTS, DISPUTABLE_EVENTS } = require('../helpers/utils/events')
 const { CHALLENGES_STATE, RULINGS } = require('../helpers/utils/enums')
+
+const Disputable = artifacts.require('DisputableAppMock')
 
 const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 
@@ -48,7 +50,11 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
             })
 
             context('when the challenge was not answered', () => {
-              const itSettlesTheChallengeProperly = from => {
+              const itSettlesTheChallengeProperly = (from, callbacksRevert = false) => {
+                beforeEach('set mock callbacks behavior', async () => {
+                  await disputable.disputable.mockSetCallbacksRevert(callbacksRevert)
+                })
+
                 it('updates the challenge state only', async () => {
                   const previousChallengeState = await disputable.getChallenge(challengeId)
 
@@ -139,6 +145,13 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
 
                   assertAmountOfEvents(receipt, AGREEMENT_EVENTS.ACTION_SETTLED, 1)
                   assertEvent(receipt, AGREEMENT_EVENTS.ACTION_SETTLED, { actionId, challengeId: currentChallengeId })
+
+                  // disputable event
+                  if (callbacksRevert) {
+                    assertAmountOfRawEvents(receipt, Disputable.abi, DISPUTABLE_EVENTS.REJECTED, 0)
+                  } else {
+                    assertAmountOfRawEvents(receipt, Disputable.abi, DISPUTABLE_EVENTS.REJECTED, 1)
+                  }
                 })
 
                 it('there are no more paths allowed', async () => {
@@ -158,7 +171,13 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                 context('when the sender is the action submitter', () => {
                   const from = submitter
 
-                  itSettlesTheChallengeProperly(from)
+                  context('when disputable callback reverts', () => {
+                    itSettlesTheChallengeProperly(from, true)
+                  })
+
+                  context('when disputable callback doesn’t revert', () => {
+                    itSettlesTheChallengeProperly(from, false)
+                  })
                 })
 
                 context('when the sender is the challenger', () => {
@@ -182,19 +201,37 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                 context('when the sender is the action submitter', () => {
                   const from = submitter
 
-                  itSettlesTheChallengeProperly(from)
+                  context('when disputable callback reverts', () => {
+                    itSettlesTheChallengeProperly(from, true)
+                  })
+
+                  context('when disputable callback doesn’t revert', () => {
+                    itSettlesTheChallengeProperly(from, false)
+                  })
                 })
 
                 context('when the sender is the challenger', () => {
                   const from = challenger
 
-                  itSettlesTheChallengeProperly(from)
+                  context('when disputable callback reverts', () => {
+                    itSettlesTheChallengeProperly(from, true)
+                  })
+
+                  context('when disputable callback doesn’t revert', () => {
+                    itSettlesTheChallengeProperly(from, false)
+                  })
                 })
 
                 context('when the sender is someone else', () => {
                   const from = someone
 
-                  itSettlesTheChallengeProperly(from)
+                  context('when disputable callback reverts', () => {
+                    itSettlesTheChallengeProperly(from, true)
+                  })
+
+                  context('when disputable callback doesn’t revert', () => {
+                    itSettlesTheChallengeProperly(from, false)
+                  })
                 })
               }
 
