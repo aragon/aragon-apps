@@ -1,4 +1,4 @@
-const { bn, bigExp } = require('../helpers/lib/numbers')
+const { bn, bigExp } = require('@aragon/contract-helpers-test/src/utils/numbers')
 
 const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 

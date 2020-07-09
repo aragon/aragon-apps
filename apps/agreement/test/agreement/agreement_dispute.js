@@ -1,5 +1,5 @@
 const { utf8ToHex, padLeft } = require('web3-utils')
-const { bn } = require('../helpers/lib/numbers')
+const { bn } = require('@aragon/contract-helpers-test/src/utils/numbers')
 const { assertBn } = require('../helpers/assert/assertBn')
 const { assertRevert } = require('../helpers/assert/assertThrow')
 const { getEventArgument } = require('@aragon/contract-helpers-test/src/utils/events')

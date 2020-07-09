@@ -1,4 +1,4 @@
-const { bn } = require('../lib/numbers')
+const { bn } = require('@aragon/contract-helpers-test/src/utils/numbers')
 const { CHALLENGES_STATE } = require('../utils/enums')
 const { AGREEMENT_EVENTS } = require('../utils/events')
 const { AGREEMENT_ERRORS } = require('../utils/errors')

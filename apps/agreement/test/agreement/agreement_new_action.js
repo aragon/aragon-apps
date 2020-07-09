@@ -2,7 +2,7 @@ const { assertBn } = require('../helpers/assert/assertBn')
 const { assertRevert } = require('../helpers/assert/assertThrow')
 const { decodeEventsOfType } = require('../helpers/lib/decodeEvent')
 const { assertAmountOfEvents, assertEvent } = require('../helpers/assert/assertEvent')
-const { bn, bigExp } = require('../helpers/lib/numbers')
+const { bn, bigExp } = require('@aragon/contract-helpers-test/src/utils/numbers')
 const { AGREEMENT_EVENTS } = require('../helpers/utils/events')
 const { AGREEMENT_ERRORS, DISPUTABLE_ERRORS } = require('../helpers/utils/errors')
 
@@ -172,7 +172,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
 
                     context('when the transaction fee token is not the staking token', () => {
                       let token
-                      
+
                       beforeEach('set transaction fees', async () => {
                         token = await deployer.deployToken({})
                         await deployer.aragonAppFeesCashier.setAppFee('0x', token.address, appFeeAmount)

@@ -1,5 +1,5 @@
 const { assertBn } = require('../helpers/assert/assertBn')
-const { bn, bigExp } = require('../helpers/lib/numbers')
+const { bn, bigExp } = require('@aragon/contract-helpers-test/src/utils/numbers')
 const { CHALLENGES_STATE, RULINGS } = require('../helpers/utils/enums')
 
 const deployer = require('../helpers/utils/deployer')(web3, artifacts)

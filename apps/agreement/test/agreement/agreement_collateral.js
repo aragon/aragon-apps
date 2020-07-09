@@ -1,6 +1,6 @@
 const { DAY } = require('../helpers/lib/time')
 const { assertBn } = require('../helpers/assert/assertBn')
-const { bigExp, bn } = require('../helpers/lib/numbers')
+const { bigExp, bn } = require('@aragon/contract-helpers-test/src/utils/numbers')
 const { assertRevert } = require('../helpers/assert/assertThrow')
 const { assertAmountOfEvents, assertEvent } = require('../helpers/assert/assertEvent')
 const { AGREEMENT_EVENTS } = require('../helpers/utils/events')
