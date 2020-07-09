@@ -1,7 +1,7 @@
 const AgreementWrapper = require('../wrappers/agreement')
 const DisputableWrapper = require('../wrappers/disputable')
 
-const { NOW, DAY } = require('../lib/time')
+const { NOW, ONE_DAY } = require('@aragon/contract-helpers-test/src/utils/time')
 const { utf8ToHex } = require('web3-utils')
 const { bigExp, bn } = require('@aragon/contract-helpers-test/src/utils/numbers')
 const { getEventArgument, getNewProxyAddress } = require('@aragon/contract-helpers-test/src/utils/events')
@@ -29,7 +29,7 @@ const DEFAULT_DISPUTABLE_INITIALIZATION_PARAMS = {
   appId: '0xdead1234dead1234dead1234dead1234dead1234dead1234dead1234dead1234',
   currentTimestamp: NOW,
 
-  challengeDuration: bn(2 * DAY),        // 2 days
+  challengeDuration: bn(2 * ONE_DAY),    // 2 days
   actionCollateral: bigExp(100, 18),     // 100 DAI
   challengeCollateral: bigExp(200, 18),  // 200 DAI
   collateralToken: {

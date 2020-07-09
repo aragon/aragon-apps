@@ -1,4 +1,4 @@
-const { DAY } = require('../helpers/lib/time')
+const { ONE_DAY } = require('@aragon/contract-helpers-test/src/utils/time')
 const { assertBn } = require('../helpers/assert/assertBn')
 const { bigExp, bn } = require('@aragon/contract-helpers-test/src/utils/numbers')
 const { assertRevert } = require('../helpers/assert/assertThrow')
@@ -14,7 +14,7 @@ contract('Agreement', ([_, owner, someone]) => {
   let initialCollateralRequirement = {
     actionCollateral: bigExp(200, 18),
     challengeCollateral: bigExp(100, 18),
-    challengeDuration: bn(3 * DAY),
+    challengeDuration: bn(3 * ONE_DAY),
   }
 
   beforeEach('deploy agreement', async () => {
@@ -24,7 +24,7 @@ contract('Agreement', ([_, owner, someone]) => {
 
   describe('changeCollateralRequirement', () => {
     let newCollateralRequirement = {
-      challengeDuration: bn(10 * DAY),
+      challengeDuration: bn(10 * ONE_DAY),
       actionCollateral: bigExp(100, 18),
       challengeCollateral: bigExp(50, 18),
     }
