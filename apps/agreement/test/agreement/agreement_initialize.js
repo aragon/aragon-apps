@@ -1,7 +1,7 @@
 const { assertBn } = require('@aragon/contract-helpers-test/src/assert/assertBn')
 const { assertEvent } = require('@aragon/contract-helpers-test/src/assert/assertEvent')
 const { assertRevert } = require('@aragon/contract-helpers-test/src/assert/assertThrow')
-const { decodeEventsOfType } = require('../helpers/lib/decodeEvent')
+const { decodeEvents } = require('@aragon/contract-helpers-test/src/utils/events')
 const { AGREEMENT_EVENTS } = require('../helpers/utils/events')
 const { ARAGON_OS_ERRORS, AGREEMENT_ERRORS } = require('../helpers/utils/errors')
 
@@ -64,7 +64,7 @@ contract('Agreement', ([_, EOA]) => {
 
         assertBn(currentSettingId, 1, 'current content ID does not match')
 
-        const logs = decodeEventsOfType(receipt, deployer.abi, AGREEMENT_EVENTS.SETTING_CHANGED)
+        const logs = decodeEvents(receipt.receipt, deployer.abi, AGREEMENT_EVENTS.SETTING_CHANGED)
         assertEvent({ logs }, AGREEMENT_EVENTS.SETTING_CHANGED, { settingId: currentSettingId })
       })
 

@@ -1,6 +1,6 @@
 const { assertBn } = require('@aragon/contract-helpers-test/src/assert/assertBn')
 const { assertRevert } = require('@aragon/contract-helpers-test/src/assert/assertThrow')
-const { decodeEventsOfType } = require('../helpers/lib/decodeEvent')
+const { decodeEvents } = require('@aragon/contract-helpers-test/src/utils/events')
 const { assertEvent, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/assert/assertEvent')
 const { RULINGS } = require('../helpers/utils/enums')
 const { AGREEMENT_ERRORS } = require('../helpers/utils/errors')
@@ -108,7 +108,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                         const { disputeId } = await disputable.getChallenge(challengeId)
                         const receipt = await disputable.submitEvidence({ actionId, evidence, from, finished })
 
-                        const logs = decodeEventsOfType(receipt, disputable.abi, 'EvidenceSubmitted')
+                        const logs = decodeEvents(receipt.receipt, disputable.abi, 'EvidenceSubmitted')
                         assertAmountOfEvents({ logs }, 'EvidenceSubmitted', 1)
                         assertEvent({ logs }, 'EvidenceSubmitted', { disputeId, submitter: from, evidence, finished })
                       })

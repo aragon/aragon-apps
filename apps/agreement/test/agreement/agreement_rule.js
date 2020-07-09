@@ -1,6 +1,6 @@
 const { assertBn } = require('@aragon/contract-helpers-test/src/assert/assertBn')
 const { assertRevert } = require('@aragon/contract-helpers-test/src/assert/assertThrow')
-const { decodeEventsOfType } = require('../helpers/lib/decodeEvent')
+const { decodeEvents } = require('@aragon/contract-helpers-test/src/utils/events')
 const { assertEvent, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/assert/assertEvent')
 const { AGREEMENT_EVENTS } = require('../helpers/utils/events')
 const { AGREEMENT_ERRORS } = require('../helpers/utils/errors')
@@ -132,7 +132,7 @@ contract('Agreement', ([_, submitter, challenger]) => {
                         const receipt = await disputable.executeRuling({ actionId, ruling })
 
                         const IArbitrable = artifacts.require('IArbitrable')
-                        const logs = decodeEventsOfType(receipt, IArbitrable.abi, 'Ruled')
+                        const logs = decodeEvents(receipt.receipt, IArbitrable.abi, 'Ruled')
 
                         assertAmountOfEvents({ logs }, 'Ruled', 1)
                         assertEvent({ logs }, 'Ruled', { arbitrator: disputable.arbitrator.address, disputeId, ruling })
@@ -257,7 +257,7 @@ contract('Agreement', ([_, submitter, challenger]) => {
                     it('emits an event', async () => {
                       const { currentChallengeId } = await disputable.getAction(actionId)
                       const receipt = await disputable.executeRuling({ actionId, ruling })
-                      const logs = decodeEventsOfType(receipt, disputable.abi, AGREEMENT_EVENTS.ACTION_ACCEPTED)
+                      const logs = decodeEvents(receipt.receipt, disputable.abi, AGREEMENT_EVENTS.ACTION_ACCEPTED)
 
                       assertAmountOfEvents({ logs }, AGREEMENT_EVENTS.ACTION_ACCEPTED, 1)
                       assertEvent({ logs }, AGREEMENT_EVENTS.ACTION_ACCEPTED, { actionId, challengeId: currentChallengeId })
@@ -300,7 +300,7 @@ contract('Agreement', ([_, submitter, challenger]) => {
                     it('emits an event', async () => {
                       const { currentChallengeId } = await disputable.getAction(actionId)
                       const receipt = await disputable.executeRuling({ actionId, ruling })
-                      const logs = decodeEventsOfType(receipt, disputable.abi, AGREEMENT_EVENTS.ACTION_REJECTED)
+                      const logs = decodeEvents(receipt.receipt, disputable.abi, AGREEMENT_EVENTS.ACTION_REJECTED)
 
                       assertAmountOfEvents({ logs }, AGREEMENT_EVENTS.ACTION_REJECTED, 1)
                       assertEvent({ logs }, AGREEMENT_EVENTS.ACTION_REJECTED, { actionId, challengeId: currentChallengeId })
@@ -334,7 +334,7 @@ contract('Agreement', ([_, submitter, challenger]) => {
                     it('emits an event', async () => {
                       const { currentChallengeId } = await disputable.getAction(actionId)
                       const receipt = await disputable.executeRuling({ actionId, ruling })
-                      const logs = decodeEventsOfType(receipt, disputable.abi, AGREEMENT_EVENTS.ACTION_VOIDED)
+                      const logs = decodeEvents(receipt.receipt, disputable.abi, AGREEMENT_EVENTS.ACTION_VOIDED)
 
                       assertAmountOfEvents({ logs }, AGREEMENT_EVENTS.ACTION_VOIDED, 1)
                       assertEvent({ logs }, AGREEMENT_EVENTS.ACTION_VOIDED, { actionId, challengeId: currentChallengeId })

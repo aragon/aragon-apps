@@ -1,6 +1,6 @@
 const { assertBn } = require('@aragon/contract-helpers-test/src/assert/assertBn')
 const { assertRevert } = require('@aragon/contract-helpers-test/src/assert/assertThrow')
-const { decodeEventsOfType } = require('../helpers/lib/decodeEvent')
+const { decodeEvents } = require('@aragon/contract-helpers-test/src/utils/events')
 const { assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/assert/assertEvent')
 const { bn, bigExp } = require('@aragon/contract-helpers-test/src/utils/numbers')
 const { AGREEMENT_EVENTS } = require('../helpers/utils/events')
@@ -88,7 +88,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
 
                     it('emits an event', async () => {
                       const { receipt, actionId } = await disputable.newAction({ submitter, actionContext, stake, sign })
-                      const logs = decodeEventsOfType(receipt, disputable.abi, AGREEMENT_EVENTS.ACTION_SUBMITTED)
+                      const logs = decodeEvents(receipt.receipt, disputable.abi, AGREEMENT_EVENTS.ACTION_SUBMITTED)
 
                       assertAmountOfEvents({ logs }, AGREEMENT_EVENTS.ACTION_SUBMITTED, 1)
                       assertEvent({ logs }, AGREEMENT_EVENTS.ACTION_SUBMITTED, { actionId })
@@ -133,7 +133,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
 
                   it('emits an event', async () => {
                     const { receipt, actionId } = await disputable.newAction({ submitter, actionContext, stake, sign })
-                    const logs = decodeEventsOfType(receipt, disputable.abi, AGREEMENT_EVENTS.ACTION_SUBMITTED)
+                    const logs = decodeEvents(receipt.receipt, disputable.abi, AGREEMENT_EVENTS.ACTION_SUBMITTED)
 
                     assertAmountOfEvents({ logs }, AGREEMENT_EVENTS.ACTION_SUBMITTED, 1)
                     assertEvent({ logs }, AGREEMENT_EVENTS.ACTION_SUBMITTED, { actionId, disputable: disputable.disputable.address })

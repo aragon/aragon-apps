@@ -1,7 +1,6 @@
 const AgreementWrapper = require('./agreement')
 
-const { decodeEventsOfType } = require('../lib/decodeEvent')
-const { getEventArgument } = require('@aragon/contract-helpers-test/src/utils/events')
+const { getEventArgument, decodeEvents } = require('@aragon/contract-helpers-test/src/utils/events')
 const { AGREEMENT_EVENTS, DISPUTABLE_EVENTS } = require('../utils/events')
 
 class DisputableWrapper extends AgreementWrapper {
@@ -78,7 +77,7 @@ class DisputableWrapper extends AgreementWrapper {
     await this.allowManager({ user: from, amount: this.actionCollateral })
 
     const receipt = await this.disputable.forward(script, { from })
-    const logs = decodeEventsOfType(receipt, this.abi, AGREEMENT_EVENTS.ACTION_SUBMITTED)
+    const logs = decodeEvents(receipt.receipt, this.abi, AGREEMENT_EVENTS.ACTION_SUBMITTED)
     const actionId = logs.length > 0 ? getEventArgument({ logs }, AGREEMENT_EVENTS.ACTION_SUBMITTED, 'actionId') : undefined
 
     const disputableActionId = getEventArgument(receipt, DISPUTABLE_EVENTS.SUBMITTED, 'id')

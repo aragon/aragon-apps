@@ -1,7 +1,7 @@
 const { assertBn } = require('@aragon/contract-helpers-test/src/assert/assertBn')
 const { bn, bigExp } = require('@aragon/contract-helpers-test/src/utils/numbers')
 const { assertRevert } = require('@aragon/contract-helpers-test/src/assert/assertThrow')
-const { decodeEventsOfType } = require('../helpers/lib/decodeEvent')
+const { decodeEvents } = require('@aragon/contract-helpers-test/src/utils/events')
 const { assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/assert/assertEvent')
 const { STAKING_EVENTS } = require('../helpers/utils/events')
 const { STAKING_ERRORS } = require('../helpers/utils/errors')
@@ -195,7 +195,7 @@ contract('Agreement', ([_, someone, user]) => {
       it('emits an event', async () => {
         const Staking = artifacts.require('Staking')
         const receipt = await agreement.approveAndCall({ token, amount, from, to: staking.address, mint: false })
-        const logs = decodeEventsOfType(receipt, Staking.abi, STAKING_EVENTS.BALANCE_STAKED)
+        const logs = decodeEvents(receipt.receipt, Staking.abi, STAKING_EVENTS.BALANCE_STAKED)
 
         assertAmountOfEvents({ logs }, STAKING_EVENTS.BALANCE_STAKED, 1)
         assertEvent({ logs }, STAKING_EVENTS.BALANCE_STAKED, { user, amount })

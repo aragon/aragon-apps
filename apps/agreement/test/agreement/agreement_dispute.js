@@ -3,7 +3,7 @@ const { bn } = require('@aragon/contract-helpers-test/src/utils/numbers')
 const { assertBn } = require('@aragon/contract-helpers-test/src/assert/assertBn')
 const { assertRevert } = require('@aragon/contract-helpers-test/src/assert/assertThrow')
 const { getEventArgument } = require('@aragon/contract-helpers-test/src/utils/events')
-const { decodeEventsOfType } = require('../helpers/lib/decodeEvent')
+const { decodeEvents } = require('@aragon/contract-helpers-test/src/utils/events')
 const { assertEvent, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/assert/assertEvent')
 const { AGREEMENT_ERRORS } = require('../helpers/utils/errors')
 const { AGREEMENT_EVENTS } = require('../helpers/utils/events')
@@ -70,7 +70,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                       const receipt = await disputable.dispute({ actionId, from, arbitrationFees })
 
                       const IArbitrator = artifacts.require('ArbitratorMock')
-                      const logs = decodeEventsOfType(receipt, IArbitrator.abi, 'NewDispute')
+                      const logs = decodeEvents(receipt.receipt, IArbitrator.abi, 'NewDispute')
                       const disputeId = getEventArgument({ logs }, 'NewDispute', 'disputeId');
 
                       const currentChallengeState = await disputable.getChallenge(challengeId)
@@ -114,7 +114,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                       const expectedMetadata = `${appId}${paddedActionId}`
 
                       const IArbitrator = artifacts.require('ArbitratorMock')
-                      const logs = decodeEventsOfType(receipt, IArbitrator.abi, 'NewDispute')
+                      const logs = decodeEvents(receipt.receipt, IArbitrator.abi, 'NewDispute')
                       assertAmountOfEvents({ logs }, 'NewDispute', 1)
 
                       assertEvent({ logs }, 'NewDispute', { disputeId, possibleRulings: 2, metadata: expectedMetadata })
@@ -124,7 +124,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                       const receipt = await disputable.dispute({ actionId, from, arbitrationFees })
                       const { disputeId } = await disputable.getChallenge(challengeId)
 
-                      const logs = decodeEventsOfType(receipt, disputable.abi, 'EvidenceSubmitted')
+                      const logs = decodeEvents(receipt.receipt, disputable.abi, 'EvidenceSubmitted')
                       assertAmountOfEvents({ logs }, 'EvidenceSubmitted', 2)
                       assertEvent({ logs }, 'EvidenceSubmitted', { arbitrator: disputable.arbitrator, disputeId, submitter: submitter, evidence: actionContext, finished: false }, 0)
                       assertEvent({ logs }, 'EvidenceSubmitted', { arbitrator: disputable.arbitrator, disputeId, submitter: challenger, evidence: challengeContext, finished: false }, 1)
