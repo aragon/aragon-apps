@@ -1,104 +1,34 @@
 const VOTER_STATE = require('../helpers/state')
+const { DAY } = require('@aragon/apps-agreement/test/helpers/lib/time')
 const { bigExp } = require('@aragon/apps-agreement/test/helpers/lib/numbers')
 const { assertBn } = require('@aragon/apps-agreement/test/helpers/assert/assertBn')
 const { assertRevert } = require('@aragon/apps-agreement/test/helpers/assert/assertThrow')
 const { skipCoverage } = require('@aragon/os/test/helpers/coverage')
-const { encodeCallScript } = require('@aragon/contract-test-helpers/evmScript')
-const { pct, getVoteState } = require('../helpers/voting')
-const { decodeEventsOfType } = require('@aragon/apps-agreement/test/helpers/lib/decodeEvent')
-const { makeErrorMappingProxy } = require('@aragon/contract-test-helpers/utils')
-const { getEventArgument, getNewProxyAddress } = require('@aragon/contract-test-helpers/events')
+const { VOTING_ERRORS } = require('../helpers/errors')
 const { assertEvent, assertAmountOfEvents } = require('@aragon/apps-agreement/test/helpers/assert/assertEvent')
+const { pct, createVote, getVoteState } = require('../helpers/voting')(web3, artifacts)
 
-const Voting = artifacts.require('DisputableVotingWithoutAgreementMock')
-const ExecutionTarget = artifacts.require('ExecutionTarget')
+const deployer = require('../helpers/deployer')(web3, artifacts)
 
-const ACL = artifacts.require('@aragon/os/contracts/acl/ACL')
-const Kernel = artifacts.require('@aragon/os/contracts/kernel/Kernel')
-const DAOFactory = artifacts.require('@aragon/os/contracts/factory/DAOFactory')
-const MiniMeToken = artifacts.require('@aragon/apps-shared-minime/contracts/MiniMeToken')
-const EVMScriptRegistryFactory = artifacts.require('@aragon/os/contracts/factory/EVMScriptRegistryFactory')
-
-const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff'
-const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
-
-contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, representative, anotherRepresentative, anyone]) => {
-  let votingBase, kernelBase, aclBase, daoFactory
-  let dao, acl, token, executionTarget, script, voteId, voting
-  let APP_MANAGER_ROLE, CREATE_VOTES_ROLE, MODIFY_OVERRULE_WINDOW_ROLE
-
-  const NOW = 1553703809  // random fixed timestamp in seconds
-  const ONE_DAY = 60 * 60 * 24
-  const OVERRULE_WINDOW = ONE_DAY
-  const VOTING_DURATION = ONE_DAY * 5
+contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, representative, anotherRepresentative, anyone]) => {
+  let voting, token, voteId
 
   const MIN_QUORUM = pct(20)
   const MIN_SUPPORT = pct(70)
-
-  // Error strings
-  const ERRORS = makeErrorMappingProxy({
-    // aragonOS errors
-    APP_AUTH_FAILED: 'APP_AUTH_FAILED',
-
-    // Voting errors
-    VOTING_NO_VOTE: 'VOTING_NO_VOTE',
-    VOTING_CANNOT_VOTE: 'VOTING_CANNOT_VOTE',
-    VOTING_NOT_REPRESENTATIVE: 'VOTING_NOT_REPRESENTATIVE',
-    VOTING_WITHIN_OVERRULE_WINDOW: 'VOTING_WITHIN_OVERRULE_WINDOW',
-    VOTING_INVALID_OVERRULE_WINDOW: 'VOTING_INVALID_OVERRULE_WINDOW',
-    VOTING_DELEGATES_EXCEEDS_MAX_LEN: 'VOTING_DELEGATES_EXCEEDS_MAX_LEN'
-  })
-
-  before('deploy base implementations', async () => {
-    kernelBase = await Kernel.new(true) // petrify immediately
-    aclBase = await ACL.new()
-    const regFact = await EVMScriptRegistryFactory.new()
-    daoFactory = await DAOFactory.new(kernelBase.address, aclBase.address, regFact.address)
-    votingBase = await Voting.new()
-  })
-
-  before('load roles', async () => {
-    APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
-    CREATE_VOTES_ROLE = await votingBase.CREATE_VOTES_ROLE()
-    MODIFY_OVERRULE_WINDOW_ROLE = await votingBase.MODIFY_OVERRULE_WINDOW_ROLE()
-  })
-
-  before('create dao', async () => {
-    const receipt = await daoFactory.newDAO(root)
-    dao = await Kernel.at(getEventArgument(receipt, 'DeployDAO', 'dao'))
-    acl = await ACL.at(await dao.acl())
-    await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
-  })
+  const OVERRULE_WINDOW = DAY
+  const VOTING_DURATION = DAY * 5
+  const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
   before('mint tokens', async () => {
-    token = await MiniMeToken.new(ZERO_ADDRESS, ZERO_ADDRESS, 0, 'n', 18, 'n', true, { from: root }) // empty parameters minime
-    await token.generateTokens(voter, bigExp(51, 18), { from: root })
-    await token.generateTokens(anotherVoter, bigExp(49, 18), { from: root })
-    await token.generateTokens(thirdVoter, bigExp(1, 18), { from: root })
+    token = await deployer.deployToken({})
+    await token.generateTokens(voter, bigExp(51, 18))
+    await token.generateTokens(anotherVoter, bigExp(49, 18))
+    await token.generateTokens(thirdVoter, bigExp(1, 18))
   })
 
-  beforeEach('create voting app', async () => {
-    const receipt = await dao.newAppInstance('0x1234', votingBase.address, '0x', false, { from: root })
-    voting = await Voting.at(getNewProxyAddress(receipt))
-
-    await acl.createPermission(ANY_ADDR, voting.address, CREATE_VOTES_ROLE, root, { from: root })
-    await acl.createPermission(root, voting.address, MODIFY_OVERRULE_WINDOW_ROLE, root, { from: root })
-
-    await voting.mockSetTimestamp(NOW)
-    await voting.initialize(token.address, MIN_SUPPORT, MIN_QUORUM, VOTING_DURATION, OVERRULE_WINDOW, { from: root })
+  beforeEach('deploy voting', async () => {
+    voting = await deployer.deployAndInitialize({ owner, minimumAcceptanceQuorum: MIN_QUORUM, requiredSupport: MIN_SUPPORT, voteDuration: VOTING_DURATION, overruleWindow: OVERRULE_WINDOW })
   })
-
-  const createVote = async (from = voter) => {
-    executionTarget = await ExecutionTarget.new()
-    script = encodeCallScript([{ to: executionTarget.address, calldata: executionTarget.contract.methods.execute().encodeABI() }])
-
-    const receipt = await voting.newVote(script, '0x', { from })
-    const events = decodeEventsOfType(receipt, Voting.abi, 'StartVote')
-    assert.equal(events.length, 1, 'number of StartVote emitted events does not match')
-    const startVoteEvent = events[0].args
-    voteId = startVoteEvent.voteId
-    return voteId
-  }
 
   const getVoterState = async (voter, id = voteId) => voting.getVoterState(id, voter)
 
@@ -136,7 +66,9 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, repres
 
   describe('canVoteOnBehalfOf', () => {
     context('when the vote exists', () => {
-      beforeEach('create a vote', createVote)
+      beforeEach('create a vote', async () => {
+        ({ voteId } = await createVote({ voting, from: voter }))
+      })
 
       context('when the sender is a representative', () => {
         beforeEach('add representative', async () => {
@@ -229,14 +161,16 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, repres
       })
 
       it('reverts', async () => {
-        await assertRevert(voting.canVoteOnBehalfOf(voteId, [voter], representative, { from: representative }), ERRORS.VOTING_NO_VOTE)
+        await assertRevert(voting.canVoteOnBehalfOf(voteId, [voter], representative, { from: representative }), VOTING_ERRORS.VOTING_NO_VOTE)
       })
     })
   })
 
   describe('voteOnBehalfOf', () => {
     context('when the vote exists', () => {
-      beforeEach('create a vote', createVote)
+      beforeEach('create a vote', async () => {
+        ({ voteId } = await createVote({ voting, from: voter }))
+      })
 
       context('when the sender is a representative', () => {
         const from = representative
@@ -353,7 +287,7 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, repres
             })
 
             it('reverts', async () => {
-              await assertRevert(voting.voteOnBehalfOf(voteId, true, [voter], { from }), ERRORS.VOTING_WITHIN_OVERRULE_WINDOW)
+              await assertRevert(voting.voteOnBehalfOf(voteId, true, [voter], { from }), VOTING_ERRORS.VOTING_WITHIN_OVERRULE_WINDOW)
             })
           })
         })
@@ -366,7 +300,7 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, repres
           })
 
           it('reverts', async () => {
-            await assertRevert(voting.voteOnBehalfOf(voteId, true, [invalidVoter], { from }), ERRORS.VOTING_CANNOT_VOTE)
+            await assertRevert(voting.voteOnBehalfOf(voteId, true, [invalidVoter], { from }), VOTING_ERRORS.VOTING_CANNOT_VOTE)
           })
         })
       })
@@ -375,7 +309,7 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, repres
         const from = voter
 
         it('reverts', async () => {
-          await assertRevert(voting.voteOnBehalfOf(voteId, true, [voter], { from }), ERRORS.VOTING_NOT_REPRESENTATIVE)
+          await assertRevert(voting.voteOnBehalfOf(voteId, true, [voter], { from }), VOTING_ERRORS.VOTING_NOT_REPRESENTATIVE)
         })
       })
 
@@ -383,7 +317,7 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, repres
         const from = anyone
 
         it('reverts', async () => {
-          await assertRevert(voting.voteOnBehalfOf(voteId, true, [voter], { from }), ERRORS.VOTING_NOT_REPRESENTATIVE)
+          await assertRevert(voting.voteOnBehalfOf(voteId, true, [voter], { from }), VOTING_ERRORS.VOTING_NOT_REPRESENTATIVE)
         })
       })
     })
@@ -391,7 +325,7 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, repres
     context('when the vote does not exist', () => {
       it('reverts', async () => {
         await voting.setRepresentative(representative, { from: voter })
-        await assertRevert(voting.voteOnBehalfOf(voteId, true, [voter], { from: representative }), ERRORS.VOTING_NO_VOTE)
+        await assertRevert(voting.voteOnBehalfOf(voteId, true, [voter], { from: representative }), VOTING_ERRORS.VOTING_NO_VOTE)
       })
     })
   })
@@ -404,7 +338,9 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, repres
     })
 
     context('when the vote id exists', () => {
-      beforeEach(createVote)
+      beforeEach('create a vote', async () => {
+        ({ voteId } = await createVote({ voting, from: voter }))
+      })
 
       context('when the input is valid', () => {
         const previousVoter = thirdVoter
@@ -442,7 +378,7 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, repres
 
         context('when the input length exceeds the max length allowed', () => {
           it('reverts', async () => {
-            await assertRevert(voting.voteOnBehalfOf(voteId, true, voters), ERRORS.VOTING_DELEGATES_EXCEEDS_MAX_LEN)
+            await assertRevert(voting.voteOnBehalfOf(voteId, true, voters), VOTING_ERRORS.VOTING_DELEGATES_EXCEEDS_MAX_LEN)
           })
         })
       })
@@ -452,66 +388,19 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, repres
       const voters = [voter, anotherVoter]
 
       it('reverts', async () => {
-        await assertRevert(voting.voteOnBehalfOf(voteId, true, voters, { from: representative }), ERRORS.VOTING_NO_VOTE)
-      })
-    })
-  })
-
-  describe('changeOverruleWindow', () => {
-    context('when the sender is allowed', () => {
-      const from = root
-
-      context('when the new window is valid', () => {
-        const newWindow = ONE_DAY
-
-        beforeEach('create a vote', createVote)
-
-        it('changes the overrule window', async () => {
-          await voting.changeOverruleWindow(newWindow, { from })
-
-          assert.equal((await voting.overruleWindow()).toString(), newWindow)
-        })
-
-        it('emits an event', async () => {
-          const receipt = await voting.changeOverruleWindow(newWindow, { from })
-
-          assertAmountOfEvents(receipt, 'ChangeOverruleWindow')
-          assertEvent(receipt, 'ChangeOverruleWindow', { overruleWindow: newWindow })
-        })
-
-        it('does not affect previous created votes', async () => {
-          await voting.changeOverruleWindow(newWindow, { from })
-
-          const { overruleWindow } = await getVoteState(voting, voteId)
-          assertBn(overruleWindow, OVERRULE_WINDOW, 'overrule window does not match')
-        })
-      })
-
-      context('when the new window is not valid', () => {
-        const newWindow = VOTING_DURATION + 1
-
-        it('reverts', async () => {
-          await assertRevert(voting.changeOverruleWindow(newWindow, { from }), ERRORS.VOTING_INVALID_OVERRULE_WINDOW)
-        })
-      })
-    })
-
-    context('when the sender is not allowed', () => {
-      const from = anyone
-      const newWindow = VOTING_DURATION
-
-      it('reverts', async () => {
-        await assertRevert(voting.changeOverruleWindow(newWindow, { from }), ERRORS.APP_AUTH_FAILED)
+        await assertRevert(voting.voteOnBehalfOf(voteId, true, voters, { from: representative }), VOTING_ERRORS.VOTING_NO_VOTE)
       })
     })
   })
 
   describe('withinOverruleWindow', () => {
-    beforeEach('create a vote', createVote)
+    beforeEach('create a vote', async () => {
+      ({ voteId } = await createVote({ voting, from: voter }))
+    })
 
     context('when previous to the overrule window', () => {
       beforeEach('increase time', async () => {
-        await voting.mockIncreaseTime(ONE_DAY)
+        await voting.mockIncreaseTime(DAY)
       })
 
       it('returns false', async () => {
@@ -565,7 +454,7 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, repres
     const MAX_DELEGATE_GAS_OVERHEAD = 65e3
 
     it('adds 65k of gas per casted vote', skipCoverage(async () => {
-      await createVote()
+      ({ voteId } = await createVote({ voting, from: voter }))
       await voting.setRepresentative(representative, { from: voter })
       await voting.setRepresentative(representative, { from: anotherVoter })
 
@@ -580,11 +469,11 @@ contract('Voting delegation', ([_, root, voter, anotherVoter, thirdVoter, repres
       const voters = accounts.slice(accounts.length - MAX_DELEGATES_PER_TX, accounts.length)
 
       for (let i = 0; i < voters.length; i++) {
-        await token.generateTokens(voters[i], bigExp(2, 18), { from: root })
+        await token.generateTokens(voters[i], bigExp(2, 18), { from: owner })
         await voting.setRepresentative(representative, { from: voters[i] })
       }
 
-      await createVote()
+      ({ voteId } = await createVote({ voting, from: voter }))
       const receipt = await voting.voteOnBehalfOf(voteId, true, voters, { from: representative })
 
       assertAmountOfEvents(receipt, 'CastVote', MAX_DELEGATES_PER_TX)
