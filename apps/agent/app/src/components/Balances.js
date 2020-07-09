@@ -2,57 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react'
 import BN from 'bn.js'
 import { Box, GU, textStyle, useTheme, useLayout } from '@aragon/ui'
 import BalanceToken from './BalanceToken'
-
-const CONVERT_API_RETRY_DELAY = 2000
-
-function convertRatesUrl(symbolsQuery) {
-  return `https://min-api.cryptocompare.com/data/price?fsym=USD&tsyms=${symbolsQuery}`
-}
-
-function useConvertRates(symbols) {
-  const [rates, setRates] = useState({})
-
-  const symbolsQuery = symbols.join(',')
-
-  useEffect(() => {
-    let cancelled = false
-    let retryTimer = null
-
-    const update = async () => {
-      if (!symbolsQuery) {
-        setRates({})
-        return
-      }
-
-      try {
-        const response = await fetch(convertRatesUrl(symbolsQuery))
-        const rates = await response.json()
-        if (!cancelled) {
-          setRates(rates)
-        }
-      } catch (err) {
-        // The !cancelled check is needed in case:
-        //  1. The fetch() request is ongoing.
-        //  2. The component gets unmounted.
-        //  3. An error gets thrown.
-        //
-        //  Assuming the fetch() request keeps throwing, it would create new
-        //  requests even though the useEffect() got cancelled.
-        if (!cancelled) {
-          retryTimer = setTimeout(update, CONVERT_API_RETRY_DELAY)
-        }
-      }
-    }
-    update()
-
-    return () => {
-      cancelled = true
-      clearTimeout(retryTimer)
-    }
-  }, [symbolsQuery])
-
-  return rates
-}
+import { getConvertedAmount } from '../lib/conversion-utils'
+import { useConvertRates } from './useConvertRates'
 
 // Prepare the balances for the BalanceToken component
 function useBalanceItems(balances) {
@@ -63,18 +14,19 @@ function useBalanceItems(balances) {
   const convertRates = useConvertRates(verifiedSymbols)
 
   const balanceItems = useMemo(() => {
-    return balances.map(({ address, amount, decimals, symbol, verified }) => ({
-      address,
-      amount,
-      convertedAmount: convertRates[symbol]
-        ? amount.divn(convertRates[symbol])
-        : new BN(-1),
-      decimals,
-      symbol,
-      verified,
-    }))
+    return balances.map(({ address, amount, decimals, symbol, verified }) => {
+      return {
+        address,
+        amount,
+        convertedAmount: convertRates[symbol]
+          ? getConvertedAmount(amount, convertRates[symbol], decimals)
+          : new BN('-1'),
+        decimals,
+        symbol,
+        verified,
+      }
+    })
   }, [balances, convertRates])
-
   return balanceItems
 }
 
@@ -89,7 +41,7 @@ function Balances({ balances }) {
     <Box heading="Token Balances" padding={0}>
       <div
         css={`
-          padding: ${(layoutName === 'small' ? 1 : 2) * GU}px;
+          padding: ${(compact ? 1 : 2) * GU}px;
         `}
       >
         <div
