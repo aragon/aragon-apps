@@ -28,6 +28,9 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     // bytes32 public constant MODIFY_OVERRULE_WINDOW_ROLE = keccak256("MODIFY_OVERRULE_WINDOW_ROLE");
     bytes32 public constant MODIFY_OVERRULE_WINDOW_ROLE = 0x703200758fea823fd0c9d36774ba318b14f6c50c4ef6dff34f394e8f2c7d2d99;
 
+    // bytes32 public constant MODIFY_EXECUTION_DELAY_ROLE = keccak256("MODIFY_EXECUTION_DELAY_ROLE");
+    bytes32 public constant MODIFY_EXECUTION_DELAY_ROLE = 0x69a0bddd05e66b7ae81cce9994caef3b5c660de549fd2fd3597a9e2c3046e446;
+
     uint256 public constant PCT_BASE = 10 ** 18; // 0% = 0; 1% = 10^16; 100% = 10^18
     uint256 public constant MAX_VOTES_DELEGATION_SET_LENGTH = 70;
 
@@ -76,6 +79,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
         // the address of the representative that voted on behalf of a principal
         mapping (address => address) casters;
         uint64 overruleWindow;
+        uint64 executionDelay;
 
         // Disputable state
         uint64 pausedAt;                        // Datetime when the vote was paused
@@ -88,6 +92,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     uint64 public supportRequiredPct;
     uint64 public minAcceptQuorumPct;
     uint64 public voteTime;
+    uint64 public executionDelay;
 
     // We are mimicing an array, we use a mapping instead to make app upgrades more graceful
     mapping (uint256 => Vote) internal votes;
@@ -107,6 +112,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     event ChangeSupportRequired(uint64 supportRequiredPct);
     event ChangeMinQuorum(uint64 minAcceptQuorumPct);
     event ChangeOverruleWindow(uint64 overruleWindow);
+    event ChangeExecutionDelay(uint64 executionDelay);
     event ChangeRepresentative(address indexed voter, address indexed newRepresentative);
 
     modifier voteExists(uint256 _voteId) {
@@ -115,14 +121,21 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     }
 
     /**
-    * @notice Initialize DisputableVoting app with `_token.symbol(): string` for governance, minimum support of `@formatPct(_supportRequiredPct)`%, minimum acceptance quorum of `@formatPct(_minAcceptQuorumPct)`%, a voting duration of `@transformTime(_voteTime)`, and an overrule window of `@transformTime(_overruleWindow)`
+    * @notice Initialize DisputableVoting app with `_token.symbol(): string` for governance, minimum support of `@formatPct(_supportRequiredPct)`%, minimum acceptance quorum of `@formatPct(_minAcceptQuorumPct)`%, a voting duration of `@transformTime(_voteTime)`, an overrule window of `@transformTime(_overruleWindow), and a execution delay of `@transformTime(_executionDelay)`
     * @param _token MiniMeToken Address that will be used as governance token
     * @param _supportRequiredPct Percentage of yeas in cast votes for a vote to succeed (expressed as a percentage of 10^18; eg. 10^16 = 1%, 10^18 = 100%)
     * @param _minAcceptQuorumPct Percentage of yeas in total possible votes for a vote to succeed (expressed as a percentage of 10^18; eg. 10^16 = 1%, 10^18 = 100%)
     * @param _voteTime Seconds that a vote will be open for token holders to vote
     * @param _overruleWindow New overrule window in seconds
     */
-    function initialize(MiniMeToken _token, uint64 _supportRequiredPct, uint64 _minAcceptQuorumPct, uint64 _voteTime, uint64 _overruleWindow)
+    function initialize(
+        MiniMeToken _token,
+        uint64 _supportRequiredPct,
+        uint64 _minAcceptQuorumPct,
+        uint64 _voteTime,
+        uint64 _overruleWindow,
+        uint64 _executionDelay
+    )
         external
     {
         initialized();
@@ -136,6 +149,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
         _changeSupportRequiredPct(_supportRequiredPct);
         _changeMinAcceptQuorumPct(_minAcceptQuorumPct);
         _changeOverruleWindow(_overruleWindow);
+        _changeExecutionDelay(_executionDelay);
     }
 
     /**
@@ -169,6 +183,17 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
         authP(MODIFY_OVERRULE_WINDOW_ROLE, arr(uint256(_overruleWindow), uint256(overruleWindow)))
     {
         _changeOverruleWindow(_overruleWindow);
+    }
+
+    /**
+    * @notice Change execution delay to `@transformTime(_executionDelay)`
+    * @param _executionDelay New execution delay in seconds
+    */
+    function changeExecutionDelay(uint64 _executionDelay)
+        external
+        authP(MODIFY_EXECUTION_DELAY_ROLE, arr(uint256(_executionDelay), uint256(executionDelay)))
+    {
+        _changeExecutionDelay(_executionDelay);
     }
 
     /**
@@ -340,6 +365,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
             uint64 supportRequired,
             uint64 minAcceptQuorum,
             uint64 voteOverruleWindow,
+            uint64 voteExecutionDelay,
             uint256 yea,
             uint256 nay,
             uint256 votingPower,
@@ -354,6 +380,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
         supportRequired = vote_.supportRequiredPct;
         minAcceptQuorum = vote_.minAcceptQuorumPct;
         voteOverruleWindow = vote_.overruleWindow;
+        voteExecutionDelay = vote_.executionDelay;
         yea = vote_.yea;
         nay = vote_.nay;
         votingPower = vote_.votingPower;
@@ -561,6 +588,15 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     }
 
     /**
+    * @dev Internal function to change the execution delay
+    * @param _executionDelay New execution delay in seconds
+    */
+    function _changeExecutionDelay(uint64 _executionDelay) internal {
+        executionDelay = _executionDelay;
+        emit ChangeExecutionDelay(_executionDelay);
+    }
+
+    /**
     * @dev Internal function to create a new vote
     * @return voteId id for newly created vote
     */
@@ -575,6 +611,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
         vote_.startDate = getTimestamp64();
         vote_.snapshotBlock = snapshotBlock;
         vote_.overruleWindow = overruleWindow;
+        vote_.executionDelay = executionDelay;
         vote_.supportRequiredPct = supportRequiredPct;
         vote_.minAcceptQuorumPct = minAcceptQuorumPct;
         vote_.votingPower = votingPower;
@@ -624,6 +661,11 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
 
         // If the vote is still open, it cannot be executed
         if (_isVoteOpenForVoting(vote_)) {
+            return false;
+        }
+
+        // If the vote is within its execution delay window, it cannot be executed
+        if (_withinExecutionDelayWindow(vote_)) {
             return false;
         }
 
@@ -714,6 +756,15 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     */
     function _isVoteOpenForVoting(Vote storage vote_) internal view returns (bool) {
         return _isActive(vote_) && getTimestamp64() < _voteEndDate(vote_);
+    }
+
+    /**
+    * @dev Internal function to check if a vote is within its execution delay window
+    *      It assumes the pointer to the vote is valid
+    * @return True if the given vote is within its execution delay window
+    */
+    function _withinExecutionDelayWindow(Vote storage vote_) internal view returns (bool) {
+        return getTimestamp64() < _voteEndDate(vote_).add(vote_.executionDelay);
     }
 
     /**
