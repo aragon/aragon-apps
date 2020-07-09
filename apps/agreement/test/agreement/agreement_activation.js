@@ -1,6 +1,6 @@
 const { bn } = require('@aragon/contract-helpers-test/src/utils/numbers')
 const { assertBn } = require('@aragon/contract-helpers-test/src/assert/assertBn')
-const { assertRevert } = require('../helpers/assert/assertThrow')
+const { assertRevert } = require('@aragon/contract-helpers-test/src/assert/assertThrow')
 const { assertEvent, assertAmountOfEvents } = require('../helpers/assert/assertEvent')
 const { AGREEMENT_EVENTS } = require('../helpers/utils/events')
 const { AGREEMENT_ERRORS, ARAGON_OS_ERRORS } = require('../helpers/utils/errors')
