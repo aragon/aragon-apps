@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useMemo } from 'react'
-import { endOfDay, isWithinInterval, startOfDay } from 'date-fns'
+import { endOfDay, isAfter, isBefore, startOfDay } from 'date-fns'
 import {
   TRANSACTION_TYPES,
   TRANSACTION_TYPES_LABELS,
@@ -54,15 +54,17 @@ function useFilteredTransactions({ transactions, tokens }) {
           return false
         }
 
-        // Exclude by date range
+        // filter separately by start and end date
         if (
-          // We're not checking for an end date because we will always
-          // have a start date for defining a range.
           selectedDateRange.start &&
-          !isWithinInterval(new Date(date), {
-            start: startOfDay(selectedDateRange.start),
-            end: endOfDay(selectedDateRange.end),
-          })
+          isBefore(new Date(date), startOfDay(selectedDateRange.start))
+        ) {
+          return false
+        }
+
+        if (
+          selectedDateRange.start &&
+          isAfter(new Date(date), endOfDay(selectedDateRange.end))
         ) {
           return false
         }
@@ -93,6 +95,7 @@ function useFilteredTransactions({ transactions, tokens }) {
     (selectedToken > 0 ||
       selectedTransactionType > 0 ||
       selectedDateRange.start)
+
   return {
     emptyResultsViaFilters,
     filteredTransactions,
