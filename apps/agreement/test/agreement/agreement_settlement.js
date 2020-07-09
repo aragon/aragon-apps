@@ -1,4 +1,4 @@
-const { assertBn } = require('../helpers/assert/assertBn')
+const { assertBn } = require('@aragon/contract-helpers-test/src/assert/assertBn')
 const { assertRevert } = require('../helpers/assert/assertThrow')
 const { assertEvent, assertAmountOfEvents } = require('../helpers/assert/assertEvent')
 const { AGREEMENT_ERRORS } = require('../helpers/utils/errors')

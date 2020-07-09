@@ -1,5 +1,5 @@
 const { ONE_DAY } = require('@aragon/contract-helpers-test/src/utils/time')
-const { assertBn } = require('../helpers/assert/assertBn')
+const { assertBn } = require('@aragon/contract-helpers-test/src/assert/assertBn')
 const { bigExp, bn } = require('@aragon/contract-helpers-test/src/utils/numbers')
 const { assertRevert } = require('../helpers/assert/assertThrow')
 const { assertAmountOfEvents, assertEvent } = require('../helpers/assert/assertEvent')

@@ -1,4 +1,4 @@
-const { assertBn } = require('../helpers/assert/assertBn')
+const { assertBn } = require('@aragon/contract-helpers-test/src/assert/assertBn')
 const { bn, bigExp } = require('@aragon/contract-helpers-test/src/utils/numbers')
 const { assertRevert } = require('../helpers/assert/assertThrow')
 const { decodeEventsOfType } = require('../helpers/lib/decodeEvent')

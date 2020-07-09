@@ -1,4 +1,4 @@
-const { assertBn } = require('../helpers/assert/assertBn')
+const { assertBn } = require('@aragon/contract-helpers-test/src/assert/assertBn')
 const { bn, bigExp } = require('@aragon/contract-helpers-test/src/utils/numbers')
 const { CHALLENGES_STATE, RULINGS } = require('../helpers/utils/enums')
 
