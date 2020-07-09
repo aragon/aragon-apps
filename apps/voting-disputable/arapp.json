@@ -60,6 +60,14 @@
         "New window",
         "Current window"
       ]
+    },
+    {
+      "name": "Modify execution delay",
+      "id": "MODIFY_EXECUTION_DELAY_ROLE",
+      "params": [
+        "New execution delay",
+        "Current execution delay"
+      ]
     }
   ],
   "path": "contracts/DisputableVoting.sol"

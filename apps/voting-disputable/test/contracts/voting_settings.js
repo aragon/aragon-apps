@@ -13,6 +13,7 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
 
   const VOTE_DURATION = 5 * DAY
   const OVERRULE_WINDOW = DAY
+  const EXECUTION_DELAY = 0
   const REQUIRED_SUPPORT = pct(50)
   const MINIMUM_ACCEPTANCE_QUORUM = pct(20)
 
@@ -24,7 +25,7 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
   })
 
   beforeEach('deploy voting', async () => {
-    voting = await deployer.deployAndInitialize({ owner, supportRequired: REQUIRED_SUPPORT, minimumAcceptanceQuorum: MINIMUM_ACCEPTANCE_QUORUM, voteDuration: VOTE_DURATION, overruleWindow: OVERRULE_WINDOW })
+    voting = await deployer.deployAndInitialize({ owner, supportRequired: REQUIRED_SUPPORT, minimumAcceptanceQuorum: MINIMUM_ACCEPTANCE_QUORUM, voteDuration: VOTE_DURATION, overruleWindow: OVERRULE_WINDOW, executionDelay: EXECUTION_DELAY })
   })
 
   describe('changeSupportRequiredPct', () => {
@@ -170,12 +171,12 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
       const from = owner
 
       context('when the new window is valid', () => {
-        const newWindow = DAY
+        const newWindow = DAY * 2
 
         it('changes the overrule window', async () => {
           await voting.changeOverruleWindow(newWindow, { from })
 
-          assert.equal((await voting.overruleWindow()).toString(), newWindow)
+          assertBn(await voting.overruleWindow(), newWindow, 'overrule window does not match')
         })
 
         it('emits an event', async () => {
@@ -206,10 +207,48 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
 
     context('when the sender is not allowed', () => {
       const from = anyone
-      const newWindow = VOTE_DURATION
+      const newWindow = DAY * 2
 
       it('reverts', async () => {
         await assertRevert(voting.changeOverruleWindow(newWindow, { from }), ARAGON_OS_ERRORS.APP_AUTH_FAILED)
+      })
+    })
+  })
+
+  describe('changeExecutionDelay', () => {
+    const newDelay = DAY * 2
+
+    context('when the sender is allowed', () => {
+      const from = owner
+
+      it('changes the overrule window', async () => {
+        await voting.changeExecutionDelay(newDelay, { from })
+
+        assertBn(await voting.executionDelay(), newDelay, 'execution delay does not match')
+      })
+
+      it('emits an event', async () => {
+        const receipt = await voting.changeExecutionDelay(newDelay, { from })
+
+        assertAmountOfEvents(receipt, 'ChangeExecutionDelay')
+        assertEvent(receipt, 'ChangeExecutionDelay', { executionDelay: newDelay })
+      })
+
+      it('does not affect previous created votes', async () => {
+        const { voteId } = await createVote({ voting, from: holder51 })
+
+        await voting.changeExecutionDelay(newDelay, { from })
+
+        const { executionDelay } = await getVoteState(voting, voteId)
+        assertBn(executionDelay, EXECUTION_DELAY, 'execution delay does not match')
+      })
+    })
+
+    context('when the sender is not allowed', () => {
+      const from = anyone
+
+      it('reverts', async () => {
+        await assertRevert(voting.changeExecutionDelay(newDelay, { from }), ARAGON_OS_ERRORS.APP_AUTH_FAILED)
       })
     })
   })

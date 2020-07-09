@@ -9,8 +9,8 @@ module.exports = (web3, artifacts) => {
 
   const getVoteState = async (voting, id) => {
     const isOpen = await voting.isVoteOpen(id)
-    const { executed, startDate, snapshotBlock, supportRequired, minAcceptQuorum, voteOverruleWindow, earlyExecution, yea, nay, votingPower, script } = await voting.getVote(id)
-    return { isOpen, isExecuted: executed, startDate, snapshotBlock, support: supportRequired, quorum: minAcceptQuorum, overruleWindow: voteOverruleWindow, earlyExecution, yeas: yea, nays: nay, votingPower, script }
+    const { executed, startDate, snapshotBlock, supportRequired, minAcceptQuorum, voteOverruleWindow, voteExecutionDelay, earlyExecution, yea, nay, votingPower, script } = await voting.getVote(id)
+    return { isOpen, isExecuted: executed, startDate, snapshotBlock, support: supportRequired, quorum: minAcceptQuorum, overruleWindow: voteOverruleWindow, executionDelay: voteExecutionDelay, earlyExecution, yeas: yea, nays: nay, votingPower, script }
   }
 
   const voteScript = async (actions = 1) => {
