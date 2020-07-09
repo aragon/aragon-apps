@@ -4,7 +4,7 @@ const DisputableWrapper = require('../wrappers/disputable')
 const { NOW, DAY } = require('../lib/time')
 const { utf8ToHex } = require('web3-utils')
 const { bigExp, bn } = require('../lib/numbers')
-const { getEventArgument, getNewProxyAddress } = require('@aragon/contract-helpers-test/events')
+const { getEventArgument, getNewProxyAddress } = require('@aragon/contract-helpers-test/src/utils/events')
 
 const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff'
 const ZERO_ADDR = '0x0000000000000000000000000000000000000000'

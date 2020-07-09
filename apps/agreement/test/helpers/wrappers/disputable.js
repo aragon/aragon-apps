@@ -2,7 +2,7 @@ const AgreementWrapper = require('./agreement')
 
 const { bn } = require('../lib/numbers')
 const { decodeEventsOfType } = require('../lib/decodeEvent')
-const { getEventArgument } = require('@aragon/contract-helpers-test/events')
+const { getEventArgument } = require('@aragon/contract-helpers-test/src/utils/events')
 const { AGREEMENT_EVENTS, DISPUTABLE_EVENTS } = require('../utils/events')
 
 const EMPTY_DATA = '0x'
