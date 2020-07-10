@@ -19,7 +19,7 @@ function useBalanceItems(balances) {
         address,
         amount,
         convertedAmount: convertRates[symbol]
-          ? getConvertedAmount(amount, convertRates[symbol], decimals)
+          ? getConvertedAmount(amount, convertRates[symbol])
           : new BN('-1'),
         decimals,
         symbol,
