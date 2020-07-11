@@ -15,8 +15,8 @@ library SignatureValidator {
         NMode    // 0x04, to check if mode is specified, leave at the end
     }
 
-    // bytes4(keccak256("isValidSignature(bytes,bytes)")
-    bytes4 public constant ERC1271_RETURN_VALID_SIGNATURE = 0x20c13b0b;
+    // bytes4(keccak256("isValidSignature(bytes32,bytes)")
+    bytes4 public constant ERC1271_RETURN_VALID_SIGNATURE = 0x1626ba7e;
     uint256 internal constant ERC1271_ISVALIDSIG_MAX_GAS = 250000;
 
     string private constant ERROR_INVALID_LENGTH_POP_BYTE = "SIGVAL_INVALID_LENGTH_POP_BYTE";

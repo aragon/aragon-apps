@@ -40,6 +40,8 @@ module.exports = (
   const ERC1155_RECEIVER_INTERFACE_ID = '0x4e2312e0'
   const ERC1155_SINGLE_RECEIVED_INTERFACE_ID = '0xf23a6e61'
   const ERC1155_BATCH_RECEIVED_INTERFACE_ID = '0xbc197c81'
+  const ERC1271_RETURN_VALID_SIGNATURE = '0x1626ba7e'
+  const ERC1271_RETURN_INVALID_SIGNATURE = '0x00000000'
 
   const AgentLike = artifacts.require(agentName)
 
@@ -835,9 +837,6 @@ module.exports = (
           ERC1271: '0x03',
           NMode: '0x04',
         }
-
-        const ERC1271_RETURN_VALID_SIGNATURE = '0x20c13b0b'
-        const ERC1271_RETURN_INVALID_SIGNATURE = '0x00000000'
 
         const assertIsValidSignature = (isValid, erc1271Return) => {
           const expectedReturn =
