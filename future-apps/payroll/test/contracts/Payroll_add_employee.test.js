@@ -1,8 +1,9 @@
+const { MAX_UINT64 } = require('@aragon/test-helpers/numbers')(web3)
 const { assertRevert } = require('@aragon/test-helpers/assertThrow')
-const { getEvents, getEventArgument } = require('@aragon/test-helpers/events')
 const { USD, deployDAI } = require('../helpers/tokens')(artifacts, web3)
+const { annualSalaryPerSecond } = require('../helpers/salary')(web3)
+const { getEvents, getEventArgument } = require('@aragon/test-helpers/events')
 const { NOW, TWO_MONTHS, RATE_EXPIRATION_TIME } = require('../helpers/time')
-const { MAX_UINT64, annualSalaryPerSecond } = require('../helpers/numbers')(web3)
 const { deployContracts, createPayrollAndPriceFeed } = require('../helpers/deploy')(artifacts, web3)
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'

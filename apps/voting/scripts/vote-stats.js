@@ -48,12 +48,13 @@ module.exports = async (cb) => {
   const voting = Voting.at(appAddress)
 
   const [
-    isOpen,
     isExecuted,
     startDate,
     snapshotBlock,
     supportRequired,
     minQuorum,
+    overruleWindow,
+    earlyExecution,
     y,
     n,
     votingPower,

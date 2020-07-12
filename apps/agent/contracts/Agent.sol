@@ -1,20 +1,21 @@
 /*
- * SPDX-License-Identitifer:    GPL-3.0-or-later
+ * SPDX-License-Identifier:    GPL-3.0-or-later
  */
 
 pragma solidity 0.4.24;
 
 import "./SignatureValidator.sol";
 import "./standards/IERC165.sol";
-import "./standards/ERC1271.sol";
 import "./standards/IERC721Receiver.sol";
+import "./standards/IERC1155Receiver.sol";
+import "./standards/ERC1271.sol";
 
 import "@aragon/apps-vault/contracts/Vault.sol";
 
 import "@aragon/os/contracts/common/IForwarder.sol";
 
 
-contract Agent is IERC165, IERC721Receiver, ERC1271Bytes, IForwarder, IsContract, Vault {
+contract Agent is IERC165, IERC721Receiver, IERC1155Receiver, ERC1271, IForwarder, IsContract, Vault {
     /* Hardcoded constants to save gas
     bytes32 public constant EXECUTE_ROLE = keccak256("EXECUTE_ROLE");
     bytes32 public constant SAFE_EXECUTE_ROLE = keccak256("SAFE_EXECUTE_ROLE");
@@ -37,6 +38,9 @@ contract Agent is IERC165, IERC721Receiver, ERC1271Bytes, IForwarder, IsContract
 
     bytes4 private constant ERC165_INTERFACE_ID = 0x01ffc9a7;
     bytes4 private constant ERC721_RECEIVED_INTERFACE_ID = 0x150b7a02; // bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))
+    bytes4 private constant ERC1155_RECEIVER_INTERFACE_ID = 0x4e2312e0; // IERC721Receiver.onERC1155Received.selector ^ IERC721Receiver.onERC1155BatchReceived.selector
+    bytes4 private constant ERC1155_SINGLE_RECEIVED_INTERFACE_ID = 0xf23a6e61; // bytes4(keccak256("onERC1155Received(address,address,uint256,uint256,bytes)"))
+    bytes4 private constant ERC1155_BATCH_RECEIVED_INTERFACE_ID = 0xbc197c81; // bytes4(keccak256("onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)"))
 
     string private constant ERROR_TARGET_PROTECTED = "AGENT_TARGET_PROTECTED";
     string private constant ERROR_PROTECTED_TOKENS_MODIFIED = "AGENT_PROTECTED_TOKENS_MODIFIED";
@@ -59,6 +63,7 @@ contract Agent is IERC165, IERC721Receiver, ERC1271Bytes, IForwarder, IsContract
     event PresignHash(address indexed sender, bytes32 indexed hash);
     event SetDesignatedSigner(address indexed sender, address indexed oldSigner, address indexed newSigner);
     event ReceiveERC721(address indexed token, address indexed operator, address indexed from, uint256 tokenId, bytes data);
+    event ReceiveERC1155(address indexed token, address indexed operator, address indexed from, uint256 id, uint256 value, bytes data);
 
     /**
     * @notice Execute '`@radspec(_target, _data)`' on `_target``_ethValue == 0 ? '' : ' (Sending ' + @tokenAmount(0x0000000000000000000000000000000000000000, _ethValue) + ')'`
@@ -200,10 +205,38 @@ contract Agent is IERC165, IERC721Receiver, ERC1271Bytes, IForwarder, IsContract
         emit SetDesignatedSigner(msg.sender, oldDesignatedSigner, _designatedSigner);
     }
 
+    // Token receipient callbacks
+
     function onERC721Received(address _operator, address _from, uint256 _tokenId, bytes _data) external returns (bytes4) {
+        if (!hasInitialized()) {
+            return bytes4(0);
+        }
+
         emit ReceiveERC721(msg.sender, _operator, _from, _tokenId, _data);
 
         return ERC721_RECEIVED_INTERFACE_ID;
+    }
+
+    function onERC1155Received(address _operator, address _from, uint256 _id, uint256 _value, bytes _data) external returns (bytes4) {
+        if (!hasInitialized()) {
+            return bytes4(0);
+        }
+
+        emit ReceiveERC1155(msg.sender, _operator, _from, _id, _value, _data);
+
+        return ERC1155_SINGLE_RECEIVED_INTERFACE_ID;
+    }
+
+    function onERC1155BatchReceived(address _operator, address _from, uint256[] _ids, uint256[] _values, bytes _data) external returns (bytes4) {
+        if (!hasInitialized()) {
+            return bytes4(0);
+        }
+
+        for (uint256 i = 0; i < _ids.length; i++) {
+            emit ReceiveERC1155(msg.sender, _operator, _from, _ids[i], _values[i], _data);
+        }
+
+        return ERC1155_BATCH_RECEIVED_INTERFACE_ID;
     }
 
     // Forwarding fns
@@ -223,11 +256,13 @@ contract Agent is IERC165, IERC721Receiver, ERC1271Bytes, IForwarder, IsContract
      * @param _interfaceId Interface bytes to check
      * @return True if this contract supports the interface
      */
-    function supportsInterface(bytes4 _interfaceId) external pure returns (bool) {
-        return
+    function supportsInterface(bytes4 _interfaceId) external view returns (bool) {
+        return hasInitialized() && (
             _interfaceId == ERC1271_INTERFACE_ID ||
             _interfaceId == ERC721_RECEIVED_INTERFACE_ID ||
-            _interfaceId == ERC165_INTERFACE_ID;
+            _interfaceId == ERC1155_RECEIVER_INTERFACE_ID ||
+            _interfaceId == ERC165_INTERFACE_ID
+        );
     }
 
     /**
@@ -313,7 +348,7 @@ contract Agent is IERC165, IERC721Receiver, ERC1271Bytes, IForwarder, IsContract
     }
 
     function _protectedTokenIndex(address _token) internal view returns (uint256) {
-        for (uint i = 0; i < protectedTokens.length; i++) {
+        for (uint256 i = 0; i < protectedTokens.length; i++) {
             if (protectedTokens[i] == _token) {
               return i;
             }
