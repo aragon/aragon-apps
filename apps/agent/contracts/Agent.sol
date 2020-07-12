@@ -15,7 +15,7 @@ import "@aragon/apps-vault/contracts/Vault.sol";
 import "@aragon/os/contracts/common/IForwarder.sol";
 
 
-contract Agent is IERC165, IERC721Receiver, IERC1155Receiver, ERC1271Bytes, IForwarder, IsContract, Vault {
+contract Agent is IERC165, IERC721Receiver, IERC1155Receiver, ERC1271, IForwarder, IsContract, Vault {
     /* Hardcoded constants to save gas
     bytes32 public constant EXECUTE_ROLE = keccak256("EXECUTE_ROLE");
     bytes32 public constant SAFE_EXECUTE_ROLE = keccak256("SAFE_EXECUTE_ROLE");

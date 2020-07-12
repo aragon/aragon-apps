@@ -11,7 +11,7 @@ contract DesignatedSigner /* is IERC165, ERC1271 */ {
     bool modifyState;
 
     // bytes4(keccak256("isValidSignature(bytes,bytes)")
-    bytes4 constant public ERC1271_RETURN_VALID_SIGNATURE =   0x20c13b0b; // TODO: Likely needs to be updated
+    bytes4 constant public ERC1271_RETURN_VALID_SIGNATURE =   0x1626ba7e;
     bytes4 constant public ERC1271_RETURN_INVALID_SIGNATURE = 0x00000000;
 
     constructor (bool _isInterface, bool _isValid, bool _isValidRevert, bool _modifyState) public {
