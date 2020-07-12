@@ -324,13 +324,13 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     function canVoteOnBehalfOf(uint256 _voteId, address[] _voters, address _representative) external view voteExists(_voteId) returns (bool) {
         Vote storage vote_ = votes[_voteId];
 
-        if (_withinOverruleWindow(vote_)) {
+        if (_withinOverruleWindow(vote_) || !_isVoteOpenForVoting(vote_)) {
             return false;
         }
 
         for (uint256 i = 0; i < _voters.length; i++) {
             address voter = _voters[i];
-            if (!_canVote(vote_, voter) || !_isRepresentativeOf(voter, _representative) || !_hasNotVotedYet(vote_, voter)) {
+            if (!_hasVotingPower(vote_, voter) || !_isRepresentativeOf(voter, _representative) || _hasCastedVote(vote_, voter)) {
                 return false;
             }
         }
@@ -638,7 +638,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
             require(_hasVotingPower(vote_, voter), ERROR_CANNOT_VOTE);
             require(_isRepresentativeOf(voter, msg.sender), ERROR_NOT_REPRESENTATIVE);
 
-            if (_hasNotVotedYet(vote_, voter)) {
+            if (!_hasCastedVote(vote_, voter)) {
                 _castVote(vote_, _voteId, _supports, voter);
                 vote_.casters[voter] = msg.sender;
                 emit ProxyVoteSuccess(_voteId, voter, msg.sender, _supports);
@@ -690,7 +690,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     * @return True if the given voter can participate a certain vote
     */
     function _canVote(Vote storage vote_, address _voter) internal view returns (bool) {
-        return _isVoteOpenForVoting(vote_) && _hasVotingPower(vote_, _voter);
+        return _isVoteOpenForVoting(vote_) && _hasVotingPower(vote_, _voter) && _voteCaster(vote_, _voter) != _voter;
     }
 
     /**
@@ -703,12 +703,12 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     }
 
     /**
-    * @dev Internal function to check if a voter has already voted on a certain vote
+    * @dev Internal function to check if the vote for a voter has already been casted
     *      It assumes the pointer to the vote is valid
-    * @return True if the given voter has not voted on the requested vote
+    * @return True if a vote for the given voter has already been casted
     */
-    function _hasNotVotedYet(Vote storage vote_, address _voter) internal view returns (bool) {
-        return _voteCaster(vote_, _voter) != _voter;
+    function _hasCastedVote(Vote storage vote_, address _voter) internal view returns (bool) {
+        return _voterState(vote_, _voter) != VoterState.Absent;
     }
 
     /**
@@ -800,7 +800,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     *      It assumes the pointer to the vote is valid
     */
     function _voteCaster(Vote storage vote_, address _voter) internal view returns (address) {
-        if (_voterState(vote_, _voter) == VoterState.Absent) {
+        if (!_hasCastedVote(vote_, _voter)) {
             return address(0);
         }
 
@@ -837,6 +837,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
         VoterState state = _voterState(vote_, _voter);
 
         // If voter had previously voted, decrease count
+        // Note that votes can be changed only during the overrule window
         if (state == VoterState.Yea) {
             vote_.yea = vote_.yea.sub(voterStake);
         } else if (state == VoterState.Nay) {

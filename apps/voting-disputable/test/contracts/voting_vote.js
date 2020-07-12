@@ -109,21 +109,13 @@ contract('Voting', ([_, owner, holder1, holder2, holder20, holder29, holder51, n
             assert.equal(voterState, VOTER_STATE.NAY, 'holder29 should have nay voter status')
           })
 
-          it('holder can modify vote', async () => {
+          it('holder can not modify vote', async () => {
             await voting.vote(voteId, true, { from: holder29 })
             const firstTime = await getVoteState(voting, voteId)
             assertBn(firstTime.nays, 0, 'nay vote should have been removed')
             assertBn(firstTime.yeas, bigExp(29, 18), 'yea vote should have been counted')
 
-            await voting.vote(voteId, false, { from: holder29 })
-            const secondTime = await getVoteState(voting, voteId)
-            assertBn(secondTime.nays, bigExp(29, 18), 'nay vote should have been removed')
-            assertBn(secondTime.yeas, 0, 'yea vote should have been counted')
-
-            await voting.vote(voteId, true, { from: holder29 })
-            const thirdTime = await getVoteState(voting, voteId)
-            assertBn(thirdTime.nays, 0, 'nay vote should have been removed')
-            assertBn(thirdTime.yeas, bigExp(29, 18), 'yea vote should have been counted')
+            await assertRevert(voting.vote(voteId, false, { from: holder29 }), VOTING_ERRORS.VOTING_CANNOT_VOTE)
           })
 
           it('token transfers dont affect voting', async () => {
