@@ -15,12 +15,6 @@ Each of the individual apps come with a frontend that is intended to be installe
 
 You can read more about how each of the individual apps work in the [Aragon user guide](https://help.aragon.org/category/15-aragon-apps).
 
-## Coming soon apps
-
-The following apps are still under development, and not ready for production deployment yet:
-
-- **[Payroll](future-apps/payroll)**: Manages employees' payrolls.
-
 ## Quick start
 
 ```

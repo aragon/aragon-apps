@@ -10,7 +10,6 @@ cache:
     - apps/token-manager/app/node_modules
     - apps/vault/node_modules
     - apps/voting/node_modules
-    - future-apps/payroll/node_modules
     - shared/migrations/node_modules
     - shared/minime/node_modules
     - shared/test-helpers/node_modules
@@ -24,8 +23,6 @@ env:
 install:
   - travis_wait 60 npm install
 jobs:
-  allow_failures:
-    - script: npm run coverage:payroll
   include:
     - stage: tests
       script: npm run lint
@@ -36,8 +33,6 @@ jobs:
       name: "Agent"
     - script: npm run test:finance
       name: "Finance"
-    - script: npm run test:payroll:except:payday
-      name: "Payroll except payday"
     - script: npm run test:token-manager
       name: "Token Manager"
     - script: npm run test:token-manager:app
@@ -58,17 +53,11 @@ jobs:
       name: "Agent"
     - script: npm run coverage:finance
       name: "Finance"
-    - script: npm run coverage:payroll
-      name: "Payroll"
     - script: npm run coverage:token-manager
       name: "Token Manager"
     - script: npm run coverage:vault
       name: "Vault"
     - script: npm run coverage:voting
       name: "Voting"
-
-    - stage: integration
-      script: npm run test:payroll:only:payday
-      name: "Payroll payday"
 after_success:
   - ./node_modules/.bin/lcov-result-merger 'apps/*/coverage/lcov.info' | ./node_modules/.bin/coveralls
