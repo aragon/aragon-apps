@@ -2,6 +2,7 @@ import React from 'react'
 import styled from 'styled-components'
 import BN from 'bn.js'
 import {
+  addressesEqual,
   Button,
   Field,
   IconCross,
@@ -25,7 +26,7 @@ import {
   tokenDataOverride,
   getTokenSymbol,
 } from '../../lib/token-utils'
-import { addressesEqual, isAddress } from '../../lib/web3-utils'
+import { isAddress } from '../../lib/web3-utils'
 import AmountInput from '../AmountInput'
 import ToggleContent from '../ToggleContent'
 import TokenSelector from './TokenSelector'

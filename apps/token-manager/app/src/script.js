@@ -1,6 +1,6 @@
 import Aragon, { events } from '@aragon/api'
+import { addressesEqual }  from '@aragon/ui'
 import tokenSettings, { hasLoadedTokenSettings } from './token-settings'
-import { addressesEqual } from './web3-utils'
 import tokenAbi from './abi/minimeToken.json'
 
 const app = new Aragon()

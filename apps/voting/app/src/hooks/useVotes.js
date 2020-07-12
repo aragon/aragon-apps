@@ -1,8 +1,9 @@
 import { useMemo } from 'react'
 import { useAppState, useCurrentApp, useInstalledApps } from '@aragon/api-react'
+import { shortenAddress } from '@aragon/ui'
 import { isVoteOpen } from '../vote-utils'
 import { VOTE_ABSENT } from '../vote-types'
-import { EMPTY_ADDRESS, shortenAddress } from '../web3-utils'
+import { EMPTY_ADDRESS } from '../web3-utils'
 import useNow from './useNow'
 
 // Decorate the votes array with more information relevant to the frontend

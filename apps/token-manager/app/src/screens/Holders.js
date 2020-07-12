@@ -12,12 +12,12 @@ import {
   IconLabel,
   IconRemove,
   Split,
+  addressesEqual,
   formatTokenAmount,
   textStyle,
   useLayout,
   useTheme,
 } from '@aragon/ui'
-import { addressesEqual } from '../web3-utils'
 import InfoBoxes from '../components/InfoBoxes'
 import LocalIdentityBadge from '../components/LocalIdentityBadge/LocalIdentityBadge'
 import { useIdentity } from '../components/IdentityManager/IdentityManager'

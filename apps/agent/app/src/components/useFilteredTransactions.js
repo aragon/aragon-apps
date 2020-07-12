@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo } from 'react'
 import { endOfDay, isWithinInterval, startOfDay } from 'date-fns'
+import { addressesEqual } from '@aragon/ui'
 import { TRANSACTION_TYPES } from '../transaction-types'
-import { addressesEqual } from '../lib/web3-utils'
 
 const INITIAL_DATE_RANGE = { start: null, end: null }
 const INITIAL_TRANSACTION_TYPE = -1
