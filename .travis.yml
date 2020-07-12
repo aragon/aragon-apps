@@ -6,7 +6,6 @@ cache:
     - apps/agreement/node_modules
     - apps/agent/node_modules
     - apps/finance/node_modules
-    - apps/survey/node_modules
     - apps/token-manager/node_modules
     - apps/token-manager/app/node_modules
     - apps/vault/node_modules
@@ -39,8 +38,6 @@ jobs:
       name: "Finance"
     - script: npm run test:payroll:except:payday
       name: "Payroll except payday"
-    - script: npm run test:survey
-      name: "Survey"
     - script: npm run test:token-manager
       name: "Token Manager"
     - script: npm run test:token-manager:app
@@ -63,8 +60,6 @@ jobs:
       name: "Finance"
     - script: npm run coverage:payroll
       name: "Payroll"
-    - script: npm run coverage:survey
-      name: "Survey"
     - script: npm run coverage:token-manager
       name: "Token Manager"
     - script: npm run coverage:vault
