@@ -284,7 +284,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     */
     function canClose(uint256 _voteId) external view voteExists(_voteId) returns (bool) {
         Vote storage vote_ = votes[_voteId];
-        return (_isActive(vote_) || _isExecuted(vote_)) && getTimestamp64() >= _voteEndDate(vote_);
+        return (_isActive(vote_) || _isExecuted(vote_)) && !_isOpen(vote_);
     }
 
     // Getter fns
@@ -654,13 +654,13 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     * @return True if the given vote can be executed
     */
     function _canExecute(Vote storage vote_) internal view returns (bool) {
-        // If vote is already executed, it cannot be executed again
-        if (_isExecuted(vote_)) {
+        // If vote is executed, paused, or cancelled, it cannot be executed
+        if (!_isActive(vote_)) {
             return false;
         }
 
         // If the vote is still open, it cannot be executed
-        if (_isVoteOpenForVoting(vote_)) {
+        if (_isOpen(vote_)) {
             return false;
         }
 
@@ -750,12 +750,22 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     }
 
     /**
+    * @dev Tell whether a vote is open
+    *      It assumes the pointer to the vote is valid
+    * @param vote_ Vote action instance being queried
+    * @return True if the given vote is open
+    */
+    function _isOpen(Vote storage vote_) internal view returns (bool) {
+        return getTimestamp64() < _voteEndDate(vote_);
+    }
+
+    /**
     * @dev Internal function to check if a vote is still open for voting
     *      It assumes the pointer to the vote is valid
     * @return True if the given vote is open
     */
     function _isVoteOpenForVoting(Vote storage vote_) internal view returns (bool) {
-        return _isActive(vote_) && getTimestamp64() < _voteEndDate(vote_);
+        return _isActive(vote_) && _isOpen(vote_);
     }
 
     /**

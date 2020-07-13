@@ -4,6 +4,7 @@ const { RULINGS } = require('@aragon/apps-agreement/test/helpers/utils/enums')
 const { assertBn } = require('@aragon/apps-agreement/test/helpers/assert/assertBn')
 const { bigExp, bn } = require('@aragon/apps-agreement/test/helpers/lib/numbers')
 const { assertRevert } = require('@aragon/apps-agreement/test/helpers/assert/assertThrow')
+const { VOTING_ERRORS } = require('../helpers/errors')
 const { pct, createVote, voteScript, getVoteState } = require('../helpers/voting')(web3, artifacts)
 
 const votingDeployer = require('../helpers/deployer')(web3, artifacts)
@@ -126,6 +127,7 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
 
     beforeEach('challenge vote', async () => {
       currentTimestamp = await voting.getTimestampPublic()
+      await voting.vote(voteId, true, { from: voter51 })
       await agreement.challenge({ actionId })
     })
 
@@ -141,17 +143,17 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
     it('does not allow a voter to vote', async () => {
       assert.isFalse(await voting.canVote(voteId, voter49), 'voter can vote')
 
-      await assertRevert(voting.vote(voteId, false, { from: voter49 }), 'VOTING_CANNOT_VOTE')
+      await assertRevert(voting.vote(voteId, false, { from: voter49 }), VOTING_ERRORS.VOTING_CANNOT_VOTE)
     })
 
     it('does not allow to execute the vote', async () => {
       assert.isFalse(await voting.canExecute(voteId), 'voting can be executed')
-      await assertRevert(voting.executeVote(voteId), 'VOTING_CANNOT_EXECUTE')
+      await assertRevert(voting.executeVote(voteId), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
 
       await voting.mockIncreaseTime(VOTING_DURATION)
 
       assert.isFalse(await voting.canExecute(voteId), 'voting can be executed')
-      await assertRevert(voting.executeVote(voteId), 'VOTING_CANNOT_EXECUTE')
+      await assertRevert(voting.executeVote(voteId), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
     })
 
     it('marks the vote as closed', async () => {
@@ -171,6 +173,7 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
 
     beforeEach('challenge vote', async () => {
       pauseTimestamp = await voting.getTimestampPublic()
+      await voting.vote(voteId, true, { from: voter51 })
       await agreement.challenge({ actionId })
 
       currentTimestamp = pauseTimestamp.add(bn(DAY))
@@ -188,8 +191,8 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
       })
 
       it('allows voter to vote and execute', async () => {
-        assert.isTrue(await voting.canVote(voteId, voter51), 'voter cannot vote')
-        await voting.vote(voteId, true, { from: voter51 })
+        assert.isTrue(await voting.canVote(voteId, voter49), 'voter cannot vote')
+        await voting.vote(voteId, true, { from: voter49 })
         await voting.mockIncreaseTime(VOTING_DURATION)
 
         assert.isTrue(await voting.canExecute(voteId), 'voting cannot be executed')
@@ -257,6 +260,7 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
 
     beforeEach('challenge vote', async () => {
       pauseTimestamp = await voting.getTimestampPublic()
+      await voting.vote(voteId, true, { from: voter51 })
       await agreement.challenge({ actionId })
 
       currentTimestamp = pauseTimestamp.add(bn(DAY))
@@ -276,13 +280,17 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
       it('does not allow a voter to vote', async () => {
         assert.isFalse(await voting.canVote(voteId, voter49), 'voter can vote')
 
-        await assertRevert(voting.vote(voteId, false, { from: voter49 }), 'VOTING_CANNOT_VOTE')
+        await assertRevert(voting.vote(voteId, false, { from: voter49 }), VOTING_ERRORS.VOTING_CANNOT_VOTE)
       })
 
       it('does not allow to execute the vote', async () => {
         assert.isFalse(await voting.canExecute(voteId), 'voting can be executed')
+        await assertRevert(voting.executeVote(voteId), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
 
-        await assertRevert(voting.executeVote(voteId), 'VOTING_CANNOT_EXECUTE')
+        await voting.mockIncreaseTime(VOTING_DURATION)
+
+        assert.isFalse(await voting.canExecute(voteId), 'voting can be executed')
+        await assertRevert(voting.executeVote(voteId), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
       })
 
       it('marks the vote as closed', async () => {
