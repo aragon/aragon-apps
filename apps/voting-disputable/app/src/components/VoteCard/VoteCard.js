@@ -41,8 +41,7 @@ function VoteCard({ vote, onOpen }) {
   } = vote
 
   //TODO: Remove this once we have real data
-  vote.disputable = getDisputableVoteById(voteId)
-
+  vote.disputable.action = getDisputableVoteById(voteId)
   const { votingPower, yea, nay } = numData
   const { open, metadata, description, endDate } = data
   const options = useMemo(

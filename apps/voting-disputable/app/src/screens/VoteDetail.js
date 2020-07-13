@@ -44,7 +44,6 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
   const { layoutName } = useLayout()
   const { tokenSymbol } = useAppState()
   const connectedAccount = useConnectedAccount()
-
   const {
     connectedAccountVote,
     data,
@@ -53,8 +52,8 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
     voteId,
   } = vote
 
-  //TODO: get real disputable vote info. this is temporary
-  vote.disputable = getDisputableVoteById(vote.voteId)
+  //TODO: Remove this once we have real data
+  vote.disputable.action = getDisputableVoteById(voteId)
 
   const { minAcceptQuorum, supportRequired, yea, nay } = numData
   const { creator, description, metadata, open, path: executionPath } = data
