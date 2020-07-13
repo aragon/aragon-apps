@@ -54,7 +54,7 @@ function useFilteredTransactions({ transactions, tokens }) {
           return false
         }
 
-        // filter separately by start and end date
+        // Filter separately by start and end date
         if (
           selectedDateRange.start &&
           isBefore(new Date(date), startOfDay(selectedDateRange.start))
