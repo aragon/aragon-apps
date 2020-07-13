@@ -1125,8 +1125,7 @@ contract Agreement is IAgreement, AragonApp {
             return false;
         }
 
-        // TODO: update with new ACL version: no need to pass challenger address by parameter
-        bytes memory params = ConversionHelpers.dangerouslyCastUintArrayToBytes(arr(_challenger));
+        bytes memory params = new bytes(0);
         return currentKernel.hasPermission(_challenger, address(_disputable), CHALLENGE_ROLE, params);
     }
 
