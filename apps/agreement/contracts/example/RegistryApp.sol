@@ -137,7 +137,7 @@ contract Registry is DisputableAragonApp {
     */
     function canForward(address _sender, bytes _data) public view returns (bool) {
         (bytes32 id,) = _decodeData(_data);
-        return canPerform(_sender, REGISTER_ENTRY_ROLE, arr(_sender, uint256(id)));
+        return canPerform(_sender, REGISTER_ENTRY_ROLE, arr(uint256(id)));
     }
 
     /**
