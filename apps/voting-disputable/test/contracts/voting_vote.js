@@ -5,19 +5,21 @@ const { assertBn } = require('@aragon/apps-agreement/test/helpers/assert/assertB
 const { bn, bigExp } = require('@aragon/apps-agreement/test/helpers/lib/numbers')
 const { assertRevert } = require('@aragon/apps-agreement/test/helpers/assert/assertThrow')
 const { VOTING_ERRORS } = require('../helpers/errors')
-const { pct, createVote, voteScript, getVoteState } = require('../helpers/voting')(web3, artifacts)
+const { pct, createVote, getVoteState } = require('../helpers/voting')(web3, artifacts)
+const { assertEvent, assertAmountOfEvents } = require('@aragon/apps-agreement/test/helpers/assert/assertEvent')
 
 const deployer = require('../helpers/deployer')(web3, artifacts)
 
-contract('Voting', ([_, owner, holder20, holder29, holder51, nonHolder]) => {
+contract('Voting', ([_, owner, holder20, holder29, holder51, nonHolder, representative]) => {
   let voting, token
 
   const CONTEXT = '0xabcdef'
   const VOTE_DURATION = 5 * DAY
   const OVERRULE_WINDOW = DAY
   const EXECUTION_DELAY = 0
-  const REQUIRED_SUPPORT = pct(50)
-  const MINIMUM_ACCEPTANCE_QUORUM = pct(20)
+  const QUIET_ENDING_PERIOD = 2 * DAY
+  const REQUIRED_SUPPORT = pct(10)
+  const MINIMUM_ACCEPTANCE_QUORUM = pct(5)
 
   beforeEach('deploy and mint tokens', async () => {
     token = await deployer.deployToken({})
@@ -27,7 +29,7 @@ contract('Voting', ([_, owner, holder20, holder29, holder51, nonHolder]) => {
   })
 
   beforeEach('deploy voting', async () => {
-    voting = await deployer.deployAndInitialize({ owner, minimumAcceptanceQuorum: MINIMUM_ACCEPTANCE_QUORUM, requiredSupport: REQUIRED_SUPPORT, voteDuration: VOTE_DURATION, overruleWindow: OVERRULE_WINDOW, executionDelay: EXECUTION_DELAY })
+    voting = await deployer.deployAndInitialize({ owner, minimumAcceptanceQuorum: MINIMUM_ACCEPTANCE_QUORUM, requiredSupport: REQUIRED_SUPPORT, voteDuration: VOTE_DURATION, overruleWindow: OVERRULE_WINDOW, quietEndingPeriod: QUIET_ENDING_PERIOD, executionDelay: EXECUTION_DELAY })
   })
 
   describe('vote', () => {
@@ -37,49 +39,227 @@ contract('Voting', ([_, owner, holder20, holder29, holder51, nonHolder]) => {
       ({ voteId } = await createVote({ voting, voteContext: CONTEXT, from: holder51 }))
     })
 
-    it('holder can vote', async () => {
-      await voting.vote(voteId, false, { from: holder29 })
-      const { nays } = await getVoteState(voting, voteId)
-      const voterState = await voting.getVoterState(voteId, holder29)
+    context('when the sender has some balance', () => {
+      const from = holder29
+      const expectedBalance = bigExp(29, 18)
 
-      assertBn(nays, bigExp(29, 18), 'nay vote should have been counted')
-      assert.equal(voterState, VOTER_STATE.NAY, 'holder29 should have nay voter status')
+      context('when the vote is open', () => {
+        context('when no one voted before', () => {
+          const itDoesNotExtendTheVoteDuration = () => {
+            it('does not extend the vote duration', async () => {
+              const receipt = await voting.vote(voteId, true, { from })
+              assertAmountOfEvents(receipt, 'VoteQuietEndingExtension', 0)
+            })
+          }
+
+          it('can vote', async () => {
+            await voting.vote(voteId, false, { from })
+            const { nays } = await getVoteState(voting, voteId)
+            const voterState = await voting.getVoterState(voteId, from)
+
+            assertBn(nays, expectedBalance, 'nay vote should have been counted')
+            assert.equal(voterState, VOTER_STATE.NAY, 'should have nay voter status')
+          })
+
+          it('emits an event', async () => {
+            const receipt = await voting.vote(voteId, true, { from })
+
+            await assertAmountOfEvents(receipt, 'CastVote')
+            await assertEvent(receipt, 'CastVote', { voteId, voter: from, supports: true, stake: expectedBalance })
+          })
+
+          it('cannot modify vote', async () => {
+            await voting.vote(voteId, true, { from })
+            const firstTime = await getVoteState(voting, voteId)
+            assertBn(firstTime.nays, 0, 'nay vote should have been removed')
+            assertBn(firstTime.yeas, expectedBalance, 'yea vote should have been counted')
+
+            await assertRevert(voting.vote(voteId, false, { from }), VOTING_ERRORS.VOTING_CANNOT_VOTE)
+          })
+
+          it('token transfers dont affect voting', async () => {
+            await token.transfer(nonHolder, expectedBalance, { from })
+
+            await voting.vote(voteId, true, { from })
+            const { yeas } = await getVoteState(voting, voteId)
+
+            assertBn(yeas, expectedBalance, 'yea vote should have been counted')
+            assert.equal(await token.balanceOf(from), 0, 'balance should be 0 at current block')
+
+            await assertRevert(voting.vote(voteId, false, { from: nonHolder }), VOTING_ERRORS.VOTING_CANNOT_VOTE)
+          })
+
+          context('when casted before the quiet ending period', () => {
+            itDoesNotExtendTheVoteDuration()
+          })
+
+          context('when casted during the quiet ending period', () => {
+            beforeEach('move to the middle of the quiet ending period', async () => {
+              await voting.mockIncreaseTime(VOTE_DURATION - QUIET_ENDING_PERIOD / 2)
+            })
+
+            itDoesNotExtendTheVoteDuration()
+          })
+        })
+
+        context('when someone voted before', () => {
+          const previousSupport = false
+          const previousNays = bigExp(20, 18)
+
+          const itHandlesQuietEndingProperly = () => {
+            const itHandlesVoteDurationProperly = extendsWhenFlipped => {
+              const itCanVote = support => {
+                it('can vote', async () => {
+                  await voting.vote(voteId, support, { from })
+                  const { yeas, nays } = await getVoteState(voting, voteId)
+                  const voterState = await voting.getVoterState(voteId, from)
+
+                  if (support) {
+                    assertBn(yeas, expectedBalance, 'yea vote should have been counted')
+                    assert.equal(voterState, VOTER_STATE.YEA, 'should have yea voter status')
+                  } else {
+                    assertBn(nays, previousNays.add(expectedBalance), 'nay vote should have been counted')
+                    assert.equal(voterState, VOTER_STATE.NAY, 'should have nay voter status')
+                  }
+                })
+              }
+
+              const itDoesNotExtendTheVoteDuration = support => {
+                it('does not extend the vote duration', async () => {
+                  const receipt = await voting.vote(voteId, support, { from })
+                  assertAmountOfEvents(receipt, 'VoteQuietEndingExtension', 0)
+                })
+              }
+
+              context('when the outcome is not flipped', () => {
+                const support = previousSupport
+
+                itCanVote(support)
+
+                itDoesNotExtendTheVoteDuration(support)
+              })
+
+              context('when the outcome is flipped', () => {
+                const support = !previousSupport
+
+                itCanVote(support)
+
+                if (extendsWhenFlipped) {
+                  it('extends the vote duration', async () => {
+                    const receipt = await voting.vote(voteId, support, { from })
+
+                    assertAmountOfEvents(receipt, 'VoteQuietEndingExtension')
+                    assertEvent(receipt, 'VoteQuietEndingExtension', { voteId, passing: support })
+                  })
+                } else {
+                  itDoesNotExtendTheVoteDuration(support)
+                }
+              })
+            }
+
+            const itReverts = () => {
+              it('reverts', async () => {
+                await assertRevert(voting.vote(voteId, true, { from }), VOTING_ERRORS.VOTING_CANNOT_VOTE)
+              })
+            }
+
+            context('when the vote is cast before the quiet ending period', () => {
+              const extendsWhenFlipped = false
+
+              beforeEach('move before the quiet ending period', async () => {
+                await voting.mockIncreaseTime(VOTE_DURATION - QUIET_ENDING_PERIOD - 1)
+              })
+
+              itHandlesVoteDurationProperly(extendsWhenFlipped)
+            })
+
+            context('when the vote is cast at the beginning of the quiet ending period', () => {
+              const extendsWhenFlipped = true
+
+              beforeEach('move at the beginning of the quiet ending period', async () => {
+                await voting.mockIncreaseTime(VOTE_DURATION - QUIET_ENDING_PERIOD)
+              })
+
+              itHandlesVoteDurationProperly(extendsWhenFlipped)
+            })
+
+            context('when the vote is cast during the quiet ending period', () => {
+              const extendsWhenFlipped = true
+
+              beforeEach('move to the middle of the quiet ending period', async () => {
+                await voting.mockIncreaseTime(VOTE_DURATION - QUIET_ENDING_PERIOD / 2)
+              })
+
+              itHandlesVoteDurationProperly(extendsWhenFlipped)
+            })
+
+            context('when the vote is cast at the end of the quiet ending period', () => {
+              beforeEach('move at the end of the quiet ending period', async () => {
+                await voting.mockIncreaseTime(VOTE_DURATION)
+              })
+
+              itReverts()
+            })
+
+            context('when the vote is cast after the quiet ending period', () => {
+              beforeEach('move after the quiet ending period', async () => {
+                await voting.mockIncreaseTime(VOTE_DURATION + 1)
+              })
+
+              itReverts()
+            })
+          }
+
+          context('when casting a normal vote', () => {
+            beforeEach('vote', async () => {
+              await voting.vote(voteId, previousSupport, { from: holder20 })
+            })
+
+            itHandlesQuietEndingProperly()
+          })
+
+          context('when overruling a previous vote', () => {
+            beforeEach('delegate vote', async () => {
+              await voting.vote(voteId, previousSupport, { from: holder20 })
+              await voting.setRepresentative(representative, { from })
+              await voting.voteOnBehalfOf(voteId, previousSupport, [from], { from: representative })
+            })
+
+            itHandlesQuietEndingProperly()
+          })
+        })
+      })
+
+      context('when the vote is closed', () => {
+        beforeEach('close vote', async () => {
+          await voting.vote(voteId, true, { from: holder51 })
+          await voting.mockIncreaseTime(VOTE_DURATION)
+        })
+
+        context('when the vote was not executed', () => {
+          it('reverts', async () => {
+            await assertRevert(voting.vote(voteId, true, { from }), VOTING_ERRORS.VOTING_CANNOT_VOTE)
+          })
+        })
+
+        context('when the vote was executed', () => {
+          beforeEach('execute vote', async () => {
+            await voting.executeVote(voteId)
+          })
+
+          it('reverts', async () => {
+            await assertRevert(voting.vote(voteId, true, { from }), VOTING_ERRORS.VOTING_CANNOT_VOTE)
+          })
+        })
+      })
     })
 
-    it('holder can not modify vote', async () => {
-      await voting.vote(voteId, true, { from: holder29 })
-      const firstTime = await getVoteState(voting, voteId)
-      assertBn(firstTime.nays, 0, 'nay vote should have been removed')
-      assertBn(firstTime.yeas, bigExp(29, 18), 'yea vote should have been counted')
+    context('when the sender does not have balance', () => {
+      const from = nonHolder
 
-      await assertRevert(voting.vote(voteId, false, { from: holder29 }), VOTING_ERRORS.VOTING_CANNOT_VOTE)
-    })
-
-    it('token transfers dont affect voting', async () => {
-      await token.transfer(nonHolder, bigExp(29, 18), { from: holder29 })
-
-      await voting.vote(voteId, true, { from: holder29 })
-      const { yeas } = await getVoteState(voting, voteId)
-
-      assertBn(yeas, bigExp(29, 18), 'yea vote should have been counted')
-      assert.equal(await token.balanceOf(holder29), 0, 'balance should be 0 at current block')
-    })
-
-    it('throws when non-holder votes', async () => {
-      await assertRevert(voting.vote(voteId, true, { from: nonHolder }), VOTING_ERRORS.VOTING_CANNOT_VOTE)
-    })
-
-    it('throws when voting after voting closes', async () => {
-      await voting.mockIncreaseTime(VOTE_DURATION)
-      await assertRevert(voting.vote(voteId, true, { from: holder29 }), VOTING_ERRORS.VOTING_CANNOT_VOTE)
-    })
-
-    it('cannot vote on executed vote', async () => {
-      await voting.vote(voteId, true, { from: holder51 })
-      await voting.mockIncreaseTime(VOTE_DURATION)
-      await voting.executeVote(voteId)
-
-      await assertRevert(voting.vote(voteId, true, { from: holder20 }), VOTING_ERRORS.VOTING_CANNOT_VOTE)
+      it('reverts', async () => {
+        await assertRevert(voting.vote(voteId, true, { from }), VOTING_ERRORS.VOTING_CANNOT_VOTE)
+      })
     })
   })
 

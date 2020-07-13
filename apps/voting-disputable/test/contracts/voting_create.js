@@ -19,6 +19,8 @@ contract('Voting', ([_, owner, holder1, holder2, holder20, holder29, holder51, n
   const VOTE_DURATION = 5 * DAY
   const OVERRULE_WINDOW = DAY
   const EXECUTION_DELAY = 0
+  const QUIET_ENDING_PERIOD = DAY
+  const QUIET_ENDING_EXTENSION = DAY / 2
   const REQUIRED_SUPPORT = pct(50)
   const MINIMUM_ACCEPTANCE_QUORUM = pct(20)
 
@@ -45,7 +47,7 @@ contract('Voting', ([_, owner, holder1, holder2, holder20, holder29, holder51, n
     context('when the app was initialized', () => {
       beforeEach('initialize voting', async () => {
         token = await deployer.deployToken({})
-        voting.initialize(token.address, REQUIRED_SUPPORT, MINIMUM_ACCEPTANCE_QUORUM, VOTE_DURATION, OVERRULE_WINDOW, EXECUTION_DELAY)
+        await voting.initialize(token.address, REQUIRED_SUPPORT, MINIMUM_ACCEPTANCE_QUORUM, VOTE_DURATION, OVERRULE_WINDOW, QUIET_ENDING_PERIOD, QUIET_ENDING_EXTENSION, EXECUTION_DELAY)
       })
 
       context('when there is some supply', () => {
