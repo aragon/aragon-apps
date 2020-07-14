@@ -499,7 +499,7 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     function canForward(address _sender, bytes) public view returns (bool) {
         // TODO: Handle the case where a Disputable app doesn't have an Agreement set
         // Note that `canPerform()` implicitly does an initialization check itself
-        return canPerform(_sender, CREATE_VOTES_ROLE, arr(_sender));
+        return canPerform(_sender, CREATE_VOTES_ROLE, arr());
     }
 
     // DisputableAragonApp callback implementations

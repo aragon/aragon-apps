@@ -469,7 +469,7 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
       const voters = accounts.slice(accounts.length - MAX_DELEGATES_PER_TX, accounts.length)
 
       for (let i = 0; i < voters.length; i++) {
-        await token.generateTokens(voters[i], bigExp(2, 18), { from: owner })
+        await token.generateTokens(voters[i], bigExp(2, 18))
         await voting.setRepresentative(representative, { from: voters[i] })
       }
 
