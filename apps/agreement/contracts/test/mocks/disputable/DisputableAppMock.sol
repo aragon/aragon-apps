@@ -91,7 +91,7 @@ contract DisputableAppMock is DisputableAragonApp, TimeHelpersMock {
     * @return True if the given address can submit actions, false otherwise
     */
     function canForward(address _sender, bytes) public view returns (bool) {
-        return canPerform(_sender, SUBMIT_ROLE, arr(_sender));
+        return canPerform(_sender, SUBMIT_ROLE, arr());
     }
 
     /**

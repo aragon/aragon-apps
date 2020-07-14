@@ -7,6 +7,7 @@ import "@aragon/os/contracts/lib/arbitration/IAragonAppFeesCashier.sol";
 
 contract AragonAppFeesCashierMock is IAragonAppFeesCashier, EtherTokenConstant, IsContract {
     string private constant ERROR_WRONG_TOKEN = "AAFC_WRONG_TOKEN";
+    string private constant ERROR_NON_ZERO_VALUE = "AAFC_NON_ZERO_VALUE";
 
     ERC20 internal token;
     uint256 internal amount;
@@ -41,7 +42,8 @@ contract AragonAppFeesCashierMock is IAragonAppFeesCashier, EtherTokenConstant, 
         }
     }
 
-    function payAppFees(bytes32, bytes) external {
+    function payAppFees(bytes32, bytes) external payable {
+        require(msg.value == 0, ERROR_NON_ZERO_VALUE);
         token.transferFrom(msg.sender, address(this), amount);
     }
 
