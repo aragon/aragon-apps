@@ -11,11 +11,13 @@ import {
   useTheme,
 } from '@aragon/ui'
 import DisputableActions from './DisputableActions'
+import DisputablePeriod from './DisputablePeriod'
 import DisputableStatusLabel from '../DisputableStatusLabel'
 import { getAgreement } from '../../agreementsMockData'
-import { DISPUTABLE_VOTE_STATUSES } from '../../disputable-vote-statuses'
-
-const formatDate = date => `${format(date, 'yyyy-MM-dd, HH:mm')}`
+import {
+  DISPUTABLE_VOTE_STATUSES,
+  VOTE_STATUS_PAUSED,
+} from '../../disputable-vote-statuses'
 
 function hasDispute(vote) {
   return (
@@ -33,6 +35,9 @@ function DisputableActionStatus({ vote }) {
   const { challengeAmount, collateralToken } = vote.disputable.action.collateral
   const disputableStatus =
     vote.disputable && DISPUTABLE_VOTE_STATUSES.get(vote.disputable.status)
+
+  const challenged =
+    DISPUTABLE_VOTE_STATUSES.get(vote.disputable.status) === VOTE_STATUS_PAUSED
 
   return (
     <Box heading="Disputable Action Status">
@@ -60,26 +65,14 @@ function DisputableActionStatus({ vote }) {
             </span>
           </div>
         </Item>
-        <Item label="Challenge period">
-          {new Date().getTime() > vote.disputable.action.endDate ? (
-            formatDate(vote.disputable.action.endDate)
-          ) : (
-            <div
-              css={`
-                display: inline-flex;
-              `}
-            >
-              <Timer end={new Date(vote.disputable.action.endDate)} />{' '}
-              <div
-                css={`
-                  padding-left: ${1 * GU}px;
-                  color: ${theme.contentSecondary};
-                `}
-              >
-                (48h)
-              </div>
-            </div>
-          )}
+        <Item label={challenged ? 'Settlement period' : 'Challenge period'}>
+          <DisputablePeriod
+            startDate={
+              challenged
+                ? vote.disputable.pausedAt * 1000
+                : new Date(vote.data.startDate).getTime()
+            }
+          />
         </Item>
         <Item label="Agreement">
           <Link>{agreement.agreementTitle}</Link>
