@@ -15,7 +15,7 @@
     "test": "TRUFFLE_TEST=true npm run ganache-cli:test",
     "test:gas": "GAS_REPORTER=true npm test",
     "coverage": "SOLIDITY_COVERAGE=true npm run ganache-cli:test",
-    "ganache-cli:test": "./node_modules/@aragon/contract-test-helpers/ganache-cli.sh",
+    "ganache-cli:test": "./node_modules/@aragon/contract-helpers-test/ganache-cli.sh",
     "abi:extract": "truffle-extract --output abi/ --keys abi",
     "prepublishOnly": "truffle compile --all && npm run abi:extract -- --no-compile",
     "apm:prepublish": "npm run compile",
@@ -30,7 +30,6 @@
   "devDependencies": {
     "@aragon/apps-shared-migrations": "1.0.0",
     "@aragon/cli": "^7.1.3",
-    "@aragon/contract-test-helpers": "^0.0.1",
     "@aragon/contract-helpers-test": "^0.0.3",
     "@aragon/minime": "^1.0.0",
     "@aragon/staking": "^0.2.3",
