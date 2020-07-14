@@ -4,6 +4,7 @@ import BN from 'bn.js'
 import { GU, Help, formatTokenAmount, textStyle, useTheme } from '@aragon/ui'
 import { useNetwork } from '@aragon/api-react'
 import { tokenIconUrl } from '../lib/icon-utils'
+
 function BalanceToken({
   address,
   amount,
@@ -15,6 +16,7 @@ function BalanceToken({
 }) {
   const theme = useTheme()
   const network = useNetwork()
+
   const amountFormatted = formatTokenAmount(amount, decimals, {
     digits: decimals,
   })
@@ -22,6 +24,7 @@ function BalanceToken({
     digits: 3,
   })
   const amountWasRounded = amountFormatted !== amountFormattedRounded
+
   return (
     <div css="display: inline-block">
       <div
