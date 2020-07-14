@@ -1,11 +1,11 @@
 const VOTER_STATE = require('../helpers/state')
-const getBlockNumber = require('@aragon/contract-test-helpers/blockNumber')(web3)
+const getBlockNumber = require('@aragon/contract-helpers-test/blockNumber')(web3)
 
 const { DAY } = require('@aragon/apps-agreement/test/helpers/lib/time')
 const { assertBn } = require('@aragon/apps-agreement/test/helpers/assert/assertBn')
 const { bn, bigExp } = require('@aragon/apps-agreement/test/helpers/lib/numbers')
 const { assertRevert } = require('@aragon/apps-agreement/test/helpers/assert/assertThrow')
-const { getEventArgument } = require('@aragon/contract-test-helpers/events')
+const { getEventArgument } = require('@aragon/contract-helpers-test/events')
 const { ARAGON_OS_ERRORS, VOTING_ERRORS } = require('../helpers/errors')
 const { assertEvent, assertAmountOfEvents } = require('@aragon/apps-agreement/test/helpers/assert/assertEvent')
 const { pct, createVote, voteScript, getVoteState } = require('../helpers/voting')(web3, artifacts)
