@@ -1,5 +1,5 @@
 const { bigExp } = require('@aragon/apps-agreement/test/helpers/lib/numbers')
-const { encodeCallScript } = require('@aragon/contract-test-helpers/evmScript')
+const { encodeCallScript } = require('@aragon/contract-helpers-test/evmScript')
 const { decodeEventsOfType } = require('@aragon/apps-agreement/test/helpers/lib/decodeEvent')
 
 const EMPTY_SCRIPT = '0x00000001'
