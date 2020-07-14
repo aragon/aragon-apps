@@ -69,7 +69,7 @@ function DisputableActionStatus({ vote }) {
           <DisputablePeriod
             startDate={
               challenged
-                ? vote.disputable.pausedAt * 1000
+                ? vote.disputable.pausedAt
                 : new Date(vote.data.startDate).getTime()
             }
           />

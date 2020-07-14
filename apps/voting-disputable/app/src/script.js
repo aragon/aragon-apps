@@ -347,6 +347,7 @@ function loadVoteDisputableInfo(voteId) {
     app
       .call('getVoteDisputableInfo', voteId)
       .toPromise()
+      .then(vote => marshallDisputableInfo(vote))
       .catch(err => {
         console.error(
           `Error fetching disputable info from vote (${voteId})`,
@@ -425,6 +426,18 @@ function marshallVote({
     startDate: marshallDate(startDate),
   }
 }
+function marshallDisputableInfo({ actionId, pauseDuration, pausedAt, status }) {
+  return {
+    actionId,
+    pauseDuration,
+    pausedAt: marshallDate(pausedAt),
+    status,
+  }
+}
+actionId: '2'
+pauseDuration: '0'
+pausedAt: '1594081479'
+status: '1'
 
 function marshallDate(date) {
   // Represent dates as real numbers, as it's very unlikely they'll hit the limit...
