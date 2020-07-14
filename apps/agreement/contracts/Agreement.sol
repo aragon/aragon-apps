@@ -1125,8 +1125,7 @@ contract Agreement is IAgreement, AragonApp {
             return false;
         }
 
-        bytes memory params = new bytes(0);
-        return currentKernel.hasPermission(_challenger, address(_disputable), CHALLENGE_ROLE, params);
+        return currentKernel.hasPermission(_challenger, address(_disputable), CHALLENGE_ROLE, new bytes(0));
     }
 
     /**
