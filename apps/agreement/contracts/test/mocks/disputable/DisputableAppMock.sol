@@ -17,6 +17,7 @@ contract DisputableAppMock is DisputableAragonApp, TimeHelpersMock {
     string internal constant ERROR_CANNOT_SUBMIT = "DISPUTABLE_CANNOT_SUBMIT";
     string internal constant ERROR_CANNOT_CHALLENGE = "DISPUTABLE_CANNOT_CHALLENGE";
     string internal constant ERROR_ENTRY_DOES_NOT_EXIST = "DISPUTABLE_ENTRY_DOES_NOT_EXIST";
+    string internal constant ERROR_CALLBACK_REVERTED = "DISPUTABLE_CALLBACK_REVERTED";
 
     // bytes32 public constant SUBMIT_ROLE = keccak256("SUBMIT_ROLE");
     bytes32 public constant SUBMIT_ROLE = 0x8a8601cc8e9efb544266baca5bffc5cea11aed5de937dc37810fd002b4010eac;
@@ -37,7 +38,8 @@ contract DisputableAppMock is DisputableAragonApp, TimeHelpersMock {
 
     uint256 private entriesLength;
     mapping (uint256 => Entry) private entries;
-
+    bool private callbacksRevert;
+    
     /**
     * @dev Initialize app
     */
@@ -53,6 +55,13 @@ contract DisputableAppMock is DisputableAragonApp, TimeHelpersMock {
     function mockDisputable(bool _canClose, bool _canChallenge) external {
         mockCanClose = _canClose;
         mockCanChallenge = _canChallenge;
+    }
+
+    /**
+    * @dev Mock callbacks revert configuration
+    */
+    function mockSetCallbacksRevert(bool _callbacksRevert) external {
+        callbacksRevert = _callbacksRevert;
     }
 
     /**
@@ -99,6 +108,8 @@ contract DisputableAppMock is DisputableAragonApp, TimeHelpersMock {
     * @param _id Identification number of the entry to be challenged
     */
     function _onDisputableActionChallenged(uint256 _id, uint256 /* _challengeId */, address /* _challenger */) internal {
+        require(!callbacksRevert, ERROR_CALLBACK_REVERTED);
+
         entries[_id].challenged = true;
         emit DisputableChallenged(_id);
     }
@@ -108,6 +119,8 @@ contract DisputableAppMock is DisputableAragonApp, TimeHelpersMock {
     * @param _id Identification number of the entry to be allowed
     */
     function _onDisputableActionAllowed(uint256 _id) internal {
+        require(!callbacksRevert, ERROR_CALLBACK_REVERTED);
+
         entries[_id].challenged = false;
         emit DisputableAllowed(_id);
     }
@@ -117,6 +130,8 @@ contract DisputableAppMock is DisputableAragonApp, TimeHelpersMock {
     * @param _id Identification number of the entry to be rejected
     */
     function _onDisputableActionRejected(uint256 _id) internal {
+        require(!callbacksRevert, ERROR_CALLBACK_REVERTED);
+
         entries[_id].challenged = false;
         emit DisputableRejected(_id);
     }
@@ -126,6 +141,8 @@ contract DisputableAppMock is DisputableAragonApp, TimeHelpersMock {
     * @param _id Identification number of the entry to be voided
     */
     function _onDisputableActionVoided(uint256 _id) internal {
+        require(!callbacksRevert, ERROR_CALLBACK_REVERTED);
+
         entries[_id].challenged = false;
         emit DisputableVoided(_id);
     }
