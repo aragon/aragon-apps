@@ -1,6 +1,9 @@
-import { useState, useCallback, useMemo } from 'react'
-import { endOfDay, isWithinInterval, startOfDay } from 'date-fns'
-import { TRANSACTION_TYPES } from '../transaction-types'
+import { useState, useCallback, useEffect, useMemo } from 'react'
+import { endOfDay, isAfter, isBefore, startOfDay } from 'date-fns'
+import {
+  TRANSACTION_TYPES,
+  TRANSACTION_TYPES_LABELS,
+} from '../transaction-types'
 import { addressesEqual } from '../lib/web3-utils'
 
 const INITIAL_DATE_RANGE = { start: null, end: null }
@@ -10,24 +13,27 @@ const INITIAL_TOKEN = -1
 function useFilteredTransactions({ transactions, tokens }) {
   const [page, setPage] = useState(0)
   const [selectedDateRange, setSelectedDateRange] = useState(INITIAL_DATE_RANGE)
+  const [selectedToken, setSelectedToken] = useState(INITIAL_TOKEN)
   const [selectedTransactionType, setSelectedTransactionType] = useState(
     INITIAL_TRANSACTION_TYPE
   )
-  const [selectedToken, setSelectedToken] = useState(INITIAL_TOKEN)
+
+  useEffect(() => setPage(0), [
+    selectedDateRange,
+    selectedToken,
+    selectedTransactionType,
+  ])
+
   const handleSelectedDateRangeChange = useCallback(range => {
-    setPage(0)
     setSelectedDateRange(range)
   }, [])
   const handleTokenChange = useCallback(index => {
-    setPage(0)
     setSelectedToken(index || INITIAL_TOKEN)
   }, [])
   const handleTransactionTypeChange = useCallback(index => {
-    setPage(0)
     setSelectedTransactionType(index || INITIAL_TRANSACTION_TYPE)
   }, [])
   const handleClearFilters = useCallback(() => {
-    setPage(0)
     setSelectedTransactionType(INITIAL_TRANSACTION_TYPE)
     setSelectedToken(INITIAL_TOKEN)
     setSelectedDateRange(INITIAL_DATE_RANGE)
@@ -48,15 +54,17 @@ function useFilteredTransactions({ transactions, tokens }) {
           return false
         }
 
-        // Exclude by date range
+        // Filter separately by start and end date
         if (
-          // We're not checking for an end date because we will always
-          // have a start date for defining a range.
           selectedDateRange.start &&
-          !isWithinInterval(new Date(date), {
-            start: startOfDay(selectedDateRange.start),
-            end: endOfDay(selectedDateRange.end),
-          })
+          isBefore(new Date(date), startOfDay(selectedDateRange.start))
+        ) {
+          return false
+        }
+
+        if (
+          selectedDateRange.start &&
+          isAfter(new Date(date), endOfDay(selectedDateRange.end))
         ) {
           return false
         }
@@ -87,6 +95,7 @@ function useFilteredTransactions({ transactions, tokens }) {
     (selectedToken > 0 ||
       selectedTransactionType > 0 ||
       selectedDateRange.start)
+
   return {
     emptyResultsViaFilters,
     filteredTransactions,
@@ -100,6 +109,7 @@ function useFilteredTransactions({ transactions, tokens }) {
     selectedToken,
     selectedTransactionType,
     symbols,
+    transactionTypes: TRANSACTION_TYPES_LABELS,
   }
 }
 

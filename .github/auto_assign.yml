@@ -5,6 +5,7 @@ addAssignees: false
 
 reviewers:
   - bpierre
+  - delfipolito
   - evalir
 
 skipKeywords:
@@ -12,4 +13,4 @@ skipKeywords:
   - draft
 
 # Set 0 to add all the reviewers (default: 0)
-numberOfReviewers: 0
+numberOfReviewers: 2

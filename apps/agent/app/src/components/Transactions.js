@@ -26,7 +26,6 @@ import {
 import { useIdentity } from './IdentityManager/IdentityManager'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
 import TransactionFilters from './TransactionFilters'
-import { TRANSACTION_TYPES_LABELS } from '../transaction-types'
 import useDownloadData from './useDownloadData'
 import useFilteredTransactions from './useFilteredTransactions'
 import { ISO_SHORT_FORMAT, ISO_LONG_FORMAT } from '../lib/date-utils'
@@ -57,7 +56,12 @@ const Transactions = React.memo(function Transactions({
     selectedToken,
     selectedTransactionType,
     symbols,
+    transactionTypes,
   } = useFilteredTransactions({ transactions, tokens })
+
+  const transactionLabels = useMemo(() => Object.values(transactionTypes), [
+    transactionTypes,
+  ])
 
   const tokenDetails = tokens.reduce(
     (details, { address, decimals, symbol }) => {
@@ -140,7 +144,7 @@ const Transactions = React.memo(function Transactions({
                 symbols={symbols}
                 tokenFilter={selectedToken}
                 transactionTypeFilter={selectedTransactionType}
-                transactionTypes={Object.values(TRANSACTION_TYPES_LABELS)}
+                transactionTypes={transactionLabels}
               />
             )}
             <Button
@@ -225,7 +229,7 @@ const Transactions = React.memo(function Transactions({
               color: ${theme.surfaceContent};
             `}
           >
-            {TRANSACTION_TYPES_LABELS[type]}
+            {transactionTypes[type]}
           </div>
         )
         const referenceNode = (
