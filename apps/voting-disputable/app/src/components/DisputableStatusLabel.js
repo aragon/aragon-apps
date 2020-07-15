@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import {
   IconAttention,
   IconClock,
-  IconClosed,
+  IconClose,
   IconInfo,
   Tag,
   useTheme,
@@ -22,22 +22,22 @@ function getAttributes(status, theme) {
       Icon: IconClock,
     },
     [VOTE_STATUS_CANCELLED]: {
-      background: String(theme.surfaceUnder),
+      background: theme.surfaceUnde,
       label: 'Cancelled',
-      Icon: IconClosed,
-      color: String(theme.disabledContent),
+      Icon: IconClose,
+      color: theme.disabledContent,
     },
     [VOTE_STATUS_CLOSED]: {
-      background: String(theme.surfaceUnder),
+      background: theme.surfaceUnder,
       label: 'Closed',
       Icon: IconInfo,
-      color: String(theme.disabledContent),
+      color: theme.disabledContent,
     },
     [VOTE_STATUS_PAUSED]: {
-      background: String(theme.warningSurface),
+      background: theme.warningSurface,
       label: 'Challenged',
       Icon: IconAttention,
-      color: String(theme.warningSurfaceContent),
+      color: theme.warningSurfaceContent,
     },
   }
 
