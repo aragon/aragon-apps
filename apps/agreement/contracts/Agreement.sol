@@ -62,7 +62,7 @@ contract Agreement is IAgreement, AragonApp {
     string internal constant ERROR_SUBMITTER_FINISHED_EVIDENCE = "AGR_SUBMITTER_FINISHED_EVIDENCE";
     string internal constant ERROR_CHALLENGER_FINISHED_EVIDENCE = "AGR_CHALLENGER_FINISHED_EVIDENCE";
 
-    // This role is checked against the disputable apps when users try to challenge disuptable actions. 
+    // This role is checked against the disputable apps when users try to challenge disuptable actions.
     // Thus, it must be configured per disputable app. Please take a look at `canPerformChallenge` for reference.
     // bytes32 public constant CHALLENGE_ROLE = keccak256("CHALLENGE_ROLE");
     bytes32 public constant CHALLENGE_ROLE = 0xef025787d7cd1a96d9014b8dc7b44899b8c1350859fb9e1e05f5a546dd65158d;
@@ -77,7 +77,7 @@ contract Agreement is IAgreement, AragonApp {
         string title;
         bytes content;
         IArbitrator arbitrator;
-        IAragonAppFeesCashier aragonAppFeesCashier;                   // Cashier to deposit new action transaction fees (usually linked to the selected arbitrator)
+        IAragonAppFeesCashier aragonAppFeesCashier; // Cashier to deposit new action transaction fees (usually linked to the selected arbitrator)
     }
 
     struct Action {
@@ -657,14 +657,15 @@ contract Agreement is IAgreement, AragonApp {
 
     /**
     * @dev ACL oracle interface - Tells whether an address has already signed the Agreement
-    * @return True if a parameterized address has signed the current version of the Agreement, false otherwise
+    * @param _who Sender of the original call
+    * @return True if the original sender has signed the current version of the Agreement, false otherwise
     */
-    function canPerform(address, address, address, bytes32, uint256[] _how) external view returns (bool) {
-        require(_how.length > 0, ERROR_ACL_SIGNER_MISSING);
-        require(_how[0] < 2**160, ERROR_ACL_SIGNER_NOT_ADDRESS);
-
-        address signer = address(_how[0]);
-        (, bool mustSign) = _getSigner(signer);
+    function canPerform(address _who, address /* _grantee */, address /* _where */, bytes32 /* _what */, uint256[] /* _how */)
+        external
+        view
+        returns (bool)
+    {
+        (, bool mustSign) = _getSigner(_who);
         return !mustSign;
     }
 
@@ -1071,7 +1072,9 @@ contract Agreement is IAgreement, AragonApp {
     */
     function _newSetting(IArbitrator _arbitrator, IAragonAppFeesCashier _aragonAppFeesCashier, string _title, bytes _content) internal {
         require(isContract(address(_arbitrator)), ERROR_ARBITRATOR_NOT_CONTRACT);
-        require(_aragonAppFeesCashier == IAragonAppFeesCashier(0) || isContract(address(_aragonAppFeesCashier)), ERROR_APP_FEE_CASHIER_NOT_CONTRACT);
+
+        bool unsetCashier = _aragonAppFeesCashier == IAragonAppFeesCashier(0);
+        require(unsetCashier || isContract(address(_aragonAppFeesCashier)), ERROR_APP_FEE_CASHIER_NOT_CONTRACT);
 
         uint256 id = nextSettingId++;
         Setting storage setting = settings[id];
@@ -1394,7 +1397,7 @@ contract Agreement is IAgreement, AragonApp {
     * @return Total amount of arbitration fees required by the arbitrator to raise a dispute
     * @return Total amount of challenger fee tokens to be refunded to the challenger
     */
-    function _getMissingArbitratorFees(IArbitrator _arbitrator, ERC20 _challengerFeeToken, uint256 _challengerFeeAmount) 
+    function _getMissingArbitratorFees(IArbitrator _arbitrator, ERC20 _challengerFeeToken, uint256 _challengerFeeAmount)
         internal
         view
         returns (address, ERC20, uint256, uint256, uint256)
