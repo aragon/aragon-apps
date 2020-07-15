@@ -4,7 +4,7 @@ const { decodeEventsOfType } = require('../helpers/lib/decodeEvent')
 const { assertAmountOfEvents, assertEvent } = require('../helpers/assert/assertEvent')
 const { bn, bigExp } = require('../helpers/lib/numbers')
 const { AGREEMENT_EVENTS } = require('../helpers/utils/events')
-const { AGREEMENT_ERRORS, DISPUTABLE_ERRORS } = require('../helpers/utils/errors')
+const { AGREEMENT_ERRORS, STAKING_ERRORS, DISPUTABLE_ERRORS } = require('../helpers/utils/errors')
 
 const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 
@@ -43,12 +43,12 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
               })
 
               context('when the signer has enough balance', () => {
-                const newActionFlow = (appFeeAmount) => {
+                const itHandlesNewActionsCorrectly = (appFeesInCollateralTokens, value = bn(0)) => {
                   context('when the agreement settings did not change', () => {
                     it('creates a new scheduled action', async () => {
                       const currentSettingId = await disputable.getCurrentSettingId()
                       const currentCollateralId = await disputable.getCurrentCollateralRequirementId()
-                      const { actionId, disputableActionId } = await disputable.newAction({ submitter, actionContext, stake, sign })
+                      const { actionId, disputableActionId } = await disputable.newAction({ submitter, actionContext, stake, sign, value })
 
                       const actionData = await disputable.getAction(actionId)
                       assert.equal(actionData.disputable, disputable.disputable.address, 'disputable does not match')
@@ -63,11 +63,11 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
                     it('locks the collateral amount', async () => {
                       const { locked: previousLockedBalance, available: previousAvailableBalance } = await disputable.getBalance(submitter)
 
-                      await disputable.newAction({ submitter, actionContext, stake, sign })
+                      await disputable.newAction({ submitter, actionContext, stake, sign, value })
 
                       const { locked: currentLockedBalance, available: currentAvailableBalance } = await disputable.getBalance(submitter)
                       assertBn(currentLockedBalance, previousLockedBalance.add(actionCollateral), 'locked balance does not match')
-                      assertBn(currentAvailableBalance, previousAvailableBalance.sub(actionCollateral).sub(appFeeAmount), 'available balance does not match')
+                      assertBn(currentAvailableBalance, previousAvailableBalance.sub(actionCollateral).sub(appFeesInCollateralTokens), 'available balance does not match')
                     })
 
                     it('does not affect token balances', async () => {
@@ -77,25 +77,17 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
                       const previousSubmitterBalance = await collateralToken.balanceOf(submitter)
                       const previousStakingBalance = await collateralToken.balanceOf(stakingAddress)
 
-                      await disputable.newAction({ submitter, actionContext, stake, sign })
+                      await disputable.newAction({ submitter, actionContext, stake, sign, value })
 
                       const currentSubmitterBalance = await collateralToken.balanceOf(submitter)
                       assertBn(currentSubmitterBalance, previousSubmitterBalance, 'submitter balance does not match')
 
                       const currentStakingBalance = await collateralToken.balanceOf(stakingAddress)
-                      assertBn(currentStakingBalance.add(appFeeAmount), previousStakingBalance, 'staking balance does not match')
-                    })
-
-                    it('emits an event', async () => {
-                      const { receipt, actionId } = await disputable.newAction({ submitter, actionContext, stake, sign })
-                      const logs = decodeEventsOfType(receipt, disputable.abi, AGREEMENT_EVENTS.ACTION_SUBMITTED)
-
-                      assertAmountOfEvents({ logs }, AGREEMENT_EVENTS.ACTION_SUBMITTED, 1)
-                      assertEvent({ logs }, AGREEMENT_EVENTS.ACTION_SUBMITTED, { actionId })
+                      assertBn(currentStakingBalance, previousStakingBalance.sub(appFeesInCollateralTokens), 'staking balance does not match')
                     })
 
                     it('can be challenged or closed', async () => {
-                      const { actionId } = await disputable.newAction({ submitter, actionContext, stake, sign })
+                      const { actionId } = await disputable.newAction({ submitter, actionContext, stake, sign, value })
 
                       const { canClose, canChallenge, canSettle, canDispute, canClaimSettlement, canRuleDispute } = await disputable.getAllowedPaths(actionId)
                       assert.isTrue(canClose, 'action cannot be closed')
@@ -106,6 +98,14 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
                       assert.isFalse(canRuleDispute, 'action dispute can be ruled')
                       assert.isFalse(canClaimSettlement, 'action settlement can be claimed')
                     })
+
+                    it('emits an event', async () => {
+                      const { receipt, actionId } = await disputable.newAction({ submitter, actionContext, stake, sign, value })
+                      const logs = decodeEventsOfType(receipt, disputable.abi, AGREEMENT_EVENTS.ACTION_SUBMITTED)
+
+                      assertAmountOfEvents({ logs }, AGREEMENT_EVENTS.ACTION_SUBMITTED, 1)
+                      assertEvent({ logs }, AGREEMENT_EVENTS.ACTION_SUBMITTED, { actionId, disputable: disputable.disputable.address })
+                    })
                   })
 
                   context('when the agreement content changed', () => {
@@ -115,11 +115,11 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
 
                     it('still have available balance', async () => {
                       const { available } = await disputable.getBalance(submitter)
-                      assertBn(available, actionCollateral.add(appFeeAmount), 'submitter does not have enough staked balance')
+                      assertBn(available, actionCollateral.add(appFeesInCollateralTokens), 'submitter does not have enough staked balance')
                     })
 
                     it('can not schedule actions', async () => {
-                      await assertRevert(disputable.newAction({ submitter, actionContext, stake, sign }), AGREEMENT_ERRORS.ERROR_SIGNER_MUST_SIGN)
+                      await assertRevert(disputable.newAction({ submitter, actionContext, stake, sign, value }), AGREEMENT_ERRORS.ERROR_SIGNER_MUST_SIGN)
                     })
 
                     it('can unstake the available balance', async () => {
@@ -130,66 +130,165 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
                       assertBn(currentAvailableBalance, 0, 'submitter available balance does not match')
                     })
                   })
-
-                  it('emits an event', async () => {
-                    const { receipt, actionId } = await disputable.newAction({ submitter, actionContext, stake, sign })
-                    const logs = decodeEventsOfType(receipt, disputable.abi, AGREEMENT_EVENTS.ACTION_SUBMITTED)
-
-                    assertAmountOfEvents({ logs }, AGREEMENT_EVENTS.ACTION_SUBMITTED, 1)
-                    assertEvent({ logs }, AGREEMENT_EVENTS.ACTION_SUBMITTED, { actionId, disputable: disputable.disputable.address })
-                  })
                 }
 
                 context('when the transaction fees module is set', () => {
                   context('when the transaction fee is zero', () => {
-                    newActionFlow(bn(0))
+                    const appFeesInCollateralTokens = bn(0)
+
+                    beforeEach('set transaction fees', async () => {
+                      await disputable.setAppFee({ amount: bn(0) })
+                    })
+
+                    itHandlesNewActionsCorrectly(appFeesInCollateralTokens)
+
+                    it('does not transfer any transaction fees', async () => {
+                      const { collateralToken, aragonAppFeesCashier } = disputable
+                      const previousAppFeesCashierEthBalance = await web3.eth.getBalance(aragonAppFeesCashier.address)
+                      const previousAppFeesCashierTokenBalance = await collateralToken.balanceOf(aragonAppFeesCashier.address)
+
+                      await disputable.newAction({ submitter, actionContext, stake, sign })
+
+                      const currentAppFeesCashierBalance = await web3.eth.getBalance(aragonAppFeesCashier.address)
+                      assertBn(currentAppFeesCashierBalance, previousAppFeesCashierEthBalance, 'app fees cashier eth balance does not match')
+
+                      const currentAppFeesCashierTokenBalance = await collateralToken.balanceOf(aragonAppFeesCashier.address)
+                      assertBn(currentAppFeesCashierTokenBalance, previousAppFeesCashierTokenBalance, 'app fees cashier token balance does not match')
+                    })
                   })
 
                   context('when the transaction fee is not zero', () => {
-                    const appFeeAmount = bigExp(15, 18)
+                    const appFeeAmount = bigExp(1, 16)
 
-                    context('when the transaction fee token is the staking token', () => {
-                      beforeEach('set transaction fees', async () => {
-                        const { collateralToken } = disputable
-                        await deployer.aragonAppFeesCashier.setAppFee('0x', collateralToken.address, appFeeAmount)
-                      })
+                    context('when the transaction fee token is an ERC20', () => {
+                      context('when the transaction fee token is the collateral token', () => {
+                        const appFeesInCollateralTokens = appFeeAmount
 
-                      context('when the transaction fee payment succeeds', () => {
-                        beforeEach('stake, allow', async () => {
-                          await disputable.stake({ amount: appFeeAmount, user: submitter })
-                          await disputable.allowManager({ user: submitter, amount: appFeeAmount })
+                        beforeEach('set transaction fees', async () => {
+                          await disputable.setAppFee({ amount: appFeeAmount })
                         })
 
-                        newActionFlow(appFeeAmount)
+                        context('when the submitter has allowed enough balance in the staking pool', () => {
+                          beforeEach('stake, allow', async () => {
+                            await disputable.stake({ amount: appFeeAmount, user: submitter })
+                            await disputable.allowManager({ user: submitter, amount: appFeeAmount })
+                          })
+
+                          context('when the submitter does not send ETH', () => {
+                            itHandlesNewActionsCorrectly(appFeesInCollateralTokens)
+
+                            it('transfer the tokens from the staking pool to the cashier', async () => {
+                              const stakingAddress = await disputable.getStakingAddress()
+                              const { collateralToken, aragonAppFeesCashier } = disputable
+
+                              const previousStakingBalance = await collateralToken.balanceOf(stakingAddress)
+                              const previousCashierBalance = await collateralToken.balanceOf(aragonAppFeesCashier.address)
+
+                              await disputable.newAction({ submitter, actionContext, stake, sign })
+
+                              const currentStakingBalance = await collateralToken.balanceOf(stakingAddress)
+                              assertBn(currentStakingBalance, previousStakingBalance.sub(appFeeAmount), 'staking balance does not match')
+
+                              const currentCashierBalance = await collateralToken.balanceOf(aragonAppFeesCashier.address)
+                              assertBn(currentCashierBalance, previousCashierBalance.add(appFeeAmount), 'cashier balance does not match')
+                            })
+                          })
+
+                          context('when the submitter adds some ETH as well', () => {
+                            const sentEth = bn(1)
+
+                            it('reverts', async () => {
+                              await assertRevert(disputable.newAction({ submitter, actionContext, stake, sign, value: sentEth }), AGREEMENT_ERRORS.ERROR_UNEXPECTED_APP_FEE_VALUE)
+                            })
+                          })
+                        })
+
+                        context('when the submitter has no allowed balance in the staking pool', () => {
+                          it('reverts', async () => {
+                            await assertRevert(disputable.newAction({ submitter, actionContext, stake, sign }), STAKING_ERRORS.ERROR_NOT_ENOUGH_AVAILABLE_STAKE)
+                          })
+                        })
                       })
 
-                      context('when the transaction fee payment doesn’t succeed', () => {
-                        it('reverts', async () => {
-                          await assertRevert(disputable.newAction({ submitter, actionContext, stake, sign }), AGREEMENT_ERRORS.STAKING_NOT_ENOUGH_BALANCE)
+                      context('when the transaction fee token is not the collateral token', () => {
+                        let token
+                        const appFeesInCollateralTokens = bn(0)
+
+                        beforeEach('set transaction fees', async () => {
+                          token = await deployer.deployToken({})
+                          await disputable.setAppFee({ token, amount: appFeeAmount })
+                        })
+
+                        context('when the transaction fee payment succeeds', () => {
+                          beforeEach('stake and allow manager for new staking pool for transaction fees', async () => {
+                            await disputable.stake({ token, amount: appFeeAmount, user: submitter })
+                            await disputable.allowManager({ token, user: submitter, amount: appFeeAmount })
+                          })
+
+                          context('when the submitter does not send ETH', () => {
+                            itHandlesNewActionsCorrectly(appFeesInCollateralTokens)
+
+                            it('transfer the tokens from the staking pool to the cashier', async () => {
+                              const stakingAddress = await disputable.getStakingAddress(token)
+                              const { aragonAppFeesCashier } = disputable
+
+                              const previousStakingBalance = await token.balanceOf(stakingAddress)
+                              const previousCashierBalance = await token.balanceOf(aragonAppFeesCashier.address)
+
+                              await disputable.newAction({ submitter, actionContext, stake, sign })
+
+                              const currentStakingBalance = await token.balanceOf(stakingAddress)
+                              assertBn(currentStakingBalance, previousStakingBalance.sub(appFeeAmount), 'staking balance does not match')
+
+                              const currentCashierBalance = await token.balanceOf(aragonAppFeesCashier.address)
+                              assertBn(currentCashierBalance, previousCashierBalance.add(appFeeAmount), 'cashier balance does not match')
+                            })
+                          })
+
+                          context('when the submitter adds some ETH as well', () => {
+                            const sentEth = bn(1)
+
+                            it('reverts', async () => {
+                              await assertRevert(disputable.newAction({ submitter, actionContext, stake, sign, value: sentEth }), AGREEMENT_ERRORS.ERROR_UNEXPECTED_APP_FEE_VALUE)
+                            })
+                          })
+                        })
+
+                        context('when the submitter has no allowed balance in the staking pool', () => {
+                          it('reverts', async () => {
+                            await assertRevert(disputable.newAction({ submitter, actionContext, stake, sign }), STAKING_ERRORS.ERROR_NOT_ENOUGH_AVAILABLE_STAKE)
+                          })
                         })
                       })
                     })
 
-                    context('when the transaction fee token is not the staking token', () => {
-                      let token
-                      
+                    context('when the transaction fee token is ETH', () => {
+                      const appFeesInEth = appFeeAmount
+                      const appFeesInCollateralTokens = bn(0)
+
                       beforeEach('set transaction fees', async () => {
-                        token = await deployer.deployToken({})
-                        await deployer.aragonAppFeesCashier.setAppFee('0x', token.address, appFeeAmount)
+                        await disputable.setAppFee({ token: { address: ZERO_ADDRESS }, amount: appFeeAmount })
                       })
 
-                      context('when the transaction fee payment succeeds', () => {
-                        beforeEach('stake and allow manager for new staking pool for transaction fees', async () => {
-                          await disputable.stake({ token, amount: appFeeAmount, user: submitter })
-                          await disputable.allowManager({ token, user: submitter, amount: appFeeAmount })
+                      context('when the submitter sends the required fees', () => {
+                        itHandlesNewActionsCorrectly(appFeesInCollateralTokens, appFeesInEth)
+
+                        it('transfers the transaction fees correctly', async () => {
+                          const { aragonAppFeesCashier } = disputable
+                          const previousAppFeesCashierBalance = await web3.eth.getBalance(aragonAppFeesCashier.address)
+
+                          await disputable.newAction({ submitter, actionContext, stake, sign, value: appFeesInEth })
+
+                          const currentAppFeesCashierBalance = await web3.eth.getBalance(aragonAppFeesCashier.address)
+                          assertBn(currentAppFeesCashierBalance, bn(previousAppFeesCashierBalance).add(appFeesInEth), 'app fees cashier balance does not match')
                         })
-
-                        newActionFlow(bn(0))
                       })
 
-                      context('when the transaction fee payment does not succeed', () => {
+                      context('when the submitter does not send the required fees', () => {
+                        const sentEth = appFeesInEth.sub(bn(1))
+
                         it('reverts', async () => {
-                          await assertRevert(disputable.newAction({ submitter, actionContext, stake, sign }), AGREEMENT_ERRORS.STAKING_NOT_ENOUGH_BALANCE)
+                          await assertRevert(disputable.newAction({ submitter, actionContext, stake, sign, value: sentEth }), AGREEMENT_ERRORS.ERROR_INVALID_APP_FEE_AMOUNT)
                         })
                       })
                     })
@@ -197,12 +296,14 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
                 })
 
                 context('when the transaction fees module is not set', () => {
+                  const appFeesInCollateralTokens = bn(0)
+
                   beforeEach('remove transactions module', async () => {
                     await disputable.changeSetting({ aragonAppFeesCashierAddress: ZERO_ADDRESS, from: owner })
                     await disputable.sign(submitter)
                   })
 
-                  newActionFlow(bn(0))
+                  itHandlesNewActionsCorrectly(appFeesInCollateralTokens)
                 })
               })
 

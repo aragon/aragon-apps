@@ -2,10 +2,11 @@ pragma solidity 0.4.24;
 
 import "@aragon/os/contracts/lib/math/SafeMath64.sol";
 import "@aragon/os/contracts/apps/disputable/DisputableAragonApp.sol";
+import "@aragon/os/contracts/forwarding/IForwarderWithContextPayable.sol";
 import "../helpers/TimeHelpersMock.sol";
 
 
-contract DisputableAppMock is DisputableAragonApp, TimeHelpersMock {
+contract DisputableAppMock is IForwarderWithContextPayable, DisputableAragonApp, TimeHelpersMock {
     using SafeMath64 for uint64;
 
     bytes4 public constant ERC165_INTERFACE = ERC165_INTERFACE_ID;
@@ -39,7 +40,7 @@ contract DisputableAppMock is DisputableAragonApp, TimeHelpersMock {
     uint256 private entriesLength;
     mapping (uint256 => Entry) private entries;
     bool private callbacksRevert;
-    
+
     /**
     * @dev Initialize app
     */
@@ -67,12 +68,11 @@ contract DisputableAppMock is DisputableAragonApp, TimeHelpersMock {
     /**
     * @dev IForwarder interface conformance
     */
-    function forward(bytes memory data) public {
-        // TODO: use new forwarding interface with context data
-        require(canForward(msg.sender, data), ERROR_CANNOT_SUBMIT);
+    function forward(bytes _evmScript, bytes _context) external payable {
+        require(_canForward(msg.sender, _evmScript), ERROR_CANNOT_SUBMIT);
 
         uint256 id = entriesLength++;
-        entries[id].actionId = _newAgreementAction(id, data, msg.sender);
+        entries[id].actionId = _newAgreementAction(id, _context, msg.sender);
 
         emit DisputableSubmitted(id);
     }
@@ -99,8 +99,13 @@ contract DisputableAppMock is DisputableAragonApp, TimeHelpersMock {
     * @param _sender Address of the account intending to forward an action
     * @return True if the given address can submit actions, false otherwise
     */
-    function canForward(address _sender, bytes) public view returns (bool) {
-        return canPerform(_sender, SUBMIT_ROLE, arr());
+    function canForward(address _sender, bytes _evmScript) external view returns (bool) {
+        return _canForward(_sender, _evmScript);
+    }
+
+    // TODO: how are we going to implement this from the disputable apps?
+    function forwardFee() external view returns (address, uint256) {
+        return (address(0), 0);
     }
 
     /**
@@ -145,5 +150,14 @@ contract DisputableAppMock is DisputableAragonApp, TimeHelpersMock {
 
         entries[_id].challenged = false;
         emit DisputableVoided(_id);
+    }
+
+    /**
+    * @dev Tells whether an address can forward actions or not
+    * @param _sender Address of the account intending to forward an action
+    * @return True if the given address can submit actions, false otherwise
+    */
+    function _canForward(address _sender, bytes) internal view returns (bool) {
+        return canPerform(_sender, SUBMIT_ROLE, arr());
     }
 }
