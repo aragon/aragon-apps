@@ -1,6 +1,6 @@
 const { isAddress } = require('web3-utils')
 const { isBigNumber } = require('../lib/numbers')
-const { decodeEvents, getEventAt, getEvents } = require('@aragon/contract-helpers-test/events')
+const { getEventAt, getEvents } = require('@aragon/contract-helpers-test/events')
 
 const assertEvent = (receipt, eventName, expectedArgs = {}, index = 0) => {
   const event = getEventAt(receipt, eventName, index)
@@ -25,14 +25,7 @@ const assertAmountOfEvents = (receipt, eventName, expectedAmount = 1) => {
   assert.equal(events.length, expectedAmount, `number of ${eventName} events does not match`)
 }
 
-const assertAmountOfRawEvents = (receipt, abi, eventName, expectedAmount = 1) => {
-  receipt.logs = receipt.logs.concat(decodeEvents(receipt.receipt, abi, eventName))
-  const events = getEvents(receipt, eventName)
-  assert.equal(events.length, expectedAmount, `number of ${eventName} events does not match`)
-}
-
 module.exports = {
   assertEvent,
-  assertAmountOfEvents,
-  assertAmountOfRawEvents
+  assertAmountOfEvents
 }

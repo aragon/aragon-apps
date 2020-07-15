@@ -14,10 +14,6 @@ class DisputableWrapper extends AgreementWrapper {
     this.collateralRequirement = collateralRequirement
   }
 
-  get disputableAbi() {
-    return this.disputable.abi
-  }
-
   get collateralToken() {
     return this.collateralRequirement.collateralToken
   }
