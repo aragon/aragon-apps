@@ -5,8 +5,6 @@ const { AGREEMENT_ERRORS } = require('../helpers/utils/errors')
 const { AGREEMENT_EVENTS, DISPUTABLE_EVENTS } = require('../helpers/utils/events')
 const { CHALLENGES_STATE, RULINGS } = require('../helpers/utils/enums')
 
-const Disputable = artifacts.require('DisputableAppMock')
-
 const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 
 contract('Agreement', ([_, someone, submitter, challenger]) => {
@@ -149,7 +147,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
 
                   // disputable event shouldn't be emitted when disputable reverts
                   const expectedEventsAmount = callbacksRevert ? 0 : 1
-                  assertAmountOfRawEvents(receipt, Disputable.abi, DISPUTABLE_EVENTS.REJECTED, expectedEventsAmount)
+                  assertAmountOfRawEvents(receipt, disputable.disputableAbi, DISPUTABLE_EVENTS.REJECTED, expectedEventsAmount)
                 })
 
                 it('there are no more paths allowed', async () => {

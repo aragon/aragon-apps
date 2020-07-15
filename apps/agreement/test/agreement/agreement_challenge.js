@@ -38,6 +38,20 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
             })
           }
 
+          const itChallengesTheActionProperlyNeverthelessRevertingDisputables = () => {
+            context('when disputable callback reverts', () => {
+              const reverts = true
+
+              itChallengesTheActionProperly(reverts)
+            })
+
+            context('when disputable callback does not revert', () => {
+              const reverts = false
+
+              itChallengesTheActionProperly(reverts)
+            })
+          }
+
           const itChallengesTheActionProperly = callbacksRevert => {
             context('when the challenger has staked enough collateral', () => {
               beforeEach('stake challenge collateral', async () => {
@@ -204,13 +218,7 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
 
           context('when the action was not closed', () => {
             context('when the action was not challenged', () => {
-              context('when disputable callback reverts', () => {
-                itChallengesTheActionProperly(true)
-              })
-
-              context('when disputable callback doesn’t revert', () => {
-                itChallengesTheActionProperly(false)
-              })
+              itChallengesTheActionProperlyNeverthelessRevertingDisputables()
             })
 
             context('when the action was challenged', () => {
@@ -275,13 +283,7 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
                       })
 
                       context('when the action was not closed', () => {
-                        context('when disputable callback reverts', () => {
-                          itChallengesTheActionProperly(true)
-                        })
-
-                        context('when disputable callback doesn’t revert', () => {
-                          itChallengesTheActionProperly(false)
-                        })
+                        itChallengesTheActionProperlyNeverthelessRevertingDisputables()
                       })
 
                       context('when the action was closed', () => {
@@ -299,13 +301,7 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
                       })
 
                       context('when the action was not closed', () => {
-                        context('when disputable callback reverts', () => {
-                          itChallengesTheActionProperly(true)
-                        })
-
-                        context('when disputable callback doesn’t revert', () => {
-                          itChallengesTheActionProperly(false)
-                        })
+                        itChallengesTheActionProperlyNeverthelessRevertingDisputables()
                       })
 
                       context('when the action was closed', () => {
