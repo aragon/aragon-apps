@@ -1,10 +1,12 @@
 const { assertBn } = require('../helpers/assert/assertBn')
 const { bn, bigExp } = require('../helpers/lib/numbers')
 const { assertRevert } = require('../helpers/assert/assertThrow')
-const { assertEvent, assertAmountOfEvents } = require('../helpers/assert/assertEvent')
-const { AGREEMENT_EVENTS } = require('../helpers/utils/events')
+const { assertEvent, assertAmountOfEvents, assertAmountOfRawEvents } = require('../helpers/assert/assertEvent')
+const { AGREEMENT_EVENTS, DISPUTABLE_EVENTS } = require('../helpers/utils/events')
 const { AGREEMENT_ERRORS } = require('../helpers/utils/errors')
 const { CHALLENGES_STATE, RULINGS } = require('../helpers/utils/enums')
+
+const Disputable = artifacts.require('DisputableAppMock')
 
 const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 
@@ -36,11 +38,29 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
             })
           }
 
-          const itChallengesTheActionProperly = () => {
+          const itChallengesTheActionProperlyNeverthelessRevertingDisputables = () => {
+            context('when disputable callback reverts', () => {
+              const reverts = true
+
+              itChallengesTheActionProperly(reverts)
+            })
+
+            context('when disputable callback does not revert', () => {
+              const reverts = false
+
+              itChallengesTheActionProperly(reverts)
+            })
+          }
+
+          const itChallengesTheActionProperly = callbacksRevert => {
             context('when the challenger has staked enough collateral', () => {
               beforeEach('stake challenge collateral', async () => {
                 const amount = disputable.challengeCollateral
                 await disputable.approve({ amount, from: challenger })
+              })
+
+              beforeEach('set mock callbacks behavior', async () => {
+                await disputable.disputable.mockSetCallbacksRevert(callbacksRevert)
               })
 
               context('when the challenger has approved half of the arbitration fees', () => {
@@ -134,6 +154,10 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
 
                     assertAmountOfEvents(receipt, AGREEMENT_EVENTS.ACTION_CHALLENGED, 1)
                     assertEvent(receipt, AGREEMENT_EVENTS.ACTION_CHALLENGED, { actionId, challengeId: currentChallengeId })
+
+                    // disputable event shouldn't be emitted when disputable reverts
+                    const expectedEventsAmount = callbacksRevert ? 0 : 1
+                    assertAmountOfRawEvents(receipt, Disputable.abi, DISPUTABLE_EVENTS.CHALLENGED, expectedEventsAmount)
                   })
 
                   it('it can be answered only', async () => {
@@ -194,7 +218,7 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
 
           context('when the action was not closed', () => {
             context('when the action was not challenged', () => {
-              itChallengesTheActionProperly()
+              itChallengesTheActionProperlyNeverthelessRevertingDisputables()
             })
 
             context('when the action was challenged', () => {
@@ -259,7 +283,7 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
                       })
 
                       context('when the action was not closed', () => {
-                        itChallengesTheActionProperly()
+                        itChallengesTheActionProperlyNeverthelessRevertingDisputables()
                       })
 
                       context('when the action was closed', () => {
@@ -277,7 +301,7 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
                       })
 
                       context('when the action was not closed', () => {
-                        itChallengesTheActionProperly()
+                        itChallengesTheActionProperlyNeverthelessRevertingDisputables()
                       })
 
                       context('when the action was closed', () => {

@@ -62,6 +62,8 @@ contract Agreement is IAgreement, AragonApp {
     string internal constant ERROR_SUBMITTER_FINISHED_EVIDENCE = "AGR_SUBMITTER_FINISHED_EVIDENCE";
     string internal constant ERROR_CHALLENGER_FINISHED_EVIDENCE = "AGR_CHALLENGER_FINISHED_EVIDENCE";
 
+    // This role is checked against the disputable apps when users try to challenge disuptable actions.
+    // Thus, it must be configured per disputable app. Please take a look at `canPerformChallenge` for reference.
     // bytes32 public constant CHALLENGE_ROLE = keccak256("CHALLENGE_ROLE");
     bytes32 public constant CHALLENGE_ROLE = 0xef025787d7cd1a96d9014b8dc7b44899b8c1350859fb9e1e05f5a546dd65158d;
 
@@ -347,10 +349,16 @@ contract Agreement is IAgreement, AragonApp {
         require(_canPerformChallenge(disputable, msg.sender), ERROR_SENDER_CANNOT_CHALLENGE_ACTION);
         require(_settlementOffer <= requirement.actionAmount, ERROR_INVALID_SETTLEMENT_OFFER);
 
-        // TODO: implement try catch
         uint256 challengeId = _createChallenge(_actionId, action, msg.sender, requirement, _settlementOffer, _finishedEvidence, _context);
         action.currentChallengeId = challengeId;
-        disputable.onDisputableActionChallenged(action.disputableActionId, challengeId, msg.sender);
+        // try/catch for:
+        // disputable.onDisputableActionChallenged(action.disputableActionId, challengeId, msg.sender);
+        address(disputable).call(abi.encodeWithSelector(
+            disputable.onDisputableActionChallenged.selector,
+            action.disputableActionId,
+            challengeId,
+            msg.sender
+        ));
         emit ActionChallenged(_actionId, challengeId);
     }
 
@@ -386,7 +394,9 @@ contract Agreement is IAgreement, AragonApp {
         _transferTo(challenge.arbitratorFeeToken, challenger, challenge.arbitratorFeeAmount);
 
         challenge.state = ChallengeState.Settled;
-        disputable.onDisputableActionRejected(action.disputableActionId);
+        // try/catch for:
+        // disputable.onDisputableActionRejected(action.disputableActionId);
+        address(disputable).call(abi.encodeWithSelector(disputable.onDisputableActionRejected.selector, action.disputableActionId));
         emit ActionSettled(_actionId, challengeId);
         _closeAction(_actionId, action);
     }
@@ -457,7 +467,6 @@ contract Agreement is IAgreement, AragonApp {
         challenge.ruling = _ruling;
         emit Ruled(arbitrator, _disputeId, _ruling);
 
-        // TODO: implement try catch
         if (_ruling == DISPUTES_RULING_SUBMITTER) {
             _acceptAction(actionId, action, challengeId, challenge);
         } else if (_ruling == DISPUTES_RULING_CHALLENGER) {
@@ -655,14 +664,15 @@ contract Agreement is IAgreement, AragonApp {
 
     /**
     * @dev ACL oracle interface - Tells whether an address has already signed the Agreement
-    * @return True if a parameterized address has signed the current version of the Agreement, false otherwise
+    * @param _who Sender of the original call
+    * @return True if the original sender has signed the current version of the Agreement, false otherwise
     */
-    function canPerform(address, address, address, bytes32, uint256[] _how) external view returns (bool) {
-        require(_how.length > 0, ERROR_ACL_SIGNER_MISSING);
-        require(_how[0] < 2**160, ERROR_ACL_SIGNER_NOT_ADDRESS);
-
-        address signer = address(_how[0]);
-        (, bool mustSign) = _getSigner(signer);
+    function canPerform(address _who, address /* _grantee */, address /* _where */, address, bytes32 /* _what */, uint256[] /* _how */)
+        external
+        view
+        returns (bool)
+    {
+        (, bool mustSign) = _getSigner(_who);
         return !mustSign;
     }
 
@@ -931,7 +941,9 @@ contract Agreement is IAgreement, AragonApp {
         (IDisputable disputable, CollateralRequirement storage requirement) = _getDisputableFor(_action);
         _slashBalance(requirement.staking, _action.submitter, challenger, requirement.actionAmount);
         _transferTo(requirement.token, challenger, requirement.challengeAmount);
-        disputable.onDisputableActionRejected(_action.disputableActionId);
+        // try/catch for:
+        // disputable.onDisputableActionRejected(_action.disputableActionId);
+        address(disputable).call(abi.encodeWithSelector(disputable.onDisputableActionRejected.selector, _action.disputableActionId));
         emit ActionRejected(_actionId, _challengeId);
 
         _closeAction(_actionId, _action);
@@ -950,7 +962,9 @@ contract Agreement is IAgreement, AragonApp {
         address submitter = _action.submitter;
         (IDisputable disputable, CollateralRequirement storage requirement) = _getDisputableFor(_action);
         _transferTo(requirement.token, submitter, requirement.challengeAmount);
-        disputable.onDisputableActionAllowed(_action.disputableActionId);
+        // try/catch for:
+        // disputable.onDisputableActionAllowed(_action.disputableActionId);
+        address(disputable).call(abi.encodeWithSelector(disputable.onDisputableActionAllowed.selector, _action.disputableActionId));
         emit ActionAccepted(_actionId, _challengeId);
     }
 
@@ -966,7 +980,9 @@ contract Agreement is IAgreement, AragonApp {
 
         (IDisputable disputable, CollateralRequirement storage requirement) = _getDisputableFor(_action);
         _transferTo(requirement.token, _challenge.challenger, requirement.challengeAmount);
-        disputable.onDisputableActionVoided(_action.disputableActionId);
+        // try/catch for:
+        // disputable.onDisputableActionVoided(_action.disputableActionId);
+        address(disputable).call(abi.encodeWithSelector(disputable.onDisputableActionVoided.selector, _action.disputableActionId));
         emit ActionVoided(_actionId, _challengeId);
     }
 
@@ -1071,6 +1087,9 @@ contract Agreement is IAgreement, AragonApp {
         require(isContract(address(_arbitrator)), ERROR_ARBITRATOR_NOT_CONTRACT);
         require(_aragonAppFeesCashier == IAragonAppFeesCashier(0) || isContract(address(_aragonAppFeesCashier)), ERROR_APP_FEE_CASHIER_NOT_CONTRACT);
 
+        bool unsetCashier = _aragonAppFeesCashier == IAragonAppFeesCashier(0);
+        require(unsetCashier || isContract(address(_aragonAppFeesCashier)), ERROR_APP_FEE_CASHIER_NOT_CONTRACT);
+
         uint256 id = nextSettingId++;
         Setting storage setting = settings[id];
         setting.title = _title;
@@ -1125,9 +1144,7 @@ contract Agreement is IAgreement, AragonApp {
             return false;
         }
 
-        // TODO: update with new ACL version: no need to pass challenger address by parameter
-        bytes memory params = ConversionHelpers.dangerouslyCastUintArrayToBytes(arr(_challenger));
-        return currentKernel.hasPermission(_challenger, address(_disputable), CHALLENGE_ROLE, params);
+        return currentKernel.hasPermission(_challenger, address(_disputable), CHALLENGE_ROLE, new bytes(0));
     }
 
     /**
@@ -1394,7 +1411,7 @@ contract Agreement is IAgreement, AragonApp {
     * @return Total amount of arbitration fees required by the arbitrator to raise a dispute
     * @return Total amount of challenger fee tokens to be refunded to the challenger
     */
-    function _getMissingArbitratorFees(IArbitrator _arbitrator, ERC20 _challengerFeeToken, uint256 _challengerFeeAmount) 
+    function _getMissingArbitratorFees(IArbitrator _arbitrator, ERC20 _challengerFeeToken, uint256 _challengerFeeAmount)
         internal
         view
         returns (address, ERC20, uint256, uint256, uint256)

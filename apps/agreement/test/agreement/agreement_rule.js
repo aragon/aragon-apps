@@ -1,10 +1,12 @@
 const { assertBn } = require('../helpers/assert/assertBn')
 const { assertRevert } = require('../helpers/assert/assertThrow')
 const { decodeEventsOfType } = require('../helpers/lib/decodeEvent')
-const { assertEvent, assertAmountOfEvents } = require('../helpers/assert/assertEvent')
-const { AGREEMENT_EVENTS } = require('../helpers/utils/events')
+const { assertEvent, assertAmountOfEvents, assertAmountOfRawEvents } = require('../helpers/assert/assertEvent')
+const { AGREEMENT_EVENTS, DISPUTABLE_EVENTS } = require('../helpers/utils/events')
 const { AGREEMENT_ERRORS } = require('../helpers/utils/errors')
 const { RULINGS, CHALLENGES_STATE } = require('../helpers/utils/enums')
+
+const Disputable = artifacts.require('DisputableAppMock')
 
 const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 
@@ -99,7 +101,11 @@ contract('Agreement', ([_, submitter, challenger]) => {
                 })
 
                 context('when the dispute was ruled', () => {
-                  const itRulesTheActionProperly = (ruling, expectedChallengeState) => {
+                  const itRulesTheActionProperly = (ruling, expectedChallengeState, callbacksRevert = false) => {
+                    beforeEach('set mock callbacks behavior', async () => {
+                      await disputable.disputable.mockSetCallbacksRevert(callbacksRevert)
+                    })
+
                     context('when the sender is the arbitrator', () => {
                       it('updates the challenge state only', async () => {
                         const previousChallengeState = await disputable.getChallenge(challengeId)
@@ -139,6 +145,15 @@ contract('Agreement', ([_, submitter, challenger]) => {
                       })
 
                       if (expectedChallengeState === CHALLENGES_STATE.ACCEPTED) {
+                        it(`${callbacksRevert ? 'does not emit' : 'emits'} a disputable event`, async () => {
+                          const { disputeId } = await disputable.getChallenge(challengeId)
+                          const receipt = await disputable.executeRuling({ actionId, ruling })
+
+                          // disputable event shouldn't be emitted when disputable reverts
+                          const expectedEventsAmount = callbacksRevert ? 0 : 1
+                          assertAmountOfRawEvents(receipt, Disputable.abi, DISPUTABLE_EVENTS.REJECTED, expectedEventsAmount)
+                        })
+
                         it('marks the action as closed', async () => {
                           const previousActionState = await disputable.getAction(actionId)
 
@@ -179,6 +194,16 @@ contract('Agreement', ([_, submitter, challenger]) => {
                           assert.isFalse(canRuleDispute, 'action dispute can be ruled')
                         })
                       } else {
+                        it(`${callbacksRevert ? 'does not emit' : 'emits'} a disputable event`, async () => {
+                          const { disputeId } = await disputable.getChallenge(challengeId)
+                          const receipt = await disputable.executeRuling({ actionId, ruling })
+
+                          // disputable event shouldn't be emitted when disputable reverts
+                          const expectedEventsAmount = callbacksRevert ? 0 : 1
+                          const disputableEvent = expectedChallengeState === CHALLENGES_STATE.REJECTED ? DISPUTABLE_EVENTS.ALLOWED : DISPUTABLE_EVENTS.VOIDED
+                          assertAmountOfRawEvents(receipt, Disputable.abi, disputableEvent, expectedEventsAmount)
+                        })
+
                         it('does not mark the action as closed', async () => {
                           const previousActionState = await disputable.getAction(actionId)
 
@@ -234,7 +259,13 @@ contract('Agreement', ([_, submitter, challenger]) => {
                     const ruling = RULINGS.IN_FAVOR_OF_SUBMITTER
                     const expectedChallengeState = CHALLENGES_STATE.REJECTED
 
-                    itRulesTheActionProperly(ruling, expectedChallengeState)
+                    context('when disputable callback reverts', () => {
+                      itRulesTheActionProperly(ruling, expectedChallengeState, true)
+                    })
+
+                    context('when disputable callback doesn’t revert', () => {
+                      itRulesTheActionProperly(ruling, expectedChallengeState, false)
+                    })
 
                     it('transfers the challenge collateral to the submitter', async () => {
                       const { collateralToken, challengeCollateral } = disputable
@@ -268,7 +299,13 @@ contract('Agreement', ([_, submitter, challenger]) => {
                     const ruling = RULINGS.IN_FAVOR_OF_CHALLENGER
                     const expectedChallengeState = CHALLENGES_STATE.ACCEPTED
 
-                    itRulesTheActionProperly(ruling, expectedChallengeState)
+                    context('when disputable callback reverts', () => {
+                      itRulesTheActionProperly(ruling, expectedChallengeState, true)
+                    })
+
+                    context('when disputable callback doesn’t revert', () => {
+                      itRulesTheActionProperly(ruling, expectedChallengeState, false)
+                    })
 
                     it('transfers the challenge collateral and the collateral amount to the challenger', async () => {
                       const stakingAddress = await disputable.getStakingAddress()
@@ -311,7 +348,13 @@ contract('Agreement', ([_, submitter, challenger]) => {
                     const ruling = RULINGS.REFUSED
                     const expectedChallengeState = CHALLENGES_STATE.VOIDED
 
-                    itRulesTheActionProperly(ruling, expectedChallengeState)
+                    context('when disputable callback reverts', () => {
+                      itRulesTheActionProperly(ruling, expectedChallengeState, true)
+                    })
+
+                    context('when disputable callback doesn’t revert', () => {
+                      itRulesTheActionProperly(ruling, expectedChallengeState, false)
+                    })
 
                     it('transfers the challenge collateral to the challenger', async () => {
                       const { collateralToken, challengeCollateral } = disputable

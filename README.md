@@ -7,7 +7,6 @@ This repository contains the following apps:
 - **[Agent](apps/agent)**: Hold assets and perform actions from Aragon organizations.
 - **[Agreement](apps/agreement)**: Govern organizations through a subjective rules.
 - **[Finance](apps/finance)**: Send payments and manage expenses with budgeting.
-- **[Survey](apps/survey)**: Create polls to gauge community opinions.
 - **[Tokens](apps/token-manager)**: Manages organization tokens.
 - **[Vault](apps/vault)**: Securely owns and manages tokens on behalf of a DAO.
 - **[Voting](apps/voting)**: Create votes that execute actions on behalf of token holders.
@@ -16,12 +15,6 @@ This repository contains the following apps:
 Each of the individual apps come with a frontend that is intended to be installed and used through the [Aragon client](http://github.com/aragon/aragon).
 
 You can read more about how each of the individual apps work in the [Aragon user guide](https://help.aragon.org/category/15-aragon-apps).
-
-## Coming soon apps
-
-The following apps are still under development, and not ready for production deployment yet:
-
-- **[Payroll](future-apps/payroll)**: Manages employees' payrolls.
 
 ## Quick start
 
