@@ -1,18 +1,14 @@
 import React from 'react'
-import { Button, GU, textStyle, useTheme } from '@aragon/ui'
+import { useConnectedAccount } from '@aragon/api-react'
+import { Button, GU } from '@aragon/ui'
 import {
   VOTE_STATUS_PAUSED,
   VOTE_STATUS_ACTIVE,
-  VOTE_STATUS_CANCELLED,
-  VOTE_STATUS_CLOSED,
 } from '../../disputable-vote-statuses'
-import { useConnectedAccount } from '@aragon/api-react'
 import { addressesEqual } from '../../web3-utils'
 
 function DisputableActions({ status, submitter }) {
-  const theme = useTheme()
   const connectedAccount = useConnectedAccount()
-
   const connectedAccountIsSubmitter = addressesEqual(
     submitter,
     connectedAccount

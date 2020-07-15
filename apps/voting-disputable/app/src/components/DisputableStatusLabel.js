@@ -1,13 +1,11 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import {
-  GU,
   IconAttention,
   IconClock,
   IconClosed,
   IconInfo,
   Tag,
-  textStyle,
   useTheme,
 } from '@aragon/ui'
 import {
@@ -15,7 +13,6 @@ import {
   VOTE_STATUS_CANCELLED,
   VOTE_STATUS_CLOSED,
   VOTE_STATUS_PAUSED,
-  DISPUTABLE_VOTE_STATUSES,
 } from '../disputable-vote-statuses'
 
 function getAttributes(status, theme) {

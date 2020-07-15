@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React from 'react'
 import { GU, useTheme } from '@aragon/ui'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
 

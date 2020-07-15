@@ -1,4 +1,5 @@
 import React from 'react'
+import { format } from 'date-fns'
 import {
   Box,
   GU,
@@ -9,7 +10,6 @@ import {
   Timer,
   useTheme,
 } from '@aragon/ui'
-import { format } from 'date-fns'
 import DisputableActions from './DisputableActions'
 import DisputableStatusLabel from '../DisputableStatusLabel'
 import { getAgreement } from '../../agreementsMockData'

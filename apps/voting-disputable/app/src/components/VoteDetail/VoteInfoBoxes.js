@@ -12,9 +12,9 @@ import {
   GU,
 } from '@aragon/ui'
 import { useNetwork } from '@aragon/api-react'
+import { round } from '../../math-utils'
 import SummaryBar from '../SummaryBar'
 import VoteStatus from '../VoteStatus'
-import { round } from '../../math-utils'
 
 const formatDate = date => `${format(date, 'yyyy-MM-dd, HH:mm')}`
 
@@ -33,7 +33,8 @@ function VoteInfoBoxes({
       css={`
         margin-top: ${2 * GU}px;
         display: grid;
-        grid-auto-flow: ${compactMode ? 'row' : 'column'};
+        grid-template-columns: ${compactMode ? '1fr' : '1fr 1fr 1fr'};
+        grid-template-rows: ${compactMode ? '1fr 1fr 1fr' : '1fr'};
         grid-gap: ${2 * GU}px;
       `}
     >
