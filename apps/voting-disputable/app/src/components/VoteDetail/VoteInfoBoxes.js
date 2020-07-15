@@ -44,6 +44,7 @@ function VoteInfoBoxes({
           css={`
             height: 100%;
           `}
+          padding={(compactMode ? 2 : 3) * GU}
         >
           <Status vote={vote} />
         </Box>
@@ -65,6 +66,7 @@ function VoteInfoBoxes({
           css={`
             height: 100%;
           `}
+          padding={(compactMode ? 2 : 3) * GU}
         >
           <SummaryWithPercentages
             positiveSize={votesYeaVotersSize}
@@ -89,6 +91,7 @@ function VoteInfoBoxes({
           css={`
             height: 100%;
           `}
+          padding={(compactMode ? 2 : 3) * GU}
         >
           <SummaryWithPercentages
             positiveSize={quorumProgress}
