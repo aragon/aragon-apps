@@ -1,0 +1,31 @@
+{
+  "presets": [
+    [
+      "env",
+      {
+        "modules": false,
+        "useBuiltIns": false
+      }
+    ],
+    "stage-2"
+  ],
+  "plugins": [
+    ["styled-components", {
+      "displayName": true
+    }],
+    "transform-runtime"
+  ],
+  "env": {
+    "test": {
+      "presets": [
+        [
+          "env",
+          {
+            "modules": "commonjs",
+            "targets": { "node": "current" }
+          }
+        ]
+      ]
+    }
+  }
+}
