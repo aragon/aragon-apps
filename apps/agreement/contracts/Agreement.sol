@@ -347,16 +347,10 @@ contract Agreement is IAgreement, AragonApp {
         require(_canPerformChallenge(disputable, msg.sender), ERROR_SENDER_CANNOT_CHALLENGE_ACTION);
         require(_settlementOffer <= requirement.actionAmount, ERROR_INVALID_SETTLEMENT_OFFER);
 
+        // TODO: implement try catch
         uint256 challengeId = _createChallenge(_actionId, action, msg.sender, requirement, _settlementOffer, _finishedEvidence, _context);
         action.currentChallengeId = challengeId;
-        // try/catch for:
-        // disputable.onDisputableActionChallenged(action.disputableActionId, challengeId, msg.sender);
-        address(disputable).call(abi.encodeWithSelector(
-            disputable.onDisputableActionChallenged.selector,
-            action.disputableActionId,
-            challengeId,
-            msg.sender
-        ));
+        disputable.onDisputableActionChallenged(action.disputableActionId, challengeId, msg.sender);
         emit ActionChallenged(_actionId, challengeId);
     }
 
@@ -392,9 +386,7 @@ contract Agreement is IAgreement, AragonApp {
         _transferTo(challenge.arbitratorFeeToken, challenger, challenge.arbitratorFeeAmount);
 
         challenge.state = ChallengeState.Settled;
-        // try/catch for:
-        // disputable.onDisputableActionRejected(action.disputableActionId);
-        address(disputable).call(abi.encodeWithSelector(disputable.onDisputableActionRejected.selector, action.disputableActionId));
+        disputable.onDisputableActionRejected(action.disputableActionId);
         emit ActionSettled(_actionId, challengeId);
         _closeAction(_actionId, action);
     }
@@ -465,6 +457,7 @@ contract Agreement is IAgreement, AragonApp {
         challenge.ruling = _ruling;
         emit Ruled(arbitrator, _disputeId, _ruling);
 
+        // TODO: implement try catch
         if (_ruling == DISPUTES_RULING_SUBMITTER) {
             _acceptAction(actionId, action, challengeId, challenge);
         } else if (_ruling == DISPUTES_RULING_CHALLENGER) {
@@ -938,9 +931,7 @@ contract Agreement is IAgreement, AragonApp {
         (IDisputable disputable, CollateralRequirement storage requirement) = _getDisputableFor(_action);
         _slashBalance(requirement.staking, _action.submitter, challenger, requirement.actionAmount);
         _transferTo(requirement.token, challenger, requirement.challengeAmount);
-        // try/catch for:
-        // disputable.onDisputableActionRejected(_action.disputableActionId);
-        address(disputable).call(abi.encodeWithSelector(disputable.onDisputableActionRejected.selector, _action.disputableActionId));
+        disputable.onDisputableActionRejected(_action.disputableActionId);
         emit ActionRejected(_actionId, _challengeId);
 
         _closeAction(_actionId, _action);
@@ -959,9 +950,7 @@ contract Agreement is IAgreement, AragonApp {
         address submitter = _action.submitter;
         (IDisputable disputable, CollateralRequirement storage requirement) = _getDisputableFor(_action);
         _transferTo(requirement.token, submitter, requirement.challengeAmount);
-        // try/catch for:
-        // disputable.onDisputableActionAllowed(_action.disputableActionId);
-        address(disputable).call(abi.encodeWithSelector(disputable.onDisputableActionAllowed.selector, _action.disputableActionId));
+        disputable.onDisputableActionAllowed(_action.disputableActionId);
         emit ActionAccepted(_actionId, _challengeId);
     }
 
@@ -977,9 +966,7 @@ contract Agreement is IAgreement, AragonApp {
 
         (IDisputable disputable, CollateralRequirement storage requirement) = _getDisputableFor(_action);
         _transferTo(requirement.token, _challenge.challenger, requirement.challengeAmount);
-        // try/catch for:
-        // disputable.onDisputableActionVoided(_action.disputableActionId);
-        address(disputable).call(abi.encodeWithSelector(disputable.onDisputableActionVoided.selector, _action.disputableActionId));
+        disputable.onDisputableActionVoided(_action.disputableActionId);
         emit ActionVoided(_actionId, _challengeId);
     }
 
