@@ -146,12 +146,10 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                   assertAmountOfEvents(receipt, AGREEMENT_EVENTS.ACTION_SETTLED, 1)
                   assertEvent(receipt, AGREEMENT_EVENTS.ACTION_SETTLED, { actionId, challengeId: currentChallengeId })
 
-                  // disputable event
-                  if (callbacksRevert) {
-                    assertAmountOfRawEvents(receipt, Disputable.abi, DISPUTABLE_EVENTS.REJECTED, 0)
-                  } else {
-                    assertAmountOfRawEvents(receipt, Disputable.abi, DISPUTABLE_EVENTS.REJECTED, 1)
-                  }
+
+                  // disputable event shouldn't be emitted when disputable reverts
+                  const expectedEventsAmount = callbacksRevert ? 0 : 1
+                  assertAmountOfRawEvents(receipt, Disputable.abi, DISPUTABLE_EVENTS.REJECTED, expectedEventsAmount)
                 })
 
                 it('there are no more paths allowed', async () => {

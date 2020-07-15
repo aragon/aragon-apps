@@ -145,15 +145,13 @@ contract('Agreement', ([_, submitter, challenger]) => {
                       })
 
                       if (expectedChallengeState === CHALLENGES_STATE.ACCEPTED) {
-                        it('(maybe) emits a disputable event', async () => {
+                        it(`${callbacksRevert ? 'does not emit' : 'emits'} a disputable event`, async () => {
                           const { disputeId } = await disputable.getChallenge(challengeId)
                           const receipt = await disputable.executeRuling({ actionId, ruling })
 
-                          if (callbacksRevert) {
-                            assertAmountOfRawEvents(receipt, Disputable.abi, DISPUTABLE_EVENTS.REJECTED, 0)
-                          } else {
-                            assertAmountOfRawEvents(receipt, Disputable.abi, DISPUTABLE_EVENTS.REJECTED, 1)
-                          }
+                          // disputable event shouldn't be emitted when disputable reverts
+                          const expectedEventsAmount = callbacksRevert ? 0 : 1
+                          assertAmountOfRawEvents(receipt, Disputable.abi, DISPUTABLE_EVENTS.REJECTED, expectedEventsAmount)
                         })
 
                         it('marks the action as closed', async () => {
@@ -196,22 +194,14 @@ contract('Agreement', ([_, submitter, challenger]) => {
                           assert.isFalse(canRuleDispute, 'action dispute can be ruled')
                         })
                       } else {
-                        let disputableEvent
-                        if (expectedChallengeState === CHALLENGES_STATE.REJECTED) {
-                          disputableEvent = DISPUTABLE_EVENTS.ALLOWED
-                        } else {
-                          disputableEvent = DISPUTABLE_EVENTS.VOIDED
-                        }
-
-                        it('(maybe) emits a disputable event', async () => {
+                        it(`${callbacksRevert ? 'does not emit' : 'emits'} a disputable event`, async () => {
                           const { disputeId } = await disputable.getChallenge(challengeId)
                           const receipt = await disputable.executeRuling({ actionId, ruling })
 
-                          if (callbacksRevert) {
-                            assertAmountOfRawEvents(receipt, Disputable.abi, disputableEvent, 0)
-                          } else {
-                            assertAmountOfRawEvents(receipt, Disputable.abi, disputableEvent, 1)
-                          }
+                          // disputable event shouldn't be emitted when disputable reverts
+                          const expectedEventsAmount = callbacksRevert ? 0 : 1
+                          const disputableEvent = expectedChallengeState === CHALLENGES_STATE.REJECTED ? DISPUTABLE_EVENTS.ALLOWED : DISPUTABLE_EVENTS.VOIDED
+                          assertAmountOfRawEvents(receipt, Disputable.abi, disputableEvent, expectedEventsAmount)
                         })
 
                         it('does not mark the action as closed', async () => {

@@ -38,7 +38,7 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
             })
           }
 
-          const itChallengesTheActionProperly = (callbacksRevert = false) => {
+          const itChallengesTheActionProperly = callbacksRevert => {
             context('when the challenger has staked enough collateral', () => {
               beforeEach('stake challenge collateral', async () => {
                 const amount = disputable.challengeCollateral
@@ -141,12 +141,9 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
                     assertAmountOfEvents(receipt, AGREEMENT_EVENTS.ACTION_CHALLENGED, 1)
                     assertEvent(receipt, AGREEMENT_EVENTS.ACTION_CHALLENGED, { actionId, challengeId: currentChallengeId })
 
-                    // disputable event
-                    if (callbacksRevert) {
-                      assertAmountOfRawEvents(receipt, Disputable.abi, DISPUTABLE_EVENTS.CHALLENGED, 0)
-                    } else {
-                      assertAmountOfRawEvents(receipt, Disputable.abi, DISPUTABLE_EVENTS.CHALLENGED, 1)
-                    }
+                    // disputable event shouldn't be emitted when disputable reverts
+                    const expectedEventsAmount = callbacksRevert ? 0 : 1
+                    assertAmountOfRawEvents(receipt, Disputable.abi, DISPUTABLE_EVENTS.CHALLENGED, expectedEventsAmount)
                   })
 
                   it('it can be answered only', async () => {

@@ -38,8 +38,8 @@ contract DisputableAppMock is DisputableAragonApp, TimeHelpersMock {
 
     uint256 private entriesLength;
     mapping (uint256 => Entry) private entries;
-
-    bool callbacksRevert;
+    bool private callbacksRevert;
+    
     /**
     * @dev Initialize app
     */
@@ -57,6 +57,9 @@ contract DisputableAppMock is DisputableAragonApp, TimeHelpersMock {
         mockCanChallenge = _canChallenge;
     }
 
+    /**
+    * @dev Mock callbacks revert configuration
+    */
     function mockSetCallbacksRevert(bool _callbacksRevert) external {
         callbacksRevert = _callbacksRevert;
     }
