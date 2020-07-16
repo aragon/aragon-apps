@@ -79,7 +79,6 @@ async function initialize(tokenAddr) {
       const nextState = {
         ...state,
       }
-
       switch (event) {
         case events.ACCOUNTS_TRIGGER:
           return updateConnectedAccount(nextState, returnValues)
@@ -185,6 +184,10 @@ async function castVote(state, { voteId, voter }) {
       ...vote.data,
       ...(await loadVoteData(voteId)),
     },
+    disputable: {
+      ...vote.disputable,
+      ...(await loadVoteDisputableInfo(voteId)),
+    },
   })
 
   return updateState({ ...state, connectedAccountVotes }, voteId, transform)
@@ -242,6 +245,7 @@ async function updateVotes(votes, voteId, transform) {
       await transform({
         voteId,
         data: await loadVoteData(voteId),
+        disputable: await loadVoteDisputableInfo(voteId),
       })
     )
   } else {
@@ -332,6 +336,22 @@ function loadVoteData(voteId) {
       .then(vote => loadVoteDescription(marshallVote(vote)))
       .catch(err => {
         console.error(`Error fetching vote (${voteId})`, err)
+        throw err
+      })
+  )
+}
+
+function loadVoteDisputableInfo(voteId) {
+  // Wrap with retry in case the disputable info is somehow not present
+  return retryEvery(() =>
+    app
+      .call('getVoteDisputableInfo', voteId)
+      .toPromise()
+      .catch(err => {
+        console.error(
+          `Error fetching disputable info from vote (${voteId})`,
+          err
+        )
         throw err
       })
   )

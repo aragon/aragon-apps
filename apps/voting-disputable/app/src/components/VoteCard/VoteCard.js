@@ -17,7 +17,7 @@ import VoteStatus from '../VoteStatus'
 import VoteDescription from '../VoteDescription'
 import You from '../You'
 //TODO: remove once we have real data
-import { getDisputableVoteById } from '../../agreementsMockData'
+import { getMockVoteActionById } from '../../agreementsMockData'
 
 function getCardBorderColor(status, theme) {
   const borderColor = {
@@ -41,7 +41,7 @@ function VoteCard({ vote, onOpen }) {
   } = vote
 
   //TODO: Remove this once we have real data
-  vote.disputable = getDisputableVoteById(voteId)
+  vote.disputable.action = getMockVoteActionById(voteId)
 
   const { votingPower, yea, nay } = numData
   const { open, metadata, description, endDate } = data
