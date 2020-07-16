@@ -1,17 +1,19 @@
-const { assertBn } = require('../helpers/assert/assertBn')
-const { assertRevert } = require('../helpers/assert/assertThrow')
-const { assertEvent, assertAmountOfEvents, assertAmountOfRawEvents } = require('../helpers/assert/assertEvent')
-const { AGREEMENT_ERRORS } = require('../helpers/utils/errors')
-const { AGREEMENT_EVENTS, DISPUTABLE_EVENTS } = require('../helpers/utils/events')
-const { CHALLENGES_STATE, RULINGS } = require('../helpers/utils/enums')
-
 const deployer = require('../helpers/utils/deployer')(web3, artifacts)
+const { AGREEMENT_ERRORS } = require('../helpers/utils/errors')
+const { CHALLENGES_STATE, RULINGS } = require('../helpers/utils/enums')
+const { AGREEMENT_EVENTS, DISPUTABLE_EVENTS } = require('../helpers/utils/events')
+
+const { injectWeb3, injectArtifacts } = require('@aragon/contract-helpers-test')
+const { assertBn, assertRevert, assertEvent, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/asserts')
+
+injectWeb3(web3)
+injectArtifacts(artifacts)
 
 contract('Agreement', ([_, someone, submitter, challenger]) => {
   let disputable, actionId
 
   beforeEach('deploy agreement instance', async () => {
-    disputable = await deployer.deployAndInitializeWrapperWithDisputable()
+    disputable = await deployer.deployAndInitializeDisputableWrapper()
   })
 
   describe('settlement', () => {
@@ -141,13 +143,12 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                   const { currentChallengeId } = await disputable.getAction(actionId)
                   const receipt = await disputable.settle({ actionId, from })
 
-                  assertAmountOfEvents(receipt, AGREEMENT_EVENTS.ACTION_SETTLED, 1)
+                  assertAmountOfEvents(receipt, AGREEMENT_EVENTS.ACTION_SETTLED)
                   assertEvent(receipt, AGREEMENT_EVENTS.ACTION_SETTLED, { actionId, challengeId: currentChallengeId })
 
-
                   // disputable event shouldn't be emitted when disputable reverts
-                  const expectedEventsAmount = callbacksRevert ? 0 : 1
-                  assertAmountOfRawEvents(receipt, disputable.disputableAbi, DISPUTABLE_EVENTS.REJECTED, expectedEventsAmount)
+                  const expectedAmount = callbacksRevert ? 0 : 1
+                  assertAmountOfEvents(receipt, DISPUTABLE_EVENTS.REJECTED, { expectedAmount, decodeForAbi: disputable.disputableAbi })
                 })
 
                 it('there are no more paths allowed', async () => {

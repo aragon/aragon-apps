@@ -1,12 +1,12 @@
-const { assertBn } = require('../helpers/assert/assertBn')
-const { bn, bigExp } = require('../helpers/lib/numbers')
-const { assertRevert } = require('../helpers/assert/assertThrow')
-const { decodeEventsOfType } = require('../helpers/lib/decodeEvent')
-const { assertAmountOfEvents, assertEvent } = require('../helpers/assert/assertEvent')
+const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 const { STAKING_EVENTS } = require('../helpers/utils/events')
 const { STAKING_ERRORS } = require('../helpers/utils/errors')
 
-const deployer = require('../helpers/utils/deployer')(web3, artifacts)
+const { bn, bigExp, injectWeb3, injectArtifacts } = require('@aragon/contract-helpers-test')
+const { assertBn, assertRevert, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
+
+injectWeb3(web3)
+injectArtifacts(artifacts)
 
 contract('Agreement', ([_, someone, user]) => {
   let token, staking, agreement
@@ -14,7 +14,7 @@ contract('Agreement', ([_, someone, user]) => {
   beforeEach('deploy agreement instance', async () => {
     token = await deployer.deployToken({})
     staking = await deployer.deployStakingInstance(token)
-    agreement = await deployer.deployAndInitializeWrapper()
+    agreement = await deployer.deployAndInitializeAgreementWrapper()
   })
 
   describe('stake', () => {
@@ -62,7 +62,7 @@ contract('Agreement', ([_, someone, user]) => {
         it('emits an event', async () => {
           const receipt = await agreement.stake({ token, amount, user, approve })
 
-          assertAmountOfEvents(receipt, STAKING_EVENTS.BALANCE_STAKED, 1)
+          assertAmountOfEvents(receipt, STAKING_EVENTS.BALANCE_STAKED)
           assertEvent(receipt, STAKING_EVENTS.BALANCE_STAKED, { user, amount })
         })
       })
@@ -130,7 +130,7 @@ contract('Agreement', ([_, someone, user]) => {
         it('emits an event', async () => {
           const receipt = await agreement.stake({ token, user, amount, from, approve })
 
-          assertAmountOfEvents(receipt, STAKING_EVENTS.BALANCE_STAKED, 1)
+          assertAmountOfEvents(receipt, STAKING_EVENTS.BALANCE_STAKED)
           assertEvent(receipt, STAKING_EVENTS.BALANCE_STAKED, { user, amount })
         })
       })
@@ -195,10 +195,9 @@ contract('Agreement', ([_, someone, user]) => {
       it('emits an event', async () => {
         const Staking = artifacts.require('Staking')
         const receipt = await agreement.approveAndCall({ token, amount, from, to: staking.address, mint: false })
-        const logs = decodeEventsOfType(receipt, Staking.abi, STAKING_EVENTS.BALANCE_STAKED)
 
-        assertAmountOfEvents({ logs }, STAKING_EVENTS.BALANCE_STAKED, 1)
-        assertEvent({ logs }, STAKING_EVENTS.BALANCE_STAKED, { user, amount })
+        assertAmountOfEvents(receipt, STAKING_EVENTS.BALANCE_STAKED, { decodeForAbi: Staking.abi })
+        assertEvent(receipt, STAKING_EVENTS.BALANCE_STAKED, { expectedArgs: { user, amount }, decodeForAbi: Staking.abi })
       })
     })
 
@@ -255,7 +254,7 @@ contract('Agreement', ([_, someone, user]) => {
           it('emits an event', async () => {
             const receipt = await agreement.unstake({ token, user, amount })
 
-            assertAmountOfEvents(receipt, STAKING_EVENTS.BALANCE_UNSTAKED, 1)
+            assertAmountOfEvents(receipt, STAKING_EVENTS.BALANCE_UNSTAKED)
             assertEvent(receipt, STAKING_EVENTS.BALANCE_UNSTAKED, { user, amount })
           })
         }

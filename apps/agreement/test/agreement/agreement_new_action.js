@@ -1,14 +1,12 @@
-const { assertBn } = require('../helpers/assert/assertBn')
-const { assertRevert } = require('../helpers/assert/assertThrow')
-const { decodeEventsOfType } = require('../helpers/lib/decodeEvent')
-const { assertAmountOfEvents, assertEvent } = require('../helpers/assert/assertEvent')
-const { bn, bigExp } = require('../helpers/lib/numbers')
+const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 const { AGREEMENT_EVENTS } = require('../helpers/utils/events')
 const { AGREEMENT_ERRORS, DISPUTABLE_ERRORS } = require('../helpers/utils/errors')
 
-const deployer = require('../helpers/utils/deployer')(web3, artifacts)
+const { bn, bigExp, ZERO_ADDRESS, injectWeb3, injectArtifacts } = require('@aragon/contract-helpers-test')
+const { assertBn, assertRevert, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
 
-const ZERO_ADDRESS = '0x' + '0'.repeat(40)
+injectWeb3(web3)
+injectArtifacts(artifacts)
 
 contract('Agreement', ([_, owner, submitter, someone]) => {
   let disputable, actionCollateral
@@ -17,7 +15,8 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
 
   beforeEach('deploy agreement instance', async () => {
     await deployer.deployStakingFactory()
-    disputable = await deployer.deployAndInitializeWrapperWithDisputable({ owner, activate: false, submitters: [submitter] })
+    await deployer.deployAndInitializeAgreement({ owner })
+    disputable = await deployer.deployAndInitializeDisputableWrapper({ owner, activate: false, submitters: [submitter] })
     actionCollateral = disputable.actionCollateral
   })
 
@@ -88,10 +87,9 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
 
                     it('emits an event', async () => {
                       const { receipt, actionId } = await disputable.newAction({ submitter, actionContext, stake, sign })
-                      const logs = decodeEventsOfType(receipt, disputable.abi, AGREEMENT_EVENTS.ACTION_SUBMITTED)
 
-                      assertAmountOfEvents({ logs }, AGREEMENT_EVENTS.ACTION_SUBMITTED, 1)
-                      assertEvent({ logs }, AGREEMENT_EVENTS.ACTION_SUBMITTED, { actionId })
+                      assertAmountOfEvents(receipt, AGREEMENT_EVENTS.ACTION_SUBMITTED, { decodeForAbi: disputable.abi })
+                      assertEvent(receipt, AGREEMENT_EVENTS.ACTION_SUBMITTED, { expectedArgs: { actionId }, decodeForAbi: disputable.abi })
                     })
 
                     it('can be challenged or closed', async () => {
@@ -130,14 +128,6 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
                       assertBn(currentAvailableBalance, 0, 'submitter available balance does not match')
                     })
                   })
-
-                  it('emits an event', async () => {
-                    const { receipt, actionId } = await disputable.newAction({ submitter, actionContext, stake, sign })
-                    const logs = decodeEventsOfType(receipt, disputable.abi, AGREEMENT_EVENTS.ACTION_SUBMITTED)
-
-                    assertAmountOfEvents({ logs }, AGREEMENT_EVENTS.ACTION_SUBMITTED, 1)
-                    assertEvent({ logs }, AGREEMENT_EVENTS.ACTION_SUBMITTED, { actionId, disputable: disputable.disputable.address })
-                  })
                 }
 
                 context('when the transaction fees module is set', () => {
@@ -172,7 +162,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
 
                     context('when the transaction fee token is not the staking token', () => {
                       let token
-                      
+
                       beforeEach('set transaction fees', async () => {
                         token = await deployer.deployToken({})
                         await deployer.aragonAppFeesCashier.setAppFee('0x', token.address, appFeeAmount)

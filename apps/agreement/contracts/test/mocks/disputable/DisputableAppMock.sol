@@ -2,10 +2,10 @@ pragma solidity 0.4.24;
 
 import "@aragon/os/contracts/lib/math/SafeMath64.sol";
 import "@aragon/os/contracts/apps/disputable/DisputableAragonApp.sol";
-import "../helpers/TimeHelpersMock.sol";
+import "@aragon/contract-helpers-test/contracts/0.4/aragonOS/SharedTimeHelpersMock.sol";
 
 
-contract DisputableAppMock is DisputableAragonApp, TimeHelpersMock {
+contract DisputableAppMock is DisputableAragonApp, SharedTimeHelpersMock {
     using SafeMath64 for uint64;
 
     bytes4 public constant ERC165_INTERFACE = ERC165_INTERFACE_ID;
@@ -39,7 +39,7 @@ contract DisputableAppMock is DisputableAragonApp, TimeHelpersMock {
     uint256 private entriesLength;
     mapping (uint256 => Entry) private entries;
     bool private callbacksRevert;
-    
+
     /**
     * @dev Initialize app
     */
