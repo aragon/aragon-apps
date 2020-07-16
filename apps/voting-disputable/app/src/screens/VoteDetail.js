@@ -32,7 +32,7 @@ import { percentageList, round, safeDiv } from '../math-utils'
 import { getQuorumProgress } from '../vote-utils'
 import { VOTE_NAY, VOTE_YEA } from '../vote-types'
 import { addressesEqual } from '../web3-utils'
-import { getDisputableVoteById } from '../agreementsMockData'
+import { getMockVoteActionById } from '../agreementsMockData'
 
 const formatDate = date => `${format(date, 'yyyy-MM-dd, HH:mm')}`
 
@@ -53,7 +53,7 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
   } = vote
 
   //TODO: Remove this once we have real data
-  vote.disputable.action = getDisputableVoteById(voteId)
+  vote.disputable.action = getMockVoteActionById(voteId)
 
   const { minAcceptQuorum, supportRequired, yea, nay } = numData
   const { creator, description, metadata, open, path: executionPath } = data

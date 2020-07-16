@@ -184,6 +184,10 @@ async function castVote(state, { voteId, voter }) {
       ...vote.data,
       ...(await loadVoteData(voteId)),
     },
+    disputable: {
+      ...vote.disputable,
+      ...(await loadVoteDisputableInfo(voteId)),
+    },
   })
 
   return updateState({ ...state, connectedAccountVotes }, voteId, transform)
@@ -338,7 +342,7 @@ function loadVoteData(voteId) {
 }
 
 function loadVoteDisputableInfo(voteId) {
-  // Wrap with retry in case the vote is somehow not present
+  // Wrap with retry in case the disputable info is somehow not present
   return retryEvery(() =>
     app
       .call('getVoteDisputableInfo', voteId)

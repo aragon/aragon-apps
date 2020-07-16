@@ -1,7 +1,7 @@
-export const VOTE_STATUS_ACTIVE = '0'
-export const VOTE_STATUS_PAUSED = '1'
-export const VOTE_STATUS_CANCELLED = '2'
-export const VOTE_STATUS_CLOSED = '3'
+export const VOTE_STATUS_ACTIVE = Symbol('VOTE_STATUS_ACTIVE')
+export const VOTE_STATUS_PAUSED = Symbol('VOTE_STATUS_PAUSED')
+export const VOTE_STATUS_CANCELLED = Symbol('VOTE_STATUS_CANCELLED')
+export const VOTE_STATUS_CLOSED = Symbol('VOTE_STATUS_CLOSED')
 
 export const DISPUTABLE_VOTE_STATUSES = new Map([
   ['0', VOTE_STATUS_ACTIVE],

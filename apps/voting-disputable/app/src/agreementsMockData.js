@@ -1,4 +1,4 @@
-let vote1 = {
+let action1 = {
   //Agreement.sol: getAction(actionID)
   disputable: '', //Address of the disputable that created the action
   disputableActionId: '24',
@@ -34,7 +34,7 @@ let vote1 = {
   },
 }
 
-let vote2 = {
+let action2 = {
   //Agreement.sol: getAction(actionID)
   disputable: '', //Address of the disputable that created the action
   disputableActionId: '24',
@@ -71,7 +71,7 @@ let vote2 = {
 }
 
 let date = new Date().getTime() + 3600 * 60 * 48
-let vote3 = {
+let action3 = {
   //Agreement.sol: getAction(actionID)
   disputable: '', //Address of the disputable that created the action
   disputableActionId: '24',
@@ -107,14 +107,14 @@ let vote3 = {
   },
 }
 
-export function getDisputableVoteById(id) {
+export function getMockVoteActionById(id) {
   if (id == 13 || id == '13') {
-    return vote1
+    return action1
   }
   if (id == 12 || id == '12') {
-    return vote2
+    return action2
   }
-  return vote3
+  return action3
 }
 
 export function getAgreement() {
@@ -122,23 +122,5 @@ export function getAgreement() {
     tokenSymbol: 'ANT',
     collateralAmount: 100,
     agreementTitle: 'EthicalDAO Agreement.',
-  }
-}
-
-export function challengeVoteById(id, address) {
-  if (id == 13 || id == '13') {
-    vote1.status = 'Paused'
-    vote1.action.state = 'Challenged'
-    vote1.action.challenge.challenger = address
-  }
-  if (id == 12 || id == '12') {
-    vote2.status = 'Paused'
-    vote2.action.state = 'Challenged'
-    vote2.action.challenge.challenger = address
-  }
-  if (id == 14 || id == '14') {
-    vote3.status = 'Paused'
-    vote3.action.state = 'Challenged'
-    vote3.action.challenge.challenger = address
   }
 }
