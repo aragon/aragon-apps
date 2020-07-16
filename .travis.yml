@@ -12,7 +12,6 @@ cache:
     - apps/voting/node_modules
     - shared/migrations/node_modules
     - shared/minime/node_modules
-    - shared/test-helpers/node_modules
 notifications:
   email: false
 node_js:
