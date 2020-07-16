@@ -113,7 +113,7 @@ class App extends React.PureComponent {
         onResolve={this.handleResolveLocalIdentity}
         onShowLocalIdentityModal={this.handleShowLocalIdentityModal}
       >
-        <SyncIndicator visible={isSyncing} />
+        <SyncIndicator visible={isSyncing} shift={50} />
 
         {!isSyncing && appStateReady && holders.length === 0 && (
           <EmptyState onAssignHolder={this.handleLaunchAssignTokensNoHolder} />
