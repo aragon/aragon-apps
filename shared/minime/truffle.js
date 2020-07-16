@@ -1,25 +1,5 @@
-module.exports = {
-  networks: {
-    rpc: {
-      network_id: 15,
-      host: 'localhost',
-      port: 8545,
-      gas: 6.9e6,
-    },
-    coverage: {
-      host: "localhost",
-      network_id: "*",
-      port: 8555,
-      gas: 0xffffffffff,
-      gasPrice: 0x01
-    },
-  },
-  build: {},
-  mocha: {},
-  solc: {
-    optimizer: {
-      enabled: true,
-      runs: 10000
-    }
-  },
-}
+const TruffleConfig = require('@aragon/truffle-config-v5')
+
+TruffleConfig.compilers.solc.version = '0.4.24'
+
+module.exports = TruffleConfig
