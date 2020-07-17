@@ -12,8 +12,5 @@ export function pluralize(count, singular, plural, re = PLURALIZE_RE) {
 export function noop() {}
 
 export function formatDate(date) {
-  return `${format(date, 'HH:mm')} on ${format(date, 'do')} of ${format(
-    date,
-    'MMM. yyyy'
-  )}`
+  return `${format(date, 'yyyy-MM-dd, HH:mm')}`
 }
