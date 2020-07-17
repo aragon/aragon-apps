@@ -37,4 +37,7 @@ function DisputablePeriod({ startDate }) {
   )
 }
 
+DisputablePeriod.propTypes = {
+  startDate: PropTypes.number,
+}
 export default DisputablePeriod
