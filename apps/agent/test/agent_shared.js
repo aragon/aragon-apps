@@ -1,6 +1,7 @@
 const ERRORS = require('./helpers/errors')
 const ethABI = require('web3-eth-abi')
 const ethUtil = require('ethereumjs-util')
+const { sha3 } = require('web3-utils')
 const { hash: namehash } = require('eth-ens-namehash')
 const { getInstalledApp, encodeCallScript } = require('@aragon/contract-helpers-test/src/aragon-os')
 const { assertRevert, assertBn, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/asserts')
@@ -121,7 +122,7 @@ module.exports = (
       })
 
       it('cannot add presigned hashes', async () => {
-        const hash = web3.utils.sha3('hash') // careful as it may encode the data in the same way as solidity before hashing
+        const hash = sha3('hash') // careful as it may encode the data in the same way as solidity before hashing
 
         await acl.createPermission(root, agent.address, ADD_PRESIGNED_HASH_ROLE, root, { from: root })
         await assertRevert(agent.presignHash(hash), ERRORS.APP_AUTH_FAILED)
@@ -702,7 +703,7 @@ module.exports = (
 
       context('> Signing messages', () => {
         const [_, nobody, presigner, signerDesignator] = accounts
-        const HASH = web3.utils.sha3('hash') // careful as it may encode the data in the same way as solidity before hashing
+        const HASH = sha3('hash') // careful as it may encode the data in the same way as solidity before hashing
 
         const SIGNATURE_MODES = {
           Invalid: '0x00',
