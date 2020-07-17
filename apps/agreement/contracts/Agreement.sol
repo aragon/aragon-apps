@@ -1161,7 +1161,12 @@ contract Agreement is IAgreement, AragonApp {
     * @return True if the action can be closed, false otherwise
     */
     function _canClose(Action storage _action) internal view returns (bool) {
-        return _canProceed(_action) && _action.disputable.canClose(_action.disputableActionId);
+        if (!_canProceed(_action)) {
+            return false;
+        }
+
+        IDisputable disputable = _action.disputable;
+        return IDisputable(msg.sender) == disputable || disputable.canClose(_action.disputableActionId);
     }
 
     /**

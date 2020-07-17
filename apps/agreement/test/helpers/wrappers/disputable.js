@@ -102,6 +102,10 @@ class DisputableWrapper extends AgreementWrapper {
     return this.forward({ script: actionContext, from: submitter })
   }
 
+  async close(id, fromDisputable = false) {
+    return fromDisputable ? this.disputable.closeAction(id) : super.close(id)
+  }
+
   async challenge(options = {}) {
     if (options.stake === undefined) options.stake = this.challengeCollateral
     if (options.stake) await this.approve({ amount: options.stake, from: options.challenger })
