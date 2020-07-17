@@ -1,7 +1,6 @@
 {
   "packages": [
     "apps/*",
-    "future-apps/*",
     "shared/*"
   ],
   "version": "independent"
