@@ -1,5 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
+import { differenceInHours } from 'date-fns'
 import { GU, Timer, useTheme } from '@aragon/ui'
 import { formatDate } from '../../utils'
 
@@ -28,7 +29,7 @@ function DisputablePeriod({ startDate }) {
               color: ${theme.contentSecondary};
             `}
           >
-            (48h)
+            ({differenceInHours(PERIOD, 0)})
           </div>
         </div>
       )}
