@@ -10,7 +10,7 @@ injectWeb3(web3)
 injectArtifacts(artifacts)
 
 contract('Agreement', ([_, submitter]) => {
-  let disputable, actionId
+  let disputable, actionId, disputableActionId
 
   beforeEach('deploy agreement instance', async () => {
     disputable = await deployer.deployAndInitializeDisputableWrapper()
@@ -19,7 +19,7 @@ contract('Agreement', ([_, submitter]) => {
   describe('close', () => {
     context('when the given action exists', () => {
       beforeEach('create action', async () => {
-        ({ actionId } = await disputable.newAction({ submitter }))
+        ({ actionId, disputableActionId } = await disputable.newAction({ submitter }))
       })
 
       const itCanCloseActions = () => {
@@ -39,6 +39,17 @@ contract('Agreement', ([_, submitter]) => {
             assertBn(currentActionState.disputableActionId, previousActionState.disputableActionId, 'disputable action ID does not match')
             assertBn(currentActionState.currentChallengeId, previousActionState.currentChallengeId, 'challenge ID does not match')
             assertBn(currentActionState.collateralRequirementId, previousActionState.collateralRequirementId, 'collateral requirement ID does not match')
+          })
+
+          it('can be closed by the disputable', async () => {
+            const closedFromDisputable = true
+            await disputable.mockDisputable({ canClose :false })
+
+            await assertRevert(disputable.close(actionId), AGREEMENT_ERRORS.ERROR_CANNOT_CLOSE_ACTION)
+            await disputable.close(disputableActionId, closedFromDisputable)
+
+            const currentActionState = await disputable.getAction(actionId)
+            assert.isTrue(currentActionState.closed, 'action is not closed')
           })
 
           if (unlocksBalance) {

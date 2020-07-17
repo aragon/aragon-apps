@@ -65,6 +65,13 @@ contract DisputableAppMock is DisputableAragonApp, SharedTimeHelpersMock {
     }
 
     /**
+    * @dev Helper function to close actions
+    */
+    function closeAction(uint256 _id) external {
+        _closeAgreementAction(entries[_id].actionId);
+    }
+
+    /**
     * @dev IForwarder interface conformance
     */
     function forward(bytes memory data) public {
