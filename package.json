@@ -34,7 +34,6 @@
     "test:agent": "lerna run --scope=@aragon/apps-agent --stream test",
     "test:agreement": "lerna run --scope=@aragon/apps-agreement --stream test",
     "test:future": "lerna run --scope=@aragon/future-apps-* --concurrency=1 --stream test",
-    "test:shared": "lerna run --scope=@aragon/apps-shared-* --concurrency=1 --stream test",
     "coverage": "npm run coverage:all",
     "coverage:all": "lerna run --scope=@aragon/apps-* --concurrency=1 --stream coverage",
     "coverage:finance": "lerna run --scope=@aragon/apps-finance --concurrency=1 --stream coverage",

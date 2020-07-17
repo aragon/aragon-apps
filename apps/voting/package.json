@@ -55,7 +55,7 @@
     "truffle-extract": "^1.2.1"
   },
   "dependencies": {
-    "@aragon/apps-shared-minime": "1.0.0",
+    "@aragon/minime": "1.0.0",
     "@aragon/os": "4.2.0"
   }
 }
