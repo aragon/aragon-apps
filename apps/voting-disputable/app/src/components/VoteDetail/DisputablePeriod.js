@@ -29,7 +29,7 @@ function DisputablePeriod({ startDate }) {
               color: ${theme.contentSecondary};
             `}
           >
-            ({differenceInHours(PERIOD, 0)})
+            ({differenceInHours(PERIOD, 0)}h)
           </div>
         </div>
       )}

@@ -1,13 +1,13 @@
 import React from 'react'
 import { Box, GU, IconLock, Info, Link, textStyle, useTheme } from '@aragon/ui'
-import DisputableActions from './DisputableActions'
-import DisputablePeriod from './DisputablePeriod'
-import DisputableStatusLabel from '../DisputableStatusLabel'
-import { getAgreement } from '../../agreementsMockData'
 import {
   DISPUTABLE_VOTE_STATUSES,
   VOTE_STATUS_PAUSED,
 } from '../../disputable-vote-statuses'
+import { getAgreement } from '../../agreementsMockData'
+import DisputableActions from './DisputableActions'
+import DisputablePeriod from './DisputablePeriod'
+import DisputableStatusLabel from '../DisputableStatusLabel'
 
 function hasDispute(vote) {
   return (
