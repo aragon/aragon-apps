@@ -21,7 +21,7 @@
   },
   "devDependencies": {
     "@aragon/apps-shared-migrations": "1.0.0",
-    "@aragon/contract-helpers-test": "0.1.0-rc.2",
+    "@aragon/contract-helpers-test": "^0.1.0-rc.2",
     "@aragon/truffle-config-v5": "^1.0.1",
     "chai": "^4.2.0",
     "ethereumjs-testrpc-sc": "^6.1.6",
