@@ -34,8 +34,6 @@ import { VOTE_NAY, VOTE_YEA } from '../vote-types'
 import { addressesEqual } from '../web3-utils'
 import { getMockVoteActionById } from '../agreementsMockData'
 
-const formatDate = date => `${format(date, 'yyyy-MM-dd, HH:mm')}`
-
 const DEFAULT_DESCRIPTION =
   'No additional description has been provided for this proposal.'
 

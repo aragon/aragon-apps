@@ -1,21 +1,13 @@
 import React from 'react'
-import { format } from 'date-fns'
+import { Box, GU, IconLock, Info, Link, textStyle, useTheme } from '@aragon/ui'
 import {
-  Box,
-  GU,
-  IconLock,
-  Info,
-  Link,
-  textStyle,
-  Timer,
-  useTheme,
-} from '@aragon/ui'
-import DisputableActions from './DisputableActions'
-import DisputableStatusLabel from '../DisputableStatusLabel'
+  DISPUTABLE_VOTE_STATUSES,
+  VOTE_STATUS_PAUSED,
+} from '../../disputable-vote-statuses'
 import { getAgreement } from '../../agreementsMockData'
-import { DISPUTABLE_VOTE_STATUSES } from '../../disputable-vote-statuses'
-
-const formatDate = date => `${format(date, 'yyyy-MM-dd, HH:mm')}`
+import DisputableActions from './DisputableActions'
+import DisputablePeriod from './DisputablePeriod'
+import DisputableStatusLabel from '../DisputableStatusLabel'
 
 function hasDispute(vote) {
   return (
@@ -27,12 +19,13 @@ function hasDispute(vote) {
 
 function DisputableActionStatus({ vote }) {
   //TODO: get agreement and vote real data
-  const theme = useTheme()
   const agreement = getAgreement()
 
   const { challengeAmount, collateralToken } = vote.disputable.action.collateral
   const disputableStatus =
     vote.disputable && DISPUTABLE_VOTE_STATUSES.get(vote.disputable.status)
+
+  const challenged = disputableStatus === VOTE_STATUS_PAUSED
 
   return (
     <Box heading="Disputable Action Status">
@@ -60,26 +53,14 @@ function DisputableActionStatus({ vote }) {
             </span>
           </div>
         </Item>
-        <Item label="Challenge period">
-          {new Date().getTime() > vote.disputable.action.endDate ? (
-            formatDate(vote.disputable.action.endDate)
-          ) : (
-            <div
-              css={`
-                display: inline-flex;
-              `}
-            >
-              <Timer end={new Date(vote.disputable.action.endDate)} />{' '}
-              <div
-                css={`
-                  padding-left: ${1 * GU}px;
-                  color: ${theme.contentSecondary};
-                `}
-              >
-                (48h)
-              </div>
-            </div>
-          )}
+        <Item label={challenged ? 'Settlement period' : 'Challenge period'}>
+          <DisputablePeriod
+            startDate={
+              challenged
+                ? vote.disputable.pausedAt
+                : new Date(vote.data.startDate).getTime()
+            }
+          />
         </Item>
         <Item label="Agreement">
           <Link>{agreement.agreementTitle}</Link>

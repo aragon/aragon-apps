@@ -347,6 +347,7 @@ function loadVoteDisputableInfo(voteId) {
     app
       .call('getVoteDisputableInfo', voteId)
       .toPromise()
+      .then(vote => marshallDisputableInfo(vote))
       .catch(err => {
         console.error(
           `Error fetching disputable info from vote (${voteId})`,
@@ -423,6 +424,14 @@ function marshallVote({
     // Like times, blocks should be safe to represent as real numbers
     snapshotBlock: parseInt(snapshotBlock, 10),
     startDate: marshallDate(startDate),
+  }
+}
+function marshallDisputableInfo({ actionId, pauseDuration, pausedAt, status }) {
+  return {
+    actionId,
+    pauseDuration,
+    pausedAt: marshallDate(pausedAt),
+    status,
   }
 }
 
