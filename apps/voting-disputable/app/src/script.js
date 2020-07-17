@@ -6,6 +6,7 @@ import { voteTypeFromContractEnum } from './vote-utils'
 import { EMPTY_CALLSCRIPT } from './evmscript-utils'
 import tokenDecimalsAbi from './abi/token-decimals.json'
 import tokenSymbolAbi from './abi/token-symbol.json'
+import agreementAbi from './abi/agreement.json'
 
 const tokenAbi = [].concat(tokenDecimalsAbi, tokenSymbolAbi)
 
@@ -427,6 +428,11 @@ function marshallVote({
   }
 }
 function marshallDisputableInfo({ actionId, pauseDuration, pausedAt, status }) {
+  const agreement = app.external(
+    '0xeDeA3FB46d3A42f137011D10e9087588e9937fD8',
+    agreementAbi
+  )
+  console.log('marshal', actionId, agreement.getAction(actionId).toPromise())
   return {
     actionId,
     pauseDuration,
