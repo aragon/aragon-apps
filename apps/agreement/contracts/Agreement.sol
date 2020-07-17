@@ -325,11 +325,9 @@ contract Agreement is IAgreement, AragonApp {
     */
     function closeAction(uint256 _actionId) external {
         Action storage action = _getAction(_actionId);
-        (IDisputable disputable, CollateralRequirement storage requirement) = _getDisputableFor(action);
+        require(_canClose(action), ERROR_CANNOT_CLOSE_ACTION);
 
-        bool checkingFromDisputable = IDisputable(msg.sender) == disputable;
-        require(_canClose(action, checkingFromDisputable), ERROR_CANNOT_CLOSE_ACTION);
-
+        (, CollateralRequirement storage requirement) = _getDisputableFor(action);
         _unlockBalance(requirement.staking, action.submitter, requirement.actionAmount);
         _closeAction(_actionId, action);
     }
@@ -709,7 +707,7 @@ contract Agreement is IAgreement, AragonApp {
     */
     function canClose(uint256 _actionId) external view returns (bool) {
         Action storage action = _getAction(_actionId);
-        return _canClose(action, false);
+        return _canClose(action);
     }
 
     /**
@@ -1160,11 +1158,15 @@ contract Agreement is IAgreement, AragonApp {
     /**
     * @dev Tell whether an action can be closed
     * @param _action Action instance to be queried
-    * @param _checkingFromDisputable Whether the check is being performed from the disputable itself
     * @return True if the action can be closed, false otherwise
     */
-    function _canClose(Action storage _action, bool _checkingFromDisputable) internal view returns (bool) {
-        return _canProceed(_action) && (_checkingFromDisputable || _action.disputable.canClose(_action.disputableActionId));
+    function _canClose(Action storage _action) internal view returns (bool) {
+        if (!_canProceed(_action)) {
+            return false;
+        }
+
+        IDisputable disputable = _action.disputable;
+        return IDisputable(msg.sender) == disputable || disputable.canClose(_action.disputableActionId);
     }
 
     /**
