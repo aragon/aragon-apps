@@ -1,15 +1,5 @@
 import React from 'react'
-import { format } from 'date-fns'
-import {
-  Box,
-  GU,
-  IconLock,
-  Info,
-  Link,
-  textStyle,
-  Timer,
-  useTheme,
-} from '@aragon/ui'
+import { Box, GU, IconLock, Info, Link, textStyle, useTheme } from '@aragon/ui'
 import DisputableActions from './DisputableActions'
 import DisputablePeriod from './DisputablePeriod'
 import DisputableStatusLabel from '../DisputableStatusLabel'
@@ -29,15 +19,13 @@ function hasDispute(vote) {
 
 function DisputableActionStatus({ vote }) {
   //TODO: get agreement and vote real data
-  const theme = useTheme()
   const agreement = getAgreement()
 
   const { challengeAmount, collateralToken } = vote.disputable.action.collateral
   const disputableStatus =
     vote.disputable && DISPUTABLE_VOTE_STATUSES.get(vote.disputable.status)
 
-  const challenged =
-    DISPUTABLE_VOTE_STATUSES.get(vote.disputable.status) === VOTE_STATUS_PAUSED
+  const challenged = disputableStatus === VOTE_STATUS_PAUSED
 
   return (
     <Box heading="Disputable Action Status">

@@ -434,10 +434,6 @@ function marshallDisputableInfo({ actionId, pauseDuration, pausedAt, status }) {
     status,
   }
 }
-actionId: '2'
-pauseDuration: '0'
-pausedAt: '1594081479'
-status: '1'
 
 function marshallDate(date) {
   // Represent dates as real numbers, as it's very unlikely they'll hit the limit...

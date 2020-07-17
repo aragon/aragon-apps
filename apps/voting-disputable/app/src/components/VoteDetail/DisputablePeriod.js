@@ -1,26 +1,27 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { GU, Timer, useTheme } from '@aragon/ui'
-import { format } from 'date-fns'
+import { formatDate } from '../../utils'
 
 //48 hour period
 const PERIOD = 1000 * 60 * 60 * 48
-const formatDate = date => `${format(date, 'yyyy-MM-dd, HH:mm')}`
 
 function DisputablePeriod({ startDate }) {
   const theme = useTheme()
   const now = new Date().getTime()
+  const endDate = startDate + PERIOD
+
   return (
     <React.Fragment>
-      {now > startDate + PERIOD ? (
-        formatDate(startDate + PERIOD)
+      {now > endDate ? (
+        formatDate(endDate)
       ) : (
         <div
           css={`
             display: inline-flex;
           `}
         >
-          <Timer end={new Date(startDate + PERIOD)} />{' '}
+          <Timer end={new Date(endDate)} />{' '}
           <div
             css={`
               padding-left: ${1 * GU}px;

@@ -12,11 +12,10 @@ import {
   GU,
 } from '@aragon/ui'
 import { useNetwork } from '@aragon/api-react'
+import { formatDate } from '../../utils'
 import { round } from '../../math-utils'
 import SummaryBar from '../SummaryBar'
 import VoteStatus from '../VoteStatus'
-
-const formatDate = date => `${format(date, 'yyyy-MM-dd, HH:mm')}`
 
 function VoteInfoBoxes({
   minAcceptQuorum,
