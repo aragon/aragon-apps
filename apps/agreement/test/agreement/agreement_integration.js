@@ -1,9 +1,8 @@
-const { assertBn } = require('../helpers/assert/assertBn')
-const { bn, bigExp } = require('../helpers/lib/numbers')
+const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 const { CHALLENGES_STATE, RULINGS } = require('../helpers/utils/enums')
 
-const deployer = require('../helpers/utils/deployer')(web3, artifacts)
-
+const { assertBn } = require('@aragon/contract-helpers-test/src/asserts')
+const { bn, bigExp } = require('@aragon/contract-helpers-test')
 
 contract('Agreement', ([_, challenger, holder0, holder1, holder2, holder3, holder4, holder5]) => {
   let disputable, collateralToken
@@ -40,7 +39,7 @@ contract('Agreement', ([_, challenger, holder0, holder1, holder2, holder3, holde
 
   before('deploy disputable instance', async () => {
     collateralToken = await deployer.deployCollateralToken()
-    disputable = await deployer.deployAndInitializeWrapperWithDisputable({ actionCollateral, challengeCollateral, submitters: [holder1, holder2, holder3, holder4, holder5] })
+    disputable = await deployer.deployAndInitializeDisputableWrapper({ actionCollateral, challengeCollateral, submitters: [holder1, holder2, holder3, holder4, holder5] })
   })
 
   describe('integration', () => {

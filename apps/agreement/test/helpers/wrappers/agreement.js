@@ -1,20 +1,19 @@
-const { bn } = require('../lib/numbers')
 const { CHALLENGES_STATE } = require('../utils/enums')
 const { AGREEMENT_EVENTS } = require('../utils/events')
 const { AGREEMENT_ERRORS } = require('../utils/errors')
-const { getEventArgument } = require('@aragon/contract-helpers-test/events')
 
-const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
-const EMPTY_DATA = '0x'
+const { ZERO_ADDRESS, EMPTY_BYTES, bn, getEventArgument } = require('@aragon/contract-helpers-test')
 
 class AgreementWrapper {
-  constructor(artifacts, web3, agreement, arbitrator, aragonAppFeesCashier, stakingFactory) {
+  constructor(artifacts, web3, agreement, arbitrator, aragonAppFeesCashier, stakingFactory, clock) {
     this.artifacts = artifacts
     this.web3 = web3
     this.agreement = agreement
     this.arbitrator = arbitrator
     this.aragonAppFeesCashier = aragonAppFeesCashier
     this.stakingFactory = stakingFactory
+    this.clock = clock
+    this.staking = {}
   }
 
   get abi() {
@@ -64,10 +63,15 @@ class AgreementWrapper {
   }
 
   async getStakingAddress(token) {
-    const stakingAddress = await this.stakingFactory.getInstance(token.address)
-    if (stakingAddress !== ZERO_ADDRESS) return stakingAddress
-    const receipt = await this.stakingFactory.getOrCreateInstance(token.address)
-    return getEventArgument(receipt, 'NewStaking', 'instance')
+    if (!this.staking[token.address]) {
+      const stakingAddress = await this.stakingFactory.getInstance(token.address)
+      if (stakingAddress !== ZERO_ADDRESS) this.staking[token.address] = stakingAddress
+      else {
+        const receipt = await this.stakingFactory.getOrCreateInstance(token.address)
+        this.staking[token.address] = getEventArgument(receipt, 'NewStaking', 'instance')
+      }
+    }
+    return this.staking[token.address]
   }
 
   async getStaking(token) {
@@ -247,18 +251,10 @@ class AgreementWrapper {
   }
 
   async moveToTimestamp(timestamp) {
-    const clockMockAddress = await this.agreement.clockMock()
-    const clockMock = await this._getContract('ClockMock').at(clockMockAddress)
     const currentTimestamp = await this.currentTimestamp()
-    if (timestamp.lt(currentTimestamp)) return clockMock.mockSetTimestamp(timestamp)
+    if (timestamp.lt(currentTimestamp)) return this.clock.mockSetTimestamp(timestamp)
     const timeDiff = timestamp.sub(currentTimestamp)
-    return clockMock.mockIncreaseTime(timeDiff)
-  }
-
-  async increaseTime(seconds) {
-    const clockMockAddress = await this.agreement.clockMock()
-    const clockMock = await this._getContract('ClockMock').at(clockMockAddress)
-    return clockMock.mockIncreaseTime(seconds)
+    return this.clock.mockIncreaseTime(timeDiff)
   }
 
   async approve({ token, amount, to = undefined, from = undefined, accumulate = true }) {
@@ -274,17 +270,16 @@ class AgreementWrapper {
     if (!from) from = await this._getSender()
 
     if (mint) await token.generateTokens(from, amount)
-    return token.approveAndCall(to, amount, EMPTY_DATA, { from })
+    return token.approveAndCall(to, amount, EMPTY_BYTES, { from })
   }
 
-  async allowManager({ token, user, amount}) {
-    // allow lock manager if needed
+  async allowManager({ token, user, amount }) {
     const staking = await this.getStaking(token)
-    const lock = await staking.getLock(user, this.agreement.address)
-    if (lock._allowance.eq(bn(0))) {
-      await staking.allowManager(this.agreement.address, amount, EMPTY_DATA, { from: user })
-    } else if (lock._allowance.sub(lock._amount).lt(amount)) {
-      await staking.increaseLockAllowance(this.agreement.address, amount, { from: user })
+    const { _allowance: allowance, _amount: locked } = await staking.getLock(user, this.agreement.address)
+    if (allowance.eq(bn(0))) {
+      return staking.allowManager(this.agreement.address, amount, EMPTY_BYTES, { from: user })
+    } else if (allowance.sub(locked).lt(amount)) {
+      return staking.increaseLockAllowance(this.agreement.address, amount.sub(allowance.sub(locked)), { from: user })
     }
   }
 
@@ -297,14 +292,14 @@ class AgreementWrapper {
     if (approve) await this.approve({ token, amount: approve, to: staking.address, from })
 
     return (user === from)
-      ? staking.stake(amount, EMPTY_DATA, { from: user })
-      : staking.stakeFor(user, amount, EMPTY_DATA, { from })
+      ? staking.stake(amount, EMPTY_BYTES, { from: user })
+      : staking.stakeFor(user, amount, EMPTY_BYTES, { from })
   }
 
   async unstake({ token, user, amount = undefined }) {
     const staking = await this.getStaking(token)
     if (amount === undefined) amount = await staking.unlockedBalanceOf(user)
-    return staking.unstake(amount, EMPTY_DATA, { from: user })
+    return staking.unstake(amount, EMPTY_BYTES, { from: user })
   }
 
   async safeApprove(token, from, to, amount, accumulate = true) {
@@ -315,8 +310,11 @@ class AgreementWrapper {
   }
 
   async _getSender() {
-    const accounts = await this.web3.eth.getAccounts()
-    return accounts[0]
+    if (!this.sender) {
+      const accounts = await this.web3.eth.getAccounts()
+      this.sender = accounts[0]
+    }
+    return this.sender
   }
 
   _getContract(name) {

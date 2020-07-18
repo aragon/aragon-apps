@@ -1,11 +1,12 @@
-const { assertBn } = require('../helpers/assert/assertBn')
-const { assertEvent } = require('../helpers/assert/assertEvent')
-const { assertRevert } = require('../helpers/assert/assertThrow')
-const { decodeEventsOfType } = require('../helpers/lib/decodeEvent')
+const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 const { AGREEMENT_EVENTS } = require('../helpers/utils/events')
 const { ARAGON_OS_ERRORS, AGREEMENT_ERRORS } = require('../helpers/utils/errors')
 
-const deployer = require('../helpers/utils/deployer')(web3, artifacts)
+const { injectWeb3, injectArtifacts } = require('@aragon/contract-helpers-test')
+const { assertBn, assertEvent, assertRevert } = require('@aragon/contract-helpers-test/src/asserts')
+
+injectWeb3(web3)
+injectArtifacts(artifacts)
 
 contract('Agreement', ([_, EOA]) => {
   let arbitrator, aragonAppFeesCashier, stakingFactory, agreement
@@ -63,9 +64,7 @@ contract('Agreement', ([_, EOA]) => {
         const currentSettingId = await agreement.getCurrentSettingId()
 
         assertBn(currentSettingId, 1, 'current content ID does not match')
-
-        const logs = decodeEventsOfType(receipt, deployer.abi, AGREEMENT_EVENTS.SETTING_CHANGED)
-        assertEvent({ logs }, AGREEMENT_EVENTS.SETTING_CHANGED, { settingId: currentSettingId })
+        assertEvent(receipt, AGREEMENT_EVENTS.SETTING_CHANGED, { expectedArgs: { settingId: currentSettingId }, decodeForAbi: deployer.abi })
       })
 
       it('initializes the first setting with the given title, content, arbitrator and app fees cashier', async () => {
