@@ -94,11 +94,7 @@ contract('Agreement', ([_, submitter, challenger]) => {
                 })
 
                 context('when the dispute was ruled', () => {
-                  const itRulesTheActionProperly = (ruling, expectedChallengeState, callbacksRevert = false) => {
-                    beforeEach('set mock callbacks behavior', async () => {
-                      await disputable.disputable.mockSetCallbacksRevert(callbacksRevert)
-                    })
-
+                  const itRulesTheActionProperly = (ruling, expectedChallengeState) => {
                     context('when the sender is the arbitrator', () => {
                       it('updates the challenge state only', async () => {
                         const previousChallengeState = await disputable.getChallenge(challengeId)
@@ -135,14 +131,6 @@ contract('Agreement', ([_, submitter, challenger]) => {
                       })
 
                       if (expectedChallengeState === CHALLENGES_STATE.ACCEPTED) {
-                        it(`${callbacksRevert ? 'does not emit' : 'emits'} a disputable event`, async () => {
-                          const receipt = await disputable.executeRuling({ actionId, ruling })
-
-                          // disputable event shouldn't be emitted when disputable reverts
-                          const expectedAmount = callbacksRevert ? 0 : 1
-                          assertAmountOfEvents(receipt, DISPUTABLE_EVENTS.REJECTED, { expectedAmount, decodeForAbi: disputable.disputableAbi })
-                        })
-
                         it('marks the action as closed', async () => {
                           const previousActionState = await disputable.getAction(actionId)
 
@@ -183,15 +171,6 @@ contract('Agreement', ([_, submitter, challenger]) => {
                           assert.isFalse(canRuleDispute, 'action dispute can be ruled')
                         })
                       } else {
-                        it(`${callbacksRevert ? 'does not emit' : 'emits'} a disputable event`, async () => {
-                          const receipt = await disputable.executeRuling({ actionId, ruling })
-
-                          // disputable event shouldn't be emitted when disputable reverts
-                          const expectedAmount = callbacksRevert ? 0 : 1
-                          const disputableEvent = expectedChallengeState === CHALLENGES_STATE.REJECTED ? DISPUTABLE_EVENTS.ALLOWED : DISPUTABLE_EVENTS.VOIDED
-                          assertAmountOfEvents(receipt, disputableEvent, { expectedAmount, decodeForAbi: disputable.disputableAbi })
-                        })
-
                         it('does not mark the action as closed', async () => {
                           const previousActionState = await disputable.getAction(actionId)
 
@@ -247,13 +226,7 @@ contract('Agreement', ([_, submitter, challenger]) => {
                     const ruling = RULINGS.IN_FAVOR_OF_SUBMITTER
                     const expectedChallengeState = CHALLENGES_STATE.REJECTED
 
-                    context('when disputable callback reverts', () => {
-                      itRulesTheActionProperly(ruling, expectedChallengeState, true)
-                    })
-
-                    context('when disputable callback doesn’t revert', () => {
-                      itRulesTheActionProperly(ruling, expectedChallengeState, false)
-                    })
+                    itRulesTheActionProperly(ruling, expectedChallengeState)
 
                     it('transfers the challenge collateral to the submitter', async () => {
                       const { collateralToken, challengeCollateral } = disputable
@@ -280,19 +253,22 @@ contract('Agreement', ([_, submitter, challenger]) => {
                       assertAmountOfEvents(receipt, AGREEMENT_EVENTS.ACTION_ACCEPTED, { decodeForAbi: disputable.abi })
                       assertEvent(receipt, AGREEMENT_EVENTS.ACTION_ACCEPTED, { expectedArgs: { actionId, challengeId: currentChallengeId }, decodeForAbi: disputable.abi })
                     })
+
+                    it('ignores the disputable callback behavior', async () => {
+                      await disputable.mockDisputable({ callbacksRevert: true })
+
+                      const receipt = await disputable.executeRuling({ actionId, ruling })
+
+                      // disputable event shouldn't be emitted when disputable reverts
+                      assertAmountOfEvents(receipt, DISPUTABLE_EVENTS.ALLOWED, { expectedAmount: 0, decodeForAbi: disputable.disputableAbi })
+                    })
                   })
 
                   context('when the dispute was ruled in favor the challenger', () => {
                     const ruling = RULINGS.IN_FAVOR_OF_CHALLENGER
                     const expectedChallengeState = CHALLENGES_STATE.ACCEPTED
 
-                    context('when disputable callback reverts', () => {
-                      itRulesTheActionProperly(ruling, expectedChallengeState, true)
-                    })
-
-                    context('when disputable callback doesn’t revert', () => {
-                      itRulesTheActionProperly(ruling, expectedChallengeState, false)
-                    })
+                    itRulesTheActionProperly(ruling, expectedChallengeState)
 
                     it('transfers the challenge collateral and the collateral amount to the challenger', async () => {
                       const stakingAddress = await disputable.getStakingAddress()
@@ -328,19 +304,22 @@ contract('Agreement', ([_, submitter, challenger]) => {
                       assertAmountOfEvents(receipt, AGREEMENT_EVENTS.ACTION_REJECTED, { decodeForAbi: disputable.abi })
                       assertEvent(receipt, AGREEMENT_EVENTS.ACTION_REJECTED, { expectedArgs: { actionId, challengeId: currentChallengeId }, decodeForAbi: disputable.abi })
                     })
+
+                    it('ignores the disputable callback behavior', async () => {
+                      await disputable.mockDisputable({ callbacksRevert: true })
+
+                      const receipt = await disputable.executeRuling({ actionId, ruling })
+
+                      // disputable event shouldn't be emitted when disputable reverts
+                      assertAmountOfEvents(receipt, DISPUTABLE_EVENTS.REJECTED, { expectedAmount: 0, decodeForAbi: disputable.disputableAbi })
+                    })
                   })
 
                   context('when the dispute was refused', () => {
                     const ruling = RULINGS.REFUSED
                     const expectedChallengeState = CHALLENGES_STATE.VOIDED
 
-                    context('when disputable callback reverts', () => {
-                      itRulesTheActionProperly(ruling, expectedChallengeState, true)
-                    })
-
-                    context('when disputable callback doesn’t revert', () => {
-                      itRulesTheActionProperly(ruling, expectedChallengeState, false)
-                    })
+                    itRulesTheActionProperly(ruling, expectedChallengeState)
 
                     it('transfers the challenge collateral to the challenger', async () => {
                       const { collateralToken, challengeCollateral } = disputable
@@ -366,6 +345,15 @@ contract('Agreement', ([_, submitter, challenger]) => {
 
                       assertAmountOfEvents(receipt, AGREEMENT_EVENTS.ACTION_VOIDED, { decodeForAbi: disputable.abi })
                       assertEvent(receipt, AGREEMENT_EVENTS.ACTION_VOIDED, { expectedArgs: { actionId, challengeId: currentChallengeId }, decodeForAbi: disputable.abi })
+                    })
+
+                    it('ignores the disputable callback behavior', async () => {
+                      await disputable.mockDisputable({ callbacksRevert: true })
+
+                      const receipt = await disputable.executeRuling({ actionId, ruling })
+
+                      // disputable event shouldn't be emitted when disputable reverts
+                      assertAmountOfEvents(receipt, DISPUTABLE_EVENTS.VOIDED, { expectedAmount: 0, decodeForAbi: disputable.disputableAbi })
                     })
                   })
                 })

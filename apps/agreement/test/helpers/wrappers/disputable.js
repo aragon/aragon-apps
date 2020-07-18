@@ -139,8 +139,8 @@ class DisputableWrapper extends AgreementWrapper {
   }
 
   async mockDisputable(options = {}) {
-    const { canClose, canChallenge } = options
-    return this.disputable.mockDisputable(!!canClose, !!canChallenge)
+    const { canClose, canChallenge, callbacksRevert } = options
+    return this.disputable.mockDisputable(!!canClose, !!canChallenge, !!callbacksRevert)
   }
 }
 

@@ -37,29 +37,11 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
             })
           }
 
-          const itChallengesTheActionProperlyNeverthelessRevertingDisputables = () => {
-            context('when disputable callback reverts', () => {
-              const reverts = true
-
-              itChallengesTheActionProperly(reverts)
-            })
-
-            context('when disputable callback does not revert', () => {
-              const reverts = false
-
-              itChallengesTheActionProperly(reverts)
-            })
-          }
-
-          const itChallengesTheActionProperly = callbacksRevert => {
+          const itChallengesTheActionProperly = () => {
             context('when the challenger has staked enough collateral', () => {
               beforeEach('stake challenge collateral', async () => {
                 const amount = disputable.challengeCollateral
                 await disputable.approve({ amount, from: challenger })
-              })
-
-              beforeEach('set mock callbacks behavior', async () => {
-                await disputable.disputable.mockSetCallbacksRevert(callbacksRevert)
               })
 
               context('when the challenger has approved half of the arbitration fees', () => {
@@ -153,10 +135,6 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
 
                     assertAmountOfEvents(receipt, AGREEMENT_EVENTS.ACTION_CHALLENGED)
                     assertEvent(receipt, AGREEMENT_EVENTS.ACTION_CHALLENGED, { actionId, challengeId: currentChallengeId })
-
-                    // disputable event shouldn't be emitted when disputable reverts
-                    const expectedAmount = callbacksRevert ? 0 : 1
-                    assertAmountOfEvents(receipt, DISPUTABLE_EVENTS.CHALLENGED, { expectedAmount, decodeForAbi: disputable.disputableAbi })
                   })
 
                   it('it can be answered only', async () => {
@@ -170,6 +148,15 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
                     assert.isFalse(canChallenge, 'action can be challenged')
                     assert.isFalse(canClaimSettlement, 'action settlement can be claimed')
                     assert.isFalse(canRuleDispute, 'action dispute can be ruled')
+                  })
+
+                  it('ignores the disputable callback behavior', async () => {
+                    await disputable.disputable.mockDisputable({ callbacksRevert: true })
+
+                    const receipt = await disputable.challenge({ actionId, challenger, settlementOffer, challengeContext, arbitrationFees, stake })
+
+                    // disputable event shouldn't be emitted when disputable reverts
+                    assertAmountOfEvents(receipt, DISPUTABLE_EVENTS.CHALLENGED, { expectedAmount: 0, decodeForAbi: disputable.disputableAbi })
                   })
                 })
 
@@ -217,7 +204,7 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
 
           context('when the action was not closed', () => {
             context('when the action was not challenged', () => {
-              itChallengesTheActionProperlyNeverthelessRevertingDisputables()
+              itChallengesTheActionProperly()
             })
 
             context('when the action was challenged', () => {
@@ -282,7 +269,7 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
                       })
 
                       context('when the action was not closed', () => {
-                        itChallengesTheActionProperlyNeverthelessRevertingDisputables()
+                        itChallengesTheActionProperly()
                       })
 
                       context('when the action was closed', () => {
@@ -300,7 +287,7 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
                       })
 
                       context('when the action was not closed', () => {
-                        itChallengesTheActionProperlyNeverthelessRevertingDisputables()
+                        itChallengesTheActionProperly()
                       })
 
                       context('when the action was closed', () => {
