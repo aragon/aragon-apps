@@ -255,7 +255,7 @@ contract('Finance App', ([root, owner, recipient]) => {
       assert.isTrue(isIncoming, 'tx should be incoming')
       assertBn(date, 1, 'date should be correct')
 
-      assertEvent(receipt, 'NewTransaction', { reference })
+      assertEvent(receipt, 'NewTransaction', { expectedArgs: { reference } })
     })
 
     it('records ETH deposits using fallback', async () => {
@@ -274,7 +274,7 @@ contract('Finance App', ([root, owner, recipient]) => {
       assert.isTrue(isIncoming, 'tx should be incoming')
       assertBn(date, 1, 'date should be correct')
 
-      assertEvent(receipt, 'NewTransaction', { reference: 'Ether transfer to Finance app' })
+      assertEvent(receipt, 'NewTransaction', { expectedArgs: { reference: 'Ether transfer to Finance app' } })
     })
 
     it('fails to deposit if amount does not match value', async () => {
@@ -316,7 +316,7 @@ contract('Finance App', ([root, owner, recipient]) => {
         assert.isTrue(isIncoming, 'tx should be incoming')
         assertBn(date, 1, 'date should be correct')
 
-        assertEvent(receipt, 'NewTransaction', { reference: 'Recover to Vault' })
+        assertEvent(receipt, 'NewTransaction', { expectedArgs: { reference: 'Recover to Vault' } })
       })
 
       it('fail to be recovered using AragonApp#transferToVault', async () => {
@@ -358,7 +358,7 @@ contract('Finance App', ([root, owner, recipient]) => {
       assert.isTrue(isIncoming, 'tx should be incoming')
       assertBn(date, 1, 'date should be correct')
 
-      assertEvent(receipt, 'NewTransaction', { reference: 'Recover to Vault' })
+      assertEvent(receipt, 'NewTransaction', { expectedArgs: { reference: 'Recover to Vault' } })
     })
 
     it('fails to be recovered using AragonApp#transferToVault', async () => {
@@ -384,7 +384,7 @@ contract('Finance App', ([root, owner, recipient]) => {
       const amount = 10
       // executes up to 10 times every 2 seconds
       const receipt = await finance.newScheduledPayment(token1.address, recipient, amount, NOW, 2, 10, 'ref')
-      assertEvent(receipt, 'NewPayment', { reference: 'ref' })
+      assertEvent(receipt, 'NewPayment', { expectedArgs: { reference: 'ref' } })
 
       const { token, receiver, amount: txAmount, initialPaymentTime, interval, maxExecutions, inactive, executions, createdBy } = await finance.getPayment(1)
 
@@ -420,7 +420,7 @@ contract('Finance App', ([root, owner, recipient]) => {
       const amount = 10
 
       const receipt = await finance.newImmediatePayment(token1.address, recipient, amount, 'ref')
-      assertEvent(receipt, 'NewTransaction', { reference: 'ref' })
+      assertEvent(receipt, 'NewTransaction', { expectedArgs: { reference: 'ref' } })
 
       assertBn(await token1.balanceOf(recipient), amount, 'recipient should have received tokens')
 
