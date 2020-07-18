@@ -1,74 +1,41 @@
 const ERRORS = require('./helpers/errors')
 const { hash } = require('eth-ens-namehash')
-const { getInstalledApp } = require('@aragon/contract-helpers-test/src/aragon-os')
 const { assertRevert, assertBn } = require('@aragon/contract-helpers-test/src/asserts')
-const { bn, getEventArgument, injectWeb3, injectArtifacts } = require('@aragon/contract-helpers-test')
+const { ZERO_ADDRESS, bn, injectWeb3, injectArtifacts } = require('@aragon/contract-helpers-test')
+const { ANY_ENTITY, getInstalledApp, newDao, installNewApp } = require('@aragon/contract-helpers-test/src/aragon-os')
 
 // Allow for sharing this test across other vault implementations and subclasses
-module.exports = (
-  vaultName,
-  {
-    accounts,
-    artifacts,
-    web3
-  }
-) => {
+module.exports = (vaultName, { accounts, artifacts, web3 }) => {
   injectWeb3(web3)
   injectArtifacts(artifacts)
 
-  const ACL = artifacts.require('ACL')
-  const EVMScriptRegistryFactory = artifacts.require('EVMScriptRegistryFactory')
-  const DAOFactory = artifacts.require('DAOFactory')
-  const Kernel = artifacts.require('Kernel')
-  const KernelProxy = artifacts.require('KernelProxy')
+  // Vault-like instance we're testing
+  const VaultLike = artifacts.require(vaultName)
 
-  const EtherTokenConstantMock = artifacts.require('EtherTokenConstantMock')
+  const ACL = artifacts.require('ACL')
+  const KernelProxy = artifacts.require('KernelProxy')
   const KernelDepositableMock = artifacts.require('KernelDepositableMock')
 
   const TokenMock = artifacts.require('TokenMock')
   const TokenReturnFalseMock = artifacts.require('TokenReturnFalseMock')
   const TokenReturnMissingMock = artifacts.require('TokenReturnMissingMock')
-
   const DestinationMock = artifacts.require('DestinationMock')
 
-  // Vault-like instance we're testing
-  const VaultLike = artifacts.require(vaultName)
-
+  const ETH = ZERO_ADDRESS
   const root = accounts[0]
 
   context(`> Shared tests for Vault-like apps`, () => {
-    let daoFact, vaultBase, dao, vault, vaultId
-    let ETH, ANY_ENTITY, APP_MANAGER_ROLE, TRANSFER_ROLE
+    let vaultBase, vault, vaultId, TRANSFER_ROLE
 
-    before(async () => {
-      const kernelBase = await Kernel.new(true) // petrify immediately
-      const aclBase = await ACL.new()
-      const regFact = await EVMScriptRegistryFactory.new()
-      daoFact = await DAOFactory.new(kernelBase.address, aclBase.address, regFact.address)
+    before('load roles', async () => {
       vaultBase = await VaultLike.new()
-
-      // Setup constants
-      ANY_ENTITY = await aclBase.ANY_ENTITY()
-      APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
       TRANSFER_ROLE = await vaultBase.TRANSFER_ROLE()
-
-      const ethConstant = await EtherTokenConstantMock.new()
-      ETH = await ethConstant.getETHConstant()
     })
 
-    beforeEach(async () => {
-      const r = await daoFact.newDAO(root)
-      dao = await Kernel.at(getEventArgument(r, 'DeployDAO', 'dao'))
-      const acl = await ACL.at(await dao.acl())
-
-      await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
-
-      // vault
+    beforeEach('deploy DAO with Vault app', async () => {
+      const { dao, acl } = await newDao(root)
       vaultId = hash(`${vaultName.toLowerCase()}.aragonpm.test`)
-
-      const vaultReceipt = await dao.newAppInstance(vaultId, vaultBase.address, '0x', false)
-      vault = await VaultLike.at(getInstalledApp(vaultReceipt, vaultId))
-
+      vault = await VaultLike.at(await installNewApp(dao, vaultId, vaultBase.address, root))
       await acl.createPermission(ANY_ENTITY, vault.address, TRANSFER_ROLE, root, { from: root })
     })
 
@@ -282,6 +249,7 @@ module.exports = (
           await kernel.initialize(aclBase.address, root)
           await kernel.enableDepositable()
           const acl = await ACL.at(await kernel.acl())
+          const APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
           await acl.createPermission(root, kernel.address, APP_MANAGER_ROLE, root, { from: root })
 
           // Create a new vault and set that vault as the default vault in the kernel
