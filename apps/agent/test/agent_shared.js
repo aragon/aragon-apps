@@ -3,34 +3,22 @@ const ethABI = require('web3-eth-abi')
 const ethUtil = require('ethereumjs-util')
 const { sha3 } = require('web3-utils')
 const { hash: namehash } = require('eth-ens-namehash')
-const { getInstalledApp, encodeCallScript } = require('@aragon/contract-helpers-test/src/aragon-os')
 const { assertRevert, assertBn, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/asserts')
-const { EMPTY_BYTES, bn, getEventArgument, injectWeb3, injectArtifacts } = require('@aragon/contract-helpers-test')
+const { newDao, installNewApp, getInstalledApp, encodeCallScript } = require('@aragon/contract-helpers-test/src/aragon-os')
+const { EMPTY_BYTES, ZERO_ADDRESS, bn, injectWeb3, injectArtifacts } = require('@aragon/contract-helpers-test')
 
 // Allow for sharing this test across other agent implementations and subclasses
-module.exports = (
-  agentName,
-  {
-    accounts,
-    artifacts,
-    web3
-  }
-) => {
+module.exports = (agentName, { accounts, artifacts, web3 }) => {
   injectWeb3(web3)
   injectArtifacts(artifacts)
-
-  const ACL = artifacts.require('ACL')
-  const Kernel = artifacts.require('Kernel')
-  const DAOFactory = artifacts.require('DAOFactory')
-  const EVMScriptRegistryFactory = artifacts.require('EVMScriptRegistryFactory')
 
   const ExecutionTarget = artifacts.require('ExecutionTarget')
   const DesignatedSigner = artifacts.require('DesignatedSigner')
   const DestinationMock = artifacts.require('DestinationMock')
-  const EtherTokenConstantMock = artifacts.require('EtherTokenConstantMock')
   const TokenInteractionExecutionTarget = artifacts.require('TokenInteractionExecutionTarget')
   const TokenMock = artifacts.require('TokenMock')
 
+  const ETH = ZERO_ADDRESS
   const NO_SIG = EMPTY_BYTES
   const ERC165_SUPPORT_INVALID_ID = '0xffffffff'
   const ERC165_SUPPORT_INTERFACE_ID = '0x01ffc9a7'
@@ -39,9 +27,8 @@ module.exports = (
   const AgentLike = artifacts.require(agentName)
 
   context(`> Shared tests for Agent-like apps`, () => {
-    let daoFact, agentBase, dao, acl, agent, agentAppId
-
-    let ETH, ANY_ENTITY, APP_MANAGER_ROLE, EXECUTE_ROLE, SAFE_EXECUTE_ROLE, RUN_SCRIPT_ROLE, ADD_PROTECTED_TOKEN_ROLE, REMOVE_PROTECTED_TOKEN_ROLE, ADD_PRESIGNED_HASH_ROLE, DESIGNATE_SIGNER_ROLE, ERC1271_INTERFACE_ID
+    let agentBase, dao, acl, agent, agentAppId
+    let EXECUTE_ROLE, SAFE_EXECUTE_ROLE, RUN_SCRIPT_ROLE, ADD_PROTECTED_TOKEN_ROLE, REMOVE_PROTECTED_TOKEN_ROLE, ADD_PRESIGNED_HASH_ROLE, DESIGNATE_SIGNER_ROLE, ERC1271_INTERFACE_ID
 
     const root = accounts[0]
     const authorized = accounts[1]
@@ -52,16 +39,8 @@ module.exports = (
       return contract.contract.methods[functionName](...params).call.request(txParams).params[0]
     }
 
-    before(async () => {
-      const kernelBase = await Kernel.new(true) // petrify immediately
-      const aclBase = await ACL.new()
-      const regFact = await EVMScriptRegistryFactory.new()
-      daoFact = await DAOFactory.new(kernelBase.address, aclBase.address, regFact.address)
+    before('load roles', async () => {
       agentBase = await AgentLike.new()
-
-      // Setup constants
-      ANY_ENTITY = await aclBase.ANY_ENTITY()
-      APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
       SAFE_EXECUTE_ROLE = await agentBase.SAFE_EXECUTE_ROLE()
       EXECUTE_ROLE = await agentBase.EXECUTE_ROLE()
       ADD_PROTECTED_TOKEN_ROLE = await agentBase.ADD_PROTECTED_TOKEN_ROLE()
@@ -70,23 +49,12 @@ module.exports = (
       DESIGNATE_SIGNER_ROLE = await agentBase.DESIGNATE_SIGNER_ROLE()
       RUN_SCRIPT_ROLE = await agentBase.RUN_SCRIPT_ROLE()
       ERC1271_INTERFACE_ID = await agentBase.ERC1271_INTERFACE_ID()
-
-      const ethConstant = await EtherTokenConstantMock.new()
-      ETH = await ethConstant.getETHConstant()
     })
 
-    beforeEach(async () => {
-      const receipt = await daoFact.newDAO(root)
-      dao = await Kernel.at(getEventArgument(receipt, 'DeployDAO', 'dao'))
-      acl = await ACL.at(await dao.acl())
-
-      await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
-
-      // agent
+    beforeEach('deploy DAO with agent', async () => {
+      ({ dao, acl } = await newDao(root))
       agentAppId = namehash(`${agentName}.aragonpm.test`)
-
-      const agentReceipt = await dao.newAppInstance(agentAppId, agentBase.address, '0x', false)
-      agent = await AgentLike.at(getInstalledApp(agentReceipt, agentAppId))
+      agent = await AgentLike.at(await installNewApp(dao, agentAppId, agentBase.address, root))
     })
 
     context('> Uninitialized', () => {
@@ -595,7 +563,7 @@ module.exports = (
 
             it('it should revert [token is a contract but not an ERC20]', async () => {
               // The balanceOf check reverts here, so it's a SafeERC20 error
-              await assertRevert(agent.addProtectedToken(daoFact.address, { from: authorized }), ERRORS.SAFE_ERC_20_BALANCE_REVERTED)
+              await assertRevert(agent.addProtectedToken(dao.address, { from: authorized }), ERRORS.SAFE_ERC_20_BALANCE_REVERTED)
             })
           })
         })
