@@ -13,6 +13,7 @@ class AgreementWrapper {
     this.aragonAppFeesCashier = aragonAppFeesCashier
     this.stakingFactory = stakingFactory
     this.clock = clock
+    this.staking = {}
   }
 
   get abi() {
@@ -62,10 +63,15 @@ class AgreementWrapper {
   }
 
   async getStakingAddress(token) {
-    const stakingAddress = await this.stakingFactory.getInstance(token.address)
-    if (stakingAddress !== ZERO_ADDRESS) return stakingAddress
-    const receipt = await this.stakingFactory.getOrCreateInstance(token.address)
-    return getEventArgument(receipt, 'NewStaking', 'instance')
+    if (!this.staking[token.address]) {
+      const stakingAddress = await this.stakingFactory.getInstance(token.address)
+      if (stakingAddress !== ZERO_ADDRESS) this.staking[token.address] = stakingAddress
+      else {
+        const receipt = await this.stakingFactory.getOrCreateInstance(token.address)
+        this.staking[token.address] = getEventArgument(receipt, 'NewStaking', 'instance')
+      }
+    }
+    return this.staking[token.address]
   }
 
   async getStaking(token) {
@@ -267,14 +273,13 @@ class AgreementWrapper {
     return token.approveAndCall(to, amount, EMPTY_BYTES, { from })
   }
 
-  async allowManager({ token, user, amount}) {
-    // allow lock manager if needed
+  async allowManager({ token, user, amount }) {
     const staking = await this.getStaking(token)
-    const lock = await staking.getLock(user, this.agreement.address)
-    if (lock._allowance.eq(bn(0))) {
-      await staking.allowManager(this.agreement.address, amount, EMPTY_BYTES, { from: user })
-    } else if (lock._allowance.sub(lock._amount).lt(amount)) {
-      await staking.increaseLockAllowance(this.agreement.address, amount, { from: user })
+    const { _allowance: allowance, _amount: locked } = await staking.getLock(user, this.agreement.address)
+    if (allowance.eq(bn(0))) {
+      return staking.allowManager(this.agreement.address, amount, EMPTY_BYTES, { from: user })
+    } else if (allowance.sub(locked).lt(amount)) {
+      return staking.increaseLockAllowance(this.agreement.address, amount.sub(allowance.sub(locked)), { from: user })
     }
   }
 
@@ -305,8 +310,11 @@ class AgreementWrapper {
   }
 
   async _getSender() {
-    const accounts = await this.web3.eth.getAccounts()
-    return accounts[0]
+    if (!this.sender) {
+      const accounts = await this.web3.eth.getAccounts()
+      this.sender = accounts[0]
+    }
+    return this.sender
   }
 
   _getContract(name) {

@@ -202,17 +202,6 @@ class AgreementDeployer {
     return stakingFactory
   }
 
-  async deployStakingInstance(token) {
-    if (!this.stakingFactory) await this.deployStakingFactory()
-    let stakingAddress = await this.stakingFactory.getInstance(token.address)
-    if (stakingAddress === ZERO_ADDRESS) {
-      const receipt = await this.stakingFactory.getOrCreateInstance(token.address)
-      stakingAddress = getEventArgument(receipt, 'NewStaking', 'instance')
-    }
-    const Staking = artifacts.require('Staking')
-    return Staking.at(stakingAddress)
-  }
-
   async deployCollateralToken(options = {}) {
     const collateralToken = await this.deployToken(options)
     this.previousDeploy = { ...this.previousDeploy, collateralToken }
@@ -302,8 +291,11 @@ class AgreementDeployer {
   }
 
   async _getSender() {
-    const accounts = await this.web3.eth.getAccounts()
-    return accounts[0]
+    if (!this.sender) {
+      const accounts = await this.web3.eth.getAccounts()
+      this.sender = accounts[0]
+    }
+    return this.sender
   }
 }
 
