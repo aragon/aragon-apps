@@ -52,7 +52,7 @@ contract('Agreement', ([_, signer]) => {
         const receipt = await agreement.sign(from)
 
         assertAmountOfEvents(receipt, AGREEMENT_EVENTS.SIGNED)
-        assertEvent(receipt, AGREEMENT_EVENTS.SIGNED, { signer: from, settingId: currentSettingId })
+        assertEvent(receipt, AGREEMENT_EVENTS.SIGNED, { expectedArgs: { signer: from, settingId: currentSettingId } })
       })
     }
 
