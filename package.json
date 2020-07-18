@@ -20,7 +20,7 @@
   },
   "scripts": {
     "install": "node scripts/install",
-    "bootstrap": "lerna bootstrap --hoist --nohoist=@aragon/os --nohoist=@aragon/apps-* --nohoist=@aragon/ppf-contracts",
+    "bootstrap": "lerna bootstrap --hoist --nohoist=@aragon/os --nohoist=@aragon/contract-helpers-* --nohoist=@aragon/apps-* --nohoist=@aragon/ppf-contracts",
     "bootstrap:ci": "npm run bootstrap -- --no-ci",
     "clean": "git clean -fdxi apps future-apps shared",
     "test": "npm run test:all",
@@ -34,7 +34,6 @@
     "test:agent": "lerna run --scope=@aragon/apps-agent --stream test",
     "test:agreement": "lerna run --scope=@aragon/apps-agreement --stream test",
     "test:future": "lerna run --scope=@aragon/future-apps-* --concurrency=1 --stream test",
-    "test:shared": "lerna run --scope=@aragon/apps-shared-* --concurrency=1 --stream test",
     "coverage": "npm run coverage:all",
     "coverage:all": "lerna run --scope=@aragon/apps-* --concurrency=1 --stream coverage",
     "coverage:finance": "lerna run --scope=@aragon/apps-finance --concurrency=1 --stream coverage",
@@ -45,7 +44,7 @@
     "coverage:agreement": "lerna run --scope=@aragon/apps-agreement --concurrency=1 --stream coverage",
     "lint": "lerna run --scope=@aragon/apps-* lint",
     "link:os": "lerna exec --scope '@aragon/apps-*' 'npm link @aragon/os'",
-    "ganache-cli:test": "shared/test-helpers/ganache-cli.sh",
+    "ganache-cli:test": "./node_modules/@aragon/contract-helpers-test/scripts/ganache-cli.sh",
     "publish:devnet": "lerna run --scope=@aragon/apps-* --concurrency=1 --stream publish:devnet",
     "publish:rpc": "lerna run --scope=@aragon/apps-* --concurrency=1 --stream publish:rpc",
     "publish:rinkeby": "lerna run --scope=@aragon/apps-* --concurrency=1 --stream publish:rinkeby"

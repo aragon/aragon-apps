@@ -1,7 +1,7 @@
 pragma solidity 0.4.24;
 
 import "../../Finance.sol";
-import "@aragon/test-helpers/contracts/TimeHelpersMock.sol";
+import "@aragon/contract-helpers-test/contracts/0.4/aragonOS/TimeHelpersMock.sol";
 
 
 contract FinanceMock is Finance, TimeHelpersMock {

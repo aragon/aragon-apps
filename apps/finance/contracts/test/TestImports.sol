@@ -5,13 +5,12 @@ import "@aragon/os/contracts/kernel/Kernel.sol";
 import "@aragon/os/contracts/factory/DAOFactory.sol";
 import "@aragon/os/contracts/factory/EVMScriptRegistryFactory.sol";
 
-import "@aragon/apps-vault/contracts/Vault.sol";
-
 import "@aragon/apps-shared-migrations/contracts/Migrations.sol";
-import "@aragon/test-helpers/contracts/EtherTokenConstantMock.sol";
-import "@aragon/test-helpers/contracts/TokenMock.sol";
-import "@aragon/test-helpers/contracts/TokenReturnFalseMock.sol";
-import "@aragon/test-helpers/contracts/TokenReturnMissingMock.sol";
+import "@aragon/contract-helpers-test/contracts/0.4/misc/ExecutionTarget.sol";
+import "@aragon/contract-helpers-test/contracts/0.4/token/TokenMock.sol";
+import "@aragon/contract-helpers-test/contracts/0.4/token/TokenReturnFalseMock.sol";
+import "@aragon/contract-helpers-test/contracts/0.4/token/TokenReturnMissingMock.sol";
+import "@aragon/contract-helpers-test/contracts/0.4/aragonOS/EtherTokenConstantMock.sol";
 
 // You might think this file is a bit odd, but let me explain.
 // We only use some contracts in our tests, which means Truffle

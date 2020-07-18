@@ -11,7 +11,7 @@ const executeIfDecided = false
 
 module.exports = async (cb) => {
     // the address doesnt matter as we are only generating the calldata
-    const voting = Voting.at('0xcafE1A77e84698c83CA8931F54A755176eF75f2C')
+    const voting = await Voting.at('0xcafE1A77e84698c83CA8931F54A755176eF75f2C')
     const newVoteRequest = voting.contract.newVote['bytes,string,bool,bool'].request
 
     const calldata = questions.map(

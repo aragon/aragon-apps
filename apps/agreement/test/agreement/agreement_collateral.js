@@ -1,12 +1,9 @@
-const { DAY } = require('../helpers/lib/time')
-const { assertBn } = require('../helpers/assert/assertBn')
-const { bigExp, bn } = require('../helpers/lib/numbers')
-const { assertRevert } = require('../helpers/assert/assertThrow')
-const { assertAmountOfEvents, assertEvent } = require('../helpers/assert/assertEvent')
+const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 const { AGREEMENT_EVENTS } = require('../helpers/utils/events')
 const { ARAGON_OS_ERRORS } = require('../helpers/utils/errors')
 
-const deployer = require('../helpers/utils/deployer')(web3, artifacts)
+const { ONE_DAY, bigExp, bn } = require('@aragon/contract-helpers-test')
+const { assertAmountOfEvents, assertEvent, assertBn, assertRevert } = require('@aragon/contract-helpers-test/src/asserts')
 
 contract('Agreement', ([_, owner, someone]) => {
   let disputable
@@ -14,17 +11,17 @@ contract('Agreement', ([_, owner, someone]) => {
   let initialCollateralRequirement = {
     actionCollateral: bigExp(200, 18),
     challengeCollateral: bigExp(100, 18),
-    challengeDuration: bn(3 * DAY),
+    challengeDuration: bn(3 * ONE_DAY),
   }
 
   beforeEach('deploy agreement', async () => {
-    disputable = await deployer.deployAndInitializeWrapperWithDisputable({ owner, ...initialCollateralRequirement })
+    disputable = await deployer.deployAndInitializeDisputableWrapper({ owner, ...initialCollateralRequirement })
     initialCollateralRequirement.collateralToken = deployer.collateralToken
   })
 
   describe('changeCollateralRequirement', () => {
     let newCollateralRequirement = {
-      challengeDuration: bn(10 * DAY),
+      challengeDuration: bn(10 * ONE_DAY),
       actionCollateral: bigExp(100, 18),
       challengeCollateral: bigExp(50, 18),
     }
@@ -67,7 +64,7 @@ contract('Agreement', ([_, owner, someone]) => {
         const currentId = await disputable.getCurrentCollateralRequirementId()
         const receipt = await disputable.changeCollateralRequirement({ ...newCollateralRequirement, from })
 
-        assertAmountOfEvents(receipt, AGREEMENT_EVENTS.COLLATERAL_REQUIREMENT_CHANGED, 1)
+        assertAmountOfEvents(receipt, AGREEMENT_EVENTS.COLLATERAL_REQUIREMENT_CHANGED)
         assertEvent(receipt, AGREEMENT_EVENTS.COLLATERAL_REQUIREMENT_CHANGED, { collateralRequirementId: currentId.add(bn(1)), disputable: disputable.disputable.address })
       })
     })
