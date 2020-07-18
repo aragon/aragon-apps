@@ -1,7 +1,7 @@
 const ERRORS = require('./helpers/errors')
 const { assertBn, assertRevert } = require('@aragon/contract-helpers-test/src/asserts')
-const { ANY_ENTITY, getInstalledApp, encodeCallScript } = require('@aragon/contract-helpers-test/src/aragon-os')
-const { getEventArgument, injectWeb3, injectArtifacts, ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
+const { injectWeb3, injectArtifacts, ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
+const { ANY_ENTITY, newDao, installNewApp, encodeCallScript } = require('@aragon/contract-helpers-test/src/aragon-os')
 
 injectWeb3(web3)
 injectArtifacts(artifacts)
@@ -9,49 +9,28 @@ injectArtifacts(artifacts)
 const TokenManager = artifacts.require('TokenManagerMock')
 const ExecutionTarget = artifacts.require('ExecutionTarget')
 const MiniMeToken = artifacts.require('MiniMeToken')
-const ACL = artifacts.require('ACL')
-const Kernel = artifacts.require('Kernel')
-const DAOFactory = artifacts.require('DAOFactory')
-const EVMScriptRegistryFactory = artifacts.require('EVMScriptRegistryFactory')
-const EtherTokenConstantMock = artifacts.require('EtherTokenConstantMock')
 
 contract('Token Manager', ([root, holder, holder2, anyone]) => {
-  let tokenManagerBase, daoFact, tokenManager, token
-
-  let APP_MANAGER_ROLE
+  let tokenManagerBase, tokenManager, token
   let MINT_ROLE, ISSUE_ROLE, ASSIGN_ROLE, REVOKE_VESTINGS_ROLE, BURN_ROLE
-  let ETH
 
   const NOW = 1
+  const ETH = ZERO_ADDRESS
+  const APP_ID = '0x1234123412341234123412341234123412341234123412341234123412341234'
 
-  before(async () => {
-    const kernelBase = await Kernel.new(true) // petrify immediately
-    const aclBase = await ACL.new()
-    const regFact = await EVMScriptRegistryFactory.new()
-    daoFact = await DAOFactory.new(kernelBase.address, aclBase.address, regFact.address)
+  before('load roles', async () => {
     tokenManagerBase = await TokenManager.new()
-
-    // Setup constants
-    APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
     MINT_ROLE = await tokenManagerBase.MINT_ROLE()
     ISSUE_ROLE = await tokenManagerBase.ISSUE_ROLE()
     ASSIGN_ROLE = await tokenManagerBase.ASSIGN_ROLE()
     REVOKE_VESTINGS_ROLE = await tokenManagerBase.REVOKE_VESTINGS_ROLE()
     BURN_ROLE = await tokenManagerBase.BURN_ROLE()
-
-    const ethConstant = await EtherTokenConstantMock.new()
-    ETH = await ethConstant.getETHConstant()
   })
 
-  beforeEach(async () => {
-    const r = await daoFact.newDAO(root)
-    const dao = await Kernel.at(getEventArgument(r, 'DeployDAO', 'dao'))
-    const acl = await ACL.at(await dao.acl())
+  beforeEach('deploy DAO with token manager', async () => {
+    const { dao, acl } = await newDao(root)
+    tokenManager = await TokenManager.at(await installNewApp(dao, APP_ID, tokenManagerBase.address, root))
 
-    await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
-
-    const receipt = await dao.newAppInstance('0x1234', tokenManagerBase.address, '0x', false, { from: root })
-    tokenManager = await TokenManager.at(getInstalledApp(receipt))
     tokenManager.mockSetTimestamp(NOW)
 
     await acl.createPermission(ANY_ENTITY, tokenManager.address, MINT_ROLE, root, { from: root })
@@ -67,7 +46,7 @@ contract('Token Manager', ([root, holder, holder2, anyone]) => {
     assert.isTrue(await tokenManager.isForwarder())
   })
 
-  it('initializating as transferable sets the token as transferable', async () => {
+  it('initializing as transferable sets the token as transferable', async () => {
     const transferable = true
     await token.enableTransfers(!transferable)
 
