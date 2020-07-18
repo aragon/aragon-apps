@@ -1,7 +1,6 @@
 pragma solidity 0.4.24;
 
 import "./DisputableVotingMock.sol";
-import "@aragon/contract-helpers-test/contracts/TimeHelpersMock.sol";
 
 
 /**

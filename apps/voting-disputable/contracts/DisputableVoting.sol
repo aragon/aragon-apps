@@ -254,7 +254,6 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
         require(_canExecute(vote_), ERROR_CANNOT_EXECUTE);
 
         vote_.status = VoteStatus.Executed;
-        // TODO: check agreement action is not closed
         _closeAgreementAction(vote_.actionId);
 
         // Add Agreement to blacklist to disallow the stored EVMScript from directly calling the

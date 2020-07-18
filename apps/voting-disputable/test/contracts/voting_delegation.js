@@ -1,22 +1,19 @@
 const VOTER_STATE = require('../helpers/state')
-const { DAY } = require('@aragon/apps-agreement/test/helpers/lib/time')
-const { bigExp } = require('@aragon/apps-agreement/test/helpers/lib/numbers')
-const { assertBn } = require('@aragon/apps-agreement/test/helpers/assert/assertBn')
-const { assertRevert } = require('@aragon/apps-agreement/test/helpers/assert/assertThrow')
-const { skipCoverage } = require('@aragon/os/test/helpers/coverage')
 const { VOTING_ERRORS } = require('../helpers/errors')
-const { assertEvent, assertAmountOfEvents } = require('@aragon/apps-agreement/test/helpers/assert/assertEvent')
-const { pct, createVote, getVoteState } = require('../helpers/voting')(web3, artifacts)
+const { skipCoverage } = require('@aragon/os/test/helpers/coverage')
+const { ONE_DAY, pct16, bigExp } = require('@aragon/contract-helpers-test')
+const { createVote, getVoteState } = require('../helpers/voting')
+const { assertBn, assertRevert, assertEvent, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/asserts')
 
 const deployer = require('../helpers/deployer')(web3, artifacts)
 
 contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, representative, anotherRepresentative, anyone]) => {
   let voting, token, voteId
 
-  const MIN_QUORUM = pct(20)
-  const MIN_SUPPORT = pct(70)
-  const OVERRULE_WINDOW = DAY
-  const VOTING_DURATION = DAY * 5
+  const MIN_QUORUM = pct16(20)
+  const MIN_SUPPORT = pct16(70)
+  const OVERRULE_WINDOW = ONE_DAY
+  const VOTING_DURATION = ONE_DAY * 5
   const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
   before('mint tokens', async () => {
@@ -42,7 +39,7 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
         const receipt = await voting.setRepresentative(representative, { from: voter })
 
         assertAmountOfEvents(receipt, 'ChangeRepresentative')
-        assertEvent(receipt, 'ChangeRepresentative', { voter, newRepresentative: representative })
+        assertEvent(receipt, 'ChangeRepresentative', { expectedArgs: { voter, newRepresentative: representative } })
 
         assert.isTrue(await voting.isRepresentativeOf(voter, representative))
       })
@@ -57,7 +54,7 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
         const receipt = await voting.setRepresentative(ZERO_ADDRESS, { from: voter })
 
         assertAmountOfEvents(receipt, 'ChangeRepresentative')
-        assertEvent(receipt, 'ChangeRepresentative', { voter, newRepresentative: ZERO_ADDRESS })
+        assertEvent(receipt, 'ChangeRepresentative', { expectedArgs: { voter, newRepresentative: ZERO_ADDRESS } })
 
         assert.isFalse(await voting.isRepresentativeOf(voter, representative))
       })
@@ -197,13 +194,13 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
                 assertBn(await getVoterState(representative), VOTER_STATE.ABSENT, 'representative should not have voted')
                 assert.equal(await voting.getVoteCaster(voteId, voter), representative, 'vote caster does not match')
 
-                assertAmountOfEvents(receipt, 'CastVote', 1)
-                assertEvent(receipt, 'CastVote', { voter, voteId, supports: false, stake: bigExp(51, 18) })
+                assertAmountOfEvents(receipt, 'CastVote')
+                assertEvent(receipt, 'CastVote', { expectedArgs: { voter, voteId, supports: false, stake: bigExp(51, 18) } })
               })
 
               it('emits an event', async () => {
-                assertAmountOfEvents(receipt, 'ProxyVoteSuccess', 1)
-                assertEvent(receipt, 'ProxyVoteSuccess', { voter, representative, voteId, supports: false })
+                assertAmountOfEvents(receipt, 'ProxyVoteSuccess')
+                assertEvent(receipt, 'ProxyVoteSuccess', { expectedArgs: { voter, representative, voteId, supports: false } })
               })
 
               it('can be changed by the same representative', async () => {
@@ -216,11 +213,11 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
                 assert.equal(await getVoterState(representative), VOTER_STATE.ABSENT, 'representative should not have voted')
                 assert.equal(await voting.getVoteCaster(voteId, voter), representative, 'vote caster does not match')
 
-                assertAmountOfEvents(receipt, 'CastVote', 1)
-                assertEvent(receipt, 'CastVote', { voter, voteId, supports: true, stake: bigExp(51, 18) })
+                assertAmountOfEvents(receipt, 'CastVote')
+                assertEvent(receipt, 'CastVote', { expectedArgs: { voter, voteId, supports: true, stake: bigExp(51, 18) } })
 
-                assertAmountOfEvents(receipt, 'ProxyVoteSuccess', 1)
-                assertEvent(receipt, 'ProxyVoteSuccess', { voter, representative, voteId, supports: true })
+                assertAmountOfEvents(receipt, 'ProxyVoteSuccess')
+                assertEvent(receipt, 'ProxyVoteSuccess', { expectedArgs: { voter, representative, voteId, supports: true } })
               })
 
               it('can be changed by another representative', async () => {
@@ -234,11 +231,11 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
                 assert.equal(await getVoterState(representative), VOTER_STATE.ABSENT, 'representative should not have voted')
                 assert.equal(await voting.getVoteCaster(voteId, voter), anotherRepresentative, 'vote caster does not match')
 
-                assertAmountOfEvents(receipt, 'CastVote', 1)
-                assertEvent(receipt, 'CastVote', { voter, voteId, supports: true, stake: bigExp(51, 18) })
+                assertAmountOfEvents(receipt, 'CastVote')
+                assertEvent(receipt, 'CastVote', { expectedArgs: { voter, voteId, supports: true, stake: bigExp(51, 18) } })
 
-                assertAmountOfEvents(receipt, 'ProxyVoteSuccess', 1)
-                assertEvent(receipt, 'ProxyVoteSuccess', { voter, representative: anotherRepresentative, voteId, supports: true })
+                assertAmountOfEvents(receipt, 'ProxyVoteSuccess')
+                assertEvent(receipt, 'ProxyVoteSuccess', { expectedArgs: { voter, representative: anotherRepresentative, voteId, supports: true } })
               })
 
               it('can be overruled by the voter', async () => {
@@ -251,8 +248,8 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
                 assert.equal(await getVoterState(representative), VOTER_STATE.ABSENT, 'representative should not have voted')
                 assert.equal(await voting.getVoteCaster(voteId, voter), voter, 'vote caster does not match')
 
-                assertAmountOfEvents(receipt, 'CastVote', 1)
-                assertEvent(receipt, 'CastVote', { voter, voteId, supports: true, stake: bigExp(51, 18) })
+                assertAmountOfEvents(receipt, 'CastVote')
+                assertEvent(receipt, 'CastVote', { expectedArgs: { voter, voteId, supports: true, stake: bigExp(51, 18) } })
               })
             })
 
@@ -276,7 +273,7 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
                 const receipt = await voting.voteOnBehalfOf(voteId, true, [voter], { from })
 
                 assertAmountOfEvents(receipt, 'ProxyVoteFailure')
-                assertEvent(receipt, 'ProxyVoteFailure', { voter, representative, voteId })
+                assertEvent(receipt, 'ProxyVoteFailure', { expectedArgs: { voter, representative, voteId } })
               })
             })
           })
@@ -351,12 +348,12 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
 
           const receipt = await voting.voteOnBehalfOf(voteId, false, voters, { from: representative })
 
-          assertAmountOfEvents(receipt, 'CastVote', 2)
-          assertAmountOfEvents(receipt, 'ProxyVoteFailure', 1)
-          assertAmountOfEvents(receipt, 'ProxyVoteSuccess', 2)
-          assertEvent(receipt, 'ProxyVoteFailure', { voter: previousVoter, representative, voteId })
-          assertEvent(receipt, 'ProxyVoteSuccess', { voter, representative, voteId, supports: false }, 0)
-          assertEvent(receipt, 'ProxyVoteSuccess', { voter: anotherVoter, representative, voteId, supports: false }, 1)
+          assertAmountOfEvents(receipt, 'CastVote', { expectedAmount: 2 })
+          assertAmountOfEvents(receipt, 'ProxyVoteFailure', { expectedAmount: 1 })
+          assertAmountOfEvents(receipt, 'ProxyVoteSuccess', { expectedAmount: 2 })
+          assertEvent(receipt, 'ProxyVoteFailure', { expectedArgs: { voter: previousVoter, representative, voteId }, index: 0 })
+          assertEvent(receipt, 'ProxyVoteSuccess', { expectedArgs: { voter, representative, voteId, supports: false }, index: 0 })
+          assertEvent(receipt, 'ProxyVoteSuccess', { expectedArgs: { voter: anotherVoter, representative, voteId, supports: false }, index: 1 })
 
           const { yeas, nays } = await getVoteState(voting, voteId)
           assertBn(yeas, bigExp(1, 18), 'yeas should be 1')
@@ -400,7 +397,7 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
 
     context('when previous to the overrule window', () => {
       beforeEach('increase time', async () => {
-        await voting.mockIncreaseTime(DAY)
+        await voting.mockIncreaseTime(ONE_DAY)
       })
 
       it('returns false', async () => {
@@ -476,8 +473,8 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
       ({ voteId } = await createVote({ voting, from: voter }))
       const receipt = await voting.voteOnBehalfOf(voteId, true, voters, { from: representative })
 
-      assertAmountOfEvents(receipt, 'CastVote', MAX_DELEGATES_PER_TX)
-      assertAmountOfEvents(receipt, 'ProxyVoteSuccess', MAX_DELEGATES_PER_TX)
+      assertAmountOfEvents(receipt, 'CastVote', { expectedAmount: MAX_DELEGATES_PER_TX })
+      assertAmountOfEvents(receipt, 'ProxyVoteSuccess', { expectedAmount: MAX_DELEGATES_PER_TX })
       assert.isAtMost(receipt.receipt.cumulativeGasUsed, 6.8e6)
 
       const { yeas, nays } = await getVoteState(voting, voteId)
