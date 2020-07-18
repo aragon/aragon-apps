@@ -44,7 +44,6 @@ contract DisputableAppMock is DisputableAragonApp, SharedTimeHelpersMock {
 
     uint256 private entriesLength;
     mapping (uint256 => Entry) private entries;
-
     /**
     * @dev Initialize app
     */
@@ -61,6 +60,13 @@ contract DisputableAppMock is DisputableAragonApp, SharedTimeHelpersMock {
         mockCanClose = _canClose;
         mockCanChallenge = _canChallenge;
         mockCallbacksRevert = _callbacksRevert;
+    }
+
+    /**
+    * @dev Helper function to close actions
+    */
+    function closeAction(uint256 _id) external {
+        _closeAgreementAction(entries[_id].actionId);
     }
 
     /**
