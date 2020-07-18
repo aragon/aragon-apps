@@ -754,7 +754,7 @@ contract('Finance App', ([root, owner, recipient]) => {
           await finance.executePayment(paymentId)
 
           assertBn(await token1.balanceOf(recipient), amount * 4, 'recipient should have received tokens')
-          assert.deepEqual(await finance.nextPaymentTime(paymentId), MAX_UINT64, 'payment should never be repeated')
+          assertBn(await finance.nextPaymentTime(paymentId), MAX_UINT64, 'payment should never be repeated')
         })
 
         it('receiver can always execute a payment', async () => {
