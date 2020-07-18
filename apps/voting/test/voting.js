@@ -1,16 +1,12 @@
 const ERRORS = require('./helpers/errors')
 const { assertBn, assertRevert, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/asserts')
 const { pct16, bn, bigExp, getEventArgument, ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
-const { getInstalledApp, encodeCallScript, ANY_ENTITY, EMPTY_CALLS_SCRIPT } = require('@aragon/contract-helpers-test/src/aragon-os')
+const { newDao, installNewApp, encodeCallScript, ANY_ENTITY, EMPTY_CALLS_SCRIPT } = require('@aragon/contract-helpers-test/src/aragon-os')
 
 const Voting = artifacts.require('VotingMock')
 
-const ACL = artifacts.require('ACL')
-const Kernel = artifacts.require('Kernel')
-const DAOFactory = artifacts.require('DAOFactory')
 const MiniMeToken = artifacts.require('MiniMeToken')
 const ExecutionTarget = artifacts.require('ExecutionTarget')
-const EVMScriptRegistryFactory = artifacts.require('EVMScriptRegistryFactory')
 
 const createdVoteId = receipt => getEventArgument(receipt, 'StartVote', 'voteId')
 
@@ -21,39 +17,24 @@ const VOTER_STATE = ['ABSENT', 'YEA', 'NAY'].reduce((state, key, index) => {
 
 
 contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, nonHolder]) => {
-  let votingBase, daoFact, voting, token, executionTarget
-
-  let APP_MANAGER_ROLE
+  let votingBase, voting, token, executionTarget
   let CREATE_VOTES_ROLE, MODIFY_SUPPORT_ROLE, MODIFY_QUORUM_ROLE
 
   const NOW = 1
   const votingDuration = 1000
+  const APP_ID = '0x1234123412341234123412341234123412341234123412341234123412341234'
 
-  before(async () => {
-    const kernelBase = await Kernel.new(true) // petrify immediately
-    const aclBase = await ACL.new()
-    const regFact = await EVMScriptRegistryFactory.new()
-    daoFact = await DAOFactory.new(kernelBase.address, aclBase.address, regFact.address)
+  before('load roles', async () => {
     votingBase = await Voting.new()
-
-    // Setup constants
-    APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
     CREATE_VOTES_ROLE = await votingBase.CREATE_VOTES_ROLE()
     MODIFY_SUPPORT_ROLE = await votingBase.MODIFY_SUPPORT_ROLE()
     MODIFY_QUORUM_ROLE = await votingBase.MODIFY_QUORUM_ROLE()
   })
 
-  beforeEach(async () => {
-    const r = await daoFact.newDAO(root)
-    const dao = await Kernel.at(getEventArgument(r, 'DeployDAO', 'dao'))
-    const acl = await ACL.at(await dao.acl())
-
-    await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
-
-    const receipt = await dao.newAppInstance('0x1234', votingBase.address, '0x', false, { from: root })
-    voting = await Voting.at(getInstalledApp(receipt))
+  beforeEach('deploy DAO with Voting app', async () => {
+    const { dao, acl } = await newDao(root)
+    voting = await Voting.at(await installNewApp(dao, APP_ID, votingBase.address, root))
     await voting.mockSetTimestamp(NOW)
-
     await acl.createPermission(ANY_ENTITY, voting.address, CREATE_VOTES_ROLE, root, { from: root })
     await acl.createPermission(ANY_ENTITY, voting.address, MODIFY_SUPPORT_ROLE, root, { from: root })
     await acl.createPermission(ANY_ENTITY, voting.address, MODIFY_QUORUM_ROLE, root, { from: root })
@@ -65,9 +46,7 @@ contract('Voting App', ([root, holder1, holder2, holder20, holder29, holder51, n
 
     beforeEach(async () => {
       token = await MiniMeToken.new(ZERO_ADDRESS, ZERO_ADDRESS, 0, 'n', 0, 'n', true) // empty parameters minime
-
       await voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, votingDuration)
-
       executionTarget = await ExecutionTarget.new()
     })
 
