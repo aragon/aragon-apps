@@ -1,18 +1,19 @@
-const { assertBn } = require('../helpers/assert/assertBn')
-const { assertRevert } = require('../helpers/assert/assertThrow')
-const { decodeEventsOfType } = require('../helpers/lib/decodeEvent')
-const { assertEvent, assertAmountOfEvents } = require('../helpers/assert/assertEvent')
+const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 const { RULINGS } = require('../helpers/utils/enums')
 const { AGREEMENT_ERRORS } = require('../helpers/utils/errors')
 const { AGREEMENT_EVENTS } = require('../helpers/utils/events')
 
-const deployer = require('../helpers/utils/deployer')(web3, artifacts)
+const { injectWeb3, injectArtifacts } = require('@aragon/contract-helpers-test')
+const { assertBn, assertRevert, assertEvent, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/asserts')
+
+injectWeb3(web3)
+injectArtifacts(artifacts)
 
 contract('Agreement', ([_, submitter]) => {
   let disputable, actionId, disputableActionId
 
   beforeEach('deploy agreement instance', async () => {
-    disputable = await deployer.deployAndInitializeWrapperWithDisputable()
+    disputable = await deployer.deployAndInitializeDisputableWrapper()
   })
 
   describe('close', () => {
@@ -92,10 +93,9 @@ contract('Agreement', ([_, submitter]) => {
 
           it('emits an event', async () => {
             const receipt = await disputable.close(actionId)
-            const logs = decodeEventsOfType(receipt, disputable.abi, AGREEMENT_EVENTS.ACTION_CLOSED)
 
-            assertAmountOfEvents({ logs }, AGREEMENT_EVENTS.ACTION_CLOSED, 1)
-            assertEvent({ logs }, AGREEMENT_EVENTS.ACTION_CLOSED, { actionId })
+            assertAmountOfEvents(receipt, AGREEMENT_EVENTS.ACTION_CLOSED, { decodeForAbi: disputable.abi })
+            assertEvent(receipt, AGREEMENT_EVENTS.ACTION_CLOSED, { expectedArgs: { actionId }, decodeForAbi: disputable.abi })
           })
 
           it('there are no more paths allowed', async () => {
