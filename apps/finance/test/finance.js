@@ -1,25 +1,17 @@
 const ERRORS = require('./helpers/errors')
-const { getInstalledApp } = require('@aragon/contract-helpers-test/src/aragon-os')
+const { newDao, installNewApp, getInstalledApp } = require('@aragon/contract-helpers-test/src/aragon-os')
 const { assertBn, assertRevert, assertEvent, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/asserts')
-const { ONE_DAY, ZERO_ADDRESS, bn, getEventArgument, injectWeb3, injectArtifacts } = require('@aragon/contract-helpers-test')
+const { ONE_DAY, ZERO_ADDRESS, MAX_UINT64, bn, getEventArgument, injectWeb3, injectArtifacts } = require('@aragon/contract-helpers-test')
 
 injectWeb3(web3)
 injectArtifacts(artifacts)
 
 const Finance = artifacts.require('FinanceMock')
 const Vault = artifacts.require('Vault')
-
-const ACL = artifacts.require('ACL')
-const Kernel = artifacts.require('Kernel')
-const DAOFactory = artifacts.require('DAOFactory')
-const EVMScriptRegistryFactory = artifacts.require('EVMScriptRegistryFactory')
-
-// Mocks
 const TokenMock = artifacts.require('TokenMock')
 const ForceSendETH = artifacts.require('ForceSendETH')
 const TokenReturnFalseMock = artifacts.require('TokenReturnFalseMock')
 const TokenReturnMissingMock = artifacts.require('TokenReturnMissingMock')
-const EtherTokenConstantMock = artifacts.require('EtherTokenConstantMock')
 
 // Tests for different token interfaces
 const tokenTestGroups = [
@@ -38,31 +30,21 @@ const tokenTestGroups = [
 ]
 
 contract('Finance App', ([root, owner, recipient]) => {
-  let daoFact, financeBase, finance, vaultBase, vault, token1, token2
-
-  let ETH, MAX_UINT64, ANY_ENTITY, APP_MANAGER_ROLE
-  let CREATE_PAYMENTS_ROLE, CHANGE_PERIOD_ROLE, CHANGE_BUDGETS_ROLE, EXECUTE_PAYMENTS_ROLE, MANAGE_PAYMENTS_ROLE
-  let TRANSFER_ROLE
+  let financeBase, finance, vaultBase, vault, token1, token2
+  let CREATE_PAYMENTS_ROLE, CHANGE_PERIOD_ROLE, CHANGE_BUDGETS_ROLE, EXECUTE_PAYMENTS_ROLE, MANAGE_PAYMENTS_ROLE, TRANSFER_ROLE
 
   const NOW = 1
   const PERIOD_DURATION = ONE_DAY
+  const ETH = ZERO_ADDRESS
   const withdrawAddr = '0x0000000000000000000000000000000000001234'
+  const APP_ID = '0x1234123412341234123412341234123412341234123412341234123412341234'
   const VAULT_INITIAL_ETH_BALANCE = 400
   const VAULT_INITIAL_TOKEN1_BALANCE = 100
   const VAULT_INITIAL_TOKEN2_BALANCE = 200
 
   before(async () => {
-    const kernelBase = await Kernel.new(true) // petrify immediately
-    const aclBase = await ACL.new()
-    const regFact = await EVMScriptRegistryFactory.new()
-    daoFact = await DAOFactory.new(kernelBase.address, aclBase.address, regFact.address)
     vaultBase = await Vault.new()
     financeBase = await Finance.new()
-
-    // Setup constants
-    MAX_UINT64 = await financeBase.getMaxUint64()
-    ANY_ENTITY = await aclBase.ANY_ENTITY()
-    APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
 
     CREATE_PAYMENTS_ROLE = await financeBase.CREATE_PAYMENTS_ROLE()
     CHANGE_PERIOD_ROLE = await financeBase.CHANGE_PERIOD_ROLE()
@@ -70,9 +52,6 @@ contract('Finance App', ([root, owner, recipient]) => {
     EXECUTE_PAYMENTS_ROLE = await financeBase.EXECUTE_PAYMENTS_ROLE()
     MANAGE_PAYMENTS_ROLE = await financeBase.MANAGE_PAYMENTS_ROLE()
     TRANSFER_ROLE = await vaultBase.TRANSFER_ROLE()
-
-    const ethConstant = await EtherTokenConstantMock.new()
-    ETH = await ethConstant.getETHConstant()
   })
 
   const setupRecoveryVault = async (dao) => {
@@ -87,15 +66,9 @@ contract('Finance App', ([root, owner, recipient]) => {
   }
 
   const newProxyFinance = async () => {
-    const r = await daoFact.newDAO(root)
-    const dao = await Kernel.at(getEventArgument(r, 'DeployDAO', 'dao'))
-    const acl = await ACL.at(await dao.acl())
+    const { dao, acl } = await newDao(root)
+    const financeApp = await Finance.at(await installNewApp(dao, APP_ID, financeBase.address, root))
 
-    await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
-
-    // finance
-    const receipt2 = await dao.newAppInstance('0x5678', financeBase.address, '0x', false, { from: root })
-    const financeApp = await Finance.at(getInstalledApp(receipt2))
     await financeApp.mockSetTimestamp(NOW)
     await financeApp.mock_setMaxPeriodTransitions(MAX_UINT64)
 
@@ -107,7 +80,7 @@ contract('Finance App', ([root, owner, recipient]) => {
 
     const recoveryVault = await setupRecoveryVault(dao)
 
-    return { dao, financeApp, recoveryVault }
+    return { dao, acl, financeApp, recoveryVault }
   }
 
   const forceSendETH = async (to, value) => {
@@ -117,13 +90,12 @@ contract('Finance App', ([root, owner, recipient]) => {
   }
 
   beforeEach(async () => {
-    const { dao, financeApp } = await newProxyFinance()
+    const { dao, acl, financeApp } = await newProxyFinance()
     finance = financeApp
 
     // vault
     const receipt1 = await dao.newAppInstance('0x1234', vaultBase.address, '0x', false, { from: root })
     vault = await Vault.at(getInstalledApp(receipt1))
-    const acl = await ACL.at(await dao.acl())
     await acl.createPermission(finance.address, vault.address, TRANSFER_ROLE, root, { from: root })
     await vault.initialize()
 
