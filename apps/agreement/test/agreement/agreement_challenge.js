@@ -151,7 +151,7 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
                   })
 
                   it('ignores the disputable callback behavior', async () => {
-                    await disputable.disputable.mockDisputable({ callbacksRevert: true })
+                    await disputable.mockDisputable({ canChallenge: true, callbacksRevert: true })
 
                     const receipt = await disputable.challenge({ actionId, challenger, settlementOffer, challengeContext, arbitrationFees, stake })
 
