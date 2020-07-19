@@ -229,7 +229,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
                             })
 
                             it('reverts', async () => {
-                              await assertRevert(disputable.newAction({ submitter, actionContext, stake, sign }), STAKING_ERRORS.ERROR_NOT_ENOUGH_BALANCE)
+                              await assertRevert(disputable.newAction({ submitter, actionContext, stake, sign }), STAKING_ERRORS.ERROR_NOT_ENOUGH_ALLOWANCE)
                             })
                           })
                         })
