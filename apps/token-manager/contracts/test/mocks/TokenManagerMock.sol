@@ -1,7 +1,7 @@
 pragma solidity 0.4.24;
 
 import "../../TokenManager.sol";
-import "@aragon/test-helpers/contracts/TimeHelpersMock.sol";
+import "@aragon/contract-helpers-test/contracts/0.4/aragonOS/TimeHelpersMock.sol";
 
 
 /* solium-disable-next-line no-empty-blocks */

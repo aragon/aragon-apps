@@ -1,14 +1,8 @@
 const VOTER_STATE = require('../helpers/state')
-const getBlockNumber = require('@aragon/contract-helpers-test/blockNumber')(web3)
-
-const { DAY } = require('@aragon/apps-agreement/test/helpers/lib/time')
-const { assertBn } = require('@aragon/apps-agreement/test/helpers/assert/assertBn')
-const { bn, bigExp } = require('@aragon/apps-agreement/test/helpers/lib/numbers')
-const { assertRevert } = require('@aragon/apps-agreement/test/helpers/assert/assertThrow')
-const { getEventArgument } = require('@aragon/contract-helpers-test/events')
 const { ARAGON_OS_ERRORS, VOTING_ERRORS } = require('../helpers/errors')
-const { assertEvent, assertAmountOfEvents } = require('@aragon/apps-agreement/test/helpers/assert/assertEvent')
-const { pct, createVote, voteScript, getVoteState } = require('../helpers/voting')(web3, artifacts)
+const { createVote, voteScript, getVoteState } = require('../helpers/voting')
+const { ONE_DAY, pct16, bn, bigExp, getEventArgument } = require('@aragon/contract-helpers-test')
+const { assertBn, assertRevert, assertEvent, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/asserts')
 
 const deployer = require('../helpers/deployer')(web3, artifacts)
 
@@ -16,11 +10,11 @@ contract('Voting', ([_, owner, holder1, holder2, holder20, holder29, holder51, n
   let voting, token
 
   const CONTEXT = '0xabcdef'
-  const VOTE_DURATION = 5 * DAY
-  const OVERRULE_WINDOW = DAY
+  const VOTE_DURATION = 5 * ONE_DAY
+  const OVERRULE_WINDOW = ONE_DAY
   const EXECUTION_DELAY = 0
-  const REQUIRED_SUPPORT = pct(50)
-  const MINIMUM_ACCEPTANCE_QUORUM = pct(20)
+  const REQUIRED_SUPPORT = pct16(50)
+  const MINIMUM_ACCEPTANCE_QUORUM = pct16(20)
 
   beforeEach('deploy voting', async () => {
     voting = await deployer.deploy({ owner })
@@ -77,7 +71,7 @@ contract('Voting', ([_, owner, holder1, holder2, holder20, holder29, holder51, n
 
           it('emits an event', async () => {
             assertAmountOfEvents(receipt, 'StartVote')
-            assertEvent(receipt, 'StartVote', { voteId, creator: holder51, context: CONTEXT })
+            assertEvent(receipt, 'StartVote', { expectedArgs: { voteId, creator: holder51, context: CONTEXT } })
           })
 
           it('has correct state', async () => {
@@ -85,7 +79,7 @@ contract('Voting', ([_, owner, holder1, holder2, holder20, holder29, holder51, n
 
             assert.isTrue(isOpen, 'vote should be open')
             assert.isFalse(isExecuted, 'vote should not be executed')
-            assertBn(snapshotBlock, await getBlockNumber() - 1, 'snapshot block should be correct')
+            assertBn(snapshotBlock, await web3.eth.getBlockNumber() - 1, 'snapshot block should be correct')
             assertBn(support, REQUIRED_SUPPORT, 'required support should be app required support')
             assertBn(quorum, MINIMUM_ACCEPTANCE_QUORUM, 'min quorum should be app min quorum')
             assertBn(overruleWindow, OVERRULE_WINDOW, 'default overrule window should be correct')
@@ -226,7 +220,7 @@ contract('Voting', ([_, owner, holder1, holder2, holder20, holder29, holder51, n
             const { snapshotBlock, votingPower } = await getVoteState(voting, voteId)
 
             // Generating tokens advanced the block by one
-            assertBn(snapshotBlock, await getBlockNumber() - 2, 'snapshot block should be correct')
+            assertBn(snapshotBlock, await web3.eth.getBlockNumber() - 2, 'snapshot block should be correct')
             assertBn(votingPower, await token.totalSupplyAt(snapshotBlock), 'voting power should match snapshot supply')
             assertBn(votingPower, 2, 'voting power should be correct')
           })
@@ -240,7 +234,7 @@ contract('Voting', ([_, owner, holder1, holder2, holder20, holder29, holder51, n
 
             const { snapshotBlock, votingPower } = await getVoteState(voting, voteId)
 
-            assertBn(snapshotBlock, await getBlockNumber() - 1, 'snapshot block should be correct')
+            assertBn(snapshotBlock, await web3.eth.getBlockNumber() - 1, 'snapshot block should be correct')
             assertBn(votingPower, await token.totalSupplyAt(snapshotBlock), 'voting power should match snapshot supply')
             assertBn(votingPower, 2, 'voting power should be correct')
           })
@@ -257,34 +251,34 @@ contract('Voting', ([_, owner, holder1, holder2, holder20, holder29, holder51, n
 
   describe('isValuePct', () => {
     it('tests total = 0', async () => {
-      const result1 = await voting.isValuePct(0, 0, pct(50))
+      const result1 = await voting.isValuePct(0, 0, pct16(50))
       assert.equal(result1, false, 'total 0 should always return false')
 
-      const result2 = await voting.isValuePct(1, 0, pct(50))
+      const result2 = await voting.isValuePct(1, 0, pct16(50))
       assert.equal(result2, false, 'total 0 should always return false')
     })
 
     it('tests value = 0', async () => {
-      const result1 = await voting.isValuePct(0, 10, pct(50))
-      assert.equal(result1, false, 'value 0 should return false if pct is non-zero')
+      const result1 = await voting.isValuePct(0, 10, pct16(50))
+      assert.equal(result1, false, 'value 0 should return false if pct16 is non-zero')
 
       const result2 = await voting.isValuePct(0, 10, 0)
-      assert.equal(result2, false, 'value 0 should return false if pct is zero')
+      assert.equal(result2, false, 'value 0 should return false if pct16 is zero')
     })
 
-    it('tests pct ~= 100', async () => {
-      const result1 = await voting.isValuePct(10, 10, pct(100).sub(bn(1)))
+    it('tests pct16 ~= 100', async () => {
+      const result1 = await voting.isValuePct(10, 10, pct16(100).sub(bn(1)))
       assert.equal(result1, true, 'value 10 over 10 should pass')
     })
 
     it('tests strict inequality', async () => {
-      const result1 = await voting.isValuePct(10, 20, pct(50))
+      const result1 = await voting.isValuePct(10, 20, pct16(50))
       assert.equal(result1, false, 'value 10 over 20 should not pass for 50%')
 
-      const result2 = await voting.isValuePct(pct(50).sub(bn(1)), pct(100), pct(50))
+      const result2 = await voting.isValuePct(pct16(50).sub(bn(1)), pct16(100), pct16(50))
       assert.equal(result2, false, 'off-by-one down should not pass')
 
-      const result3 = await voting.isValuePct(pct(50).add(bn(1)), pct(100), pct(50))
+      const result3 = await voting.isValuePct(pct16(50).add(bn(1)), pct16(100), pct16(50))
       assert.equal(result3, true, 'off-by-one up should pass')
     })
   })

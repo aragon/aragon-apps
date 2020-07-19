@@ -1,7 +1,5 @@
-const { pct } = require('../helpers/voting')()
-const { DAY } = require('@aragon/apps-agreement/test/helpers/lib/time')
-const { assertBn } = require('@aragon/apps-agreement/test/helpers/assert/assertBn')
-const { assertRevert } = require('@aragon/apps-agreement/test/helpers/assert/assertThrow')
+const { ONE_DAY, pct16 } = require('@aragon/contract-helpers-test')
+const { assertBn, assertRevert } = require('@aragon/contract-helpers-test/src/asserts')
 const { ARAGON_OS_ERRORS, VOTING_ERRORS } = require('../helpers/errors')
 
 const deployer = require('../helpers/deployer')(web3, artifacts)
@@ -9,11 +7,11 @@ const deployer = require('../helpers/deployer')(web3, artifacts)
 contract('Voting initialization', ([_, owner]) => {
   let voting, token
 
-  const VOTE_DURATION = 5 * DAY
-  const OVERRULE_WINDOW = DAY
-  const EXECUTION_DELAY = DAY
-  const NEEDED_SUPPORT = pct(50)
-  const MINIMUM_ACCEPTANCE_QUORUM = pct(20)
+  const VOTE_DURATION = 5 * ONE_DAY
+  const OVERRULE_WINDOW = ONE_DAY
+  const EXECUTION_DELAY = ONE_DAY
+  const NEEDED_SUPPORT = pct16(50)
+  const MINIMUM_ACCEPTANCE_QUORUM = pct16(20)
 
   before('deploy voting', async () => {
     token = await deployer.deployToken({})
@@ -34,17 +32,17 @@ contract('Voting initialization', ([_, owner]) => {
       })
 
       it('fails if acceptance quorum is greater than min support', async () => {
-        const neededSupport = pct(20)
-        const minimumAcceptanceQuorum = pct(50)
+        const neededSupport = pct16(20)
+        const minimumAcceptanceQuorum = pct16(50)
 
         await assertRevert(voting.initialize(token.address, neededSupport, minimumAcceptanceQuorum, VOTE_DURATION, OVERRULE_WINDOW, EXECUTION_DELAY), VOTING_ERRORS.VOTING_CHANGE_QUORUM_PCTS)
       })
 
       it('fails if support is 100% or more', async () => {
-        const minimumAcceptanceQuorum = pct(20)
+        const minimumAcceptanceQuorum = pct16(20)
 
-        await assertRevert(voting.initialize(token.address, pct(101), minimumAcceptanceQuorum, VOTE_DURATION, OVERRULE_WINDOW, EXECUTION_DELAY), VOTING_ERRORS.VOTING_CHANGE_SUPP_TOO_BIG)
-        await assertRevert(voting.initialize(token.address, pct(100), minimumAcceptanceQuorum, VOTE_DURATION, OVERRULE_WINDOW, EXECUTION_DELAY), VOTING_ERRORS.VOTING_CHANGE_SUPP_TOO_BIG)
+        await assertRevert(voting.initialize(token.address, pct16(101), minimumAcceptanceQuorum, VOTE_DURATION, OVERRULE_WINDOW, EXECUTION_DELAY), VOTING_ERRORS.VOTING_CHANGE_SUPP_TOO_BIG)
+        await assertRevert(voting.initialize(token.address, pct16(100), minimumAcceptanceQuorum, VOTE_DURATION, OVERRULE_WINDOW, EXECUTION_DELAY), VOTING_ERRORS.VOTING_CHANGE_SUPP_TOO_BIG)
       })
     })
 

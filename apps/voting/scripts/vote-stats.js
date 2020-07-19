@@ -45,7 +45,7 @@ const getBlock = block => (
 )
 
 module.exports = async (cb) => {
-  const voting = Voting.at(appAddress)
+  const voting = await Voting.at(appAddress)
 
   const [
     isOpen,
@@ -60,7 +60,7 @@ module.exports = async (cb) => {
     execScript
   ] = await voting.getVote(voteId)
 
-  const token = MiniMeToken.at(await voting.token())
+  const token = await MiniMeToken.at(await voting.token())
   const decimals = await token.decimals()
 
   const fromBlock = snapshotBlock.toString()

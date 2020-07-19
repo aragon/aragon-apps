@@ -1,39 +1,25 @@
-const { hash: namehash } = require('eth-ens-namehash')
-const ethUtil = require('ethereumjs-util')
+const ERRORS = require('./helpers/errors')
 const ethABI = require('web3-eth-abi')
-const { assertRevert } = require('@aragon/test-helpers/assertThrow')
-const { assertAmountOfEvents } = require('@aragon/test-helpers/assertEvent')(web3)
-const { getEventArgument, getNewProxyAddress } = require('@aragon/test-helpers/events')
-const { encodeCallScript } = require('@aragon/test-helpers/evmScript')
-const { makeErrorMappingProxy } = require('@aragon/test-helpers/utils')
+const ethUtil = require('ethereumjs-util')
+const { sha3 } = require('web3-utils')
+const { hash: namehash } = require('eth-ens-namehash')
+const { assertRevert, assertBn, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/asserts')
+const { newDao, installNewApp, getInstalledApp, encodeCallScript } = require('@aragon/contract-helpers-test/src/aragon-os')
+const { EMPTY_BYTES, ZERO_ADDRESS, bn, injectWeb3, injectArtifacts } = require('@aragon/contract-helpers-test')
 
 // Allow for sharing this test across other agent implementations and subclasses
-module.exports = (
-  agentName,
-  {
-    accounts,
-    artifacts,
-    web3
-  }
-) => {
-  const web3Call = require('@aragon/test-helpers/call')(web3)
-  const web3Sign = require('@aragon/test-helpers/sign')(web3)
-  const getBalance = require('@aragon/test-helpers/balance')(web3)
-
-  const ACL = artifacts.require('ACL')
-  const Kernel = artifacts.require('Kernel')
-  const DAOFactory = artifacts.require('DAOFactory')
-  const EVMScriptRegistryFactory = artifacts.require('EVMScriptRegistryFactory')
+module.exports = (agentName, { accounts, artifacts, web3 }) => {
+  injectWeb3(web3)
+  injectArtifacts(artifacts)
 
   const ExecutionTarget = artifacts.require('ExecutionTarget')
   const DesignatedSigner = artifacts.require('DesignatedSigner')
   const DestinationMock = artifacts.require('DestinationMock')
-  const EtherTokenConstantMock = artifacts.require('EtherTokenConstantMock')
   const TokenInteractionExecutionTarget = artifacts.require('TokenInteractionExecutionTarget')
   const TokenMock = artifacts.require('TokenMock')
 
-  const NO_SIG = '0x'
-  const NO_DATA = '0x'
+  const ETH = ZERO_ADDRESS
+  const NO_SIG = EMPTY_BYTES
   const ERC165_SUPPORT_INVALID_ID = '0xffffffff'
   const ERC165_SUPPORT_INTERFACE_ID = '0x01ffc9a7'
   const ERC721_RECEIVED_INTERFACE_ID = '0x150b7a02'
@@ -41,48 +27,20 @@ module.exports = (
   const AgentLike = artifacts.require(agentName)
 
   context(`> Shared tests for Agent-like apps`, () => {
-    let daoFact, agentBase, dao, acl, agent, agentAppId
-
-    let ETH, ANY_ENTITY, APP_MANAGER_ROLE, EXECUTE_ROLE, SAFE_EXECUTE_ROLE, RUN_SCRIPT_ROLE, ADD_PROTECTED_TOKEN_ROLE, REMOVE_PROTECTED_TOKEN_ROLE, ADD_PRESIGNED_HASH_ROLE, DESIGNATE_SIGNER_ROLE, ERC1271_INTERFACE_ID
-
-    // Error strings
-    const errors = makeErrorMappingProxy({
-      // aragonOS errors
-      APP_AUTH_FAILED: 'APP_AUTH_FAILED',
-      INIT_ALREADY_INITIALIZED: 'INIT_ALREADY_INITIALIZED',
-      INIT_NOT_INITIALIZED: 'INIT_NOT_INITIALIZED',
-      RECOVER_DISALLOWED: 'RECOVER_DISALLOWED',
-      SAFE_ERC_20_BALANCE_REVERTED: 'SAFE_ERC_20_BALANCE_REVERTED',
-
-      // Agent errors
-      AGENT_TARGET_PROTECTED: 'AGENT_TARGET_PROTECTED',
-      AGENT_PROTECTED_TOKENS_MODIFIED: 'AGENT_PROTECTED_TOKENS_MODIFIED',
-      AGENT_PROTECTED_BALANCE_LOWERED: 'AGENT_PROTECTED_BALANCE_LOWERED',
-      AGENT_TOKENS_CAP_REACHED: 'AGENT_TOKENS_CAP_REACHED',
-      AGENT_TOKEN_ALREADY_PROTECTED: 'AGENT_TOKEN_ALREADY_PROTECTED',
-      AGENT_TOKEN_NOT_ERC20: 'AGENT_TOKEN_NOT_ERC20',
-      AGENT_TOKEN_NOT_PROTECTED: 'AGENT_TOKEN_NOT_PROTECTED',
-      AGENT_DESIGNATED_TO_SELF: 'AGENT_DESIGNATED_TO_SELF',
-      AGENT_CAN_NOT_FORWARD: 'AGENT_CAN_NOT_FORWARD',
-    })
+    let agentBase, dao, acl, agent, agentAppId
+    let EXECUTE_ROLE, SAFE_EXECUTE_ROLE, RUN_SCRIPT_ROLE, ADD_PROTECTED_TOKEN_ROLE, REMOVE_PROTECTED_TOKEN_ROLE, ADD_PRESIGNED_HASH_ROLE, DESIGNATE_SIGNER_ROLE, ERC1271_INTERFACE_ID
 
     const root = accounts[0]
     const authorized = accounts[1]
     const unauthorized = accounts[2]
 
-    const encodeFunctionCall = (contract, functionName, ...params) =>
-      contract[functionName].request(...params).params[0]
+    const encodeFunctionCall = (contract, functionName, ...params) => {
+      const txParams = (params.length > 0 && typeof params[params.length - 1] === 'object') ? params.pop() : {}
+      return contract.contract.methods[functionName](...params).call.request(txParams).params[0]
+    }
 
-    before(async () => {
-      const kernelBase = await Kernel.new(true) // petrify immediately
-      const aclBase = await ACL.new()
-      const regFact = await EVMScriptRegistryFactory.new()
-      daoFact = await DAOFactory.new(kernelBase.address, aclBase.address, regFact.address)
+    before('load roles', async () => {
       agentBase = await AgentLike.new()
-
-      // Setup constants
-      ANY_ENTITY = await aclBase.ANY_ENTITY()
-      APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
       SAFE_EXECUTE_ROLE = await agentBase.SAFE_EXECUTE_ROLE()
       EXECUTE_ROLE = await agentBase.EXECUTE_ROLE()
       ADD_PROTECTED_TOKEN_ROLE = await agentBase.ADD_PROTECTED_TOKEN_ROLE()
@@ -91,30 +49,19 @@ module.exports = (
       DESIGNATE_SIGNER_ROLE = await agentBase.DESIGNATE_SIGNER_ROLE()
       RUN_SCRIPT_ROLE = await agentBase.RUN_SCRIPT_ROLE()
       ERC1271_INTERFACE_ID = await agentBase.ERC1271_INTERFACE_ID()
-
-      const ethConstant = await EtherTokenConstantMock.new()
-      ETH = await ethConstant.getETHConstant()
     })
 
-    beforeEach(async () => {
-      const r = await daoFact.newDAO(root)
-      dao = Kernel.at(getEventArgument(r, 'DeployDAO', 'dao'))
-      acl = ACL.at(await dao.acl())
-
-      await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
-
-      // agent
+    beforeEach('deploy DAO with agent', async () => {
+      ({ dao, acl } = await newDao(root))
       agentAppId = namehash(`${agentName}.aragonpm.test`)
-
-      const agentReceipt = await dao.newAppInstance(agentAppId, agentBase.address, '0x', false)
-      agent = AgentLike.at(getNewProxyAddress(agentReceipt))
+      agent = await AgentLike.at(await installNewApp(dao, agentAppId, agentBase.address, root))
     })
 
     context('> Uninitialized', () => {
       it('cannot initialize base app', async () => {
         const newAgent = await AgentLike.new()
         assert.isTrue(await newAgent.isPetrified())
-        await assertRevert(newAgent.initialize(), errors.INIT_ALREADY_INITIALIZED)
+        await assertRevert(newAgent.initialize(), ERRORS.INIT_ALREADY_INITIALIZED)
       })
 
       it('can be initialized', async () => {
@@ -124,42 +71,42 @@ module.exports = (
 
       it('cannot execute actions', async () => {
         await acl.createPermission(root, agent.address, EXECUTE_ROLE, root, { from: root })
-        await assertRevert(agent.execute(accounts[8], 0, NO_DATA), errors.APP_AUTH_FAILED)
+        await assertRevert(agent.execute(accounts[8], 0, EMPTY_BYTES), ERRORS.APP_AUTH_FAILED)
       })
 
       it('cannot safe execute actions', async () => {
         await acl.createPermission(root, agent.address, SAFE_EXECUTE_ROLE, root, { from: root })
-        await assertRevert(agent.safeExecute(accounts[8], NO_DATA), errors.APP_AUTH_FAILED)
+        await assertRevert(agent.safeExecute(accounts[8], EMPTY_BYTES), ERRORS.APP_AUTH_FAILED)
       })
 
       it('cannot add protected tokens', async () => {
         await acl.createPermission(root, agent.address, ADD_PROTECTED_TOKEN_ROLE, root, { from: root })
-        await assertRevert(agent.addProtectedToken(accounts[8]), errors.APP_AUTH_FAILED)
+        await assertRevert(agent.addProtectedToken(accounts[8]), ERRORS.APP_AUTH_FAILED)
       })
 
       it('cannot remove protected tokens', async () => {
         await acl.createPermission(root, agent.address, REMOVE_PROTECTED_TOKEN_ROLE, root, { from: root })
-        await assertRevert(agent.removeProtectedToken(accounts[8]), errors.APP_AUTH_FAILED)
+        await assertRevert(agent.removeProtectedToken(accounts[8]), ERRORS.APP_AUTH_FAILED)
       })
 
       it('cannot add presigned hashes', async () => {
-        const hash = web3.sha3('hash') // careful as it may encode the data in the same way as solidity before hashing
+        const hash = sha3('hash') // careful as it may encode the data in the same way as solidity before hashing
 
         await acl.createPermission(root, agent.address, ADD_PRESIGNED_HASH_ROLE, root, { from: root })
-        await assertRevert(agent.presignHash(hash), errors.APP_AUTH_FAILED)
+        await assertRevert(agent.presignHash(hash), ERRORS.APP_AUTH_FAILED)
       })
 
       it('cannot set designated signers', async () => {
         await acl.createPermission(root, agent.address, DESIGNATE_SIGNER_ROLE, root, { from: root })
-        await assertRevert(agent.setDesignatedSigner(accounts[8]), errors.APP_AUTH_FAILED)
+        await assertRevert(agent.setDesignatedSigner(accounts[8]), ERRORS.APP_AUTH_FAILED)
       })
 
       it('cannot forward actions', async () => {
-        const action = { to: agent.address, calldata: agent.contract.presignHash.getData(accounts[8]) }
+        const action = { to: agent.address, calldata: agent.contract.methods.presignHash(accounts[8]).encodeABI() }
         const script = encodeCallScript([action])
 
         await acl.createPermission(root, agent.address, RUN_SCRIPT_ROLE, root, { from: root })
-        await assertRevert(agent.forward(script), errors.AGENT_CAN_NOT_FORWARD)
+        await assertRevert(agent.forward(script), ERRORS.AGENT_CAN_NOT_FORWARD)
       })
     })
 
@@ -169,103 +116,103 @@ module.exports = (
       })
 
       it('fails on reinitialization', async () => {
-        await assertRevert(agent.initialize(), errors.INIT_ALREADY_INITIALIZED)
+        await assertRevert(agent.initialize(), ERRORS.INIT_ALREADY_INITIALIZED)
       })
 
       context('> Executing actions', () => {
         const [_, nonExecutor, executor] = accounts
         let executionTarget
 
-        for (const depositAmount of [0, 3]) {
-          context(depositAmount ? '> With ETH' : '> Without ETH', () => {
+        for (const depositAmount of [bn(0), bn(3)]) {
+          context(depositAmount.gt(bn(0)) ? '> With ETH' : '> Without ETH', () => {
             beforeEach(async () => {
               await acl.createPermission(executor, agent.address, EXECUTE_ROLE, root, { from: root })
 
               executionTarget = await ExecutionTarget.new()
-              assert.equal(await executionTarget.counter(), 0, 'expected starting counter of execution target to be be 0')
-              assert.equal((await getBalance(executionTarget.address)).toString(), 0, 'expected starting balance of execution target to be be 0')
+              assertBn(await executionTarget.counter(), 0, 'expected starting counter of execution target to be be 0')
+              assertBn(await web3.eth.getBalance(executionTarget.address), 0, 'expected starting balance of execution target to be be 0')
 
-              if (depositAmount) {
+              if (depositAmount.gt(bn(0))) {
                 await agent.deposit(ETH, depositAmount, { value: depositAmount })
               }
-              assert.equal((await getBalance(agent.address)).toString(), depositAmount, `expected starting balance of agent to be ${depositAmount}`)
+              assertBn(await web3.eth.getBalance(agent.address), depositAmount, `expected starting balance of agent to be ${depositAmount}`)
             })
 
             it('can execute actions', async () => {
               const N = 1102
 
-              const data = executionTarget.contract.setCounter.getData(N)
+              const data = executionTarget.contract.methods.setCounter(N).encodeABI()
               const receipt = await agent.execute(executionTarget.address, depositAmount, data, { from: executor })
 
               assertAmountOfEvents(receipt, 'Execute')
-              assert.equal(await executionTarget.counter(), N, `expected counter to be ${N}`)
-              assert.equal((await getBalance(executionTarget.address)).toString(), depositAmount, 'expected ending balance of execution target to be correct')
-              assert.equal((await getBalance(agent.address)).toString(), 0, 'expected ending balance of agent at end to be 0')
+              assertBn(await executionTarget.counter(), N, `expected counter to be ${N}`)
+              assertBn(await web3.eth.getBalance(executionTarget.address), depositAmount, 'expected ending balance of execution target to be correct')
+              assertBn(await web3.eth.getBalance(agent.address), 0, 'expected ending balance of agent at end to be 0')
             })
 
             it('can execute actions without data', async () => {
-              const receipt = await agent.execute(executionTarget.address, depositAmount, NO_DATA, { from: executor })
+              const receipt = await agent.execute(executionTarget.address, depositAmount, EMPTY_BYTES, { from: executor })
 
               assertAmountOfEvents(receipt, 'Execute')
               // Fallback just runs ExecutionTarget.execute()
               assert.equal(await executionTarget.counter(), 1, 'expected counter to be 1')
-              assert.equal((await getBalance(executionTarget.address)).toString(), depositAmount, 'expected ending balance of execution target to be correct')
-              assert.equal((await getBalance(agent.address)).toString(), 0, 'expected ending balance of agent at end to be 0')
+              assertBn(await web3.eth.getBalance(executionTarget.address), depositAmount, 'expected ending balance of execution target to be correct')
+              assertBn(await web3.eth.getBalance(agent.address), 0, 'expected ending balance of agent at end to be 0')
             })
 
             it('can execute cheap fallback actions', async () => {
               const cheapFallbackTarget = await DestinationMock.new(false)
-              const receipt = await agent.execute(cheapFallbackTarget.address, depositAmount, NO_DATA, { from: executor })
+              const receipt = await agent.execute(cheapFallbackTarget.address, depositAmount, EMPTY_BYTES, { from: executor })
 
               assertAmountOfEvents(receipt, 'Execute')
-              assert.equal((await getBalance(cheapFallbackTarget.address)).toString(), depositAmount, 'expected ending balance of execution target to be correct')
-              assert.equal((await getBalance(agent.address)).toString(), 0, 'expected ending balance of agent at end to be 0')
+              assertBn(await web3.eth.getBalance(cheapFallbackTarget.address), depositAmount, 'expected ending balance of execution target to be correct')
+              assertBn(await web3.eth.getBalance(agent.address), 0, 'expected ending balance of agent at end to be 0')
             })
 
             it('can execute expensive fallback actions', async () => {
               const expensiveFallbackTarget = await DestinationMock.new(true)
               assert.equal(await expensiveFallbackTarget.counter(), 0)
 
-              const receipt = await agent.execute(expensiveFallbackTarget.address, depositAmount, NO_DATA, { from: executor })
+              const receipt = await agent.execute(expensiveFallbackTarget.address, depositAmount, EMPTY_BYTES, { from: executor })
 
               assertAmountOfEvents(receipt, 'Execute')
               // Fallback increments counter
               assert.equal(await expensiveFallbackTarget.counter(), 1)
-              assert.equal((await getBalance(expensiveFallbackTarget.address)).toString(), depositAmount, 'expected ending balance of execution target to be correct')
-              assert.equal((await getBalance(agent.address)).toString(), 0, 'expected ending balance of agent at end to be 0')
+              assertBn(await web3.eth.getBalance(expensiveFallbackTarget.address), depositAmount, 'expected ending balance of execution target to be correct')
+              assertBn(await web3.eth.getBalance(agent.address), 0, 'expected ending balance of agent at end to be 0')
             })
 
             it('can execute with data when target is not a contract', async () => {
               const nonContract = accounts[8] // random account
-              const nonContractBalance = await getBalance(nonContract)
+              const nonContractBalance = await web3.eth.getBalance(nonContract)
               const randomData = '0x12345678'
 
               const receipt = await agent.execute(nonContract, depositAmount, randomData, { from: executor })
 
               assertAmountOfEvents(receipt, 'Execute')
-              assert.equal((await getBalance(nonContract)).toString(), nonContractBalance.add(depositAmount).toString(), 'expected ending balance of non-contract to be correct')
-              assert.equal((await getBalance(agent.address)).toString(), 0, 'expected ending balance of agent at end to be 0')
+              assertBn(await web3.eth.getBalance(nonContract), bn(nonContractBalance).add(depositAmount), 'expected ending balance of non-contract to be correct')
+              assertBn(await web3.eth.getBalance(agent.address), 0, 'expected ending balance of agent at end to be 0')
             })
 
             it('can execute without data when target is not a contract', async () => {
               const nonContract = accounts[8] // random account
-              const nonContractBalance = await getBalance(nonContract)
+              const nonContractBalance = await web3.eth.getBalance(nonContract)
 
-              const receipt = await agent.execute(nonContract, depositAmount, NO_DATA, { from: executor })
+              const receipt = await agent.execute(nonContract, depositAmount, EMPTY_BYTES, { from: executor })
 
               assertAmountOfEvents(receipt, 'Execute')
-              assert.equal((await getBalance(nonContract)).toString(), nonContractBalance.add(depositAmount).toString(), 'expected ending balance of non-contract to be correct')
-              assert.equal((await getBalance(agent.address)).toString(), 0, 'expected ending balance of agent at end to be 0')
+              assertBn(await web3.eth.getBalance(nonContract), bn(nonContractBalance).add(depositAmount), 'expected ending balance of non-contract to be correct')
+              assertBn(await web3.eth.getBalance(agent.address), 0, 'expected ending balance of agent at end to be 0')
             })
 
             it('fails to execute without permissions', async () => {
-              const data = executionTarget.contract.execute.getData()
+              const data = executionTarget.contract.methods.execute().encodeABI()
 
-              await assertRevert(agent.execute(executionTarget.address, depositAmount, data, { from: nonExecutor }), errors.APP_AUTH_FAILED)
+              await assertRevert(agent.execute(executionTarget.address, depositAmount, data, { from: nonExecutor }), ERRORS.APP_AUTH_FAILED)
             })
 
             it('fails to execute actions with more ETH than the agent owns', async () => {
-              const data = executionTarget.contract.execute.getData()
+              const data = executionTarget.contract.methods.execute().encodeABI()
 
               await assertRevert(agent.execute(executionTarget.address, depositAmount + 1, data, { from: executor }))
             })
@@ -275,8 +222,8 @@ module.exports = (
 
               // We make a call to easily get what data could be gotten inside the EVM
               // Contract -> agent.execute -> Target.func (would allow Contract to have access to this data)
-              const call = encodeFunctionCall(agent, 'execute', to, depositAmount, data, { from: executor })
-              const returnData = await web3Call(call)
+              const call = encodeFunctionCall(agent, 'execute', to, depositAmount.toString(), data, { from: executor })
+              const returnData = await web3.eth.call(call)
 
               // ExecutionTarget.execute() increments the counter by 1
               assert.equal(ethABI.decodeParameter('uint256', returnData), 1)
@@ -286,7 +233,7 @@ module.exports = (
               // TODO: Check revert data was correctly forwarded
               // ganache currently doesn't support fetching this data
 
-              const data = executionTarget.contract.fail.getData()
+              const data = executionTarget.contract.methods.fail().encodeABI()
               await assertRevert(agent.execute(executionTarget.address, depositAmount, data, { from: executor }))
             })
 
@@ -294,14 +241,14 @@ module.exports = (
               const [granteeEqualToSig, granteeUnequalToSig] = accounts.slice(6) // random slice from accounts
 
               beforeEach(async () => {
-                const sig = executionTarget.contract.setCounter.getData(1).slice(2, 10)
+                const sig = executionTarget.contract.methods.setCounter(1).encodeABI().slice(2, 10)
                 const argId = '0x02' // arg 2
                 const equalOp = '01'
                 const nonEqualOp = '02'
                 const value = `${'00'.repeat(30 - 4)}${sig}`
 
-                const equalParam = new web3.BigNumber(`${argId}${equalOp}${value}`)
-                const nonEqualParam = new web3.BigNumber(`${argId}${nonEqualOp}${value}`)
+                const equalParam = new bn(`${argId}${equalOp}${value}`)
+                const nonEqualParam = new bn(`${argId}${nonEqualOp}${value}`)
 
                 await acl.grantPermissionP(granteeEqualToSig, agent.address, EXECUTE_ROLE, [equalParam], { from: root })
                 await acl.grantPermissionP(granteeUnequalToSig, agent.address, EXECUTE_ROLE, [nonEqualParam], { from: root })
@@ -310,36 +257,36 @@ module.exports = (
               it('equal param: can execute if the signature matches', async () => {
                 const N = 1102
 
-                const data = executionTarget.contract.setCounter.getData(N)
+                const data = executionTarget.contract.methods.setCounter(N).encodeABI()
                 const receipt = await agent.execute(executionTarget.address, depositAmount, data, { from: granteeEqualToSig })
 
                 assertAmountOfEvents(receipt, 'Execute')
                 assert.equal(await executionTarget.counter(), N, `expected counter to be ${N}`)
-                assert.equal((await getBalance(executionTarget.address)).toString(), depositAmount, 'expected ending balance of execution target to be correct')
-                assert.equal((await getBalance(agent.address)).toString(), 0, 'expected ending balance of agent at end to be 0')
+                assertBn(await web3.eth.getBalance(executionTarget.address), depositAmount, 'expected ending balance of execution target to be correct')
+                assertBn(await web3.eth.getBalance(agent.address), 0, 'expected ending balance of agent at end to be 0')
               })
 
               it('not equal param: can execute if the signature doesn\'t match', async () => {
-                const data = executionTarget.contract.execute.getData()
+                const data = executionTarget.contract.methods.execute().encodeABI()
                 const receipt = await agent.execute(executionTarget.address, depositAmount, data, { from: granteeUnequalToSig })
 
                 assertAmountOfEvents(receipt, 'Execute')
                 assert.equal(await executionTarget.counter(), 1, `expected counter to be ${1}`)
-                assert.equal((await getBalance(executionTarget.address)).toString(), depositAmount, 'expected ending balance of execution target to be correct')
-                assert.equal((await getBalance(agent.address)).toString(), 0, 'expected ending balance of agent at end to be 0')
+                assertBn(await web3.eth.getBalance(executionTarget.address), depositAmount, 'expected ending balance of execution target to be correct')
+                assertBn(await web3.eth.getBalance(agent.address), 0, 'expected ending balance of agent at end to be 0')
               })
 
               it('equal param: fails to execute if signature doesn\'t match', async () => {
-                const data = executionTarget.contract.execute.getData()
+                const data = executionTarget.contract.methods.execute().encodeABI()
 
-                await assertRevert(agent.execute(executionTarget.address, depositAmount, data, { from: granteeEqualToSig }), errors.APP_AUTH_FAILED)
+                await assertRevert(agent.execute(executionTarget.address, depositAmount, data, { from: granteeEqualToSig }), ERRORS.APP_AUTH_FAILED)
               })
 
               it('not equal param: fails to execute if the signature matches', async () => {
                 const N = 1102
 
-                const data = executionTarget.contract.setCounter.getData(N)
-                await assertRevert(agent.execute(executionTarget.address, depositAmount, data, { from: granteeUnequalToSig }), errors.APP_AUTH_FAILED)
+                const data = executionTarget.contract.methods.setCounter(N).encodeABI()
+                await assertRevert(agent.execute(executionTarget.address, depositAmount, data, { from: granteeUnequalToSig }), ERRORS.APP_AUTH_FAILED)
               })
             })
           })
@@ -371,7 +318,7 @@ module.exports = (
           context('> and target is not a protected ERC20', () => {
             it('it can execute actions', async () => {
               const N = 1102
-              const data = target.contract.setCounter.getData(N)
+              const data = target.contract.methods.setCounter(N).encodeABI()
               const receipt = await agent.safeExecute(target.address, data, { from: authorized })
 
               assertAmountOfEvents(receipt, 'SafeExecute')
@@ -379,7 +326,7 @@ module.exports = (
             })
 
             it('it can execute actions without data', async () => {
-              const receipt = await agent.safeExecute(target.address, NO_DATA, { from: authorized })
+              const receipt = await agent.safeExecute(target.address, EMPTY_BYTES, { from: authorized })
 
               assertAmountOfEvents(receipt, 'SafeExecute')
               assert.equal(await target.counter(), 1) // fallback just runs ExecutionTarget.execute()
@@ -387,7 +334,7 @@ module.exports = (
 
             it('it can execute cheap fallback actions', async () => {
               const cheapFallbackTarget = await DestinationMock.new(false)
-              const receipt = await agent.safeExecute(cheapFallbackTarget.address, NO_DATA, { from: authorized })
+              const receipt = await agent.safeExecute(cheapFallbackTarget.address, EMPTY_BYTES, { from: authorized })
 
               assertAmountOfEvents(receipt, 'SafeExecute')
             })
@@ -395,7 +342,7 @@ module.exports = (
             it('it can execute expensive fallback actions', async () => {
               const expensiveFallbackTarget = await DestinationMock.new(true)
               assert.equal(await expensiveFallbackTarget.counter(), 0)
-              const receipt = await agent.safeExecute(expensiveFallbackTarget.address, NO_DATA, { from: authorized })
+              const receipt = await agent.safeExecute(expensiveFallbackTarget.address, EMPTY_BYTES, { from: authorized })
 
               assertAmountOfEvents(receipt, 'SafeExecute')
               assert.equal(await expensiveFallbackTarget.counter(), 1) // fallback increments counter
@@ -411,7 +358,7 @@ module.exports = (
 
             it('it can execute without data when target is not a contract', async () => {
               const nonContract = accounts[8] // random account
-              const receipt = await agent.safeExecute(nonContract, NO_DATA, { from: authorized })
+              const receipt = await agent.safeExecute(nonContract, EMPTY_BYTES, { from: authorized })
 
               assertAmountOfEvents(receipt, 'SafeExecute')
             })
@@ -422,7 +369,7 @@ module.exports = (
               // We make a call to easily get what data could be gotten inside the EVM
               // Contract -> agent.safeExecute -> Target.func (would allow Contract to have access to this data)
               const call = encodeFunctionCall(agent, 'safeExecute', to, data, { from: authorized })
-              const returnData = await web3Call(call)
+              const returnData = await web3.eth.call(call)
 
               // ExecutionTarget.execute() increments the counter by 1
               assert.equal(ethABI.decodeParameter('uint256', returnData), 1)
@@ -431,7 +378,7 @@ module.exports = (
             it('it should revert if executed action reverts', async () => {
               // TODO: Check revert data was correctly forwarded
               // ganache currently doesn't support fetching this data
-              const data = target.contract.fail.getData()
+              const data = target.contract.methods.fail().encodeABI()
               await assertRevert(agent.safeExecute(target.address, data, { from: authorized }))
             })
 
@@ -445,32 +392,32 @@ module.exports = (
               context('> action decreases protected ERC20 balance', () => {
                 it('it should revert', async () => {
                   const newToken = await TokenMock.new(agent.address, amount)
-                  const initialBalance = (await newToken.balanceOf(agent.address)).toNumber()
+                  const initialBalance = await newToken.balanceOf(agent.address)
 
-                  const approve = newToken.contract.approve.getData(tokenInteractionTarget.address, 10)
+                  const approve = newToken.contract.methods.approve(tokenInteractionTarget.address, 10).encodeABI()
                   await agent.safeExecute(newToken.address, approve, { from: authorized }) // target is now allowed to transfer on behalf of agent
 
                   await agent.addProtectedToken(newToken.address, { from: authorized }) // new token is now protected (must do this after execution)
-                  const data = tokenInteractionTarget.contract.transferTokenFrom.getData(newToken.address)
+                  const data = tokenInteractionTarget.contract.methods.transferTokenFrom(newToken.address).encodeABI()
 
-                  await assertRevert(agent.safeExecute(tokenInteractionTarget.address, data, { from: authorized }), errors.AGENT_PROTECTED_BALANCE_LOWERED)
-                  const newBalance = (await newToken.balanceOf(agent.address)).toNumber()
+                  await assertRevert(agent.safeExecute(tokenInteractionTarget.address, data, { from: authorized }), ERRORS.AGENT_PROTECTED_BALANCE_LOWERED)
+                  const newBalance = await newToken.balanceOf(agent.address)
 
-                  assert.equal(initialBalance, newBalance)
+                  assertBn(initialBalance, newBalance)
                 })
               })
 
               context('> action increases protected ERC20 balance', () => {
                 it('it should execute action', async () => {
                   const newToken = await TokenMock.new(tokenInteractionTarget.address, amount)
-                  const initialBalance = (await newToken.balanceOf(agent.address)).toNumber()
+                  const initialBalance = await newToken.balanceOf(agent.address)
                   await agent.addProtectedToken(newToken.address, { from: authorized }) // newToken is now protected
 
-                  const data = tokenInteractionTarget.contract.transferTokenTo.getData(newToken.address)
+                  const data = tokenInteractionTarget.contract.methods.transferTokenTo(newToken.address).encodeABI()
                   await agent.safeExecute(tokenInteractionTarget.address, data, { from: authorized })
-                  const newBalance = (await newToken.balanceOf(agent.address)).toNumber()
+                  const newBalance = await newToken.balanceOf(agent.address)
 
-                  assert.equal(newBalance, 1)
+                  assertBn(newBalance, 1)
                   assert.notEqual(initialBalance, newBalance)
                 })
               })
@@ -485,27 +432,27 @@ module.exports = (
 
               it('it should revert', async () => {
                 await acl.grantPermission(tokenInteractionTarget.address, agent.address, REMOVE_PROTECTED_TOKEN_ROLE, { from: root }) // grant target permission to remove protected tokens
-                const data = tokenInteractionTarget.contract.removeProtectedToken.getData(token2.address)
+                const data = tokenInteractionTarget.contract.methods.removeProtectedToken(token2.address).encodeABI()
 
-                await assertRevert(agent.safeExecute(tokenInteractionTarget.address, data, { from: authorized }), errors.AGENT_PROTECTED_TOKENS_MODIFIED)
+                await assertRevert(agent.safeExecute(tokenInteractionTarget.address, data, { from: authorized }), ERRORS.AGENT_PROTECTED_TOKENS_MODIFIED)
               })
             })
           })
 
           context('> but target is a protected ERC20', () => {
             it('it should revert', async () => {
-              const approve = token1.contract.approve.getData(target.address, 10)
+              const approve = token1.contract.methods.approve(target.address, 10).encodeABI()
 
-              await assertRevert(agent.safeExecute(token1.address, approve, { from: authorized }), errors.AGENT_TARGET_PROTECTED)
+              await assertRevert(agent.safeExecute(token1.address, approve, { from: authorized }), ERRORS.AGENT_TARGET_PROTECTED)
             })
           })
         })
 
         context('> sender does not have SAFE_EXECUTE_ROLE', () => {
           it('it should revert', async () => {
-            const data = target.contract.execute.getData()
+            const data = target.contract.methods.execute().encodeABI()
 
-            await assertRevert(agent.safeExecute(target.address, data, { from: unauthorized }), errors.APP_AUTH_FAILED)
+            await assertRevert(agent.safeExecute(target.address, data, { from: unauthorized }), ERRORS.APP_AUTH_FAILED)
           })
         })
       })
@@ -517,7 +464,7 @@ module.exports = (
         beforeEach(async () => {
           executionTarget = await ExecutionTarget.new()
           // prepare script
-          const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
+          const action = { to: executionTarget.address, calldata: executionTarget.contract.methods.execute().encodeABI() }
           script = encodeCallScript([action, action]) // perform action twice
 
           await acl.createPermission(scriptRunner, agent.address, RUN_SCRIPT_ROLE, root, { from: root })
@@ -538,7 +485,7 @@ module.exports = (
           assert.isFalse(await agent.canForward(nonScriptRunner, script))
           assert.equal(await executionTarget.counter(), 0)
 
-          await assertRevert(agent.forward(script, { from: nonScriptRunner }), errors.AGENT_CAN_NOT_FORWARD)
+          await assertRevert(agent.forward(script, { from: nonScriptRunner }), ERRORS.AGENT_CAN_NOT_FORWARD)
           assert.equal(await executionTarget.counter(), 0)
         })
       })
@@ -594,7 +541,7 @@ module.exports = (
                 it('it should revert', async () => {
                   const token10 = await TokenMock.new(agent.address, 10000)
 
-                  await assertRevert(agent.addProtectedToken(token10.address, { from: authorized }), errors.AGENT_TOKENS_CAP_REACHED)
+                  await assertRevert(agent.addProtectedToken(token10.address, { from: authorized }), ERRORS.AGENT_TOKENS_CAP_REACHED)
                 })
               })
             })
@@ -604,19 +551,19 @@ module.exports = (
                 const token = await TokenMock.new(agent.address, 10000)
                 await agent.addProtectedToken(token.address, { from: authorized })
 
-                await assertRevert(agent.addProtectedToken(token.address, { from: authorized }), errors.AGENT_TOKEN_ALREADY_PROTECTED)
+                await assertRevert(agent.addProtectedToken(token.address, { from: authorized }), ERRORS.AGENT_TOKEN_ALREADY_PROTECTED)
               })
             })
           })
 
           context('> but token is not ERC20', () => {
             it('it should revert [token is not a contract]', async () => {
-              await assertRevert(agent.addProtectedToken(root, { from: authorized }), errors.AGENT_TOKEN_NOT_ERC20)
+              await assertRevert(agent.addProtectedToken(root, { from: authorized }), ERRORS.AGENT_TOKEN_NOT_ERC20)
             })
 
             it('it should revert [token is a contract but not an ERC20]', async () => {
               // The balanceOf check reverts here, so it's a SafeERC20 error
-              await assertRevert(agent.addProtectedToken(daoFact.address, { from: authorized }), errors.SAFE_ERC_20_BALANCE_REVERTED)
+              await assertRevert(agent.addProtectedToken(dao.address, { from: authorized }), ERRORS.SAFE_ERC_20_BALANCE_REVERTED)
             })
           })
         })
@@ -625,7 +572,7 @@ module.exports = (
           it('it should revert', async () => {
             const token = await TokenMock.new(agent.address, 10000)
 
-            await assertRevert(agent.addProtectedToken(token.address, { from: unauthorized }), errors.APP_AUTH_FAILED)
+            await assertRevert(agent.addProtectedToken(token.address, { from: unauthorized }), ERRORS.APP_AUTH_FAILED)
           })
         })
       })
@@ -669,7 +616,7 @@ module.exports = (
               const token2 = await TokenMock.new(agent.address, 10000)
               await agent.addProtectedToken(token1.address, { from: authorized })
 
-              await assertRevert(agent.removeProtectedToken(token2.address, { from: authorized }), errors.AGENT_TOKEN_NOT_PROTECTED)
+              await assertRevert(agent.removeProtectedToken(token2.address, { from: authorized }), ERRORS.AGENT_TOKEN_NOT_PROTECTED)
             })
           })
         })
@@ -679,7 +626,7 @@ module.exports = (
             const token = await TokenMock.new(agent.address, 10000)
             await agent.addProtectedToken(token.address, { from: authorized })
 
-            await assertRevert(agent.removeProtectedToken(token.address, { from: unauthorized }), errors.APP_AUTH_FAILED)
+            await assertRevert(agent.removeProtectedToken(token.address, { from: unauthorized }), ERRORS.APP_AUTH_FAILED)
           })
         })
       })
@@ -724,7 +671,7 @@ module.exports = (
 
       context('> Signing messages', () => {
         const [_, nobody, presigner, signerDesignator] = accounts
-        const HASH = web3.sha3('hash') // careful as it may encode the data in the same way as solidity before hashing
+        const HASH = sha3('hash') // careful as it may encode the data in the same way as solidity before hashing
 
         const SIGNATURE_MODES = {
           Invalid: '0x00',
@@ -780,13 +727,13 @@ module.exports = (
         })
 
         it('fails to presign a hash if not authorized', async () => {
-          await assertRevert(agent.presignHash(HASH, { from: nobody }), errors.APP_AUTH_FAILED)
+          await assertRevert(agent.presignHash(HASH, { from: nobody }), ERRORS.APP_AUTH_FAILED)
           assertIsValidSignature(false, await agent.isValidSignatureBytes32(HASH, NO_SIG))
         })
 
         context('> Designated signer', () => {
           const ethSign = async (hash, signer) => {
-            const packedSig = await web3Sign(signer, hash)
+            const packedSig = await web3.eth.sign(hash, signer)
 
             return {
               r: ethUtil.toBuffer('0x' + packedSig.substring(2, 66)),
@@ -823,7 +770,7 @@ module.exports = (
           const createChildAgentGenerator = (designatedSigner) =>
             async () => {
               const agentReceipt = await dao.newAppInstance(agentAppId, agentBase.address, '0x', false)
-              const childAgent = AgentLike.at(getNewProxyAddress(agentReceipt))
+              const childAgent = await AgentLike.at(getInstalledApp(agentReceipt, agentAppId))
 
               await childAgent.initialize()
               await acl.createPermission(signerDesignator, childAgent.address, DESIGNATE_SIGNER_ROLE, root, { from: root })
@@ -997,7 +944,7 @@ module.exports = (
 
           context('> Signature mode: self', () => {
             it('cannot set itself as the designated signer', async () => {
-              await assertRevert(agent.setDesignatedSigner(agent.address, { from: signerDesignator }), errors.AGENT_DESIGNATED_TO_SELF)
+              await assertRevert(agent.setDesignatedSigner(agent.address, { from: signerDesignator }), ERRORS.AGENT_DESIGNATED_TO_SELF)
             })
           })
         })

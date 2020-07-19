@@ -22,7 +22,7 @@ contract TokenBalanceOracle is IACLOracle {
         minBalance = _minBalance;
     }
 
-    function canPerform(address _who, address, address, address, bytes32, uint256[]) external view returns (bool) {
+    function canPerform(address _who, address, address, bytes32, uint256[]) external view returns (bool) {
         uint256 senderBalance = token.balanceOf(_who);
         return senderBalance >= minBalance;
     }

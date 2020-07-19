@@ -1,24 +1,25 @@
-const { assertBn } = require('../helpers/assert/assertBn')
-const { assertRevert } = require('../helpers/assert/assertThrow')
-const { decodeEventsOfType } = require('../helpers/lib/decodeEvent')
-const { assertEvent, assertAmountOfEvents } = require('../helpers/assert/assertEvent')
+const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 const { RULINGS } = require('../helpers/utils/enums')
 const { AGREEMENT_ERRORS } = require('../helpers/utils/errors')
 const { AGREEMENT_EVENTS } = require('../helpers/utils/events')
 
-const deployer = require('../helpers/utils/deployer')(web3, artifacts)
+const { injectWeb3, injectArtifacts } = require('@aragon/contract-helpers-test')
+const { assertBn, assertRevert, assertEvent, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/asserts')
 
-contract('Agreement', ([_, submitter, someone]) => {
-  let disputable, actionId
+injectWeb3(web3)
+injectArtifacts(artifacts)
+
+contract('Agreement', ([_, submitter]) => {
+  let disputable, actionId, disputableActionId
 
   beforeEach('deploy agreement instance', async () => {
-    disputable = await deployer.deployAndInitializeWrapperWithDisputable()
+    disputable = await deployer.deployAndInitializeDisputableWrapper()
   })
 
   describe('close', () => {
     context('when the given action exists', () => {
       beforeEach('create action', async () => {
-        ({ actionId } = await disputable.newAction({ submitter }))
+        ({ actionId, disputableActionId } = await disputable.newAction({ submitter }))
       })
 
       const itCanCloseActions = () => {
@@ -38,6 +39,17 @@ contract('Agreement', ([_, submitter, someone]) => {
             assertBn(currentActionState.disputableActionId, previousActionState.disputableActionId, 'disputable action ID does not match')
             assertBn(currentActionState.currentChallengeId, previousActionState.currentChallengeId, 'challenge ID does not match')
             assertBn(currentActionState.collateralRequirementId, previousActionState.collateralRequirementId, 'collateral requirement ID does not match')
+          })
+
+          it('can be closed by the disputable', async () => {
+            const closedFromDisputable = true
+            await disputable.mockDisputable({ canClose :false })
+
+            await assertRevert(disputable.close(actionId), AGREEMENT_ERRORS.ERROR_CANNOT_CLOSE_ACTION)
+            await disputable.close(disputableActionId, closedFromDisputable)
+
+            const currentActionState = await disputable.getAction(actionId)
+            assert.isTrue(currentActionState.closed, 'action is not closed')
           })
 
           if (unlocksBalance) {
@@ -81,10 +93,9 @@ contract('Agreement', ([_, submitter, someone]) => {
 
           it('emits an event', async () => {
             const receipt = await disputable.close(actionId)
-            const logs = decodeEventsOfType(receipt, disputable.abi, AGREEMENT_EVENTS.ACTION_CLOSED)
 
-            assertAmountOfEvents({ logs }, AGREEMENT_EVENTS.ACTION_CLOSED, 1)
-            assertEvent({ logs }, AGREEMENT_EVENTS.ACTION_CLOSED, { actionId })
+            assertAmountOfEvents(receipt, AGREEMENT_EVENTS.ACTION_CLOSED, { decodeForAbi: disputable.abi })
+            assertEvent(receipt, AGREEMENT_EVENTS.ACTION_CLOSED, { expectedArgs: { actionId }, decodeForAbi: disputable.abi })
           })
 
           it('there are no more paths allowed', async () => {
