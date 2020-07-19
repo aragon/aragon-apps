@@ -9,12 +9,17 @@ injectWeb3(web3)
 injectArtifacts(artifacts)
 
 contract('Agreement', ([_, owner, submitter, someone]) => {
-  let disputable, actionCollateral
+  let disputable, actionCollateral, collateralToken, aragonAppFeesCashier
 
   const actionContext = '0x123456'
 
+  before('deploy app fees cashier', async () => {
+    aragonAppFeesCashier = await deployer.deployAragonAppFeesCashier()
+  })
+
   beforeEach('deploy agreement instance', async () => {
-    disputable = await deployer.deployAndInitializeDisputableWrapper({ owner, activate: false, submitters: [submitter] })
+    disputable = await deployer.deployAndInitializeDisputableWrapper({ owner, activate: false, submitters: [submitter], aragonAppFeesCashier })
+    collateralToken = disputable.collateralToken
     actionCollateral = disputable.actionCollateral
   })
 
@@ -87,8 +92,6 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
 
                       it('does not affect token balances', async () => {
                         const stakingAddress = await disputable.getStakingAddress()
-                        const { collateralToken } = disputable
-
                         const previousSubmitterBalance = await collateralToken.balanceOf(submitter)
                         const previousStakingBalance = await collateralToken.balanceOf(stakingAddress)
 
@@ -162,7 +165,6 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
                       itHandlesNewActionsCorrectly(appFeesInCollateralTokens)
 
                       it('does not transfer any transaction fees', async () => {
-                        const { collateralToken, aragonAppFeesCashier } = disputable
                         const previousAppFeesCashierEthBalance = await web3.eth.getBalance(aragonAppFeesCashier.address)
                         const previousAppFeesCashierTokenBalance = await collateralToken.balanceOf(aragonAppFeesCashier.address)
 
@@ -197,8 +199,6 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
 
                               it('transfer the tokens from the staking pool to the cashier', async () => {
                                 const stakingAddress = await disputable.getStakingAddress()
-                                const { collateralToken, aragonAppFeesCashier } = disputable
-
                                 const previousStakingBalance = await collateralToken.balanceOf(stakingAddress)
                                 const previousCashierBalance = await collateralToken.balanceOf(aragonAppFeesCashier.address)
 
@@ -223,7 +223,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
 
                           context('when the submitter has no allowed balance in the staking pool', () => {
                             beforeEach('decrease allowance', async () => {
-                              const staking = await disputable.getStaking(disputable.collateralToken)
+                              const staking = await disputable.getStaking(collateralToken)
                               const { _allowance: allowance, _amount: locked } = await staking.getLock(submitter, disputable.address)
                               await staking.decreaseLockAllowance(submitter, disputable.address, allowance.sub(locked), { from: submitter })
                             })
@@ -254,8 +254,6 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
 
                               it('transfer the tokens from the staking pool to the cashier', async () => {
                                 const stakingAddress = await disputable.getStakingAddress(token)
-                                const { aragonAppFeesCashier } = disputable
-
                                 const previousStakingBalance = await token.balanceOf(stakingAddress)
                                 const previousCashierBalance = await token.balanceOf(aragonAppFeesCashier.address)
 
@@ -298,7 +296,6 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
                           itHandlesNewActionsCorrectly(appFeesInCollateralTokens, appFeesInEth)
 
                           it('transfers the transaction fees correctly', async () => {
-                            const { aragonAppFeesCashier } = disputable
                             const previousAppFeesCashierBalance = await web3.eth.getBalance(aragonAppFeesCashier.address)
 
                             await disputable.newAction({ submitter, actionContext, stake, sign, value: appFeesInEth })
