@@ -1,20 +1,19 @@
-const { assertBn } = require('../helpers/assert/assertBn')
-const { assertRevert } = require('../helpers/assert/assertThrow')
-const { decodeEventsOfType } = require('../helpers/lib/decodeEvent')
-const { assertEvent, assertAmountOfEvents, assertAmountOfRawEvents } = require('../helpers/assert/assertEvent')
-const { AGREEMENT_EVENTS, DISPUTABLE_EVENTS } = require('../helpers/utils/events')
+const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 const { AGREEMENT_ERRORS } = require('../helpers/utils/errors')
 const { RULINGS, CHALLENGES_STATE } = require('../helpers/utils/enums')
+const { AGREEMENT_EVENTS, DISPUTABLE_EVENTS } = require('../helpers/utils/events')
 
-const Disputable = artifacts.require('DisputableAppMock')
+const { injectWeb3, injectArtifacts } = require('@aragon/contract-helpers-test')
+const { assertBn, assertRevert, assertEvent, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/asserts')
 
-const deployer = require('../helpers/utils/deployer')(web3, artifacts)
+injectWeb3(web3)
+injectArtifacts(artifacts)
 
 contract('Agreement', ([_, submitter, challenger]) => {
   let disputable, actionId
 
   beforeEach('deploy agreement instance', async () => {
-    disputable = await deployer.deployAndInitializeWrapperWithDisputable()
+    disputable = await deployer.deployAndInitializeDisputableWrapper()
   })
 
   describe('rule', () => {
@@ -26,12 +25,6 @@ contract('Agreement', ([_, submitter, challenger]) => {
       })
 
       const itCanRuleActions = () => {
-        const itCannotRuleDispute = () => {
-          it('reverts', async () => {
-            await assertRevert(disputable.executeRuling({ actionId, ruling: RULINGS.REFUSED, mockRuling: false }), AGREEMENT_ERRORS.ERROR_CANNOT_RULE_ACTION)
-          })
-        }
-
         const itCannotRuleNonExistingDispute = () => {
           it('reverts', async () => {
             await assertRevert(disputable.executeRuling({ actionId, ruling: RULINGS.REFUSED, mockRuling: false }), AGREEMENT_ERRORS.ERROR_CHALLENGE_DOES_NOT_EXIST)
@@ -101,11 +94,7 @@ contract('Agreement', ([_, submitter, challenger]) => {
                 })
 
                 context('when the dispute was ruled', () => {
-                  const itRulesTheActionProperly = (ruling, expectedChallengeState, callbacksRevert = false) => {
-                    beforeEach('set mock callbacks behavior', async () => {
-                      await disputable.disputable.mockSetCallbacksRevert(callbacksRevert)
-                    })
-
+                  const itRulesTheActionProperly = (ruling, expectedChallengeState) => {
                     context('when the sender is the arbitrator', () => {
                       it('updates the challenge state only', async () => {
                         const previousChallengeState = await disputable.getChallenge(challengeId)
@@ -137,23 +126,11 @@ contract('Agreement', ([_, submitter, challenger]) => {
                         const { disputeId } = await disputable.getChallenge(challengeId)
                         const receipt = await disputable.executeRuling({ actionId, ruling })
 
-                        const IArbitrable = artifacts.require('IArbitrable')
-                        const logs = decodeEventsOfType(receipt, IArbitrable.abi, 'Ruled')
-
-                        assertAmountOfEvents({ logs }, 'Ruled', 1)
-                        assertEvent({ logs }, 'Ruled', { arbitrator: disputable.arbitrator.address, disputeId, ruling })
+                        assertAmountOfEvents(receipt, 'Ruled', { decodeForAbi: disputable.abi })
+                        assertEvent(receipt, 'Ruled', { expectedArgs: { arbitrator: disputable.arbitrator.address, disputeId, ruling }, decodeForAbi: disputable.abi })
                       })
 
                       if (expectedChallengeState === CHALLENGES_STATE.ACCEPTED) {
-                        it(`${callbacksRevert ? 'does not emit' : 'emits'} a disputable event`, async () => {
-                          const { disputeId } = await disputable.getChallenge(challengeId)
-                          const receipt = await disputable.executeRuling({ actionId, ruling })
-
-                          // disputable event shouldn't be emitted when disputable reverts
-                          const expectedEventsAmount = callbacksRevert ? 0 : 1
-                          assertAmountOfRawEvents(receipt, Disputable.abi, DISPUTABLE_EVENTS.REJECTED, expectedEventsAmount)
-                        })
-
                         it('marks the action as closed', async () => {
                           const previousActionState = await disputable.getAction(actionId)
 
@@ -194,16 +171,6 @@ contract('Agreement', ([_, submitter, challenger]) => {
                           assert.isFalse(canRuleDispute, 'action dispute can be ruled')
                         })
                       } else {
-                        it(`${callbacksRevert ? 'does not emit' : 'emits'} a disputable event`, async () => {
-                          const { disputeId } = await disputable.getChallenge(challengeId)
-                          const receipt = await disputable.executeRuling({ actionId, ruling })
-
-                          // disputable event shouldn't be emitted when disputable reverts
-                          const expectedEventsAmount = callbacksRevert ? 0 : 1
-                          const disputableEvent = expectedChallengeState === CHALLENGES_STATE.REJECTED ? DISPUTABLE_EVENTS.ALLOWED : DISPUTABLE_EVENTS.VOIDED
-                          assertAmountOfRawEvents(receipt, Disputable.abi, disputableEvent, expectedEventsAmount)
-                        })
-
                         it('does not mark the action as closed', async () => {
                           const previousActionState = await disputable.getAction(actionId)
 
@@ -259,13 +226,7 @@ contract('Agreement', ([_, submitter, challenger]) => {
                     const ruling = RULINGS.IN_FAVOR_OF_SUBMITTER
                     const expectedChallengeState = CHALLENGES_STATE.REJECTED
 
-                    context('when disputable callback reverts', () => {
-                      itRulesTheActionProperly(ruling, expectedChallengeState, true)
-                    })
-
-                    context('when disputable callback doesn’t revert', () => {
-                      itRulesTheActionProperly(ruling, expectedChallengeState, false)
-                    })
+                    itRulesTheActionProperly(ruling, expectedChallengeState)
 
                     it('transfers the challenge collateral to the submitter', async () => {
                       const { collateralToken, challengeCollateral } = disputable
@@ -288,10 +249,18 @@ contract('Agreement', ([_, submitter, challenger]) => {
                     it('emits an event', async () => {
                       const { currentChallengeId } = await disputable.getAction(actionId)
                       const receipt = await disputable.executeRuling({ actionId, ruling })
-                      const logs = decodeEventsOfType(receipt, disputable.abi, AGREEMENT_EVENTS.ACTION_ACCEPTED)
 
-                      assertAmountOfEvents({ logs }, AGREEMENT_EVENTS.ACTION_ACCEPTED, 1)
-                      assertEvent({ logs }, AGREEMENT_EVENTS.ACTION_ACCEPTED, { actionId, challengeId: currentChallengeId })
+                      assertAmountOfEvents(receipt, AGREEMENT_EVENTS.ACTION_ACCEPTED, { decodeForAbi: disputable.abi })
+                      assertEvent(receipt, AGREEMENT_EVENTS.ACTION_ACCEPTED, { expectedArgs: { actionId, challengeId: currentChallengeId }, decodeForAbi: disputable.abi })
+                    })
+
+                    it('ignores the disputable callback behavior', async () => {
+                      await disputable.mockDisputable({ callbacksRevert: true })
+
+                      const receipt = await disputable.executeRuling({ actionId, ruling })
+
+                      // disputable event shouldn't be emitted when disputable reverts
+                      assertAmountOfEvents(receipt, DISPUTABLE_EVENTS.ALLOWED, { expectedAmount: 0, decodeForAbi: disputable.disputableAbi })
                     })
                   })
 
@@ -299,13 +268,7 @@ contract('Agreement', ([_, submitter, challenger]) => {
                     const ruling = RULINGS.IN_FAVOR_OF_CHALLENGER
                     const expectedChallengeState = CHALLENGES_STATE.ACCEPTED
 
-                    context('when disputable callback reverts', () => {
-                      itRulesTheActionProperly(ruling, expectedChallengeState, true)
-                    })
-
-                    context('when disputable callback doesn’t revert', () => {
-                      itRulesTheActionProperly(ruling, expectedChallengeState, false)
-                    })
+                    itRulesTheActionProperly(ruling, expectedChallengeState)
 
                     it('transfers the challenge collateral and the collateral amount to the challenger', async () => {
                       const stakingAddress = await disputable.getStakingAddress()
@@ -337,10 +300,18 @@ contract('Agreement', ([_, submitter, challenger]) => {
                     it('emits an event', async () => {
                       const { currentChallengeId } = await disputable.getAction(actionId)
                       const receipt = await disputable.executeRuling({ actionId, ruling })
-                      const logs = decodeEventsOfType(receipt, disputable.abi, AGREEMENT_EVENTS.ACTION_REJECTED)
 
-                      assertAmountOfEvents({ logs }, AGREEMENT_EVENTS.ACTION_REJECTED, 1)
-                      assertEvent({ logs }, AGREEMENT_EVENTS.ACTION_REJECTED, { actionId, challengeId: currentChallengeId })
+                      assertAmountOfEvents(receipt, AGREEMENT_EVENTS.ACTION_REJECTED, { decodeForAbi: disputable.abi })
+                      assertEvent(receipt, AGREEMENT_EVENTS.ACTION_REJECTED, { expectedArgs: { actionId, challengeId: currentChallengeId }, decodeForAbi: disputable.abi })
+                    })
+
+                    it('ignores the disputable callback behavior', async () => {
+                      await disputable.mockDisputable({ callbacksRevert: true })
+
+                      const receipt = await disputable.executeRuling({ actionId, ruling })
+
+                      // disputable event shouldn't be emitted when disputable reverts
+                      assertAmountOfEvents(receipt, DISPUTABLE_EVENTS.REJECTED, { expectedAmount: 0, decodeForAbi: disputable.disputableAbi })
                     })
                   })
 
@@ -348,13 +319,7 @@ contract('Agreement', ([_, submitter, challenger]) => {
                     const ruling = RULINGS.REFUSED
                     const expectedChallengeState = CHALLENGES_STATE.VOIDED
 
-                    context('when disputable callback reverts', () => {
-                      itRulesTheActionProperly(ruling, expectedChallengeState, true)
-                    })
-
-                    context('when disputable callback doesn’t revert', () => {
-                      itRulesTheActionProperly(ruling, expectedChallengeState, false)
-                    })
+                    itRulesTheActionProperly(ruling, expectedChallengeState)
 
                     it('transfers the challenge collateral to the challenger', async () => {
                       const { collateralToken, challengeCollateral } = disputable
@@ -377,10 +342,18 @@ contract('Agreement', ([_, submitter, challenger]) => {
                     it('emits an event', async () => {
                       const { currentChallengeId } = await disputable.getAction(actionId)
                       const receipt = await disputable.executeRuling({ actionId, ruling })
-                      const logs = decodeEventsOfType(receipt, disputable.abi, AGREEMENT_EVENTS.ACTION_VOIDED)
 
-                      assertAmountOfEvents({ logs }, AGREEMENT_EVENTS.ACTION_VOIDED, 1)
-                      assertEvent({ logs }, AGREEMENT_EVENTS.ACTION_VOIDED, { actionId, challengeId: currentChallengeId })
+                      assertAmountOfEvents(receipt, AGREEMENT_EVENTS.ACTION_VOIDED, { decodeForAbi: disputable.abi })
+                      assertEvent(receipt, AGREEMENT_EVENTS.ACTION_VOIDED, { expectedArgs: { actionId, challengeId: currentChallengeId }, decodeForAbi: disputable.abi })
+                    })
+
+                    it('ignores the disputable callback behavior', async () => {
+                      await disputable.mockDisputable({ callbacksRevert: true })
+
+                      const receipt = await disputable.executeRuling({ actionId, ruling })
+
+                      // disputable event shouldn't be emitted when disputable reverts
+                      assertAmountOfEvents(receipt, DISPUTABLE_EVENTS.VOIDED, { expectedAmount: 0, decodeForAbi: disputable.disputableAbi })
                     })
                   })
                 })

@@ -11,8 +11,6 @@ cache:
     - apps/vault/node_modules
     - apps/voting/node_modules
     - shared/migrations/node_modules
-    - shared/minime/node_modules
-    - shared/test-helpers/node_modules
 notifications:
   email: false
 node_js:
@@ -43,8 +41,6 @@ jobs:
       name: "Vault"
     - script: npm run test:voting
       name: "Voting"
-    - script: npm run test:shared
-      name: "Shared"
 
     - stage: coverage
       script: npm run coverage:agreement

@@ -1,21 +1,20 @@
-const { utf8ToHex, padLeft } = require('web3-utils')
-const { bn } = require('../helpers/lib/numbers')
-const { assertBn } = require('../helpers/assert/assertBn')
-const { assertRevert } = require('../helpers/assert/assertThrow')
-const { getEventArgument } = require('@aragon/contract-helpers-test/events')
-const { decodeEventsOfType } = require('../helpers/lib/decodeEvent')
-const { assertEvent, assertAmountOfEvents } = require('../helpers/assert/assertEvent')
+const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 const { AGREEMENT_ERRORS } = require('../helpers/utils/errors')
 const { AGREEMENT_EVENTS } = require('../helpers/utils/events')
 const { RULINGS, CHALLENGES_STATE } = require('../helpers/utils/enums')
 
-const deployer = require('../helpers/utils/deployer')(web3, artifacts)
+const { padLeft } = require('web3-utils')
+const { bn, getEventArgument, injectWeb3, injectArtifacts } = require('@aragon/contract-helpers-test')
+const { assertBn, assertRevert, assertEvent, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/asserts')
+
+injectWeb3(web3)
+injectArtifacts(artifacts)
 
 contract('Agreement', ([_, someone, submitter, challenger]) => {
   let disputable, actionId
 
-  beforeEach('deploy agreement instance', async () => {
-    disputable = await deployer.deployAndInitializeWrapperWithDisputable()
+  beforeEach('deploy disputable instance', async () => {
+    disputable = await deployer.deployAndInitializeDisputableWrapper()
   })
 
   describe('dispute', () => {
@@ -68,10 +67,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                       const previousChallengeState = await disputable.getChallenge(challengeId)
 
                       const receipt = await disputable.dispute({ actionId, from, arbitrationFees })
-
-                      const IArbitrator = artifacts.require('ArbitratorMock')
-                      const logs = decodeEventsOfType(receipt, IArbitrator.abi, 'NewDispute')
-                      const disputeId = getEventArgument({ logs }, 'NewDispute', 'disputeId');
+                      const disputeId = getEventArgument(receipt, 'NewDispute', 'disputeId', { decodeForAbi: disputable.arbitrator.abi })
 
                       const currentChallengeState = await disputable.getChallenge(challengeId)
                       assertBn(currentChallengeState.disputeId, disputeId, 'challenge dispute ID does not match')
@@ -110,24 +106,20 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                       assert.isFalse(challengerFinishedEvidence, 'challenger finished evidence')
 
                       const appId = '0xcafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234'
-                      const paddedActionId = padLeft(actionId, 64)
-                      const expectedMetadata = `${appId}${paddedActionId}`
+                      const paddedChallengeId = padLeft(challengeId, 64)
+                      const expectedMetadata = `${appId}${paddedChallengeId}`
 
-                      const IArbitrator = artifacts.require('ArbitratorMock')
-                      const logs = decodeEventsOfType(receipt, IArbitrator.abi, 'NewDispute')
-                      assertAmountOfEvents({ logs }, 'NewDispute', 1)
-
-                      assertEvent({ logs }, 'NewDispute', { disputeId, possibleRulings: 2, metadata: expectedMetadata })
+                      assertAmountOfEvents(receipt, 'NewDispute', { decodeForAbi: disputable.arbitrator.abi })
+                      assertEvent(receipt, 'NewDispute', { expectedArgs: { disputeId, possibleRulings: 2, metadata: expectedMetadata }, decodeForAbi: disputable.arbitrator.abi })
                     })
 
                     it('submits both parties context as evidence', async () => {
                       const receipt = await disputable.dispute({ actionId, from, arbitrationFees })
                       const { disputeId } = await disputable.getChallenge(challengeId)
 
-                      const logs = decodeEventsOfType(receipt, disputable.abi, 'EvidenceSubmitted')
-                      assertAmountOfEvents({ logs }, 'EvidenceSubmitted', 2)
-                      assertEvent({ logs }, 'EvidenceSubmitted', { arbitrator: disputable.arbitrator, disputeId, submitter: submitter, evidence: actionContext, finished: false }, 0)
-                      assertEvent({ logs }, 'EvidenceSubmitted', { arbitrator: disputable.arbitrator, disputeId, submitter: challenger, evidence: challengeContext, finished: false }, 1)
+                      assertAmountOfEvents(receipt, 'EvidenceSubmitted', { expectedAmount: 2, decodeForAbi: disputable.abi })
+                      assertEvent(receipt, 'EvidenceSubmitted', { index: 0, expectedArgs: { arbitrator: disputable.arbitrator, disputeId, submitter: submitter, evidence: actionContext, finished: false }, decodeForAbi: disputable.abi })
+                      assertEvent(receipt, 'EvidenceSubmitted', { index: 1, expectedArgs: { arbitrator: disputable.arbitrator, disputeId, submitter: challenger, evidence: challengeContext, finished: false }, decodeForAbi: disputable.abi })
                     })
 
                     it('does not affect the submitter staked balances', async () => {
@@ -164,7 +156,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                       const { currentChallengeId } = await disputable.getAction(actionId)
                       const receipt = await disputable.dispute({ actionId, from, arbitrationFees })
 
-                      assertAmountOfEvents(receipt, AGREEMENT_EVENTS.ACTION_DISPUTED, 1)
+                      assertAmountOfEvents(receipt, AGREEMENT_EVENTS.ACTION_DISPUTED)
                       assertEvent(receipt, AGREEMENT_EVENTS.ACTION_DISPUTED, { actionId, challengeId: currentChallengeId })
                     })
 

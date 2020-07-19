@@ -1,19 +1,19 @@
-const { bigExp } = require('../helpers/lib/numbers')
-const { assertBn } = require('../helpers/assert/assertBn')
-const { assertRevert } = require('../helpers/assert/assertThrow')
-const { assertAmountOfEvents, assertEvent } = require('../helpers/assert/assertEvent')
+const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 const { AGREEMENT_ERRORS } = require('../helpers/utils/errors')
 const { AGREEMENT_EVENTS } = require('../helpers/utils/events')
 
-const deployer = require('../helpers/utils/deployer')(web3, artifacts)
+const { ANY_ENTITY } = require('@aragon/contract-helpers-test/src/aragon-os')
+const { bigExp, injectWeb3, injectArtifacts } = require('@aragon/contract-helpers-test')
+const { assertBn, assertRevert, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
+
+injectWeb3(web3)
+injectArtifacts(artifacts)
 
 contract('Agreement', ([_, signer]) => {
   let agreement
 
-  const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff'
-
   beforeEach('deploy agreement instance', async () => {
-    agreement = await deployer.deployAndInitializeWrapper()
+    agreement = await deployer.deployAndInitializeAgreementWrapper()
   })
 
   describe('sign', () => {
@@ -27,7 +27,7 @@ contract('Agreement', ([_, signer]) => {
       })
 
       it('is not allowed through ACL oracle', async () => {
-        assert.isFalse(await agreement.canPerform(ANY_ADDR, ANY_ADDR, ANY_ADDR, '0x', [from]), 'signer can perform through ACL')
+        assert.isFalse(await agreement.canPerform(from, ANY_ENTITY, ANY_ENTITY, '0x', []), 'signer can perform through ACL')
       })
 
       it('can sign the agreement', async () => {
@@ -43,7 +43,7 @@ contract('Agreement', ([_, signer]) => {
       it('is allowed through ACL oracle after signing the agreement', async () => {
         await agreement.sign(from)
 
-        assert.isTrue(await agreement.canPerform(ANY_ADDR, ANY_ADDR, ANY_ADDR, '0x', [from]), 'signer cannot perform through ACL')
+        assert.isTrue(await agreement.canPerform(from, ANY_ENTITY, ANY_ENTITY, '0x', []), 'signer cannot perform through ACL')
       })
 
       it('emits an event', async () => {
@@ -51,7 +51,7 @@ contract('Agreement', ([_, signer]) => {
 
         const receipt = await agreement.sign(from)
 
-        assertAmountOfEvents(receipt, AGREEMENT_EVENTS.SIGNED, 1)
+        assertAmountOfEvents(receipt, AGREEMENT_EVENTS.SIGNED)
         assertEvent(receipt, AGREEMENT_EVENTS.SIGNED, { signer: from, settingId: currentSettingId })
       })
     }
@@ -78,16 +78,6 @@ contract('Agreement', ([_, signer]) => {
 
         itSignsTheAgreementProperly()
       })
-    })
-  })
-
-  describe('canPerform', () => {
-    it('reverts when the signer is missing', async () => {
-      await assertRevert(agreement.canPerform(ANY_ADDR, ANY_ADDR, ANY_ADDR, '0x', []), AGREEMENT_ERRORS.ERROR_ACL_SIGNER_MISSING)
-    })
-
-    it('reverts when an invalid signer is given', async () => {
-      await assertRevert(agreement.canPerform(ANY_ADDR, ANY_ADDR, ANY_ADDR, '0x', [bigExp(2, 161)]), AGREEMENT_ERRORS.ERROR_ACL_SIGNER_NOT_ADDRESS)
     })
   })
 })

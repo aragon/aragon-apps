@@ -1,12 +1,11 @@
-const { RULINGS } = require('../helpers/utils/enums')
-
 const deployer = require('../helpers/utils/deployer')(web3, artifacts)
+const { RULINGS } = require('../helpers/utils/enums')
 
 contract('Agreement', ([_, user]) => {
   let disputable, actionId
 
   beforeEach('deploy disputable instance', async () => {
-    disputable = await deployer.deployAndInitializeWrapperWithDisputable()
+    disputable = await deployer.deployAndInitializeDisputableWrapper()
   })
 
   describe('gas costs', () => {
@@ -19,7 +18,7 @@ contract('Agreement', ([_, user]) => {
     }
 
     context('stake', () => {
-      itCostsAtMost(204e3, () => disputable.stake({ user }))
+      itCostsAtMost(205e3, () => disputable.stake({ user }))
     })
 
     context('unstake', () => {
@@ -31,7 +30,7 @@ contract('Agreement', ([_, user]) => {
     })
 
     context('newAction', () => {
-      itCostsAtMost(299e3, async () => (await disputable.newAction({})).receipt)
+      itCostsAtMost(303e3, async () => (await disputable.newAction({})).receipt)
     })
 
     context('closeAction', () => {
@@ -39,7 +38,7 @@ contract('Agreement', ([_, user]) => {
         ({ actionId } = await disputable.newAction({}))
       })
 
-      itCostsAtMost(71e3, () => disputable.close(actionId))
+      itCostsAtMost(85e3, () => disputable.close(actionId))
     })
 
     context('challenge', () => {
@@ -47,7 +46,7 @@ contract('Agreement', ([_, user]) => {
         ({ actionId } = await disputable.newAction({}))
       })
 
-      itCostsAtMost(436e3, async () => (await disputable.challenge({ actionId })).receipt)
+      itCostsAtMost(437e3, async () => (await disputable.challenge({ actionId })).receipt)
     })
 
     context('settle', () => {
@@ -56,7 +55,7 @@ contract('Agreement', ([_, user]) => {
         await disputable.challenge({ actionId })
       })
 
-      itCostsAtMost(246e3, () => disputable.settle({ actionId }))
+      itCostsAtMost(261e3, () => disputable.settle({ actionId }))
     })
 
     context('dispute', () => {
@@ -84,7 +83,7 @@ contract('Agreement', ([_, user]) => {
       })
 
       context('in favor of the challenger', () => {
-        itCostsAtMost(343e3, () => disputable.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_CHALLENGER }))
+        itCostsAtMost(358e3, () => disputable.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_CHALLENGER }))
       })
     })
   })

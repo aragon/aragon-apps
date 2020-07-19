@@ -1,15 +1,11 @@
 const AgreementWrapper = require('./agreement')
-
-const { bn } = require('../lib/numbers')
-const { decodeEventsOfType } = require('../lib/decodeEvent')
-const { getEventArgument } = require('@aragon/contract-helpers-test/events')
 const { AGREEMENT_EVENTS, DISPUTABLE_EVENTS } = require('../utils/events')
 
-const EMPTY_DATA = '0x'
+const { MAX_UINT192, bn, getEventArgument } = require('@aragon/contract-helpers-test')
 
 class DisputableWrapper extends AgreementWrapper {
-  constructor(artifacts, web3, agreement, arbitrator, aragonAppFeesCashier, stakingFactory, disputable, collateralRequirement = {}) {
-    super(artifacts, web3, agreement, arbitrator, aragonAppFeesCashier, stakingFactory)
+  constructor(artifacts, web3, agreement, arbitrator, aragonAppFeesCashier, stakingFactory, clock, disputable, collateralRequirement = {}) {
+    super(artifacts, web3, agreement, arbitrator, aragonAppFeesCashier, stakingFactory, clock)
     this.disputable = disputable
     this.collateralRequirement = collateralRequirement
   }
@@ -82,11 +78,8 @@ class DisputableWrapper extends AgreementWrapper {
   async forward({ script = '0x', context = '0x1234', value = bn(0), from = undefined }) {
     if (!from) from = await this._getSender()
 
-    await this.allowManager({ user: from, amount: this.actionCollateral })
-
     const receipt = await this.disputable.forward(script, context, { from, value })
-    const logs = decodeEventsOfType(receipt, this.abi, AGREEMENT_EVENTS.ACTION_SUBMITTED)
-    const actionId = logs.length > 0 ? getEventArgument({ logs }, AGREEMENT_EVENTS.ACTION_SUBMITTED, 'actionId') : undefined
+    const actionId = getEventArgument(receipt, AGREEMENT_EVENTS.ACTION_SUBMITTED, 'actionId', { decodeForAbi: this.abi })
 
     const disputableActionId = getEventArgument(receipt, DISPUTABLE_EVENTS.SUBMITTED, 'id')
     return { receipt, actionId, disputableActionId }
@@ -97,9 +90,17 @@ class DisputableWrapper extends AgreementWrapper {
 
     if (stake === undefined) stake = this.actionCollateral
     if (stake) await this.approveAndCall({ amount: stake, from: submitter })
-    if (sign === undefined && (await this.getSigner(submitter)).mustSign) await this.sign(submitter)
+
+    if (sign === undefined && (await this.getSigner(submitter)).mustSign) {
+      await this.sign(submitter)
+      await this.allowManager({ user: submitter })
+    }
 
     return this.forward({ context: actionContext, from: submitter, value })
+  }
+
+  async close(id, fromDisputable = false) {
+    return fromDisputable ? this.disputable.closeAction(id) : super.close(id)
   }
 
   async challenge(options = {}) {
@@ -122,7 +123,7 @@ class DisputableWrapper extends AgreementWrapper {
     return super.approveAndCall(options)
   }
 
-  async allowManager({ token = undefined, user, amount}) {
+  async allowManager({ user, token = undefined, amount = MAX_UINT192}) {
     if (!token) token = this.collateralToken
     return super.allowManager({ token, user, amount })
   }
@@ -143,14 +144,9 @@ class DisputableWrapper extends AgreementWrapper {
     return this.aragonAppFeesCashier.setAppFee(appId, token.address, amount)
   }
 
-  async unsetAppFee() {
-    const appId = await this.disputable.appId()
-    return this.aragonAppFeesCashier.unsetAppFee(appId)
-  }
-
   async mockDisputable(options = {}) {
-    const { canClose, canChallenge } = options
-    return this.disputable.mockDisputable(!!canClose, !!canChallenge)
+    const { canClose, canChallenge, callbacksRevert } = options
+    return this.disputable.mockDisputable(!!canClose, !!canChallenge, !!callbacksRevert)
   }
 }
 
