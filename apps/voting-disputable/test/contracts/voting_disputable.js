@@ -1,10 +1,8 @@
 const { toAscii, utf8ToHex } = require('web3-utils')
-const { DAY } = require('@aragon/apps-agreement/test/helpers/lib/time')
 const { RULINGS } = require('@aragon/apps-agreement/test/helpers/utils/enums')
-const { assertBn } = require('@aragon/apps-agreement/test/helpers/assert/assertBn')
-const { bigExp, bn } = require('@aragon/apps-agreement/test/helpers/lib/numbers')
-const { assertRevert } = require('@aragon/apps-agreement/test/helpers/assert/assertThrow')
-const { pct, createVote, voteScript, getVoteState } = require('../helpers/voting')(web3, artifacts)
+const { assertBn, assertRevert } = require('@aragon/contract-helpers-test/src/asserts')
+const { ONE_DAY, pct16, bigExp, bn } = require('@aragon/contract-helpers-test')
+const { createVote, voteScript, getVoteState } = require('../helpers/voting')
 
 const votingDeployer = require('../helpers/deployer')(web3, artifacts)
 const agreementDeployer = require('@aragon/apps-agreement/test/helpers/utils/deployer')(web3, artifacts)
@@ -19,14 +17,14 @@ const VOTE_STATUS = {
 contract('Voting disputable', ([_, owner, voter51, voter49]) => {
   let voting, token, agreement, voteId, actionId, collateralToken, executionTarget, script
 
-  const MIN_QUORUM = pct(20)
-  const MIN_SUPPORT = pct(50)
-  const VOTING_DURATION = DAY * 5
-  const OVERRULE_WINDOW = DAY
+  const MIN_QUORUM = pct16(20)
+  const MIN_SUPPORT = pct16(50)
+  const VOTING_DURATION = ONE_DAY * 5
+  const OVERRULE_WINDOW = ONE_DAY
   const CONTEXT = utf8ToHex('some context')
 
   before('deploy agreement and base voting', async () => {
-    agreement = await agreementDeployer.deployAndInitializeWrapper({ owner })
+    agreement = await agreementDeployer.deployAndInitializeAgreementWrapper({ owner })
     collateralToken = await agreementDeployer.deployCollateralToken()
     votingDeployer.previousDeploy = agreementDeployer.previousDeploy
 
@@ -46,7 +44,7 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
 
     const SET_AGREEMENT_ROLE = await voting.SET_AGREEMENT_ROLE()
     await votingDeployer.acl.createPermission(agreement.address, voting.address, SET_AGREEMENT_ROLE, owner, { from: owner })
-    await agreement.activate({ disputable: voting, collateralToken, actionCollateral: 0, challengeCollateral: 0, challengeDuration: DAY, from: owner })
+    await agreement.activate({ disputable: voting, collateralToken, actionCollateral: 0, challengeCollateral: 0, challengeDuration: ONE_DAY, from: owner })
   })
 
   beforeEach('create script', async () => {
@@ -173,7 +171,7 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
       pauseTimestamp = await voting.getTimestampPublic()
       await agreement.challenge({ actionId })
 
-      currentTimestamp = pauseTimestamp.add(bn(DAY))
+      currentTimestamp = pauseTimestamp.add(bn(ONE_DAY))
       await voting.mockSetTimestamp(currentTimestamp)
     })
 
@@ -184,7 +182,7 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
 
         assertBn(voteActionId, actionId, 'action ID does not match')
         assertBn(pausedAt, pauseTimestamp, 'paused at does not match')
-        assertBn(pauseDuration, DAY, 'pause duration does not match')
+        assertBn(pauseDuration, ONE_DAY, 'pause duration does not match')
       })
 
       it('allows voter to vote and execute', async () => {
@@ -259,7 +257,7 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
       pauseTimestamp = await voting.getTimestampPublic()
       await agreement.challenge({ actionId })
 
-      currentTimestamp = pauseTimestamp.add(bn(DAY))
+      currentTimestamp = pauseTimestamp.add(bn(ONE_DAY))
       await voting.mockSetTimestamp(currentTimestamp)
     })
 
@@ -270,7 +268,7 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
 
         assertBn(voteActionId, actionId, 'action ID does not match')
         assertBn(pausedAt, pauseTimestamp, 'paused at does not match')
-        assertBn(pauseDuration, DAY, 'pause duration does not match')
+        assertBn(pauseDuration, ONE_DAY, 'pause duration does not match')
       })
 
       it('does not allow a voter to vote', async () => {

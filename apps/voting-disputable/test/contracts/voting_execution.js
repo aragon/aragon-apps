@@ -1,8 +1,6 @@
-const { DAY } = require('@aragon/apps-agreement/test/helpers/lib/time')
-const { bigExp } = require('@aragon/apps-agreement/test/helpers/lib/numbers')
-const { assertBn } = require('@aragon/apps-agreement/test/helpers/assert/assertBn')
-const { assertRevert } = require('@aragon/apps-agreement/test/helpers/assert/assertThrow')
-const { pct, voteScript, createVote } = require('../helpers/voting')(web3, artifacts)
+const { voteScript, createVote } = require('../helpers/voting')
+const { ONE_DAY, bigExp, pct16 } = require('@aragon/contract-helpers-test')
+const { assertBn, assertRevert } = require('@aragon/contract-helpers-test/src/asserts')
 const { VOTING_ERRORS, ARAGON_OS_ERRORS } = require('../helpers/errors')
 
 const deployer = require('../helpers/deployer')(web3, artifacts)
@@ -10,10 +8,10 @@ const deployer = require('../helpers/deployer')(web3, artifacts)
 contract('Voting', ([_, owner, holder20, holder29, holder51]) => {
   let voting, voteId, executionTarget, script
 
-  const VOTE_DURATION = 5 * DAY
-  const OVERRULE_WINDOW = DAY
-  const REQUIRED_SUPPORT = pct(50)
-  const MINIMUM_ACCEPTANCE_QUORUM = pct(20)
+  const VOTE_DURATION = 5 * ONE_DAY
+  const OVERRULE_WINDOW = ONE_DAY
+  const REQUIRED_SUPPORT = pct16(50)
+  const MINIMUM_ACCEPTANCE_QUORUM = pct16(20)
 
   before('deploy and mint tokens', async () => {
     const token = await deployer.deployToken({})
@@ -129,7 +127,7 @@ contract('Voting', ([_, owner, holder20, holder29, holder51]) => {
     })
 
     context('with delayed execution', () => {
-      const EXECUTION_DELAY = DAY
+      const EXECUTION_DELAY = ONE_DAY
 
       beforeEach('deploy voting', async () => {
         voting = await deployer.deployAndInitialize({ owner, supportRequired: REQUIRED_SUPPORT, minimumAcceptanceQuorum: MINIMUM_ACCEPTANCE_QUORUM, voteDuration: VOTE_DURATION, overruleWindow: OVERRULE_WINDOW, executionDelay: EXECUTION_DELAY })

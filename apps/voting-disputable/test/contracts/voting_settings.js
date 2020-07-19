@@ -1,21 +1,18 @@
-const { DAY } = require('@aragon/apps-agreement/test/helpers/lib/time')
-const { assertBn } = require('@aragon/apps-agreement/test/helpers/assert/assertBn')
-const { bn, bigExp } = require('@aragon/apps-agreement/test/helpers/lib/numbers')
-const { assertRevert } = require('@aragon/apps-agreement/test/helpers/assert/assertThrow')
-const { pct, createVote, getVoteState } = require('../helpers/voting')(web3, artifacts)
+const { createVote, getVoteState } = require('../helpers/voting')
+const { ONE_DAY, bn, bigExp, pct16 } = require('@aragon/contract-helpers-test')
 const { ARAGON_OS_ERRORS, VOTING_ERRORS } = require('../helpers/errors')
-const { assertEvent, assertAmountOfEvents } = require('@aragon/apps-agreement/test/helpers/assert/assertEvent')
+const { assertBn, assertRevert, assertEvent, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/asserts')
 
 const deployer = require('../helpers/deployer')(web3, artifacts)
 
 contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) => {
   let voting
 
-  const VOTE_DURATION = 5 * DAY
-  const OVERRULE_WINDOW = DAY
+  const VOTE_DURATION = 5 * ONE_DAY
+  const OVERRULE_WINDOW = ONE_DAY
   const EXECUTION_DELAY = 0
-  const REQUIRED_SUPPORT = pct(50)
-  const MINIMUM_ACCEPTANCE_QUORUM = pct(20)
+  const REQUIRED_SUPPORT = pct16(50)
+  const MINIMUM_ACCEPTANCE_QUORUM = pct16(20)
 
   before('deploy and mint tokens', async () => {
     const token = await deployer.deployToken({})
@@ -53,12 +50,12 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
           const receipt = await voting.changeSupportRequiredPct(newSupport, { from })
 
           assertAmountOfEvents(receipt, 'ChangeSupportRequired')
-          assertEvent(receipt, 'ChangeSupportRequired', { supportRequiredPct: newSupport })
+          assertEvent(receipt, 'ChangeSupportRequired', { expectedArgs: { supportRequiredPct: newSupport } })
         })
 
         it('does not affect vote required support', async () => {
           const { voteId } = await createVote({ voting, from: holder51 })
-          await voting.changeSupportRequiredPct(pct(70), { from })
+          await voting.changeSupportRequiredPct(pct16(70), { from })
 
           // With previous required support at 50%, vote should be approved
           // with new required support at 70% it shouldn't have,
@@ -76,7 +73,7 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
       })
 
       context('when the new value is 100%', () => {
-        const newSupport = pct(100)
+        const newSupport = pct16(100)
 
         it('reverts', async () => {
           await assertRevert(voting.changeSupportRequiredPct(newSupport, { from }), VOTING_ERRORS.VOTING_CHANGE_SUPP_TOO_BIG)
@@ -84,7 +81,7 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
       })
 
       context('when the new value is above 100%', () => {
-        const newSupport = pct(101)
+        const newSupport = pct16(101)
 
         it('reverts', async () => {
           await assertRevert(voting.changeSupportRequiredPct(newSupport, { from }), VOTING_ERRORS.VOTING_CHANGE_SUPP_TOO_BIG)
@@ -96,7 +93,7 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
       const from = anyone
 
       it('reverts', async () => {
-        await assertRevert(voting.changeSupportRequiredPct(pct(90), { from }), ARAGON_OS_ERRORS.APP_AUTH_FAILED)
+        await assertRevert(voting.changeSupportRequiredPct(pct16(90), { from }), ARAGON_OS_ERRORS.APP_AUTH_FAILED)
       })
     })
   })
@@ -116,12 +113,12 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
           const receipt = await voting.changeMinAcceptQuorumPct(newQuorum, { from })
 
           assertAmountOfEvents(receipt, 'ChangeMinQuorum')
-          assertEvent(receipt, 'ChangeMinQuorum', { minAcceptQuorumPct: newQuorum })
+          assertEvent(receipt, 'ChangeMinQuorum', { expectedArgs: { minAcceptQuorumPct: newQuorum } })
         })
 
         it('does not affect the vote min quorum', async () => {
           const { voteId } = await createVote({ voting, from: holder51 })
-          await voting.changeMinAcceptQuorumPct(pct(50), { from })
+          await voting.changeMinAcceptQuorumPct(pct16(50), { from })
 
           // With previous min acceptance quorum at 20%, vote should be approved
           // with new minimum acceptance quorum at 50% it shouldn't have,
@@ -161,7 +158,7 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
       const from = anyone
 
       it('reverts', async () => {
-        await assertRevert(voting.changeMinAcceptQuorumPct(pct(90), { from }), ARAGON_OS_ERRORS.APP_AUTH_FAILED)
+        await assertRevert(voting.changeMinAcceptQuorumPct(pct16(90), { from }), ARAGON_OS_ERRORS.APP_AUTH_FAILED)
       })
     })
   })
@@ -171,7 +168,7 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
       const from = owner
 
       context('when the new window is valid', () => {
-        const newWindow = DAY * 2
+        const newWindow = ONE_DAY * 2
 
         it('changes the overrule window', async () => {
           await voting.changeOverruleWindow(newWindow, { from })
@@ -183,7 +180,7 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
           const receipt = await voting.changeOverruleWindow(newWindow, { from })
 
           assertAmountOfEvents(receipt, 'ChangeOverruleWindow')
-          assertEvent(receipt, 'ChangeOverruleWindow', { overruleWindow: newWindow })
+          assertEvent(receipt, 'ChangeOverruleWindow', { expectedArgs: { overruleWindow: newWindow } })
         })
 
         it('does not affect previous created votes', async () => {
@@ -207,7 +204,7 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
 
     context('when the sender is not allowed', () => {
       const from = anyone
-      const newWindow = DAY * 2
+      const newWindow = ONE_DAY * 2
 
       it('reverts', async () => {
         await assertRevert(voting.changeOverruleWindow(newWindow, { from }), ARAGON_OS_ERRORS.APP_AUTH_FAILED)
@@ -216,7 +213,7 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
   })
 
   describe('changeExecutionDelay', () => {
-    const newDelay = DAY * 2
+    const newDelay = ONE_DAY * 2
 
     context('when the sender is allowed', () => {
       const from = owner
@@ -231,7 +228,7 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
         const receipt = await voting.changeExecutionDelay(newDelay, { from })
 
         assertAmountOfEvents(receipt, 'ChangeExecutionDelay')
-        assertEvent(receipt, 'ChangeExecutionDelay', { executionDelay: newDelay })
+        assertEvent(receipt, 'ChangeExecutionDelay', { expectedArgs: { executionDelay: newDelay } })
       })
 
       it('does not affect previous created votes', async () => {

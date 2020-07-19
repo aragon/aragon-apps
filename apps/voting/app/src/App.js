@@ -72,7 +72,7 @@ const App = React.memo(function App() {
         )}
         {votes.length > 0 && (
           <React.Fragment>
-            <SyncIndicator visible={isSyncing} />
+            <SyncIndicator visible={isSyncing} shift={50} />
             <Header
               primary="Voting"
               secondary={

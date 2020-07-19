@@ -77,7 +77,7 @@ contract Agreement is IAgreement, AragonApp {
         string title;
         bytes content;
         IArbitrator arbitrator;
-        IAragonAppFeesCashier aragonAppFeesCashier;                   // Cashier to deposit new action transaction fees (usually linked to the selected arbitrator)
+        IAragonAppFeesCashier aragonAppFeesCashier; // Cashier to deposit new action transaction fees (usually linked to the selected arbitrator)
     }
 
     struct Action {
@@ -667,7 +667,7 @@ contract Agreement is IAgreement, AragonApp {
     * @param _who Sender of the original call
     * @return True if the original sender has signed the current version of the Agreement, false otherwise
     */
-    function canPerform(address _who, address /* _grantee */, address /* _where */, address, bytes32 /* _what */, uint256[] /* _how */)
+    function canPerform(address _who, address /* _grantee */, address /* _where */, bytes32 /* _what */, uint256[] /* _how */)
         external
         view
         returns (bool)
@@ -1085,7 +1085,6 @@ contract Agreement is IAgreement, AragonApp {
     */
     function _newSetting(IArbitrator _arbitrator, IAragonAppFeesCashier _aragonAppFeesCashier, string _title, bytes _content) internal {
         require(isContract(address(_arbitrator)), ERROR_ARBITRATOR_NOT_CONTRACT);
-        require(_aragonAppFeesCashier == IAragonAppFeesCashier(0) || isContract(address(_aragonAppFeesCashier)), ERROR_APP_FEE_CASHIER_NOT_CONTRACT);
 
         bool unsetCashier = _aragonAppFeesCashier == IAragonAppFeesCashier(0);
         require(unsetCashier || isContract(address(_aragonAppFeesCashier)), ERROR_APP_FEE_CASHIER_NOT_CONTRACT);
@@ -1162,7 +1161,12 @@ contract Agreement is IAgreement, AragonApp {
     * @return True if the action can be closed, false otherwise
     */
     function _canClose(Action storage _action) internal view returns (bool) {
-        return _canProceed(_action) && _action.disputable.canClose(_action.disputableActionId);
+        if (!_canProceed(_action)) {
+            return false;
+        }
+
+        IDisputable disputable = _action.disputable;
+        return IDisputable(msg.sender) == disputable || disputable.canClose(_action.disputableActionId);
     }
 
     /**

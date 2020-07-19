@@ -1,13 +1,12 @@
-const { bn, bigExp } = require('../helpers/lib/numbers')
-
 const deployer = require('../helpers/utils/deployer')(web3, artifacts)
+
+const { bn, bigExp } = require('@aragon/contract-helpers-test')
+const { ANY_ENTITY } = require('@aragon/contract-helpers-test/src/aragon-os')
 
 const TokenBalanceOracle = artifacts.require('TokenBalanceOracle')
 
 contract('Agreement', ([_, owner, someone, submitter, challenger]) => {
   let disputable
-
-  const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff'
 
   before('deploy base contracts', async () => {
     await deployer.deployBase()
@@ -22,7 +21,7 @@ contract('Agreement', ([_, owner, someone, submitter, challenger]) => {
     })
 
     beforeEach('deploy disputable instance', async () => {
-      disputable = await deployer.deployAndInitializeWrapperWithDisputable({ owner, submitters: [] })
+      disputable = await deployer.deployAndInitializeDisputableWrapper({ owner, submitters: [] })
     })
 
     context('when the permission is set to a particular address', async () => {
@@ -45,7 +44,7 @@ contract('Agreement', ([_, owner, someone, submitter, challenger]) => {
 
     context('when the permission is open to any address', async () => {
       beforeEach('grant permission', async () => {
-        await deployer.acl.createPermission(ANY_ADDR, disputable.disputable.address, SUBMIT_ROLE, owner, { from: owner })
+        await deployer.acl.createPermission(ANY_ENTITY, disputable.disputable.address, SUBMIT_ROLE, owner, { from: owner })
       })
 
       it('returns true', async () => {
@@ -64,8 +63,8 @@ contract('Agreement', ([_, owner, someone, submitter, challenger]) => {
 
       beforeEach('set balance oracle', async () => {
         const param = await balanceOracle.getPermissionParam()
-        await deployer.acl.createPermission(ANY_ADDR, disputable.disputable.address, SUBMIT_ROLE, owner, { from: owner })
-        await deployer.acl.grantPermissionP(ANY_ADDR, disputable.disputable.address, SUBMIT_ROLE, [param], { from: owner })
+        await deployer.acl.createPermission(ANY_ENTITY, disputable.disputable.address, SUBMIT_ROLE, owner, { from: owner })
+        await deployer.acl.grantPermissionP(ANY_ENTITY, disputable.disputable.address, SUBMIT_ROLE, [param], { from: owner })
       })
 
       const setTokenBalance = (holder, balance) => {
@@ -117,7 +116,7 @@ contract('Agreement', ([_, owner, someone, submitter, challenger]) => {
     })
 
     beforeEach('deploy disputable instance', async () => {
-      disputable = await deployer.deployAndInitializeWrapperWithDisputable({ owner, challengers: [] })
+      disputable = await deployer.deployAndInitializeDisputableWrapper({ owner, challengers: [] })
       const result = await disputable.newAction({ submitter })
       actionId = result.actionId
     })
@@ -142,7 +141,7 @@ contract('Agreement', ([_, owner, someone, submitter, challenger]) => {
 
     context('when the permission is open to any address', async () => {
       beforeEach('grant permission', async () => {
-        await deployer.acl.createPermission(ANY_ADDR, disputable.disputable.address, CHALLENGE_ROLE, owner, { from: owner })
+        await deployer.acl.createPermission(ANY_ENTITY, disputable.disputable.address, CHALLENGE_ROLE, owner, { from: owner })
       })
 
       it('returns true', async () => {
@@ -161,8 +160,8 @@ contract('Agreement', ([_, owner, someone, submitter, challenger]) => {
 
       beforeEach('set balance oracle', async () => {
         const param = await balanceOracle.getPermissionParam()
-        await deployer.acl.createPermission(ANY_ADDR, disputable.disputable.address, CHALLENGE_ROLE, owner, { from: owner })
-        await deployer.acl.grantPermissionP(ANY_ADDR, disputable.disputable.address, CHALLENGE_ROLE, [param], { from: owner })
+        await deployer.acl.createPermission(ANY_ENTITY, disputable.disputable.address, CHALLENGE_ROLE, owner, { from: owner })
+        await deployer.acl.grantPermissionP(ANY_ENTITY, disputable.disputable.address, CHALLENGE_ROLE, [param], { from: owner })
       })
 
       const setTokenBalance = (holder, balance) => {
