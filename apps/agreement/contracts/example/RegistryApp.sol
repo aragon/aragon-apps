@@ -5,11 +5,10 @@
 pragma solidity 0.4.24;
 
 import "@aragon/os/contracts/apps/disputable/DisputableAragonApp.sol";
-import "@aragon/os/contracts/forwarding/IForwarderWithContextPayable.sol";
 
 
 // TODO: Move this sample app to aragonOS
-contract RegistryApp is IForwarderWithContextPayable, DisputableAragonApp {
+contract RegistryApp is DisputableAragonApp {
     /* Validation errors */
     string internal constant ERROR_CANNOT_REGISTER = "REGISTRY_CANNOT_REGISTER";
     string internal constant ERROR_SENDER_NOT_ALLOWED = "REGISTRY_SENDER_NOT_ALLOWED";
@@ -119,35 +118,6 @@ contract RegistryApp is IForwarderWithContextPayable, DisputableAragonApp {
     }
 
     /**
-    * @notice Schedule a new entry
-    * @dev IForwarder interface conformance
-    * @param _data Data requested to be registered
-    * @param _context Link to a human-readable text giving context for the given action
-    */
-    function forward(bytes _data, bytes _context) external payable {
-        require(_canForward(msg.sender, _data), ERROR_CANNOT_REGISTER);
-
-        (bytes32 id, bytes memory value) = _decodeData(_data);
-        _register(msg.sender, id, value, _context);
-    }
-
-    /**
-    * @notice Tells whether `_sender` can forward actions or not
-    * @dev IForwarder interface conformance
-    * @param _sender Address of the account intending to forward an action
-    * @param _data Data requested to be registered
-    * @return True if the given address can submit actions, false otherwise
-    */
-    function canForward(address _sender, bytes _data) external view returns (bool) {
-        return _canForward(_sender, _data);
-    }
-
-    // TODO: how are we going to implement this from the disputable apps?
-    function forwardFee() external view returns (address, uint256) {
-        return (address(0), 0);
-    }
-
-    /**
     * @dev Challenge an entry
     * @param _id Identification number of the entry to be challenged
     */
@@ -233,17 +203,6 @@ contract RegistryApp is IForwarderWithContextPayable, DisputableAragonApp {
     }
 
     /**
-    * @dev Tell whether the app can forward an action or not
-    * @param _sender Address of the account intending to forward an action
-    * @param _data Data requested to be registered
-    * @return True if the given address can submit actions, false otherwise
-    */
-    function _canForward(address _sender, bytes _data) internal view returns (bool) {
-        (bytes32 id,) = _decodeData(_data);
-        return canPerform(_sender, REGISTER_ENTRY_ROLE, arr(id));
-    }
-
-    /**
     * @dev Tell whether an entry is registered or not
     * @param _entry Entry instance being queried
     * @return True if the entry is registered, false otherwise
@@ -270,25 +229,5 @@ contract RegistryApp is IForwarderWithContextPayable, DisputableAragonApp {
         Entry storage entry = entries[_id];
         require(_isRegistered(entry), ERROR_ENTRY_DOES_NOT_EXIST);
         return entry;
-    }
-
-    /*
-    * @dev Decode an arbitrary data array into an entry ID and value
-    * @param _data Arbitrary data array
-    * @return id Identification number of an entry
-    * @return value Value for the entry
-    */
-    function _decodeData(bytes _data) internal pure returns (bytes32 id, bytes memory value) {
-        require(_data.length >= 32, ERROR_CANNOT_DECODE_DATA);
-
-        assembly {
-            id := mload(add(_data, 32))
-        }
-
-        uint256 remainingDataLength = _data.length - 32;
-        value = new bytes(remainingDataLength);
-        for (uint256 i = 0; i < remainingDataLength; i++) {
-            value[i] = _data[i + 32];
-        }
     }
 }
