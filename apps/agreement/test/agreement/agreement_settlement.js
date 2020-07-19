@@ -140,7 +140,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                   const receipt = await disputable.settle({ actionId, from })
 
                   assertAmountOfEvents(receipt, AGREEMENT_EVENTS.ACTION_SETTLED)
-                  assertEvent(receipt, AGREEMENT_EVENTS.ACTION_SETTLED, { actionId, challengeId: currentChallengeId })
+                  assertEvent(receipt, AGREEMENT_EVENTS.ACTION_SETTLED, { expectedArgs: { actionId, challengeId: currentChallengeId } })
                 })
 
                 it('there are no more paths allowed', async () => {
