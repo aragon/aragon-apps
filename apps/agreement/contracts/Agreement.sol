@@ -775,11 +775,9 @@ contract Agreement is IAgreement, AragonApp {
             return;
         }
 
-        uint256 sentEth = 0;
         if (address(token) == ETH) {
             // If the app fees are in ETH, we forward all the value we received
             require(msg.value >= amount, ERROR_INVALID_APP_FEE_AMOUNT);
-            sentEth = msg.value;
         } else {
             // If the app fees are not ETH, we pull the required amount from
             // the specified token staking pool and approve them to the cashier
@@ -791,7 +789,7 @@ contract Agreement is IAgreement, AragonApp {
         }
 
         // Pay fees
-        aragonAppFeesCashier.payAppFees.value(sentEth)(appId, abi.encodePacked(_actionId));
+        aragonAppFeesCashier.payAppFees.value(msg.value)(appId, abi.encodePacked(_actionId));
     }
 
     /**
