@@ -2,10 +2,12 @@ name: frontend:voting
 
 on:
   push:
+    branches: master
+  pull_request:
     paths:
     # Select the root folder and Voting's frontend
     - '*'
-    - 'apps/voting/app'
+    - 'apps/voting/app/**'
 
 defaults:
   run:

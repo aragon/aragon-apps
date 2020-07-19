@@ -2,11 +2,13 @@ name: contracts:token-manager
 
 on:
   push:
+    branches: master
+  pull_request:
     paths:
     # Select the root folder and TokenManager's smart contracts
     - '*'
-    - 'apps/token-manager/*'
-    - '!apps/token-manager/app'
+    - 'apps/token-manager/**'
+    - '!apps/token-manager/app/**'
 
 defaults:
   run:

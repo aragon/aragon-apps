@@ -2,10 +2,12 @@ name: frontend:agent
 
 on:
   push:
+    branches: master
+  pull_request:
     paths:
     # Select the root folder and Agent's frontend
     - '*'
-    - 'apps/agent/app'
+    - 'apps/agent/app/**'
 
 defaults:
   run:

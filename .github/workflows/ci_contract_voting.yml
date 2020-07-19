@@ -2,11 +2,13 @@ name: contracts:voting
 
 on:
   push:
+    branches: master
+  pull_request:
     paths:
     # Select the root folder and Voting's smart contracts
     - '*'
-    - 'apps/voting/*'
-    - '!apps/voting/app'
+    - 'apps/voting/**'
+    - '!apps/voting/app/**'
 
 defaults:
   run:

@@ -2,11 +2,13 @@ name: contracts:vault
 
 on:
   push:
+    branches: master
+  pull_request:
     paths:
     # Select the root folder and Vault's smart contracts
     - '*'
-    - 'apps/vault/*'
-    - '!apps/vault/app'
+    - 'apps/vault/**'
+    - '!apps/vault/app/**'
 
 defaults:
   run:

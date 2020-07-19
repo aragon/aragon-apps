@@ -2,11 +2,13 @@ name: contracts:finance
 
 on:
   push:
+    branches: master
+  pull_request:
     paths:
     # Select the root folder and Finance's smart contracts
     - '*'
-    - 'apps/finance/*'
-    - '!apps/finance/app'
+    - 'apps/finance/**'
+    - '!apps/finance/app/**'
 
 defaults:
   run:

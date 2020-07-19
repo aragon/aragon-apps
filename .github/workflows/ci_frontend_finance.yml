@@ -2,10 +2,12 @@ name: frontend:finance
 
 on:
   push:
+    branches: master
+  pull_request:
     paths:
     # Select the root folder and Finance's frontend
     - '*'
-    - 'apps/finance/app'
+    - 'apps/finance/app/**'
 
 defaults:
   run:

@@ -2,10 +2,12 @@ name: frontend:token-manager
 
 on:
   push:
+    branches: master
+  pull_request:
     paths:
     # Select the root folder and TokenManager's frontend
     - '*'
-    - 'apps/token-manager/app'
+    - 'apps/token-manager/app/**'
 
 defaults:
   run:
