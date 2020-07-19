@@ -41,6 +41,7 @@
   },
   "scripts": {
     "lint": "eslint ./src",
+    "test": "echo 'No tests yet!'",
     "sync-assets": "copy-aragon-ui-assets -n aragon-ui ./build && rsync -rtu ./public/ ./build",
     "start": "npm run sync-assets && npm run watch:script & parcel serve index.html -p 3005 --out-dir build/",
     "build": "npm run sync-assets && npm run build:script && parcel build index.html --out-dir build/ --public-url \".\"",

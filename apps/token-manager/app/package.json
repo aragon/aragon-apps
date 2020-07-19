@@ -42,8 +42,8 @@
     "prettier": "^1.8.2"
   },
   "scripts": {
-    "test": "jest",
     "lint": "eslint ./src",
+    "test": "jest",
     "start": "npm run sync-assets && npm run watch:script & parcel serve index.html -p 3003 --out-dir build/",
     "build": "npm run sync-assets && npm run build:script && parcel build index.html --out-dir build/ --public-url \".\"",
     "build:script": "parcel build src/script.js --out-dir build/",
