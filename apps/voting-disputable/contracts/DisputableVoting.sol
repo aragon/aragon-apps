@@ -205,6 +205,20 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
         emit ChangeRepresentative(msg.sender, _representative);
     }
 
+    // Forwarding external fns
+
+    /**
+    * @notice Creates a vote to execute the desired action
+    * @dev IForwarder interface conformance
+    *      Disputable apps are required to be the initial step in the forwarding chain
+    * @param _evmScript EVM script to be executed on approval
+    */
+    function forward(bytes _evmScript) external {
+        require(_canForward(msg.sender, _evmScript), ERROR_CANNOT_FORWARD);
+        // TODO: Use new forwarding interface with context information
+        _newVote(_evmScript, new bytes(0));
+    }
+
     /**
     * @notice Create a new vote about "`_context`"
     * @param _executionScript EVM script to be executed on approval
@@ -262,6 +276,19 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
         blacklist[0] = address(_getAgreement());
         runScript(vote_.executionScript, new bytes(0), blacklist);
         emit ExecuteVote(_voteId);
+    }
+
+    // Forwarding getter fns
+
+    /**
+    * @dev Tells whether `_sender` can forward actions
+    * @dev IForwarder interface conformance
+    * @param _sender Address of the account intending to forward an action
+    * @param _evmScript EVM script being forwarded
+    * @return True if the given address can create votes
+    */
+    function canForward(address _sender, bytes _evmScript) external view returns (bool) {
+        return _canForward(_sender, _evmScript);
     }
 
     // Disputable getter fns
@@ -466,32 +493,6 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
         return _isVoteOpenForVoting(vote_) && _withinOverruleWindow(vote_);
     }
 
-    // Forwarding fns
-
-    /**
-    * @notice Creates a vote to execute the desired action
-    * @dev IForwarder interface conformance
-    *      Disputable apps are required to be the initial step in the forwarding chain
-    * @param _evmScript EVM script to be executed on approval
-    */
-    function forward(bytes _evmScript) public {
-        require(canForward(msg.sender, _evmScript), ERROR_CANNOT_FORWARD);
-        // TODO: Use new forwarding interface with context information
-        _newVote(_evmScript, new bytes(0));
-    }
-
-    /**
-    * @dev Tells whether `_sender` can forward actions
-    * @dev IForwarder interface conformance
-    * @param _sender Address of the account intending to forward an action
-    * @return True if the given address can create votes
-    */
-    function canForward(address _sender, bytes) public view returns (bool) {
-        // TODO: Handle the case where a Disputable app doesn't have an Agreement set
-        // Note that `canPerform()` implicitly does an initialization check itself
-        return canPerform(_sender, CREATE_VOTES_ROLE, arr());
-    }
-
     // DisputableAragonApp callback implementations
 
     /**
@@ -636,6 +637,17 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
                 emit ProxyVoteFailure(_voteId, voter, msg.sender);
             }
         }
+    }
+
+    /**
+    * @dev Internal function to tells whether an address can forward actions
+    * @param _sender Address of the account intending to forward an action
+    * @return True if the given address can create votes
+    */
+    function _canForward(address _sender, bytes) internal view returns (bool) {
+        // TODO: Handle the case where a Disputable app doesn't have an Agreement set
+        // Note that `canPerform()` implicitly does an initialization check itself
+        return canPerform(_sender, CREATE_VOTES_ROLE, arr());
     }
 
     /**
