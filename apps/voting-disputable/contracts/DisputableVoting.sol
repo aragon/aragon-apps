@@ -6,13 +6,13 @@ pragma solidity 0.4.24;
 
 import "@aragon/os/contracts/apps/AragonApp.sol";
 import "@aragon/os/contracts/apps/disputable/DisputableAragonApp.sol";
-import "@aragon/os/contracts/common/IForwarder.sol";
+import "@aragon/os/contracts/forwarding/IForwarder.sol";
 import "@aragon/os/contracts/lib/math/SafeMath.sol";
 import "@aragon/os/contracts/lib/math/SafeMath64.sol";
 import "@aragon/minime/contracts/MiniMeToken.sol";
 
 
-contract DisputableVoting is DisputableAragonApp, IForwarder {
+contract DisputableVoting is IForwarder, DisputableAragonApp {
     using SafeMath for uint256;
     using SafeMath64 for uint64;
 
@@ -467,15 +467,6 @@ contract DisputableVoting is DisputableAragonApp, IForwarder {
     }
 
     // Forwarding fns
-
-    /**
-    * @dev Tells whether the DisputableVoting app is a forwarder
-    * @dev IForwarder interface conformance
-    * @return Always true
-    */
-    function isForwarder() external pure returns (bool) {
-        return true;
-    }
 
     /**
     * @notice Creates a vote to execute the desired action
