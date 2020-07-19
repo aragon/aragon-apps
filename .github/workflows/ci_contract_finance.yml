@@ -1,0 +1,35 @@
+name: contracts:finance
+
+on:
+  push:
+    paths:
+    # Select the root folder and Finance's smart contracts
+    - '*'
+    - 'apps/finance/*'
+    - '!apps/finance/app'
+
+defaults:
+  run:
+    working-directory: 'apps/finance'
+
+jobs:
+  CI:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Install node
+      uses: actions/setup-node@v1
+      with:
+        node-version: 10
+    - name: yarn install
+      run: yarn install --frozen-lockfile
+      # Bootstrap from root
+      working-directory: './'
+    - name: lint
+      run: yarn run lint
+    - name: test
+      run: yarn run test
+    - name: coverage
+      run: yarn run coverage
+env:
+  CI: true

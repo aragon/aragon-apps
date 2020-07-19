@@ -1,0 +1,35 @@
+name: contracts:vault
+
+on:
+  push:
+    paths:
+    # Select the root folder and Vault's smart contracts
+    - '*'
+    - 'apps/vault/*'
+    - '!apps/vault/app'
+
+defaults:
+  run:
+    working-directory: 'apps/vault'
+
+jobs:
+  CI:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Install node
+      uses: actions/setup-node@v1
+      with:
+        node-version: 10
+    - name: yarn install
+      run: yarn install --frozen-lockfile
+      # Bootstrap from root
+      working-directory: './'
+    - name: lint
+      run: yarn run lint
+    - name: test
+      run: yarn run test
+    - name: coverage
+      run: yarn run coverage
+env:
+  CI: true

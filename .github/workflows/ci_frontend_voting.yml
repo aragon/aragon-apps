@@ -1,0 +1,30 @@
+name: frontend:voting
+
+on:
+  push:
+    paths:
+    # Select the root folder and Voting's frontend
+    - '*'
+    - 'apps/voting/app'
+
+defaults:
+  run:
+    working-directory: 'apps/voting/app'
+
+jobs:
+  CI:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Install node
+      uses: actions/setup-node@v1
+      with:
+        node-version: 12
+    - name: yarn install
+      run: yarn install --frozen-lockfile
+    - name: lint
+      run: yarn run lint
+    - name: test
+      run: yarn run test
+env:
+  CI: true

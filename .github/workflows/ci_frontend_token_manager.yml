@@ -1,0 +1,30 @@
+name: frontend:token-manager
+
+on:
+  push:
+    paths:
+    # Select the root folder and TokenManager's frontend
+    - '*'
+    - 'apps/token-manager/app'
+
+defaults:
+  run:
+    working-directory: 'apps/token-manager/app'
+
+jobs:
+  CI:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Install node
+      uses: actions/setup-node@v1
+      with:
+        node-version: 12
+    - name: yarn install
+      run: yarn install --frozen-lockfile
+    - name: lint
+      run: yarn run lint
+    - name: test
+      run: yarn run test
+env:
+  CI: true
