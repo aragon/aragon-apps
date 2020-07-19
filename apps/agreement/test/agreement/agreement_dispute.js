@@ -157,7 +157,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                       const receipt = await disputable.dispute({ actionId, from, arbitrationFees })
 
                       assertAmountOfEvents(receipt, AGREEMENT_EVENTS.ACTION_DISPUTED)
-                      assertEvent(receipt, AGREEMENT_EVENTS.ACTION_DISPUTED, { actionId, challengeId: currentChallengeId })
+                      assertEvent(receipt, AGREEMENT_EVENTS.ACTION_DISPUTED, { expectedArgs: { actionId, challengeId: currentChallengeId } })
                     })
 
                     it('can be ruled', async () => {
