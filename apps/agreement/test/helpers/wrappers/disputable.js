@@ -1,7 +1,7 @@
 const AgreementWrapper = require('./agreement')
 const { AGREEMENT_EVENTS, DISPUTABLE_EVENTS } = require('../utils/events')
 
-const { MAX_UINT192, getEventArgument } = require('@aragon/contract-helpers-test')
+const { MAX_UINT192, bn, getEventArgument } = require('@aragon/contract-helpers-test')
 
 class DisputableWrapper extends AgreementWrapper {
   constructor(artifacts, web3, agreement, arbitrator, aragonAppFeesCashier, stakingFactory, clock, disputable, collateralRequirement = {}) {
@@ -56,13 +56,13 @@ class DisputableWrapper extends AgreementWrapper {
     return super.getCollateralRequirement(this.disputable, id)
   }
 
-  async getStakingAddress(token) {
-    if (!token) token = this.collateralToken
+  async getStakingAddress(token = undefined) {
+    if (token === undefined) token = this.collateralToken
     return super.getStakingAddress(token)
   }
 
-  async getStaking(token) {
-    if (!token) token = this.collateralToken
+  async getStaking(token = undefined) {
+    if (token === undefined) token = this.collateralToken
     return super.getStaking(token)
   }
 
@@ -75,17 +75,17 @@ class DisputableWrapper extends AgreementWrapper {
     return super.deactivate({ disputable: this.disputable, ...options })
   }
 
-  async forward({ script = '0x', from = undefined }) {
+  async forward({ script = '0x', context = '0x1234', value = bn(0), from = undefined }) {
     if (!from) from = await this._getSender()
 
-    const receipt = await this.disputable.forward(script, { from })
+    const receipt = await this.disputable.forward(script, context, { from, value })
     const actionId = getEventArgument(receipt, AGREEMENT_EVENTS.ACTION_SUBMITTED, 'actionId', { decodeForAbi: this.abi })
 
     const disputableActionId = getEventArgument(receipt, DISPUTABLE_EVENTS.SUBMITTED, 'id')
     return { receipt, actionId, disputableActionId }
   }
 
-  async newAction({ submitter = undefined, actionContext = '0x1234', sign = undefined, stake = undefined }) {
+  async newAction({ submitter = undefined, actionContext = '0x1234', sign = undefined, stake = undefined, value = bn(0) }) {
     if (!submitter) submitter = await this._getSender()
 
     if (stake === undefined) stake = this.actionCollateral
@@ -96,7 +96,7 @@ class DisputableWrapper extends AgreementWrapper {
       await this.allowManager({ user: submitter })
     }
 
-    return this.forward({ script: actionContext, from: submitter })
+    return this.forward({ context: actionContext, from: submitter, value })
   }
 
   async close(id, fromDisputable = false) {
@@ -136,6 +136,12 @@ class DisputableWrapper extends AgreementWrapper {
 
   async unstake(options = {}) {
     return super.unstake({ token: this.collateralToken, ...options })
+  }
+
+  async setAppFee({ token = undefined, amount }) {
+    if (!token) token = this.collateralToken
+    const appId = await this.disputable.appId()
+    return this.aragonAppFeesCashier.setAppFee(appId, token.address, amount)
   }
 
   async mockDisputable(options = {}) {

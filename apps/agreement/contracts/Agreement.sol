@@ -45,6 +45,8 @@ contract Agreement is IAgreement, AragonApp {
     string internal constant ERROR_STAKING_FACTORY_NOT_CONTRACT = "AGR_STAKING_FACTORY_NOT_CONTRACT";
     string internal constant ERROR_ACL_SIGNER_MISSING = "AGR_ACL_ORACLE_SIGNER_MISSING";
     string internal constant ERROR_ACL_SIGNER_NOT_ADDRESS = "AGR_ACL_ORACLE_SIGNER_NOT_ADDR";
+    string internal constant ERROR_INVALID_APP_FEE_AMOUNT = "AGR_INVALID_APP_FEE_AMOUNT";
+    string internal constant ERROR_UNEXPECTED_APP_FEE_VALUE = "AGR_UNEXPECTED_APP_FEE_VALUE";
 
     /* Disputable related errors */
     string internal constant ERROR_SENDER_CANNOT_CHALLENGE_ACTION = "AGR_SENDER_CANT_CHALLENGE_ACTION";
@@ -62,7 +64,7 @@ contract Agreement is IAgreement, AragonApp {
     string internal constant ERROR_SUBMITTER_FINISHED_EVIDENCE = "AGR_SUBMITTER_FINISHED_EVIDENCE";
     string internal constant ERROR_CHALLENGER_FINISHED_EVIDENCE = "AGR_CHALLENGER_FINISHED_EVIDENCE";
 
-    // This role is checked against the disputable apps when users try to challenge disuptable actions.
+    // This role is checked against the disputable apps when users try to challenge disputable actions.
     // Thus, it must be configured per disputable app. Please take a look at `canPerformChallenge` for reference.
     // bytes32 public constant CHALLENGE_ROLE = keccak256("CHALLENGE_ROLE");
     bytes32 public constant CHALLENGE_ROLE = 0xef025787d7cd1a96d9014b8dc7b44899b8c1350859fb9e1e05f5a546dd65158d;
@@ -279,7 +281,7 @@ contract Agreement is IAgreement, AragonApp {
     * @param _context Link to a human-readable text providing context for the given action
     * @return Unique identification number for the created action in the context of the agreement
     */
-    function newAction(uint256 _disputableActionId, bytes _context, address _submitter) external returns (uint256) {
+    function newAction(uint256 _disputableActionId, bytes _context, address _submitter) external payable returns (uint256) {
         uint256 currentSettingId = _getCurrentSettingId();
         uint256 lastSettingIdSigned = lastSettingSignedBy[_submitter];
         require(lastSettingIdSigned >= currentSettingId, ERROR_SIGNER_MUST_SIGN);
@@ -773,16 +775,21 @@ contract Agreement is IAgreement, AragonApp {
             return;
         }
 
-        // Get staking pool
-        Staking staking = stakingFactory.getOrCreateInstance(token);
-
-        // Pull required fee amount from staking pool
-        _lockBalance(staking, _submitter, amount);
-        _slashBalance(staking, _submitter, address(this), amount);
+        if (address(token) == ETH) {
+            // If the app fees are in ETH, we forward all the value we received
+            require(msg.value >= amount, ERROR_INVALID_APP_FEE_AMOUNT);
+        } else {
+            // If the app fees are not ETH, we pull the required amount from
+            // the specified token staking pool and approve them to the cashier
+            require(msg.value == 0, ERROR_UNEXPECTED_APP_FEE_VALUE);
+            Staking staking = stakingFactory.getOrCreateInstance(token);
+            _lockBalance(staking, _submitter, amount);
+            _slashBalance(staking, _submitter, address(this), amount);
+            _approveFor(token, address(aragonAppFeesCashier), amount);
+        }
 
         // Pay fees
-        _approveFor(token, address(aragonAppFeesCashier), amount);
-        aragonAppFeesCashier.payAppFees(appId, abi.encodePacked(_actionId));
+        aragonAppFeesCashier.payAppFees.value(msg.value)(appId, abi.encodePacked(_actionId));
     }
 
     /**

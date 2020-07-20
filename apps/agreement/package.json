@@ -24,7 +24,7 @@
     "apm:publish:patch": "aragon apm publish patch --files public/ --prepublish-script apm:prepublish"
   },
   "dependencies": {
-    "@aragon/os": "5.0.0-beta.2"
+    "@aragon/os": "5.0.0-beta.3"
   },
   "devDependencies": {
     "@aragon/apps-shared-migrations": "1.0.0",
