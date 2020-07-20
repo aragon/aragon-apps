@@ -7,10 +7,17 @@ import "@aragon/os/contracts/lib/arbitration/IAragonAppFeesCashier.sol";
 
 contract AragonAppFeesCashierMock is IAragonAppFeesCashier, EtherTokenConstant, IsContract {
     string private constant ERROR_WRONG_TOKEN = "AAFC_WRONG_TOKEN";
-    string private constant ERROR_NON_ZERO_VALUE = "AAFC_NON_ZERO_VALUE";
+    string private constant ERROR_APP_FEE_NOT_SET = "AAFC_APP_FEE_NOT_SET";
+    string private constant ERROR_FEE_ETH_DEPOSIT_FAILED = "AAFC_FEE_ETH_DEPOSIT_FAILED";
+    string private constant ERROR_FEE_TOKEN_DEPOSIT_FAILED = "AAFC_FEE_TOKEN_DEPOSIT_FAILED";
 
-    ERC20 internal token;
-    uint256 internal amount;
+    struct AppFee {
+        bool set;
+        ERC20 token;
+        uint256 amount;
+    }
+
+    mapping (bytes32 => AppFee) internal appFees;
 
     /**
     * @notice Set fees for app with id `_appId` to `_amount` of `_token` tokens
@@ -22,6 +29,12 @@ contract AragonAppFeesCashierMock is IAragonAppFeesCashier, EtherTokenConstant, 
         _setAppFee(_appId, _token, _amount);
     }
 
+    /**
+    * @notice Set multiple app fees
+    * @param _appIds List of IDs of the apps
+    * @param _tokens List of tokens for the fees
+    * @param _amounts List of amount of the fee tokens
+    */
     function setAppFees(bytes32[] _appIds, ERC20[] _tokens, uint256[] _amounts) external {
         for (uint256 i = 0; i < _appIds.length; i++) {
             _setAppFee(_appIds[i], _tokens[i], _amounts[i]);
@@ -36,15 +49,30 @@ contract AragonAppFeesCashierMock is IAragonAppFeesCashier, EtherTokenConstant, 
        _unsetAppFee(_appId);
     }
 
+    /**
+    * @notice Unset fees for multiple apps
+    * @param _appIds List of IDs of the apps
+    */
     function unsetAppFees(bytes32[] _appIds) external {
         for (uint256 i = 0; i < _appIds.length; i++) {
             _unsetAppFee(_appIds[i]);
         }
     }
 
-    function payAppFees(bytes32, bytes) external payable {
-        require(msg.value == 0, ERROR_NON_ZERO_VALUE);
-        token.transferFrom(msg.sender, address(this), amount);
+    /**
+    * @notice Unset fees for multiple apps
+    * @param _appId App id paying for
+    */
+    function payAppFees(bytes32 _appId, bytes) external payable {
+        AppFee storage appFee = appFees[_appId];
+        require(appFee.set, ERROR_APP_FEE_NOT_SET);
+
+        ERC20 token = appFee.token;
+        if (address(token) == ETH) {
+            require(msg.value == appFee.amount, ERROR_FEE_ETH_DEPOSIT_FAILED);
+        } else {
+            require(token.transferFrom(msg.sender, address(this), appFee.amount), ERROR_FEE_TOKEN_DEPOSIT_FAILED);
+        }
     }
 
     /**
@@ -52,19 +80,27 @@ contract AragonAppFeesCashierMock is IAragonAppFeesCashier, EtherTokenConstant, 
     * @return Token for the fees
     * @return Amount of fee tokens
     */
-    function getAppFee(bytes32) external view returns (ERC20 feeToken, uint256 feeAmount) {
-        return (token, amount);
+    function getAppFee(bytes32 _appId) external view returns (ERC20, uint256) {
+        AppFee storage appFee = appFees[_appId];
+        require(appFee.set, ERROR_APP_FEE_NOT_SET);
+        return (appFee.token, appFee.amount);
     }
 
-    function _setAppFee(bytes32, ERC20 _token, uint256 _amount) internal {
+    /**
+    * @dev Internal function to set app fees
+    */
+    function _setAppFee(bytes32 _appId, ERC20 _token, uint256 _amount) internal {
         require(address(_token) == ETH || isContract(address(_token)), ERROR_WRONG_TOKEN);
-
-        token = _token;
-        amount = _amount;
+        AppFee storage appFee = appFees[_appId];
+        appFee.set = true;
+        appFee.token = _token;
+        appFee.amount = _amount;
     }
 
-    function _unsetAppFee(bytes32) internal {
-        delete token;
-        delete amount;
+    /**
+    * @dev Internal function to unset app fees
+    */
+    function _unsetAppFee(bytes32 _appId) internal {
+        delete appFees[_appId];
     }
 }
