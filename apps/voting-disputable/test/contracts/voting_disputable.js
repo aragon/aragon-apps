@@ -1,19 +1,12 @@
-const { toAscii, utf8ToHex } = require('web3-utils')
+const votingDeployer = require('../helpers/deployer')(web3, artifacts)
+const agreementDeployer = require('@aragon/apps-agreement/test/helpers/utils/deployer')(web3, artifacts)
 const { VOTING_ERRORS } = require('../helpers/errors')
+const { VOTE_STATUS, createVote, voteScript, getVoteState } = require('../helpers/voting')
+
+const { toAscii, utf8ToHex } = require('web3-utils')
 const { RULINGS } = require('@aragon/apps-agreement/test/helpers/utils/enums')
 const { assertBn, assertRevert } = require('@aragon/contract-helpers-test/src/asserts')
 const { ONE_DAY, pct16, bigExp, bn } = require('@aragon/contract-helpers-test')
-const { createVote, voteScript, getVoteState } = require('../helpers/voting')
-
-const votingDeployer = require('../helpers/deployer')(web3, artifacts)
-const agreementDeployer = require('@aragon/apps-agreement/test/helpers/utils/deployer')(web3, artifacts)
-
-const VOTE_STATUS = {
-  ACTIVE: 0,
-  PAUSED: 1,
-  CANCELLED: 2,
-  EXECUTED: 3,
-}
 
 contract('Voting disputable', ([_, owner, voter51, voter49]) => {
   let voting, token, agreement, voteId, actionId, collateralToken, executionTarget, script

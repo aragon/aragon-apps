@@ -1,11 +1,10 @@
-const VOTER_STATE = require('../helpers/state')
+const deployer = require('../helpers/deployer')(web3, artifacts)
 const { VOTING_ERRORS } = require('../helpers/errors')
+const { VOTER_STATE, createVote, getVoteState } = require('../helpers/voting')
+
 const { skipCoverage } = require('@aragon/os/test/helpers/coverage')
 const { ONE_DAY, pct16, bigExp } = require('@aragon/contract-helpers-test')
-const { createVote, getVoteState } = require('../helpers/voting')
 const { assertBn, assertRevert, assertEvent, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/asserts')
-
-const deployer = require('../helpers/deployer')(web3, artifacts)
 
 contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, representative, anotherRepresentative, anyone]) => {
   let voting, token, voteId
@@ -341,11 +340,11 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
                 }
 
                 context('when no one voted before', () => {
-                  context('when casted before the quiet ending period', () => {
+                  context('when cast before the quiet ending period', () => {
                     itDoesNotExtendTheVoteDuration()
                   })
 
-                  context('when casted during the quiet ending period', () => {
+                  context('when cast during the quiet ending period', () => {
                     beforeEach('move to the middle of the quiet ending period', async () => {
                       await voting.mockIncreaseTime(VOTE_DURATION - QUIET_ENDING_PERIOD + 1)
                     })
@@ -622,7 +621,7 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
     const MAX_DELEGATES_PER_TX = 10
     const MAX_DELEGATE_GAS_OVERHEAD = 65e3
 
-    it('adds 65k of gas per casted vote', skipCoverage(async () => {
+    it('adds 65k of gas per cast vote', skipCoverage(async () => {
       ({ voteId } = await createVote({ voting, from: voter }))
       await voting.setRepresentative(representative, { from: voter })
       await voting.setRepresentative(representative, { from: anotherVoter })

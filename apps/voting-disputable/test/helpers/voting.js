@@ -2,6 +2,19 @@ const { decodeEvents } = require('@aragon/contract-helpers-test')
 const { getArtifacts, getWeb3 } = require('@aragon/contract-helpers-test/src/config')
 const { EMPTY_CALLS_SCRIPT, encodeCallScript } = require('@aragon/contract-helpers-test/src/aragon-os')
 
+const VOTER_STATE = {
+  ABSENT: 0,
+  YEA: 1,
+  NAY: 2,
+}
+
+const VOTE_STATUS = {
+  ACTIVE: 0,
+  PAUSED: 1,
+  CANCELLED: 2,
+  EXECUTED: 3,
+}
+
 const getVoteState = async (voting, id) => {
   const isOpen = await voting.isVoteOpen(id)
   const { executed, startDate, snapshotBlock, supportRequired, minAcceptQuorum, voteOverruleWindow, voteExecutionDelay, earlyExecution, yea, nay, votingPower, script } = await voting.getVote(id)
@@ -35,6 +48,8 @@ const createVote = async ({ voting, script = undefined, voteContext = '0xabcdef'
 }
 
 module.exports = {
+  VOTER_STATE,
+  VOTE_STATUS,
   voteScript,
   createVote,
   getVoteState

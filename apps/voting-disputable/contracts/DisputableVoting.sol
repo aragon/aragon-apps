@@ -209,11 +209,11 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     * @param _quietEndingExtension New quiet ending extension in seconds
     */
     function changeQuietEndingPeriod(uint64 _quietEndingPeriod, uint64 _quietEndingExtension)
-    external
-    authP(
-        MODIFY_QUIET_ENDING_CONFIGURATION,
-        arr(uint256(_quietEndingPeriod), uint256(quietEndingPeriod), uint256(_quietEndingExtension), uint256(quietEndingExtension))
-    )
+        external
+        authP(
+            MODIFY_QUIET_ENDING_CONFIGURATION,
+            arr(uint256(_quietEndingPeriod), uint256(quietEndingPeriod), uint256(_quietEndingExtension), uint256(quietEndingExtension))
+        )
     {
         _changeQuietEndingPeriod(_quietEndingPeriod, _quietEndingExtension);
     }
@@ -343,7 +343,7 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     */
     function canClose(uint256 _voteId) external view voteExists(_voteId) returns (bool) {
         Vote storage vote_ = votes[_voteId];
-        return (_isActive(vote_) || _isExecuted(vote_)) && !_isOpen(vote_);
+        return (_isActive(vote_) || _isExecuted(vote_)) && _hasEnded(vote_);
     }
 
     // Getter fns
@@ -389,7 +389,7 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
 
         for (uint256 i = 0; i < _voters.length; i++) {
             address voter = _voters[i];
-            if (!_hasVotingPower(vote_, voter) || !_isRepresentativeOf(voter, _representative) || _hasCastedVote(vote_, voter)) {
+            if (!_hasVotingPower(vote_, voter) || !_isRepresentativeOf(voter, _representative) || _hasCastVote(vote_, voter)) {
                 return false;
             }
         }
@@ -524,7 +524,7 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     */
     function withinOverruleWindow(uint256 _voteId) external view voteExists(_voteId) returns (bool) {
         Vote storage vote_ = votes[_voteId];
-        return _isVoteOpenForVoting(vote_) && _withinOverrulePeriod(vote_);
+        return _isVoteOpenForVoting(vote_) && _withinOverruleWindow(vote_);
     }
 
     // DisputableAragonApp callback implementations
@@ -678,7 +678,7 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
             require(_hasVotingPower(vote_, voter), ERROR_CANNOT_VOTE);
             require(_isRepresentativeOf(voter, msg.sender), ERROR_NOT_REPRESENTATIVE);
 
-            if (!_hasCastedVote(vote_, voter)) {
+            if (!_hasCastVote(vote_, voter)) {
                 _castVote(vote_, _voteId, _supports, voter);
                 vote_.casters[voter] = msg.sender;
                 emit ProxyVoteSuccess(_voteId, voter, msg.sender, _supports);
@@ -711,7 +711,7 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
         }
 
         // If the vote is still open, it cannot be executed
-        if (_isOpen(vote_)) {
+        if (!_hasEnded(vote_)) {
             return false;
         }
 
@@ -732,7 +732,7 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     * @return True if the given vote can receive delegated votes
     */
     function _canDelegateVote(Vote storage vote_) internal view returns (bool) {
-        return _isActive(vote_) && !_withinOverrulePeriod(vote_);
+        return _isActive(vote_) && !_withinOverruleWindow(vote_);
     }
 
     /**
@@ -754,11 +754,11 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     }
 
     /**
-    * @dev Internal function to check if the vote for a voter has already been casted
+    * @dev Internal function to check if the vote for a voter has already been cast
     *      It assumes the pointer to the vote is valid
-    * @return True if a vote for the given voter has already been casted
+    * @return True if a vote for the given voter has already been cast
     */
-    function _hasCastedVote(Vote storage vote_, address _voter) internal view returns (bool) {
+    function _hasCastVote(Vote storage vote_, address _voter) internal view returns (bool) {
         return _voterState(vote_, _voter) != VoterState.Absent;
     }
 
@@ -801,13 +801,13 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     }
 
     /**
-    * @dev Tell whether a vote is open
+    * @dev Tell whether a vote has ended or not
     *      It assumes the pointer to the vote is valid
     * @param vote_ Vote action instance being queried
-    * @return True if the given vote is open
+    * @return True if the given vote has ended
     */
-    function _isOpen(Vote storage vote_) internal view returns (bool) {
-        return getTimestamp64() < _finalVoteEndDate(vote_);
+    function _hasEnded(Vote storage vote_) internal view returns (bool) {
+        return getTimestamp64() >= _finalVoteEndDate(vote_);
     }
 
     /**
@@ -816,7 +816,7 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     * @return True if the given vote is open for voting
     */
     function _isVoteOpenForVoting(Vote storage vote_) internal view returns (bool) {
-        return _isActive(vote_) && _isOpen(vote_);
+        return _isActive(vote_) && !_hasEnded(vote_);
     }
 
     /**
@@ -825,7 +825,7 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     *      It assumes the pointer to the vote is valid
     * @return True if the given vote is within its overrule window
     */
-    function _withinOverrulePeriod(Vote storage vote_) internal view returns (bool) {
+    function _withinOverruleWindow(Vote storage vote_) internal view returns (bool) {
         return getTimestamp64() >= _durationStartDate(vote_, vote_.overruleWindow);
     }
 
@@ -881,7 +881,7 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     *      It assumes the pointer to the vote is valid
     */
     function _voteCaster(Vote storage vote_, address _voter) internal view returns (address) {
-        if (!_hasCastedVote(vote_, _voter)) {
+        if (!_hasCastVote(vote_, _voter)) {
             return address(0);
         }
 
@@ -955,8 +955,7 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
         vote_.voters[_voter] = _supports ? VoterState.Yea : VoterState.Nay;
         emit CastVote(_voteId, _voter, _supports, voterStake);
 
-        // Avoid checking flips for quiet ending if first vote or outside quiet ending period
-        if (voterStake < yeas.add(nays) && _withinQuietEndingPeriod(vote_)) {
+        if (_withinQuietEndingPeriod(vote_)) {
             bool isAccepted = _isAccepted(yeas, yeas.add(nays), votingPower, supportRequired, minimumAcceptanceQuorum);
             if (wasAccepted != isAccepted) {
                 vote_.quietEndingExtendedSeconds = vote_.quietEndingExtendedSeconds.add(vote_.quietEndingExtension);

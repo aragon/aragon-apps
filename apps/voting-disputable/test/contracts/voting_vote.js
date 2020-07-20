@@ -1,10 +1,9 @@
-const VOTER_STATE = require('../helpers/state')
-const { ARAGON_OS_ERRORS, VOTING_ERRORS } = require('../helpers/errors')
-const { createVote, getVoteState } = require('../helpers/voting')
-const { ONE_DAY, pct16, bn, bigExp, getEventArgument } = require('@aragon/contract-helpers-test')
-const { assertBn, assertRevert, assertEvent, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/asserts')
-
 const deployer = require('../helpers/deployer')(web3, artifacts)
+const { VOTING_ERRORS } = require('../helpers/errors')
+const { VOTER_STATE, createVote, getVoteState } = require('../helpers/voting')
+
+const { ONE_DAY, pct16, bn, bigExp } = require('@aragon/contract-helpers-test')
+const { assertBn, assertRevert, assertEvent, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/asserts')
 
 contract('Voting', ([_, owner, holder20, holder29, holder51, nonHolder, representative]) => {
   let voting, token
@@ -41,13 +40,6 @@ contract('Voting', ([_, owner, holder20, holder29, holder51, nonHolder, represen
 
       context('when the vote is open', () => {
         context('when no one voted before', () => {
-          const itDoesNotExtendTheVoteDuration = () => {
-            it('does not extend the vote duration', async () => {
-              const receipt = await voting.vote(voteId, true, { from })
-              assertAmountOfEvents(receipt, 'VoteQuietEndingExtension', { expectedAmount: 0 })
-            })
-          }
-
           it('can vote', async () => {
             await voting.vote(voteId, false, { from })
             const { nays } = await getVoteState(voting, voteId)
@@ -85,16 +77,24 @@ contract('Voting', ([_, owner, holder20, holder29, holder51, nonHolder, represen
             await assertRevert(voting.vote(voteId, false, { from: nonHolder }), VOTING_ERRORS.VOTING_CANNOT_VOTE)
           })
 
-          context('when casted before the quiet ending period', () => {
-            itDoesNotExtendTheVoteDuration()
+          context('when cast before the quiet ending period', () => {
+            it('does not extend the vote duration', async () => {
+              const receipt = await voting.vote(voteId, true, { from })
+              assertAmountOfEvents(receipt, 'VoteQuietEndingExtension', { expectedAmount: 0 })
+            })
           })
 
-          context('when casted during the quiet ending period', () => {
+          context('when cast during the quiet ending period', () => {
             beforeEach('move to the middle of the quiet ending period', async () => {
               await voting.mockIncreaseTime(VOTE_DURATION - QUIET_ENDING_PERIOD / 2)
             })
 
-            itDoesNotExtendTheVoteDuration()
+            it('extends the vote duration', async () => {
+              const receipt = await voting.vote(voteId, true, { from })
+
+              assertAmountOfEvents(receipt, 'VoteQuietEndingExtension')
+              assertEvent(receipt, 'VoteQuietEndingExtension', { expectedArgs: { voteId, passing: true } })
+            })
           })
         })
 
