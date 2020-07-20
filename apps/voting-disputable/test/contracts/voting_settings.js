@@ -1,9 +1,9 @@
-const { createVote, getVoteState } = require('../helpers/voting')
-const { ONE_DAY, bn, bigExp, pct16 } = require('@aragon/contract-helpers-test')
-const { ARAGON_OS_ERRORS, VOTING_ERRORS } = require('../helpers/errors')
-const { assertBn, assertRevert, assertEvent, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/asserts')
-
 const deployer = require('../helpers/deployer')(web3, artifacts)
+const { createVote, getVoteState } = require('../helpers/voting')
+const { ARAGON_OS_ERRORS, VOTING_ERRORS } = require('../helpers/errors')
+
+const { ONE_DAY, bn, bigExp, pct16 } = require('@aragon/contract-helpers-test')
+const { assertBn, assertRevert, assertEvent, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/asserts')
 
 contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) => {
   let voting
@@ -11,6 +11,8 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
   const VOTE_DURATION = 5 * ONE_DAY
   const OVERRULE_WINDOW = ONE_DAY
   const EXECUTION_DELAY = 0
+  const QUIET_ENDING_PERIOD = ONE_DAY
+  const QUIET_ENDING_EXTENSION = ONE_DAY / 2
   const REQUIRED_SUPPORT = pct16(50)
   const MINIMUM_ACCEPTANCE_QUORUM = pct16(20)
 
@@ -22,7 +24,7 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
   })
 
   beforeEach('deploy voting', async () => {
-    voting = await deployer.deployAndInitialize({ owner, supportRequired: REQUIRED_SUPPORT, minimumAcceptanceQuorum: MINIMUM_ACCEPTANCE_QUORUM, voteDuration: VOTE_DURATION, overruleWindow: OVERRULE_WINDOW, executionDelay: EXECUTION_DELAY })
+    voting = await deployer.deployAndInitialize({ owner, supportRequired: REQUIRED_SUPPORT, minimumAcceptanceQuorum: MINIMUM_ACCEPTANCE_QUORUM, voteDuration: VOTE_DURATION, overruleWindow: OVERRULE_WINDOW, quietEndingPeriod: QUIET_ENDING_PERIOD, quietEndingExtension: QUIET_ENDING_EXTENSION, executionDelay: EXECUTION_DELAY })
   })
 
   describe('changeSupportRequiredPct', () => {
@@ -167,9 +169,7 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
     context('when the sender is allowed', () => {
       const from = owner
 
-      context('when the new window is valid', () => {
-        const newWindow = ONE_DAY * 2
-
+      const itChangesTheOverruleWindow = newWindow => {
         it('changes the overrule window', async () => {
           await voting.changeOverruleWindow(newWindow, { from })
 
@@ -191,9 +191,21 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
           const { overruleWindow } = await getVoteState(voting, voteId)
           assertBn(overruleWindow, OVERRULE_WINDOW, 'overrule window does not match')
         })
+      }
+
+      context('when the new window is lower than the vote duration', () => {
+        const newWindow = VOTE_DURATION - 1
+
+        itChangesTheOverruleWindow(newWindow)
       })
 
-      context('when the new window is not valid', () => {
+      context('when the new window is equal to the vote duration', () => {
+        const newWindow = VOTE_DURATION
+
+        itChangesTheOverruleWindow(newWindow)
+      })
+
+      context('when the new window is greater than the vote duration', () => {
         const newWindow = VOTE_DURATION + 1
 
         it('reverts', async () => {
@@ -208,6 +220,119 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
 
       it('reverts', async () => {
         await assertRevert(voting.changeOverruleWindow(newWindow, { from }), ARAGON_OS_ERRORS.APP_AUTH_FAILED)
+      })
+    })
+  })
+
+  describe('changeQuietEndingPeriod', () => {
+    context('when the sender is allowed', () => {
+      const from = owner
+
+      const itChangesTheQuietEndingPeriod = (newPeriod, newExtension) => {
+        it('changes the overrule window', async () => {
+          await voting.changeQuietEndingPeriod(newPeriod, newExtension, { from })
+
+          assertBn(await voting.quietEndingPeriod(), newPeriod, 'quiet ending period does not match')
+          assertBn(await voting.quietEndingExtension(), newExtension, 'quiet ending extension does not match')
+        })
+
+        it('emits an event', async () => {
+          const receipt = await voting.changeQuietEndingPeriod(newPeriod, newExtension, { from })
+
+          assertAmountOfEvents(receipt, 'ChangeQuietEndingPeriod')
+          assertEvent(receipt, 'ChangeQuietEndingPeriod', { expectedArgs: { quietEndingPeriod: newPeriod, quietEndingExtension: newExtension } })
+        })
+
+        // TODO: cannot add quiet ending related variables, let's use checkpointed settings instead of copying all variables
+        it.skip('does not affect previous created votes', async () => {
+          const { voteId } = await createVote({ voting, from: holder51 })
+
+          await voting.changeQuietEndingPeriod(newPeriod, newExtension, { from })
+
+          const { quietEndingPeriod, quietEndingExtension } = await getVoteState(voting, voteId)
+          assertBn(quietEndingPeriod, QUIET_ENDING_PERIOD, 'quiet ending period does not match')
+          assertBn(quietEndingExtension, QUIET_ENDING_EXTENSION, 'quiet ending extension does not match')
+        })
+      }
+
+      const itReverts = (newPeriod, newExtension, errorMessage) => {
+        it('reverts', async () => {
+          await assertRevert(voting.changeQuietEndingPeriod(newPeriod, newExtension, { from }), errorMessage)
+        })
+      }
+
+      context('when the new period is lower than the vote duration', () => {
+        const newQuietEndingPeriod = VOTE_DURATION - 1
+
+        context('when the new extension is lower than the new period', () => {
+          const newQuietEndingExtension = newQuietEndingPeriod - 1
+
+          itChangesTheQuietEndingPeriod(newQuietEndingPeriod, newQuietEndingExtension)
+        })
+
+        context('when the new extension is equal to the new period', () => {
+          const newQuietEndingExtension = newQuietEndingPeriod
+
+          itChangesTheQuietEndingPeriod(newQuietEndingPeriod, newQuietEndingExtension)
+        })
+
+        context('when the new extension is greater than the new period', () => {
+          const newQuietEndingExtension = newQuietEndingPeriod + 1
+
+          itReverts(newQuietEndingPeriod, newQuietEndingExtension, VOTING_ERRORS.VOTING_INVALID_QUIET_ENDING_EXTENSION)
+        })
+      })
+
+      context('when the new period is equal to the vote duration', () => {
+        const newQuietEndingPeriod = VOTE_DURATION
+
+        context('when the new extension is lower than the new period', () => {
+          const newQuietEndingExtension = newQuietEndingPeriod - 1
+
+          itChangesTheQuietEndingPeriod(newQuietEndingPeriod, newQuietEndingExtension)
+        })
+
+        context('when the new extension is equal to the new period', () => {
+          const newQuietEndingExtension = newQuietEndingPeriod
+
+          itChangesTheQuietEndingPeriod(newQuietEndingPeriod, newQuietEndingExtension)
+        })
+
+        context('when the new extension is greater than the new period', () => {
+          const newQuietEndingExtension = newQuietEndingPeriod + 1
+
+          itReverts(newQuietEndingPeriod, newQuietEndingExtension, VOTING_ERRORS.VOTING_INVALID_QUIET_ENDING_EXTENSION)
+        })
+      })
+
+      context('when the new period is greater than the vote duration', () => {
+        const newQuietEndingPeriod = VOTE_DURATION + 1
+
+        context('when the new extension is lower than the new period', () => {
+          const newQuietEndingExtension = newQuietEndingPeriod - 1
+
+          itReverts(newQuietEndingPeriod, newQuietEndingExtension, VOTING_ERRORS.VOTING_INVALID_QUIET_ENDING_PERIOD)
+        })
+
+        context('when the new extension is equal to the new period', () => {
+          const newQuietEndingExtension = newQuietEndingPeriod
+
+          itReverts(newQuietEndingPeriod, newQuietEndingExtension, VOTING_ERRORS.VOTING_INVALID_QUIET_ENDING_PERIOD)
+        })
+
+        context('when the new extension is greater than the new period', () => {
+          const newQuietEndingExtension = newQuietEndingPeriod + 1
+
+          itReverts(newQuietEndingPeriod, newQuietEndingExtension, VOTING_ERRORS.VOTING_INVALID_QUIET_ENDING_PERIOD)
+        })
+      })
+    })
+
+    context('when the sender is not allowed', () => {
+      const from = anyone
+
+      it('reverts', async () => {
+        await assertRevert(voting.changeQuietEndingPeriod(QUIET_ENDING_PERIOD, QUIET_ENDING_EXTENSION, { from }), ARAGON_OS_ERRORS.APP_AUTH_FAILED)
       })
     })
   })
