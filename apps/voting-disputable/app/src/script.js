@@ -348,7 +348,7 @@ function loadVoteDisputableInfo(voteId) {
     app
       .call('getVoteDisputableInfo', voteId)
       .toPromise()
-      .then(vote => marshallDisputableInfo(vote))
+      .then(disputable => marshallDisputableInfo(disputable))
       .catch(err => {
         console.error(
           `Error fetching disputable info from vote (${voteId})`,
@@ -357,6 +357,45 @@ function loadVoteDisputableInfo(voteId) {
         throw err
       })
   )
+}
+
+async function getDisputableAction(actionId) {
+  const agreement = app.external(
+    '0x5c6620c49f9aecf74bd483054f2d0ace0d375f96',
+    agreementAbi
+  )
+  return agreement
+    .getAction(actionId)
+    .toPromise()
+    .then(action => getChallenge(agreement, action))
+    .then(action => getCollaterall(agreement, action))
+}
+
+async function getChallenge(agreement, action) {
+  if (action.currentChallengeId) {
+    return {
+      ...action,
+      challenge: await agreement
+        .getChallenge(parseInt(action.currentChallengeId))
+        .toPromise(),
+    }
+  }
+  return action
+}
+
+async function getCollaterall(agreement, action) {
+  if (action.disputable && action.collateralRequirementId) {
+    return {
+      ...action,
+      collateral: await agreement
+        .getCollateralRequirement(
+          action.disputable,
+          action.collateralRequirementId
+        )
+        .toPromise(),
+    }
+  }
+  return action
 }
 
 function loadVoteSettings() {
@@ -427,17 +466,20 @@ function marshallVote({
     startDate: marshallDate(startDate),
   }
 }
-function marshallDisputableInfo({ actionId, pauseDuration, pausedAt, status }) {
-  const agreement = app.external(
-    '0xeDeA3FB46d3A42f137011D10e9087588e9937fD8',
-    agreementAbi
-  )
-  console.log('marshal', actionId, agreement.getAction(actionId).toPromise())
+async function marshallDisputableInfo({
+  actionId,
+  pauseDuration,
+  pausedAt,
+  status,
+}) {
   return {
     actionId,
     pauseDuration,
     pausedAt: marshallDate(pausedAt),
     status,
+    action: {
+      ...(await getDisputableAction(actionId)),
+    },
   }
 }
 
