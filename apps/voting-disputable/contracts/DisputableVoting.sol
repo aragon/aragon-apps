@@ -31,6 +31,9 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     // bytes32 public constant MODIFY_EXECUTION_DELAY_ROLE = keccak256("MODIFY_EXECUTION_DELAY_ROLE");
     bytes32 public constant MODIFY_EXECUTION_DELAY_ROLE = 0x69a0bddd05e66b7ae81cce9994caef3b5c660de549fd2fd3597a9e2c3046e446;
 
+    // bytes32 public constant MODIFY_QUIET_ENDING_CONFIGURATION = keccak256("MODIFY_QUIET_ENDING_CONFIGURATION");
+    bytes32 public constant MODIFY_QUIET_ENDING_CONFIGURATION = 0xea5f8966ef2b8a76f5b366172243e44574d20863ab5b01eba9ee2713c3620c2f;
+
     uint256 public constant PCT_BASE = 10 ** 18; // 0% = 0; 1% = 10^16; 100% = 10^18
     uint256 public constant MAX_VOTES_DELEGATION_SET_LENGTH = 70;
 
@@ -42,6 +45,8 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     string private constant ERROR_CHANGE_SUPPORT_PCTS = "VOTING_CHANGE_SUPPORT_PCTS";
     string private constant ERROR_CHANGE_SUPPORT_TOO_BIG = "VOTING_CHANGE_SUPP_TOO_BIG";
     string private constant ERROR_INVALID_OVERRULE_WINDOW = "VOTING_INVALID_OVERRULE_WINDOW";
+    string private constant ERROR_INVALID_QUIET_ENDING_PERIOD = "VOTING_INVALID_QUIET_ENDING_PERI";
+    string private constant ERROR_INVALID_QUIET_ENDING_EXTENSION = "VOTING_INVALID_QUIET_ENDING_EXT";
     string private constant ERROR_DELEGATES_EXCEEDS_MAX_LEN = "VOTING_DELEGATES_EXCEEDS_MAX_LEN";
 
     // Workflow errors
@@ -52,7 +57,7 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     string private constant ERROR_NO_VOTING_POWER = "VOTING_NO_VOTING_POWER";
     string private constant ERROR_VOTE_NOT_PAUSED = "VOTING_VOTE_NOT_PAUSED";
     string private constant ERROR_NOT_REPRESENTATIVE = "VOTING_NOT_REPRESENTATIVE";
-    string private constant ERROR_WITHIN_OVERRULE_WINDOW = "VOTING_WITHIN_OVERRULE_WINDOW";
+    string private constant ERROR_CANNOT_DELEGATE_VOTE = "VOTING_CANNOT_DELEGATE_VOTE";
 
     enum VoterState { Absent, Yea, Nay }
 
@@ -80,6 +85,9 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
         mapping (address => address) casters;
         uint64 overruleWindow;
         uint64 executionDelay;
+        uint64 quietEndingPeriod;
+        uint64 quietEndingExtension;
+        uint64 quietEndingExtendedSeconds;
 
         // Disputable state
         uint64 pausedAt;                        // Datetime when the vote was paused
@@ -93,8 +101,10 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     uint64 public minAcceptQuorumPct;
     uint64 public voteTime;
     uint64 public executionDelay;
+    uint64 public quietEndingPeriod;
+    uint64 public quietEndingExtension;
 
-    // We are mimicing an array, we use a mapping instead to make app upgrades more graceful
+    // We are mimicking an array, we use a mapping instead to make app upgrades more graceful
     mapping (uint256 => Vote) internal votes;
     uint256 public votesLength;
 
@@ -108,10 +118,12 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     event CancelVote(uint256 indexed voteId);
     event ProxyVoteFailure(uint256 indexed voteId, address indexed voter, address indexed representative);
     event ProxyVoteSuccess(uint256 indexed voteId, address indexed voter, address indexed representative, bool supports);
+    event VoteQuietEndingExtension(uint256 indexed voteId, bool passing);
     event ExecuteVote(uint256 indexed voteId);
     event ChangeSupportRequired(uint64 supportRequiredPct);
     event ChangeMinQuorum(uint64 minAcceptQuorumPct);
     event ChangeOverruleWindow(uint64 overruleWindow);
+    event ChangeQuietEndingPeriod(uint64 quietEndingPeriod, uint64 quietEndingExtension);
     event ChangeExecutionDelay(uint64 executionDelay);
     event ChangeRepresentative(address indexed voter, address indexed newRepresentative);
 
@@ -126,7 +138,10 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     * @param _supportRequiredPct Percentage of yeas in cast votes for a vote to succeed (expressed as a percentage of 10^18; eg. 10^16 = 1%, 10^18 = 100%)
     * @param _minAcceptQuorumPct Percentage of yeas in total possible votes for a vote to succeed (expressed as a percentage of 10^18; eg. 10^16 = 1%, 10^18 = 100%)
     * @param _voteTime Seconds that a vote will be open for token holders to vote
-    * @param _overruleWindow New overrule window in seconds
+    * @param _overruleWindow Overrule window in seconds
+    * @param _quietEndingPeriod Quiet ending period in seconds
+    * @param _quietEndingExtension Quiet ending period extension in seconds
+    * @param _executionDelay Execution delay in seconds
     */
     function initialize(
         MiniMeToken _token,
@@ -134,6 +149,8 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
         uint64 _minAcceptQuorumPct,
         uint64 _voteTime,
         uint64 _overruleWindow,
+        uint64 _quietEndingPeriod,
+        uint64 _quietEndingExtension,
         uint64 _executionDelay
     )
         external
@@ -150,6 +167,7 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
         _changeMinAcceptQuorumPct(_minAcceptQuorumPct);
         _changeOverruleWindow(_overruleWindow);
         _changeExecutionDelay(_executionDelay);
+        _changeQuietEndingPeriod(_quietEndingPeriod, _quietEndingExtension);
     }
 
     /**
@@ -183,6 +201,21 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
         authP(MODIFY_OVERRULE_WINDOW_ROLE, arr(uint256(_overruleWindow), uint256(overruleWindow)))
     {
         _changeOverruleWindow(_overruleWindow);
+    }
+
+    /**
+    * @notice Change quiet ending period to `@transformTime(_quietEndingPeriod)` with extensions of `@transformTime(_quietEndingExtension)`
+    * @param _quietEndingPeriod New quiet ending period in seconds
+    * @param _quietEndingExtension New quiet ending extension in seconds
+    */
+    function changeQuietEndingPeriod(uint64 _quietEndingPeriod, uint64 _quietEndingExtension)
+        external
+        authP(
+            MODIFY_QUIET_ENDING_CONFIGURATION,
+            arr(uint256(_quietEndingPeriod), uint256(quietEndingPeriod), uint256(_quietEndingExtension), uint256(quietEndingExtension))
+        )
+    {
+        _changeQuietEndingPeriod(_quietEndingPeriod, _quietEndingExtension);
     }
 
     /**
@@ -310,7 +343,7 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     */
     function canClose(uint256 _voteId) external view voteExists(_voteId) returns (bool) {
         Vote storage vote_ = votes[_voteId];
-        return (_isActive(vote_) || _isExecuted(vote_)) && getTimestamp64() >= _voteEndDate(vote_);
+        return (_isActive(vote_) || _isExecuted(vote_)) && _hasEnded(vote_);
     }
 
     // Getter fns
@@ -350,13 +383,13 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     function canVoteOnBehalfOf(uint256 _voteId, address[] _voters, address _representative) external view voteExists(_voteId) returns (bool) {
         Vote storage vote_ = votes[_voteId];
 
-        if (_withinOverruleWindow(vote_)) {
+        if (!_canDelegateVote(vote_)) {
             return false;
         }
 
         for (uint256 i = 0; i < _voters.length; i++) {
             address voter = _voters[i];
-            if (!_canVote(vote_, voter) || !_isRepresentativeOf(voter, _representative) || !_hasNotVotedYet(vote_, voter)) {
+            if (!_hasVotingPower(vote_, voter) || !_isRepresentativeOf(voter, _representative) || _hasCastVote(vote_, voter)) {
                 return false;
             }
         }
@@ -411,6 +444,7 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
         nay = vote_.nay;
         votingPower = vote_.votingPower;
         script = vote_.executionScript;
+        // TODO: cannot add quiet ending related variables, let's use checkpointed settings instead of copying all variables
     }
 
     /**
@@ -579,6 +613,20 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     }
 
     /**
+    * @dev Internal function to change the quiet ending configuration
+    * @param _quietEndingPeriod New quiet ending period in seconds
+    * @param _quietEndingExtension New quiet ending extension in seconds
+    */
+    function _changeQuietEndingPeriod(uint64 _quietEndingPeriod, uint64 _quietEndingExtension) internal {
+        require(_quietEndingPeriod <= voteTime, ERROR_INVALID_QUIET_ENDING_PERIOD);
+        require(_quietEndingExtension <= _quietEndingPeriod, ERROR_INVALID_QUIET_ENDING_EXTENSION);
+
+        quietEndingPeriod = _quietEndingPeriod;
+        quietEndingExtension = _quietEndingExtension;
+        emit ChangeQuietEndingPeriod(_quietEndingPeriod, _quietEndingExtension);
+    }
+
+    /**
     * @dev Internal function to change the execution delay
     * @param _executionDelay New execution delay in seconds
     */
@@ -603,6 +651,8 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
         vote_.snapshotBlock = snapshotBlock;
         vote_.overruleWindow = overruleWindow;
         vote_.executionDelay = executionDelay;
+        vote_.quietEndingPeriod = quietEndingPeriod;
+        vote_.quietEndingExtension = quietEndingExtension;
         vote_.supportRequiredPct = supportRequiredPct;
         vote_.minAcceptQuorumPct = minAcceptQuorumPct;
         vote_.votingPower = votingPower;
@@ -621,15 +671,14 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     */
     function _voteOnBehalfOf(uint256 _voteId, bool _supports, address[] _voters) internal {
         Vote storage vote_ = votes[_voteId];
-        require(_isVoteOpenForVoting(vote_), ERROR_CANNOT_VOTE);
-        require(!_withinOverruleWindow(vote_), ERROR_WITHIN_OVERRULE_WINDOW);
+        require(_canDelegateVote(vote_), ERROR_CANNOT_DELEGATE_VOTE);
 
         for (uint256 i = 0; i < _voters.length; i++) {
             address voter = _voters[i];
             require(_hasVotingPower(vote_, voter), ERROR_CANNOT_VOTE);
             require(_isRepresentativeOf(voter, msg.sender), ERROR_NOT_REPRESENTATIVE);
 
-            if (_hasNotVotedYet(vote_, voter)) {
+            if (!_hasCastVote(vote_, voter)) {
                 _castVote(vote_, _voteId, _supports, voter);
                 vote_.casters[voter] = msg.sender;
                 emit ProxyVoteSuccess(_voteId, voter, msg.sender, _supports);
@@ -656,13 +705,13 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     * @return True if the given vote can be executed
     */
     function _canExecute(Vote storage vote_) internal view returns (bool) {
-        // If vote is already executed, it cannot be executed again
-        if (_isExecuted(vote_)) {
+        // If vote is executed, paused, or cancelled, it cannot be executed
+        if (!_isActive(vote_)) {
             return false;
         }
 
         // If the vote is still open, it cannot be executed
-        if (_isVoteOpenForVoting(vote_)) {
+        if (!_hasEnded(vote_)) {
             return false;
         }
 
@@ -671,19 +720,19 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
             return false;
         }
 
-        // If the vote does not have enough support, it cannot be executed
-        uint256 totalVotes = vote_.yea.add(vote_.nay);
-        if (!_isValuePct(vote_.yea, totalVotes, vote_.supportRequiredPct)) {
-            return false;
-        }
+        // Check the vote has enough support and has reached the min quorum
+        uint256 yeas = vote_.yea;
+        uint256 totalVotes = yeas.add(vote_.nay);
+        return _isAccepted(yeas, totalVotes, vote_.votingPower, vote_.supportRequiredPct, vote_.minAcceptQuorumPct);
+    }
 
-        // If the vote has not reached min quorum, it cannot be executed
-        if (!_isValuePct(vote_.yea, vote_.votingPower, vote_.minAcceptQuorumPct)) {
-            return false;
-        }
-
-        // If none of the above conditions are met, it can be executed.
-        return true;
+    /**
+    * @dev Internal function to check if a vote can receive delegated votes
+    *      It assumes the pointer to the vote is valid
+    * @return True if the given vote can receive delegated votes
+    */
+    function _canDelegateVote(Vote storage vote_) internal view returns (bool) {
+        return _isActive(vote_) && !_withinOverruleWindow(vote_);
     }
 
     /**
@@ -692,7 +741,7 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     * @return True if the given voter can participate a certain vote
     */
     function _canVote(Vote storage vote_, address _voter) internal view returns (bool) {
-        return _isVoteOpenForVoting(vote_) && _hasVotingPower(vote_, _voter);
+        return _isVoteOpenForVoting(vote_) && _hasVotingPower(vote_, _voter) && _voteCaster(vote_, _voter) != _voter;
     }
 
     /**
@@ -705,12 +754,12 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     }
 
     /**
-    * @dev Internal function to check if a voter has already voted on a certain vote
+    * @dev Internal function to check if the vote for a voter has already been cast
     *      It assumes the pointer to the vote is valid
-    * @return True if the given voter has not voted on the requested vote
+    * @return True if a vote for the given voter has already been cast
     */
-    function _hasNotVotedYet(Vote storage vote_, address _voter) internal view returns (bool) {
-        return _voteCaster(vote_, _voter) != _voter;
+    function _hasCastVote(Vote storage vote_, address _voter) internal view returns (bool) {
+        return _voterState(vote_, _voter) != VoterState.Absent;
     }
 
     /**
@@ -752,12 +801,42 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     }
 
     /**
+    * @dev Tell whether a vote has ended or not
+    *      It assumes the pointer to the vote is valid
+    * @param vote_ Vote action instance being queried
+    * @return True if the given vote has ended
+    */
+    function _hasEnded(Vote storage vote_) internal view returns (bool) {
+        return getTimestamp64() >= _finalVoteEndDate(vote_);
+    }
+
+    /**
     * @dev Internal function to check if a vote is still open for voting
     *      It assumes the pointer to the vote is valid
-    * @return True if the given vote is open
+    * @return True if the given vote is open for voting
     */
     function _isVoteOpenForVoting(Vote storage vote_) internal view returns (bool) {
-        return _isActive(vote_) && getTimestamp64() < _voteEndDate(vote_);
+        return _isActive(vote_) && !_hasEnded(vote_);
+    }
+
+    /**
+    * @dev Internal function to check if a vote is before its overrule window
+    *      This function doesn't ensure whether the vote is open or not
+    *      It assumes the pointer to the vote is valid
+    * @return True if the given vote is within its overrule window
+    */
+    function _withinOverruleWindow(Vote storage vote_) internal view returns (bool) {
+        return getTimestamp64() >= _durationStartDate(vote_, vote_.overruleWindow);
+    }
+
+    /**
+    * @dev Internal function to check if a vote is within its quiet ending period
+    *      This function doesn't ensure whether the vote is open or not
+    *      It assumes the pointer to the vote is valid
+    * @return True if the given vote is within its quiet ending period
+    */
+    function _withinQuietEndingPeriod(Vote storage vote_) internal view returns (bool) {
+        return getTimestamp64() >= _durationStartDate(vote_, vote_.quietEndingPeriod);
     }
 
     /**
@@ -766,27 +845,27 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     * @return True if the given vote is within its execution delay window
     */
     function _withinExecutionDelayWindow(Vote storage vote_) internal view returns (bool) {
-        return getTimestamp64() < _voteEndDate(vote_).add(vote_.executionDelay);
+        return getTimestamp64() < _finalVoteEndDate(vote_).add(vote_.executionDelay);
     }
 
     /**
-    * @dev Internal function to check if a vote is within its overrule window
-    *      It assumes the pointer to the vote is valid.
-    *      This function doesn't ensure whether the vote is open or not. Note that it must always be used along with `_isVoteOpenForVoting()`
-    * @return True if the given vote is within its overrule window
+    * @dev Internal function to calculate the original end date of a vote
+    *      It does not consider the paused nor quiet ending extensions
+    *      It assumes the pointer to the vote is valid
     */
-    function _withinOverruleWindow(Vote storage vote_) internal view returns (bool) {
-        return getTimestamp64() >= _voteEndDate(vote_).sub(vote_.overruleWindow);
+    function _originalVoteEndDate(Vote storage vote_) internal view returns (uint64) {
+        return vote_.startDate.add(voteTime);
     }
 
     /**
     * @dev Internal function to calculate the end date of a vote
+    *      It considers the extensions due to quiet ending.
     *      The pause duration will be included only after the vote has "returned" from being paused
     *      It assumes the pointer to the vote is valid
     */
-    function _voteEndDate(Vote storage vote_) internal view returns (uint64) {
-        uint64 endDate = vote_.startDate.add(voteTime);
-        return endDate.add(vote_.pauseDuration);
+    function _finalVoteEndDate(Vote storage vote_) internal view returns (uint64) {
+        uint64 endDateAfterPause = _originalVoteEndDate(vote_).add(vote_.pauseDuration);
+        return endDateAfterPause.add(vote_.quietEndingExtendedSeconds);
     }
 
     /**
@@ -802,7 +881,7 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     *      It assumes the pointer to the vote is valid
     */
     function _voteCaster(Vote storage vote_, address _voter) internal view returns (address) {
-        if (_voterState(vote_, _voter) == VoterState.Absent) {
+        if (!_hasCastVote(vote_, _voter)) {
             return address(0);
         }
 
@@ -816,6 +895,19 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     */
     function _voteExists(uint256 _voteId) internal view returns (bool) {
         return _voteId < votesLength;
+    }
+
+    /**
+    * @dev Tells whether a vote is accepted or not
+    *      It checks there is enough support and the minimum acceptance quorum has been reached
+    */
+    function _isAccepted(uint256 _yeas, uint256 _totalVotes, uint256 _votingPower, uint64 _supportRequired, uint64 _minimumAcceptanceQuorum)
+        internal
+        pure
+        returns (bool)
+    {
+        return _isValuePct(_yeas, _totalVotes, _supportRequired) &&
+        _isValuePct(_yeas, _votingPower, _minimumAcceptanceQuorum);
     }
 
     /**
@@ -836,23 +928,40 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     */
     function _castVote(Vote storage vote_, uint256 _voteId, bool _supports, address _voter) private {
         uint256 voterStake = token.balanceOfAt(_voter, vote_.snapshotBlock);
-        VoterState state = _voterState(vote_, _voter);
+        uint256 yeas = vote_.yea;
+        uint256 nays = vote_.nay;
+        uint256 votingPower = vote_.votingPower;
+        uint64 supportRequired = vote_.supportRequiredPct;
+        uint64 minimumAcceptanceQuorum = vote_.minAcceptQuorumPct;
+        bool wasAccepted = _isAccepted(yeas, yeas.add(nays), votingPower, supportRequired, minimumAcceptanceQuorum);
 
         // If voter had previously voted, decrease count
-        if (state == VoterState.Yea) {
-            vote_.yea = vote_.yea.sub(voterStake);
-        } else if (state == VoterState.Nay) {
-            vote_.nay = vote_.nay.sub(voterStake);
+        // Note that votes can be changed only during the overrule window
+        VoterState previousVoterState = _voterState(vote_, _voter);
+        if (previousVoterState == VoterState.Yea) {
+            yeas = yeas.sub(voterStake);
+        } else if (previousVoterState == VoterState.Nay) {
+            nays = nays.sub(voterStake);
         }
 
         if (_supports) {
-            vote_.yea = vote_.yea.add(voterStake);
+            yeas = yeas.add(voterStake);
         } else {
-            vote_.nay = vote_.nay.add(voterStake);
+            nays = nays.add(voterStake);
         }
 
+        vote_.yea = yeas;
+        vote_.nay = nays;
         vote_.voters[_voter] = _supports ? VoterState.Yea : VoterState.Nay;
         emit CastVote(_voteId, _voter, _supports, voterStake);
+
+        if (_withinQuietEndingPeriod(vote_)) {
+            bool isAccepted = _isAccepted(yeas, yeas.add(nays), votingPower, supportRequired, minimumAcceptanceQuorum);
+            if (wasAccepted != isAccepted) {
+                vote_.quietEndingExtendedSeconds = vote_.quietEndingExtendedSeconds.add(vote_.quietEndingExtension);
+                emit VoteQuietEndingExtension(_voteId, isAccepted);
+            }
+        }
     }
 
     /**
@@ -864,5 +973,24 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
         if (_currentCaster != address(0)) {
             vote_.casters[_voter] = address(0);
         }
+    }
+
+    /**
+    * @dev Internal function to compute the start date of time duration from the original vote end date
+    *      It considers the pause duration only if the vote has "returned" from being paused,
+    *      and if the pause occurred before the start date of the time duration being queried
+    *      It assumes the pointer to the vote is valid
+    *
+    *                                                  [   queried duration   ]
+    *      [   vote active    ][   vote paused    ][   .   vote active        ]
+    *      ^                                           ^                      ^
+    *      |                                           |                      |
+    *  vote starts                            duration start date         vote ends
+    */
+    function _durationStartDate(Vote storage vote_, uint64 _duration) private view returns (uint64) {
+        uint64 pausedAt = vote_.pausedAt;
+        uint64 originalDurationStartDate = _originalVoteEndDate(vote_).sub(_duration);
+        bool pausedBeforeDurationStarts = pausedAt != 0 && pausedAt < originalDurationStartDate;
+        return pausedBeforeDurationStarts ? originalDurationStartDate.add(vote_.pauseDuration) : originalDurationStartDate;
     }
 }

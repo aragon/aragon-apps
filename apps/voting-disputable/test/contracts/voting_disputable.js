@@ -1,26 +1,21 @@
-const { toAscii, utf8ToHex } = require('web3-utils')
-const { RULINGS } = require('@aragon/apps-agreement/test/helpers/utils/enums')
-const { assertBn, assertRevert } = require('@aragon/contract-helpers-test/src/asserts')
-const { ONE_DAY, pct16, bigExp, bn } = require('@aragon/contract-helpers-test')
-const { createVote, voteScript, getVoteState } = require('../helpers/voting')
-
 const votingDeployer = require('../helpers/deployer')(web3, artifacts)
 const agreementDeployer = require('@aragon/apps-agreement/test/helpers/utils/deployer')(web3, artifacts)
+const { VOTING_ERRORS } = require('../helpers/errors')
+const { VOTE_STATUS, createVote, voteScript, getVoteState } = require('../helpers/voting')
 
-const VOTE_STATUS = {
-  ACTIVE: 0,
-  PAUSED: 1,
-  CANCELLED: 2,
-  EXECUTED: 3,
-}
+const { toAscii, utf8ToHex } = require('web3-utils')
+const { RULINGS } = require('@aragon/apps-agreement/test/helpers/utils/enums')
+const { ONE_DAY, pct16, bigExp, bn } = require('@aragon/contract-helpers-test')
+const { assertBn, assertRevert, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/asserts')
 
-contract('Voting disputable', ([_, owner, voter51, voter49]) => {
+contract('Voting disputable', ([_, owner, representative, voter20, voter29, voter51]) => {
   let voting, token, agreement, voteId, actionId, collateralToken, executionTarget, script
 
   const MIN_QUORUM = pct16(20)
-  const MIN_SUPPORT = pct16(50)
+  const MIN_SUPPORT = pct16(20)
   const VOTING_DURATION = ONE_DAY * 5
   const OVERRULE_WINDOW = ONE_DAY
+  const QUIET_ENDING_PERIOD = ONE_DAY * 2
   const CONTEXT = utf8ToHex('some context')
 
   before('deploy agreement and base voting', async () => {
@@ -35,11 +30,12 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
   before('mint vote tokens', async () => {
     token = await votingDeployer.deployToken({})
     await token.generateTokens(voter51, bigExp(51, 18))
-    await token.generateTokens(voter49, bigExp(49, 18))
+    await token.generateTokens(voter29, bigExp(29, 18))
+    await token.generateTokens(voter20, bigExp(20, 18))
   })
 
   beforeEach('create voting app', async () => {
-    voting = await votingDeployer.deployAndInitialize({ owner, agreement: true, requiredSupport: MIN_SUPPORT, minimumAcceptanceQuorum: MIN_QUORUM, voteDuration: VOTING_DURATION, overruleWindow: OVERRULE_WINDOW })
+    voting = await votingDeployer.deployAndInitialize({ owner, agreement: true, requiredSupport: MIN_SUPPORT, minimumAcceptanceQuorum: MIN_QUORUM, voteDuration: VOTING_DURATION, quietEndingPeriod: QUIET_ENDING_PERIOD, overruleWindow: OVERRULE_WINDOW })
     await voting.mockSetTimestamp(await agreement.currentTimestamp())
 
     const SET_AGREEMENT_ROLE = await voting.SET_AGREEMENT_ROLE()
@@ -124,6 +120,7 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
 
     beforeEach('challenge vote', async () => {
       currentTimestamp = await voting.getTimestampPublic()
+      await voting.vote(voteId, true, { from: voter51 })
       await agreement.challenge({ actionId })
     })
 
@@ -137,19 +134,19 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
     })
 
     it('does not allow a voter to vote', async () => {
-      assert.isFalse(await voting.canVote(voteId, voter49), 'voter can vote')
+      assert.isFalse(await voting.canVote(voteId, voter29), 'voter can vote')
 
-      await assertRevert(voting.vote(voteId, false, { from: voter49 }), 'VOTING_CANNOT_VOTE')
+      await assertRevert(voting.vote(voteId, false, { from: voter29 }), VOTING_ERRORS.VOTING_CANNOT_VOTE)
     })
 
     it('does not allow to execute the vote', async () => {
       assert.isFalse(await voting.canExecute(voteId), 'voting can be executed')
-      await assertRevert(voting.executeVote(voteId), 'VOTING_CANNOT_EXECUTE')
+      await assertRevert(voting.executeVote(voteId), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
 
       await voting.mockIncreaseTime(VOTING_DURATION)
 
       assert.isFalse(await voting.canExecute(voteId), 'voting can be executed')
-      await assertRevert(voting.executeVote(voteId), 'VOTING_CANNOT_EXECUTE')
+      await assertRevert(voting.executeVote(voteId), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
     })
 
     it('marks the vote as closed', async () => {
@@ -169,6 +166,7 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
 
     beforeEach('challenge vote', async () => {
       pauseTimestamp = await voting.getTimestampPublic()
+      await voting.vote(voteId, true, { from: voter20 })
       await agreement.challenge({ actionId })
 
       currentTimestamp = pauseTimestamp.add(bn(ONE_DAY))
@@ -186,8 +184,8 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
       })
 
       it('allows voter to vote and execute', async () => {
-        assert.isTrue(await voting.canVote(voteId, voter51), 'voter cannot vote')
-        await voting.vote(voteId, true, { from: voter51 })
+        assert.isTrue(await voting.canVote(voteId, voter29), 'voter cannot vote')
+        await voting.vote(voteId, true, { from: voter29 })
         await voting.mockIncreaseTime(VOTING_DURATION)
 
         assert.isTrue(await voting.canExecute(voteId), 'voting cannot be executed')
@@ -224,6 +222,37 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
         assert.isFalse(isOpenAtAfterEndDate, 'vote is open after end date')
       })
 
+      it('does not affect the overrule window', async () => {
+        // the vote duration is 5 days and the overrule is 1 day, there still must be 4 days without overruling
+        await voting.setRepresentative(representative, { from: voter51 })
+        assert.isTrue(await voting.canVoteOnBehalfOf(voteId, [voter51], representative), 'should be able to vote')
+
+        // move fwd just 1 day
+        await voting.mockIncreaseTime(ONE_DAY)
+        assert.isTrue(await voting.canVoteOnBehalfOf(voteId, [voter51], representative), 'should be able to vote')
+
+        // move fwd right before the overrule window starts
+        await voting.mockIncreaseTime(ONE_DAY * 3 - 1)
+        assert.isTrue(await voting.canVoteOnBehalfOf(voteId, [voter51], representative), 'should be able to vote')
+
+        // move fwd right when the overrule window starts
+        await voting.mockIncreaseTime(1)
+        assert.isFalse(await voting.canVoteOnBehalfOf(voteId, [voter51], representative), 'should be able to vote')
+      })
+
+      it('does not affect the quiet ending period', async () => {
+        // the vote duration is 5 days and the quiet ending is 2 days, there still must be 3 days without quiet ending
+        // move fwd right before the quiet ending period starts
+        await voting.mockIncreaseTime(ONE_DAY * 3 - 1)
+        const firstReceipt = await voting.vote(voteId, false, { from: voter29 })
+        assertAmountOfEvents(firstReceipt, 'VoteQuietEndingExtension', { expectedAmount: 0 })
+
+        // move fwd right when the quiet ending period starts
+        await voting.mockIncreaseTime(1)
+        const secondReceipt = await voting.vote(voteId, true, { from: voter51 })
+        assertAmountOfEvents(secondReceipt, 'VoteQuietEndingExtension', { expectedAmount: 1 })
+      })
+
       it('cannot be challenged again', async () => {
         assert.isFalse(await voting.canChallenge(voteId), 'vote should not be challenged')
 
@@ -255,6 +284,7 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
 
     beforeEach('challenge vote', async () => {
       pauseTimestamp = await voting.getTimestampPublic()
+      await voting.vote(voteId, true, { from: voter20 })
       await agreement.challenge({ actionId })
 
       currentTimestamp = pauseTimestamp.add(bn(ONE_DAY))
@@ -272,15 +302,19 @@ contract('Voting disputable', ([_, owner, voter51, voter49]) => {
       })
 
       it('does not allow a voter to vote', async () => {
-        assert.isFalse(await voting.canVote(voteId, voter49), 'voter can vote')
+        assert.isFalse(await voting.canVote(voteId, voter29), 'voter can vote')
 
-        await assertRevert(voting.vote(voteId, false, { from: voter49 }), 'VOTING_CANNOT_VOTE')
+        await assertRevert(voting.vote(voteId, false, { from: voter29 }), VOTING_ERRORS.VOTING_CANNOT_VOTE)
       })
 
       it('does not allow to execute the vote', async () => {
         assert.isFalse(await voting.canExecute(voteId), 'voting can be executed')
+        await assertRevert(voting.executeVote(voteId), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
 
-        await assertRevert(voting.executeVote(voteId), 'VOTING_CANNOT_EXECUTE')
+        await voting.mockIncreaseTime(VOTING_DURATION)
+
+        assert.isFalse(await voting.canExecute(voteId), 'voting can be executed')
+        await assertRevert(voting.executeVote(voteId), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
       })
 
       it('marks the vote as closed', async () => {

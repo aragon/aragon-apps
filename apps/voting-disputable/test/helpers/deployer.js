@@ -9,6 +9,8 @@ const DEFAULT_VOTING_INITIALIZATION_PARAMS = {
   requiredSupport: pct16(50),
   minimumAcceptanceQuorum: pct16(20),
   executionDelay: 0,
+  quietEndingPeriod: ONE_DAY,
+  quietEndingExtension: ONE_DAY / 2,
   token: {
     symbol: 'AVT',
     decimals: 18,
@@ -58,9 +60,9 @@ class VotingDeployer {
     const token = options.token || this.token
 
     const defaultOptions = { ...DEFAULT_VOTING_INITIALIZATION_PARAMS, ...options }
-    const { requiredSupport, minimumAcceptanceQuorum, voteDuration, overruleWindow, executionDelay } = defaultOptions
+    const { requiredSupport, minimumAcceptanceQuorum, voteDuration, overruleWindow, executionDelay, quietEndingPeriod, quietEndingExtension } = defaultOptions
 
-    await this.voting.initialize(token.address, requiredSupport, minimumAcceptanceQuorum, voteDuration, overruleWindow, executionDelay)
+    await this.voting.initialize(token.address, requiredSupport, minimumAcceptanceQuorum, voteDuration, overruleWindow, quietEndingPeriod, quietEndingExtension, executionDelay)
     return this.voting
   }
 
@@ -73,7 +75,7 @@ class VotingDeployer {
     const receipt = await this.dao.newAppInstance(appId, this.base.address, '0x', false, { from: owner })
     const voting = await this.base.constructor.at(await getInstalledApp(receipt, appId))
 
-    const restrictedPermissions = ['MODIFY_SUPPORT_ROLE', 'MODIFY_QUORUM_ROLE', 'MODIFY_OVERRULE_WINDOW_ROLE', 'MODIFY_EXECUTION_DELAY_ROLE']
+    const restrictedPermissions = ['MODIFY_SUPPORT_ROLE', 'MODIFY_QUORUM_ROLE', 'MODIFY_OVERRULE_WINDOW_ROLE', 'MODIFY_EXECUTION_DELAY_ROLE', 'MODIFY_QUIET_ENDING_CONFIGURATION']
     await this._createPermissions(voting, restrictedPermissions, owner)
 
     const openPermissions = ['CREATE_VOTES_ROLE', 'CHALLENGE_ROLE']

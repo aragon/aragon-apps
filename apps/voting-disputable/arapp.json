@@ -68,6 +68,16 @@
         "New execution delay",
         "Current execution delay"
       ]
+    },
+    {
+      "name": "Modify quiet ending configuration",
+      "id": "MODIFY_QUIET_ENDING_CONFIGURATION",
+      "params": [
+        "New quiet ending period",
+        "Current quiet ending period",
+        "New quiet ending extension",
+        "Current quiet ending extension"
+      ]
     }
   ],
   "path": "contracts/DisputableVoting.sol"
