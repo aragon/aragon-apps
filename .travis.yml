@@ -3,8 +3,8 @@ cache:
   timeout: 600
   directories:
     - node_modules
-    - apps/agreement/node_modules
     - apps/agent/node_modules
+    - apps/agreement/node_modules
     - apps/finance/node_modules
     - apps/token-manager/node_modules
     - apps/token-manager/app/node_modules
@@ -15,45 +15,38 @@ notifications:
   email: false
 node_js:
   - '10'
-env:
-  global:
-    - INSTALL_FRONTEND=false
 install:
-  - travis_wait 60 npm install
+  - yarn install --frozen-lockfile
 jobs:
   include:
     - stage: tests
-      script: npm run lint
+      script: yarn lint
       name: "Lint"
-    - script: npm run test:agreement
+    - script: yarn test:agreement
       name: "Agreement"
-    - script: npm run test:agent
+    - script: yarn test:agent
       name: "Agent"
-    - script: npm run test:finance
+    - script: yarn test:finance
       name: "Finance"
-    - script: npm run test:token-manager
+    - script: yarn test:token-manager
       name: "Token Manager"
-    - script: npm run test:token-manager:app
-      name: "Token Manager frontend"
-      env:
-        - INSTALL_FRONTEND=true
-    - script: npm run test:vault
+    - script: yarn test:vault
       name: "Vault"
-    - script: npm run test:voting
+    - script: yarn test:voting
       name: "Voting"
 
     - stage: coverage
-      script: npm run coverage:agreement
+      script: yarn coverage:agreement
       name: "Agreement"
-    - script: npm run coverage:agent
+    - script: yarn coverage:agent
       name: "Agent"
-    - script: npm run coverage:finance
+    - script: yarn coverage:finance
       name: "Finance"
-    - script: npm run coverage:token-manager
+    - script: yarn coverage:token-manager
       name: "Token Manager"
-    - script: npm run coverage:vault
+    - script: yarn coverage:vault
       name: "Vault"
-    - script: npm run coverage:voting
+    - script: yarn coverage:voting
       name: "Voting"
 after_success:
   - ./node_modules/.bin/lcov-result-merger 'apps/*/coverage/lcov.info' | ./node_modules/.bin/coveralls

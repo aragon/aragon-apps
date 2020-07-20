@@ -5,7 +5,7 @@
 
 ## Apps
 
-This repository contains the following apps:
+This monorepo contains the following apps:
 
 - **[Agent](apps/agent)**: Hold assets and perform actions from Aragon organizations.
 - **[Agreement](apps/agreement)**: Govern organizations through a subjective rules.
@@ -20,27 +20,50 @@ You can read more about how each of the individual apps work in the [Aragon user
 
 ## Quick start
 
+`aragon-apps` uses [`yarn workspaces`](https://classic.yarnpkg.com/en/docs/workspaces) and [`lerna`](https://github.com/lerna/lerna) to manage its individual app workspaces.
+
+To bootstrap, simply run:
+
 ```
-npm install
+yarn
 ```
 
-This installs global package dependencies and also bootstraps the entire monorepo through [`lerna`](https://github.com/lerna/lerna).
+This will initialize and install each of the individual apps, hoisting their shared dependencies into the root `node_modules/` directory.
 
-> **Note**: the monorepo is set up in such a way that you **must** install it through a `lerna bootstrap` (done automatically after an `npm install`).
->
-> If you're only interested in the contract dependencies, and not the frontends, you can use `INSTALL_FRONTEND=false npm install` instead.
->
-> If you're only interested in bootstrapping one package, you can use `npx lerna bootstrap --scope @aragon/<package> --include-filtered-dependencies`
+> 💡 If you're only interested in bootstrapping one package, you can go to that specific package workspace and use `yarn install --focus`
 
-Running tests on all apps can be done by running `npm run test` at the root directory (note that running all of the tests can take a significant amount of time!).
+#### Smart contracts
 
-Running tests of an individual app can be done by running `npm run test` inside an individual app's directory, or through the selective `npm run test:<app>` scripts.
+Running tests on all apps can be done by running `yarn test` at the root directory (note that this can take a significant amount of time!).
+
+Running tests of an individual app can be done by running `yarn test` inside an individual app's directory, or through the selective `yarn test:<app>` scripts.
 
 By default, tests are run on an in-memory instance of testrpc.
 
+#### Frontends
+
+Each app's frontend is encapsulated inside of that app's own `app/` directory.
+
+To work on frontend, you'll need to go into `app/` directory and do another `yarn` installation. For more instructions, you can follow the ["Frontend Setup" guide in the Aragon client](https://github.com/aragon/aragon/blob/master/docs/FRONTEND_SETUP.md). Note that the app itself doesn't need to be bootstrapped if you'd just like to install the frontend.
+
+For example:
+
+```sh
+# Starting at this project's root
+# Go to the Voting app's directory
+cd apps/voting
+
+# Go to the Voting app's frontend directory
+cd app/
+
+# Install and start
+yarn
+yarn start
+```
+
 ## Contributing
 
-For some introductory information on what an Aragon app is, and how to build one, please read through the [Aragon stack introduction](https://hack.aragon.org/docs/stack) and [Your first Aragon app](https://hack.aragon.org/docs/tutorial). The [aragonAPI documentation](https://hack.aragon.org/docs/api-intro) is also available as a reference.
+For some introductory information on what an Aragon app is, and how to build one, please read through the [Aragon stack introduction](https://hack.aragon.org/docs/stack) and [Your first Aragon app](https://hack.aragon.org/docs/tutorial). To build Aragon client-compatible apps, the [aragonAPI documentation](https://hack.aragon.org/docs/api-intro) is also available as a reference.
 
 #### 👋 Get started contributing with a [good first issue](https://github.com/aragon/aragon-apps/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22).
 

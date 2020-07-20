@@ -1,9 +1,9 @@
 # aragon-cli
-**/**/artifact.json
+*/**/artifact.json
 
 # Dependencies
 node_modules
-**/*/node_modules
+**/**/node_modules
 
 # coverage
 */**/coverage
@@ -26,9 +26,8 @@ lerna-debug.log
 # yarn
 yarn-error.log
 
-# Ignore lock files
+# Ignore package-lock files (only use yarn.lock)
 package-lock.json
-yarn.lock
 
 # Misc
 .DS_Store
