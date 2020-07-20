@@ -5,7 +5,7 @@
 
 ## Apps
 
-This repository contains the following apps:
+This monorepo contains the following apps:
 
 - **[Agent](apps/agent)**: Hold assets and perform actions from Aragon organizations.
 - **[Agreement](apps/agreement)**: Govern organizations through a subjective rules.
@@ -20,11 +20,15 @@ You can read more about how each of the individual apps work in the [Aragon user
 
 ## Quick start
 
+`aragon-apps` uses [`yarn workspaces`](https://classic.yarnpkg.com/en/docs/workspaces) and [`lerna`](https://github.com/lerna/lerna) to manage its individual app workspaces.
+
+To bootstrap, simply run:
+
 ```
 yarn
 ```
 
-This installs global package dependencies and also bootstraps the entire monorepo through [`yarn workspaces`](https://classic.yarnpkg.com/en/docs/workspaces).
+This will initialize and install each of the individual apps, hoisting their shared dependencies into the root `node_modules/` directory.
 
 > 💡 If you're only interested in bootstrapping one package, you can go to that specific package workspace and use `yarn install --focus`
 
@@ -40,7 +44,7 @@ By default, tests are run on an in-memory instance of testrpc.
 
 Each app's frontend is encapsulated inside of that app's own `app/` directory.
 
-To work on this frontend, you'll need to go into `app/` directory and do another `yarn` installation. For more instructions, you can follow the ["Frontend Setup" guide in the Aragon client](https://github.com/aragon/aragon/blob/master/docs/FRONTEND_SETUP.md).
+To work on frontend, you'll need to go into `app/` directory and do another `yarn` installation. For more instructions, you can follow the ["Frontend Setup" guide in the Aragon client](https://github.com/aragon/aragon/blob/master/docs/FRONTEND_SETUP.md). Note that the app itself doesn't need to be bootstrapped if you'd just like to install the frontend.
 
 For example:
 
