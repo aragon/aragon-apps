@@ -5,6 +5,7 @@
   "license": "(GPL-3.0-or-later OR AGPL-3.0-or-later)",
   "files": [
     "/abi",
+    "/arapp.json",
     "/build",
     "/contracts",
     "/test"
@@ -28,7 +29,7 @@
   },
   "devDependencies": {
     "@aragon/apps-shared-migrations": "1.0.0",
-    "@aragon/cli": "^7.1.3",
+    "@aragon/cli": "^7.0.0",
     "@aragon/minime": "^1.0.0",
     "@aragon/contract-helpers-test": "^0.1.0-rc.2",
     "@aragon/staking": "^0.2.3",
@@ -36,7 +37,7 @@
     "chai": "^4.2.0",
     "eth-gas-reporter": "^0.2.0",
     "ganache-cli": "6.9.0",
-    "solidity-coverage": "^0.7.0-beta.3",
+    "solidity-coverage": "^0.7.0",
     "solium": "^1.2.3",
     "truffle": "5.1.34",
     "truffle-extract": "^1.2.1",
