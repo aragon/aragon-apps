@@ -1,12 +1,13 @@
-const { assertBn } = require('../helpers/assert/assertBn')
-const { bn, bigExp } = require('../helpers/lib/numbers')
-const { assertRevert } = require('../helpers/assert/assertThrow')
-const { assertEvent, assertAmountOfEvents } = require('../helpers/assert/assertEvent')
-const { AGREEMENT_EVENTS } = require('../helpers/utils/events')
+const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 const { AGREEMENT_ERRORS } = require('../helpers/utils/errors')
 const { CHALLENGES_STATE, RULINGS } = require('../helpers/utils/enums')
+const { AGREEMENT_EVENTS, DISPUTABLE_EVENTS } = require('../helpers/utils/events')
 
-const deployer = require('../helpers/utils/deployer')(web3, artifacts)
+const { bn, bigExp, injectWeb3, injectArtifacts } = require('@aragon/contract-helpers-test')
+const { assertBn, assertRevert, assertEvent, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/asserts')
+
+injectWeb3(web3)
+injectArtifacts(artifacts)
 
 contract('Agreement', ([_, submitter, challenger, someone]) => {
   let disputable, actionId
@@ -15,8 +16,8 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
   const collateralAmount = bigExp(100, 18)
   const settlementOffer = collateralAmount.div(bn(2))
 
-  beforeEach('deploy agreement instance', async () => {
-    disputable = await deployer.deployAndInitializeWrapperWithDisputable({ collateralAmount, challengers: [challenger] })
+  beforeEach('deploy disputable instance', async () => {
+    disputable = await deployer.deployAndInitializeDisputableWrapper({ collateralAmount, challengers: [challenger] })
   })
 
   describe('challenge', () => {
@@ -132,7 +133,7 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
                     const { receipt } = await disputable.challenge({ actionId, challenger, settlementOffer, challengeContext, arbitrationFees, stake })
                     const { currentChallengeId } = await disputable.getAction(actionId)
 
-                    assertAmountOfEvents(receipt, AGREEMENT_EVENTS.ACTION_CHALLENGED, 1)
+                    assertAmountOfEvents(receipt, AGREEMENT_EVENTS.ACTION_CHALLENGED)
                     assertEvent(receipt, AGREEMENT_EVENTS.ACTION_CHALLENGED, { actionId, challengeId: currentChallengeId })
                   })
 
@@ -147,6 +148,15 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
                     assert.isFalse(canChallenge, 'action can be challenged')
                     assert.isFalse(canClaimSettlement, 'action settlement can be claimed')
                     assert.isFalse(canRuleDispute, 'action dispute can be ruled')
+                  })
+
+                  it('ignores the disputable callback behavior', async () => {
+                    await disputable.mockDisputable({ canChallenge: true, callbacksRevert: true })
+
+                    const receipt = await disputable.challenge({ actionId, challenger, settlementOffer, challengeContext, arbitrationFees, stake })
+
+                    // disputable event shouldn't be emitted when disputable reverts
+                    assertAmountOfEvents(receipt, DISPUTABLE_EVENTS.CHALLENGED, { expectedAmount: 0, decodeForAbi: disputable.disputableAbi })
                   })
                 })
 

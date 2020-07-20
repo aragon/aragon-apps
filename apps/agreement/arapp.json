@@ -28,13 +28,6 @@
   },
   "roles": [
     {
-      "name": "Sign Agreement",
-      "id": "SIGN_ROLE",
-      "params": [
-        "Signer address"
-      ]
-    },
-    {
       "name": "Change Agreement configuration",
       "id": "CHANGE_AGREEMENT_ROLE",
       "params": []

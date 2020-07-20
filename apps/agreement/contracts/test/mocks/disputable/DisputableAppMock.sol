@@ -2,10 +2,10 @@ pragma solidity 0.4.24;
 
 import "@aragon/os/contracts/lib/math/SafeMath64.sol";
 import "@aragon/os/contracts/apps/disputable/DisputableAragonApp.sol";
-import "../helpers/TimeHelpersMock.sol";
+import "@aragon/contract-helpers-test/contracts/0.4/aragonOS/SharedTimeHelpersMock.sol";
 
 
-contract DisputableAppMock is DisputableAragonApp, TimeHelpersMock {
+contract DisputableAppMock is DisputableAragonApp, SharedTimeHelpersMock {
     using SafeMath64 for uint64;
 
     bytes4 public constant ERC165_INTERFACE = ERC165_INTERFACE_ID;
@@ -17,9 +17,15 @@ contract DisputableAppMock is DisputableAragonApp, TimeHelpersMock {
     string internal constant ERROR_CANNOT_SUBMIT = "DISPUTABLE_CANNOT_SUBMIT";
     string internal constant ERROR_CANNOT_CHALLENGE = "DISPUTABLE_CANNOT_CHALLENGE";
     string internal constant ERROR_ENTRY_DOES_NOT_EXIST = "DISPUTABLE_ENTRY_DOES_NOT_EXIST";
+    string internal constant ERROR_CALLBACK_REVERTED = "DISPUTABLE_CALLBACK_REVERTED";
 
     // bytes32 public constant SUBMIT_ROLE = keccak256("SUBMIT_ROLE");
     bytes32 public constant SUBMIT_ROLE = 0x8a8601cc8e9efb544266baca5bffc5cea11aed5de937dc37810fd002b4010eac;
+
+    modifier evalCallbacksRevert() {
+        require(!mockCallbacksRevert, ERROR_CALLBACK_REVERTED);
+        _;
+    }
 
     event DisputableSubmitted(uint256 indexed id);
     event DisputableChallenged(uint256 indexed id);
@@ -34,10 +40,10 @@ contract DisputableAppMock is DisputableAragonApp, TimeHelpersMock {
 
     bool internal mockCanClose;
     bool internal mockCanChallenge;
+    bool internal mockCallbacksRevert;
 
     uint256 private entriesLength;
     mapping (uint256 => Entry) private entries;
-
     /**
     * @dev Initialize app
     */
@@ -50,9 +56,17 @@ contract DisputableAppMock is DisputableAragonApp, TimeHelpersMock {
     /**
     * @dev Mock can close or can challenge checks
     */
-    function mockDisputable(bool _canClose, bool _canChallenge) external {
+    function mockDisputable(bool _canClose, bool _canChallenge, bool _callbacksRevert) external {
         mockCanClose = _canClose;
         mockCanChallenge = _canChallenge;
+        mockCallbacksRevert = _callbacksRevert;
+    }
+
+    /**
+    * @dev Helper function to close actions
+    */
+    function closeAction(uint256 _id) external {
+        _closeAgreementAction(entries[_id].actionId);
     }
 
     /**
@@ -91,14 +105,14 @@ contract DisputableAppMock is DisputableAragonApp, TimeHelpersMock {
     * @return True if the given address can submit actions, false otherwise
     */
     function canForward(address _sender, bytes) public view returns (bool) {
-        return canPerform(_sender, SUBMIT_ROLE, arr(_sender));
+        return canPerform(_sender, SUBMIT_ROLE, arr());
     }
 
     /**
     * @dev Challenge an entry
     * @param _id Identification number of the entry to be challenged
     */
-    function _onDisputableActionChallenged(uint256 _id, uint256 /* _challengeId */, address /* _challenger */) internal {
+    function _onDisputableActionChallenged(uint256 _id, uint256 /* _challengeId */, address /* _challenger */) internal evalCallbacksRevert {
         entries[_id].challenged = true;
         emit DisputableChallenged(_id);
     }
@@ -107,7 +121,7 @@ contract DisputableAppMock is DisputableAragonApp, TimeHelpersMock {
     * @dev Allow an entry
     * @param _id Identification number of the entry to be allowed
     */
-    function _onDisputableActionAllowed(uint256 _id) internal {
+    function _onDisputableActionAllowed(uint256 _id) internal evalCallbacksRevert {
         entries[_id].challenged = false;
         emit DisputableAllowed(_id);
     }
@@ -116,7 +130,7 @@ contract DisputableAppMock is DisputableAragonApp, TimeHelpersMock {
     * @dev Reject an entry
     * @param _id Identification number of the entry to be rejected
     */
-    function _onDisputableActionRejected(uint256 _id) internal {
+    function _onDisputableActionRejected(uint256 _id) internal evalCallbacksRevert {
         entries[_id].challenged = false;
         emit DisputableRejected(_id);
     }
@@ -125,7 +139,7 @@ contract DisputableAppMock is DisputableAragonApp, TimeHelpersMock {
     * @dev Void an entry
     * @param _id Identification number of the entry to be voided
     */
-    function _onDisputableActionVoided(uint256 _id) internal {
+    function _onDisputableActionVoided(uint256 _id) internal evalCallbacksRevert {
         entries[_id].challenged = false;
         emit DisputableVoided(_id);
     }

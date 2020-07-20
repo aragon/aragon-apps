@@ -1,12 +1,8 @@
 const VOTER_STATE = require('../helpers/state')
-
-const { DAY } = require('@aragon/apps-agreement/test/helpers/lib/time')
-const { assertBn } = require('@aragon/apps-agreement/test/helpers/assert/assertBn')
-const { bn, bigExp } = require('@aragon/apps-agreement/test/helpers/lib/numbers')
-const { assertRevert } = require('@aragon/apps-agreement/test/helpers/assert/assertThrow')
-const { VOTING_ERRORS } = require('../helpers/errors')
-const { pct, createVote, getVoteState } = require('../helpers/voting')(web3, artifacts)
-const { assertEvent, assertAmountOfEvents } = require('@aragon/apps-agreement/test/helpers/assert/assertEvent')
+const { ARAGON_OS_ERRORS, VOTING_ERRORS } = require('../helpers/errors')
+const { createVote, getVoteState } = require('../helpers/voting')
+const { ONE_DAY, pct16, bn, bigExp, getEventArgument } = require('@aragon/contract-helpers-test')
+const { assertBn, assertRevert, assertEvent, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/asserts')
 
 const deployer = require('../helpers/deployer')(web3, artifacts)
 
@@ -14,12 +10,12 @@ contract('Voting', ([_, owner, holder20, holder29, holder51, nonHolder, represen
   let voting, token
 
   const CONTEXT = '0xabcdef'
-  const VOTE_DURATION = 5 * DAY
-  const OVERRULE_WINDOW = DAY
+  const VOTE_DURATION = 5 * ONE_DAY
+  const OVERRULE_WINDOW = ONE_DAY
   const EXECUTION_DELAY = 0
-  const QUIET_ENDING_PERIOD = 2 * DAY
-  const REQUIRED_SUPPORT = pct(10)
-  const MINIMUM_ACCEPTANCE_QUORUM = pct(5)
+  const QUIET_ENDING_PERIOD = 2 * ONE_DAY
+  const REQUIRED_SUPPORT = pct16(10)
+  const MINIMUM_ACCEPTANCE_QUORUM = pct16(5)
 
   beforeEach('deploy and mint tokens', async () => {
     token = await deployer.deployToken({})
@@ -48,7 +44,7 @@ contract('Voting', ([_, owner, holder20, holder29, holder51, nonHolder, represen
           const itDoesNotExtendTheVoteDuration = () => {
             it('does not extend the vote duration', async () => {
               const receipt = await voting.vote(voteId, true, { from })
-              assertAmountOfEvents(receipt, 'VoteQuietEndingExtension', 0)
+              assertAmountOfEvents(receipt, 'VoteQuietEndingExtension', { expectedAmount: 0 })
             })
           }
 
@@ -64,8 +60,8 @@ contract('Voting', ([_, owner, holder20, holder29, holder51, nonHolder, represen
           it('emits an event', async () => {
             const receipt = await voting.vote(voteId, true, { from })
 
-            await assertAmountOfEvents(receipt, 'CastVote')
-            await assertEvent(receipt, 'CastVote', { voteId, voter: from, supports: true, stake: expectedBalance })
+            assertAmountOfEvents(receipt, 'CastVote')
+            assertEvent(receipt, 'CastVote', { expectedArgs: { voteId, voter: from, supports: true, stake: expectedBalance } })
           })
 
           it('cannot modify vote', async () => {
@@ -127,7 +123,7 @@ contract('Voting', ([_, owner, holder20, holder29, holder51, nonHolder, represen
               const itDoesNotExtendTheVoteDuration = support => {
                 it('does not extend the vote duration', async () => {
                   const receipt = await voting.vote(voteId, support, { from })
-                  assertAmountOfEvents(receipt, 'VoteQuietEndingExtension', 0)
+                  assertAmountOfEvents(receipt, 'VoteQuietEndingExtension', { expectedAmount: 0 })
                 })
               }
 
@@ -149,7 +145,7 @@ contract('Voting', ([_, owner, holder20, holder29, holder51, nonHolder, represen
                     const receipt = await voting.vote(voteId, support, { from })
 
                     assertAmountOfEvents(receipt, 'VoteQuietEndingExtension')
-                    assertEvent(receipt, 'VoteQuietEndingExtension', { voteId, passing: support })
+                    assertEvent(receipt, 'VoteQuietEndingExtension', { expectedArgs: { voteId, passing: support } })
                   })
                 } else {
                   itDoesNotExtendTheVoteDuration(support)
@@ -265,34 +261,34 @@ contract('Voting', ([_, owner, holder20, holder29, holder51, nonHolder, represen
 
   describe('isValuePct', () => {
     it('tests total = 0', async () => {
-      const result1 = await voting.isValuePct(0, 0, pct(50))
+      const result1 = await voting.isValuePct(0, 0, pct16(50))
       assert.equal(result1, false, 'total 0 should always return false')
 
-      const result2 = await voting.isValuePct(1, 0, pct(50))
+      const result2 = await voting.isValuePct(1, 0, pct16(50))
       assert.equal(result2, false, 'total 0 should always return false')
     })
 
     it('tests value = 0', async () => {
-      const result1 = await voting.isValuePct(0, 10, pct(50))
-      assert.equal(result1, false, 'value 0 should return false if pct is non-zero')
+      const result1 = await voting.isValuePct(0, 10, pct16(50))
+      assert.equal(result1, false, 'value 0 should return false if pct16 is non-zero')
 
       const result2 = await voting.isValuePct(0, 10, 0)
-      assert.equal(result2, false, 'value 0 should return false if pct is zero')
+      assert.equal(result2, false, 'value 0 should return false if pct16 is zero')
     })
 
-    it('tests pct ~= 100', async () => {
-      const result1 = await voting.isValuePct(10, 10, pct(100).sub(bn(1)))
+    it('tests pct16 ~= 100', async () => {
+      const result1 = await voting.isValuePct(10, 10, pct16(100).sub(bn(1)))
       assert.equal(result1, true, 'value 10 over 10 should pass')
     })
 
     it('tests strict inequality', async () => {
-      const result1 = await voting.isValuePct(10, 20, pct(50))
+      const result1 = await voting.isValuePct(10, 20, pct16(50))
       assert.equal(result1, false, 'value 10 over 20 should not pass for 50%')
 
-      const result2 = await voting.isValuePct(pct(50).sub(bn(1)), pct(100), pct(50))
+      const result2 = await voting.isValuePct(pct16(50).sub(bn(1)), pct16(100), pct16(50))
       assert.equal(result2, false, 'off-by-one down should not pass')
 
-      const result3 = await voting.isValuePct(pct(50).add(bn(1)), pct(100), pct(50))
+      const result3 = await voting.isValuePct(pct16(50).add(bn(1)), pct16(100), pct16(50))
       assert.equal(result3, true, 'off-by-one up should pass')
     })
   })

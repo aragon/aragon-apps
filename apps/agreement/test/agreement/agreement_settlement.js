@@ -1,17 +1,19 @@
-const { assertBn } = require('../helpers/assert/assertBn')
-const { assertRevert } = require('../helpers/assert/assertThrow')
-const { assertEvent, assertAmountOfEvents } = require('../helpers/assert/assertEvent')
-const { AGREEMENT_ERRORS } = require('../helpers/utils/errors')
-const { AGREEMENT_EVENTS } = require('../helpers/utils/events')
-const { CHALLENGES_STATE, RULINGS } = require('../helpers/utils/enums')
-
 const deployer = require('../helpers/utils/deployer')(web3, artifacts)
+const { AGREEMENT_ERRORS } = require('../helpers/utils/errors')
+const { CHALLENGES_STATE, RULINGS } = require('../helpers/utils/enums')
+const { AGREEMENT_EVENTS, DISPUTABLE_EVENTS } = require('../helpers/utils/events')
+
+const { injectWeb3, injectArtifacts } = require('@aragon/contract-helpers-test')
+const { assertBn, assertRevert, assertEvent, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/asserts')
+
+injectWeb3(web3)
+injectArtifacts(artifacts)
 
 contract('Agreement', ([_, someone, submitter, challenger]) => {
   let disputable, actionId
 
   beforeEach('deploy agreement instance', async () => {
-    disputable = await deployer.deployAndInitializeWrapperWithDisputable()
+    disputable = await deployer.deployAndInitializeDisputableWrapper()
   })
 
   describe('settlement', () => {
@@ -137,7 +139,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                   const { currentChallengeId } = await disputable.getAction(actionId)
                   const receipt = await disputable.settle({ actionId, from })
 
-                  assertAmountOfEvents(receipt, AGREEMENT_EVENTS.ACTION_SETTLED, 1)
+                  assertAmountOfEvents(receipt, AGREEMENT_EVENTS.ACTION_SETTLED)
                   assertEvent(receipt, AGREEMENT_EVENTS.ACTION_SETTLED, { actionId, challengeId: currentChallengeId })
                 })
 
@@ -145,12 +147,21 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                   await disputable.settle({ actionId, from })
 
                   const { canClose, canChallenge, canSettle, canDispute, canClaimSettlement, canRuleDispute } = await disputable.getAllowedPaths(actionId)
-                  assert.isFalse(canClose, 'action can be closec')
+                  assert.isFalse(canClose, 'action can be close')
                   assert.isFalse(canChallenge, 'action can be challenged')
                   assert.isFalse(canSettle, 'action can be settled')
                   assert.isFalse(canDispute, 'action can be disputed')
                   assert.isFalse(canClaimSettlement, 'action settlement can be claimed')
                   assert.isFalse(canRuleDispute, 'action dispute can be ruled')
+                })
+
+                it('ignores the disputable callback behavior', async () => {
+                  await disputable.mockDisputable({ callbacksRevert: true })
+
+                  const receipt = await disputable.settle({ actionId, from })
+
+                  // disputable event shouldn't be emitted when disputable reverts
+                  assertAmountOfEvents(receipt, DISPUTABLE_EVENTS.REJECTED, { expectedAmount: 0, decodeForAbi: disputable.disputableAbi })
                 })
               }
 

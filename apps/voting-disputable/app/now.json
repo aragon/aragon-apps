@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "public": true,
+  "scope": "aragon",
+  "name": "voting-disputable",
+  "alias": "nightly-voting-disputable.aragon.org",
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@now/static-build",
+      "config": { "distDir": "build" }
+    }
+  ]
+}

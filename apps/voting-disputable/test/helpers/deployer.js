@@ -1,20 +1,16 @@
-const { pct } = require('./voting')()
-const { NOW, DAY } = require('@aragon/apps-agreement/test/helpers/lib/time')
-const { getEventArgument, getNewProxyAddress } = require('@aragon/contract-helpers-test/events')
-
-const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff'
-const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
+const { ANY_ENTITY, getInstalledApp } = require('@aragon/contract-helpers-test/src/aragon-os')
+const { ZERO_ADDRESS, NOW, ONE_DAY, pct16, getEventArgument } = require('@aragon/contract-helpers-test')
 
 const DEFAULT_VOTING_INITIALIZATION_PARAMS = {
   appId: '0x1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe',
   currentTimestamp: NOW,
-  voteDuration: DAY * 5,
-  overruleWindow: DAY,
-  requiredSupport: pct(50),
-  minimumAcceptanceQuorum: pct(20),
+  voteDuration: ONE_DAY * 5,
+  overruleWindow: ONE_DAY,
+  requiredSupport: pct16(50),
+  minimumAcceptanceQuorum: pct16(20),
   executionDelay: 0,
-  quietEndingPeriod: DAY,
-  quietEndingExtension: DAY / 2,
+  quietEndingPeriod: ONE_DAY,
+  quietEndingExtension: ONE_DAY / 2,
   token: {
     symbol: 'AVT',
     decimals: 18,
@@ -77,13 +73,13 @@ class VotingDeployer {
 
     const { appId, currentTimestamp } = { ...DEFAULT_VOTING_INITIALIZATION_PARAMS, ...options }
     const receipt = await this.dao.newAppInstance(appId, this.base.address, '0x', false, { from: owner })
-    const voting = await this.base.constructor.at(getNewProxyAddress(receipt))
+    const voting = await this.base.constructor.at(await getInstalledApp(receipt, appId))
 
     const restrictedPermissions = ['MODIFY_SUPPORT_ROLE', 'MODIFY_QUORUM_ROLE', 'MODIFY_OVERRULE_WINDOW_ROLE', 'MODIFY_EXECUTION_DELAY_ROLE', 'MODIFY_QUIET_ENDING_CONFIGURATION']
     await this._createPermissions(voting, restrictedPermissions, owner)
 
     const openPermissions = ['CREATE_VOTES_ROLE', 'CHALLENGE_ROLE']
-    await this._createPermissions(voting, openPermissions, ANY_ADDR, owner)
+    await this._createPermissions(voting, openPermissions, ANY_ENTITY, owner)
 
     if (currentTimestamp) await voting.mockSetTimestamp(currentTimestamp)
     this.previousDeploy = { ...this.previousDeploy, voting }
@@ -125,7 +121,7 @@ class VotingDeployer {
 
   async deployToken({ name = 'My Sample Token', decimals = 18, symbol = 'MST' }) {
     const MiniMeToken = this._getContract('MiniMeToken')
-    const token = await MiniMeToken.new(ZERO_ADDR, ZERO_ADDR, 0, name, decimals, symbol, true)
+    const token = await MiniMeToken.new(ZERO_ADDRESS, ZERO_ADDRESS, 0, name, decimals, symbol, true)
     this.previousDeploy = { ...this.previousDeploy, token }
     return token
   }
