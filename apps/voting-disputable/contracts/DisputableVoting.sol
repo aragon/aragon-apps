@@ -127,11 +127,6 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     event ChangeExecutionDelay(uint64 executionDelay);
     event ChangeRepresentative(address indexed voter, address indexed newRepresentative);
 
-    modifier voteExists(uint256 _voteId) {
-        require(_voteExists(_voteId), ERROR_NO_VOTE);
-        _;
-    }
-
     /**
     * @notice Initialize DisputableVoting app with `_token.symbol(): string` for governance, minimum support of `@formatPct(_supportRequiredPct)`%, minimum acceptance quorum of `@formatPct(_minAcceptQuorumPct)`%, a voting duration of `@transformTime(_voteTime)`, an overrule window of `@transformTime(_overruleWindow), and a execution delay of `@transformTime(_executionDelay)`
     * @param _token MiniMeToken Address that will be used as governance token
@@ -255,13 +250,13 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
 
     /**
     * @notice Vote `_supports ? 'yes' : 'no'` in vote #`_voteId`
-    * @dev Initialization check is implicitly provided by `voteExists()` as new votes can only be
+    * @dev Initialization check is implicitly provided by `_getVote()` as new votes can only be
     *      created via `newVote()`, which requires initialization
     * @param _voteId Id for vote
     * @param _supports Whether voter supports the vote
     */
-    function vote(uint256 _voteId, bool _supports) external voteExists(_voteId) {
-        Vote storage vote_ = votes[_voteId];
+    function vote(uint256 _voteId, bool _supports) external {
+        Vote storage vote_ = _getVote(_voteId);
         require(_canVote(vote_, msg.sender), ERROR_CANNOT_VOTE);
 
         _castVote(vote_, _voteId, _supports, msg.sender, address(0));
@@ -269,25 +264,25 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
 
     /**
     * @notice Vote `_supports ? 'yes' : 'no'` in vote #`_voteId` on behalf of multiple voters
-    * @dev Initialization check is implicitly provided by `voteExists()` as new votes can only be
+    * @dev Initialization check is implicitly provided by `_getVote()` as new votes can only be
     *      created via `newVote()`, which requires initialization
     * @param _voteId Id for vote
     * @param _supports Whether the representative supports the vote
     * @param _voters Addresses of the voters to vote on behalf of
     */
-    function voteOnBehalfOf(uint256 _voteId, bool _supports, address[] _voters) external voteExists(_voteId) {
+    function voteOnBehalfOf(uint256 _voteId, bool _supports, address[] _voters) external {
         require(_voters.length <= MAX_VOTES_DELEGATION_SET_LENGTH, ERROR_DELEGATES_EXCEEDS_MAX_LEN);
         _voteOnBehalfOf(_voteId, _supports, _voters);
     }
 
     /**
     * @notice Execute vote #`_voteId`
-    * @dev Initialization check is implicitly provided by `voteExists()` as new votes can only be
+    * @dev Initialization check is implicitly provided by `_getVote()` as new votes can only be
     *      created via `newVote()`, which requires initialization
     * @param _voteId Id for vote
     */
-    function executeVote(uint256 _voteId) external voteExists(_voteId) {
-        Vote storage vote_ = votes[_voteId];
+    function executeVote(uint256 _voteId) external {
+        Vote storage vote_ = _getVote(_voteId);
         require(_canExecute(vote_), ERROR_CANNOT_EXECUTE);
 
         vote_.status = VoteStatus.Executed;
@@ -321,8 +316,8 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     * @param _voteId Id for vote
     * @return True if the given vote can be challenged
     */
-    function canChallenge(uint256 _voteId) external view voteExists(_voteId) returns (bool) {
-        Vote storage vote_ = votes[_voteId];
+    function canChallenge(uint256 _voteId) external view returns (bool) {
+        Vote storage vote_ = _getVote(_voteId);
         return _isVoteOpenForVoting(vote_) && vote_.pausedAt == 0;
     }
 
@@ -331,8 +326,8 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     * @param _voteId Id for vote
     * @return True if the given vote can be closed
     */
-    function canClose(uint256 _voteId) external view voteExists(_voteId) returns (bool) {
-        Vote storage vote_ = votes[_voteId];
+    function canClose(uint256 _voteId) external view returns (bool) {
+        Vote storage vote_ = _getVote(_voteId);
         return (_isActive(vote_) || _isExecuted(vote_)) && _hasEnded(vote_);
     }
 
@@ -340,38 +335,38 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
 
     /**
     * @dev Tells whether vote #`_voteId` can be executed
-    *      Initialization check is implicitly provided by `voteExists()` as new votes can only be
+    *      Initialization check is implicitly provided by `_getVote()` as new votes can only be
     *      created via `newVote()`, which requires initialization
     * @param _voteId Id for vote
     * @return True if the given vote can be executed
     */
-    function canExecute(uint256 _voteId) external view voteExists(_voteId) returns (bool) {
-        return _canExecute(votes[_voteId]);
+    function canExecute(uint256 _voteId) external view returns (bool) {
+        return _canExecute(_getVote(_voteId));
     }
 
     /**
     * @dev Tells whether `_sender` can participate in the vote #`_voteId`
-    *      Initialization check is implicitly provided by `voteExists()` as new votes can only be
+    *      Initialization check is implicitly provided by `_getVote()` as new votes can only be
     *      created via `newVote()`, which requires initialization
     * @param _voteId Id for vote
     * @param _voter Address of the voter
     * @return True if the given voter can participate a certain vote
     */
-    function canVote(uint256 _voteId, address _voter) external view voteExists(_voteId) returns (bool) {
-        return _canVote(votes[_voteId], _voter);
+    function canVote(uint256 _voteId, address _voter) external view returns (bool) {
+        return _canVote(_getVote(_voteId), _voter);
     }
 
     /**
     * @dev Tells whether `_representative` can vote on behalf of `_voters` in vote #`_voteId`
-    *      Initialization check is implicitly provided by `voteExists()` as new votes can only be
+    *      Initialization check is implicitly provided by `_getVote()` as new votes can only be
     *      created via `newVote()`, which requires initialization
     * @param _voteId Id for vote
     * @param _voters List of addresses of the voters
     * @param _representative Address of the representative
     * @return True if the given representative can vote on behalf of the given voter in a certain vote
     */
-    function canVoteOnBehalfOf(uint256 _voteId, address[] _voters, address _representative) external view voteExists(_voteId) returns (bool) {
-        Vote storage vote_ = votes[_voteId];
+    function canVoteOnBehalfOf(uint256 _voteId, address[] _voters, address _representative) external view returns (bool) {
+        Vote storage vote_ = _getVote(_voteId);
 
         if (!_canDelegateVote(vote_)) {
             return false;
@@ -389,7 +384,7 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
 
     /**
     * @dev Return the information for vote #`_voteId`
-    *      Initialization check is implicitly provided by `voteExists()` as new votes can only be
+    *      Initialization check is implicitly provided by `_getVote()` as new votes can only be
     *      created via `newVote()`, which requires initialization
     * @param _voteId Vote identifier
     * @return yea Cast vote power in favor
@@ -423,8 +418,7 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
             bytes executionScript
         )
     {
-        require(_voteExists(_voteId), ERROR_NO_VOTE);
-        Vote storage vote_ = votes[_voteId];
+        Vote storage vote_ = _getVote(_voteId);
 
         yea = vote_.yea;
         nay = vote_.nay;
@@ -442,15 +436,15 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
 
     /**
     * @dev Return the state of a voter for a given vote by its ID
-    *      Initialization check is implicitly provided by `voteExists()` as new votes can only be
+    *      Initialization check is implicitly provided by `_getVote()` as new votes can only be
     *      created via `newVote()`, which requires initialization
     * @param _voteId Vote identifier
     * @param _voter Address of the voter
     * @return state Voter state of the requested voter for a certain vote
     * @return caster Address of the caster of the voter's vote
     */
-    function getCastVote(uint256 _voteId, address _voter) external view voteExists(_voteId) returns (VoterState state, address caster) {
-        Vote storage vote_ = votes[_voteId];
+    function getCastVote(uint256 _voteId, address _voter) external view returns (VoterState state, address caster) {
+        Vote storage vote_ = _getVote(_voteId);
         state = _voterState(vote_, _voter);
         caster = _voteCaster(vote_, _voter);
     }
@@ -498,13 +492,13 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
 
     /**
     * @dev Tells whether vote #`_voteId` is open for voting
-    *      Initialization check is implicitly provided by `voteExists()` as new votes can only be
+    *      Initialization check is implicitly provided by `_getVote()` as new votes can only be
     *      created via `newVote()`, which requires initialization
     * @param _voteId Id for vote
     * @return True if the vote is still open
     */
-    function isVoteOpen(uint256 _voteId) external view voteExists(_voteId) returns (bool) {
-        return _isVoteOpenForVoting(votes[_voteId]);
+    function isVoteOpen(uint256 _voteId) external view returns (bool) {
+        return _isVoteOpenForVoting(_getVote(_voteId));
     }
 
     /**
@@ -519,13 +513,13 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
 
     /**
     * @dev Tells whether vote #`_voteId` is within the overrule period for delegated votes
-    *      Initialization check is implicitly provided by `voteExists()` as new votes can only be
+    *      Initialization check is implicitly provided by `_getVote()` as new votes can only be
     *      created via `newVote()`, which requires initialization
     * @param _voteId Vote identifier
     * @return True if the requested vote is within the overrule window for delegated votes
     */
-    function withinOverruleWindow(uint256 _voteId) external view voteExists(_voteId) returns (bool) {
-        Vote storage vote_ = votes[_voteId];
+    function withinOverruleWindow(uint256 _voteId) external view returns (bool) {
+        Vote storage vote_ = _getVote(_voteId);
         return _isVoteOpenForVoting(vote_) && _withinOverruleWindow(vote_);
     }
 
@@ -537,7 +531,7 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     * @param _challengeId Identification number of the challenge associated to the vote in the Agreement app
     */
     function _onDisputableActionChallenged(uint256 _voteId, uint256 _challengeId, address /* _challenger */) internal {
-        Vote storage vote_ = votes[_voteId];
+        Vote storage vote_ = _getVote(_voteId);
         require(_isActive(vote_), ERROR_CANNOT_PAUSE_VOTE);
 
         vote_.status = VoteStatus.Paused;
@@ -550,7 +544,7 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     * @param _voteId Id for vote to be allowed
     */
     function _onDisputableActionAllowed(uint256 _voteId) internal {
-        Vote storage vote_ = votes[_voteId];
+        Vote storage vote_ = _getVote(_voteId);
         require(_isPaused(vote_), ERROR_VOTE_NOT_PAUSED);
 
         vote_.status = VoteStatus.Active;
@@ -563,7 +557,7 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     * @param _voteId Id for vote to be rejected
     */
     function _onDisputableActionRejected(uint256 _voteId) internal {
-        Vote storage vote_ = votes[_voteId];
+        Vote storage vote_ = _getVote(_voteId);
         require(_isPaused(vote_), ERROR_VOTE_NOT_PAUSED);
 
         vote_.status = VoteStatus.Cancelled;
@@ -670,7 +664,7 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     * @dev Internal function for a representative to cast a vote on behalf of many voters. It assumes the queried vote exists.
     */
     function _voteOnBehalfOf(uint256 _voteId, bool _supports, address[] _voters) internal {
-        Vote storage vote_ = votes[_voteId];
+        Vote storage vote_ = _getVote(_voteId);
         require(_canDelegateVote(vote_), ERROR_CANNOT_DELEGATE_VOTE);
 
         for (uint256 i = 0; i < _voters.length; i++) {
@@ -901,11 +895,11 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     }
 
     /**
-    * @dev Internal function to check if a certain vote id exists
-    * @return True if the given vote id was already registered
+    * @dev Internal function to get a vote object
     */
-    function _voteExists(uint256 _voteId) internal view returns (bool) {
-        return _voteId < votesLength;
+    function _getVote(uint256 _voteId) internal view returns (Vote storage) {
+        require(_voteId < votesLength, ERROR_NO_VOTE);
+        return votes[_voteId];
     }
 
     /**
