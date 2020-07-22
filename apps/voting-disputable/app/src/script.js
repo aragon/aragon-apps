@@ -369,14 +369,15 @@ async function getDisputableAction(actionId) {
     .toPromise()
     .then(action => getChallenge(agreement, action))
     .then(action => getCollaterall(agreement, action))
+    .then(action => getCollaterallToken(action))
 }
 
 async function getChallenge(agreement, action) {
-  if (action.currentChallengeId) {
+  if (action.currentChallengeId && parseInt(action.currentChallengeId) > 0) {
     return {
       ...action,
       challenge: await agreement
-        .getChallenge(parseInt(action.currentChallengeId))
+        .getChallenge(action.currentChallengeId)
         .toPromise(),
     }
   }
@@ -393,6 +394,24 @@ async function getCollaterall(agreement, action) {
           action.collateralRequirementId
         )
         .toPromise(),
+    }
+  }
+  return action
+}
+
+async function getCollaterallToken(action) {
+  const collateralToken = app.external(
+    action.collateral.collateralToken,
+    tokenAbi
+  )
+  if (action.collateral && action.collateral.collateralToken) {
+    return {
+      ...action,
+      collateral: {
+        ...action.collateral,
+        symbol: await collateralToken.symbol().toPromise(),
+        decimals: await collateralToken.decimals().toPromise(),
+      },
     }
   }
   return action

@@ -1,5 +1,15 @@
 import React from 'react'
-import { Box, GU, IconLock, Info, Link, textStyle, useTheme } from '@aragon/ui'
+import {
+  Box,
+  formatTokenAmount,
+  GU,
+  IconLock,
+  Info,
+  Link,
+  textStyle,
+  TokenBadge,
+  useTheme,
+} from '@aragon/ui'
 import {
   DISPUTABLE_VOTE_STATUSES,
   VOTE_STATUS_PAUSED,
@@ -21,7 +31,7 @@ function DisputableActionStatus({ vote }) {
   //TODO: get agreement and vote real data
   const agreement = getAgreement()
 
-  const { challengeAmount, collateralToken } = vote.disputable.action.collateral
+  const { actionAmount, decimals, symbol } = vote.disputable.action.collateral
   const disputableStatus =
     vote.disputable && DISPUTABLE_VOTE_STATUSES.get(vote.disputable.status)
 
@@ -42,7 +52,7 @@ function DisputableActionStatus({ vote }) {
               align-items: center;
             `}
           >
-            {challengeAmount} {collateralToken}
+            {formatTokenAmount(actionAmount, decimals, { symbol: symbol })}
             <span
               css={`
                 display: inline-flex;
