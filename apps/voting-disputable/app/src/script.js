@@ -359,11 +359,22 @@ function loadVoteDisputableInfo(voteId) {
   )
 }
 
-async function getDisputableAction(actionId) {
-  const agreement = app.external(
-    '0x5c6620c49f9aecf74bd483054f2d0ace0d375f96',
-    agreementAbi
+function getAgreement() {
+  return retryEvery(() =>
+    app
+      .call('getAgreement')
+      .toPromise()
+      .catch(err => {
+        console.error(`Error fetching agreement address`, err)
+        throw err
+      })
   )
+}
+
+async function getDisputableAction(actionId) {
+  const agreementAddress = await getAgreement()
+  const agreement = app.external(agreementAddress, agreementAbi)
+
   return agreement
     .getAction(actionId)
     .toPromise()
