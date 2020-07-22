@@ -7,7 +7,6 @@ import {
   Info,
   Link,
   textStyle,
-  TokenBadge,
   useTheme,
 } from '@aragon/ui'
 import {
