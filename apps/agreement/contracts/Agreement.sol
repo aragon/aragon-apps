@@ -16,9 +16,10 @@ import "@aragon/os/contracts/lib/math/SafeMath.sol";
 import "@aragon/os/contracts/lib/math/SafeMath64.sol";
 import "@aragon/staking/contracts/Staking.sol";
 import "@aragon/staking/contracts/StakingFactory.sol";
+import "@aragon/staking/contracts/locking/ILockManager.sol";
 
 
-contract Agreement is IAgreement, AragonApp {
+contract Agreement is IAgreement, AragonApp, ILockManager {
     using SafeMath for uint256;
     using SafeMath64 for uint64;
     using SafeERC20 for ERC20;
@@ -478,6 +479,14 @@ contract Agreement is IAgreement, AragonApp {
         }
     }
 
+    /**
+    * @notice Callback called from Staking when a new lock manager instance of this contract is allowed
+    */
+    // solium-disable-next-line no-empty-blocks
+    function receiveLock(address, uint256, uint256, bytes) external isInitialized returns (bool) {
+        // do nothing
+    }
+
     // Getter fns
 
     /**
@@ -750,6 +759,17 @@ contract Agreement is IAgreement, AragonApp {
     function canRuleDispute(uint256 _actionId) external view returns (bool) {
         (, Challenge storage challenge, ) = _getChallengedAction(_actionId);
         return _isDisputed(challenge);
+    }
+
+    /**
+    * @notice Check if a certain amount for a certain address can be unlocked
+    * @dev It always returns false because if we allow owners to unlock by themselves,
+    *      then the unlock call on closing or settling actions could fail due to
+    *      insufficient balance.
+    * @return Whether given lock of given owner can be unlocked by given sender
+    */
+    function canUnlock(address, uint256) external view returns (bool) {
+        return false;
     }
 
     // Internal fns
