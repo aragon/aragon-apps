@@ -46,7 +46,6 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     string private constant ERROR_CHANGE_SUPPORT_TOO_BIG = "VOTING_CHANGE_SUPP_TOO_BIG";
     string private constant ERROR_INVALID_OVERRULE_WINDOW = "VOTING_INVALID_OVERRULE_WINDOW";
     string private constant ERROR_INVALID_QUIET_ENDING_PERIOD = "VOTING_INVALID_QUIET_ENDING_PERI";
-    string private constant ERROR_INVALID_QUIET_ENDING_EXTENSION = "VOTING_INVALID_QUIET_ENDING_EXT";
     string private constant ERROR_DELEGATES_EXCEEDS_MAX_LEN = "VOTING_DELEGATES_EXCEEDS_MAX_LEN";
     string private constant ERROR_SETTING_DOES_NOT_EXIST = "VOTING_SETTING_DOES_NOT_EXIST";
 
@@ -618,7 +617,6 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     */
     function _changeQuietEndingPeriod(Setting storage _setting, uint64 _quietEndingPeriod, uint64 _quietEndingExtension) internal {
         require(_quietEndingPeriod <= voteTime, ERROR_INVALID_QUIET_ENDING_PERIOD);
-        require(_quietEndingExtension <= _quietEndingPeriod, ERROR_INVALID_QUIET_ENDING_EXTENSION);
 
         _setting.quietEndingPeriod = _quietEndingPeriod;
         _setting.quietEndingExtension = _quietEndingExtension;
