@@ -479,14 +479,6 @@ contract Agreement is IAgreement, AragonApp, ILockManager {
         }
     }
 
-    /**
-    * @notice Callback called from Staking when a new lock manager instance of this contract is allowed
-    */
-    // solium-disable-next-line no-empty-blocks
-    function receiveLock(address, uint256, uint256, bytes) external isInitialized returns (bool) {
-        // do nothing
-    }
-
     // Getter fns
 
     /**
