@@ -234,6 +234,8 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
   })
 
   describe('changeQuietEndingPeriod', () => {
+    const newQuietEndingExtension = VOTE_DURATION + 1
+
     context('when the sender is allowed', () => {
       const from = owner
 
@@ -275,67 +277,19 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
       context('when the new period is lower than the vote duration', () => {
         const newQuietEndingPeriod = VOTE_DURATION - 1
 
-        context('when the new extension is lower than the new period', () => {
-          const newQuietEndingExtension = newQuietEndingPeriod - 1
-
-          itChangesTheQuietEndingPeriod(newQuietEndingPeriod, newQuietEndingExtension)
-        })
-
-        context('when the new extension is equal to the new period', () => {
-          const newQuietEndingExtension = newQuietEndingPeriod
-
-          itChangesTheQuietEndingPeriod(newQuietEndingPeriod, newQuietEndingExtension)
-        })
-
-        context('when the new extension is greater than the new period', () => {
-          const newQuietEndingExtension = newQuietEndingPeriod + 1
-
-          itReverts(newQuietEndingPeriod, newQuietEndingExtension, VOTING_ERRORS.VOTING_INVALID_QUIET_ENDING_EXTENSION)
-        })
+        itChangesTheQuietEndingPeriod(newQuietEndingPeriod, newQuietEndingExtension)
       })
 
       context('when the new period is equal to the vote duration', () => {
         const newQuietEndingPeriod = VOTE_DURATION
 
-        context('when the new extension is lower than the new period', () => {
-          const newQuietEndingExtension = newQuietEndingPeriod - 1
-
-          itChangesTheQuietEndingPeriod(newQuietEndingPeriod, newQuietEndingExtension)
-        })
-
-        context('when the new extension is equal to the new period', () => {
-          const newQuietEndingExtension = newQuietEndingPeriod
-
-          itChangesTheQuietEndingPeriod(newQuietEndingPeriod, newQuietEndingExtension)
-        })
-
-        context('when the new extension is greater than the new period', () => {
-          const newQuietEndingExtension = newQuietEndingPeriod + 1
-
-          itReverts(newQuietEndingPeriod, newQuietEndingExtension, VOTING_ERRORS.VOTING_INVALID_QUIET_ENDING_EXTENSION)
-        })
+        itChangesTheQuietEndingPeriod(newQuietEndingPeriod, newQuietEndingExtension)
       })
 
       context('when the new period is greater than the vote duration', () => {
         const newQuietEndingPeriod = VOTE_DURATION + 1
 
-        context('when the new extension is lower than the new period', () => {
-          const newQuietEndingExtension = newQuietEndingPeriod - 1
-
-          itReverts(newQuietEndingPeriod, newQuietEndingExtension, VOTING_ERRORS.VOTING_INVALID_QUIET_ENDING_PERIOD)
-        })
-
-        context('when the new extension is equal to the new period', () => {
-          const newQuietEndingExtension = newQuietEndingPeriod
-
-          itReverts(newQuietEndingPeriod, newQuietEndingExtension, VOTING_ERRORS.VOTING_INVALID_QUIET_ENDING_PERIOD)
-        })
-
-        context('when the new extension is greater than the new period', () => {
-          const newQuietEndingExtension = newQuietEndingPeriod + 1
-
-          itReverts(newQuietEndingPeriod, newQuietEndingExtension, VOTING_ERRORS.VOTING_INVALID_QUIET_ENDING_PERIOD)
-        })
+        itReverts(newQuietEndingPeriod, newQuietEndingExtension, VOTING_ERRORS.VOTING_INVALID_QUIET_ENDING_PERIOD)
       })
     })
 
@@ -343,7 +297,7 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
       const from = anyone
 
       it('reverts', async () => {
-        await assertRevert(voting.changeQuietEndingPeriod(QUIET_ENDING_PERIOD, QUIET_ENDING_EXTENSION, { from }), ARAGON_OS_ERRORS.APP_AUTH_FAILED)
+        await assertRevert(voting.changeQuietEndingPeriod(QUIET_ENDING_PERIOD, newQuietEndingExtension, { from }), ARAGON_OS_ERRORS.APP_AUTH_FAILED)
       })
     })
   })
