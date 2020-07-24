@@ -27,7 +27,7 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
     voting = await deployer.deployAndInitialize({ owner, minimumAcceptanceQuorum: MIN_QUORUM, requiredSupport: MIN_SUPPORT, voteDuration: VOTE_DURATION, overruleWindow: OVERRULE_WINDOW, quietEndingPeriod: QUIET_ENDING_PERIOD })
   })
 
-  const getVoterState = async (voter, id = voteId) => voting.getVoterState(id, voter)
+  const getCastVote = async (voter, id = voteId) => voting.getCastVote(id, voter)
 
   describe('setRepresentative', () => {
     it('is not allowed by default', async () => {
@@ -215,9 +215,14 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
                 const { yeas, nays } = await getVoteState(voting, voteId)
                 assertBn(yeas, 0, 'yeas should be 0')
                 assertBn(nays, bigExp(51, 18).toString(), 'nays should be 51')
-                assertBn(await getVoterState(voter), VOTER_STATE.NAY, 'voter should have voted')
-                assertBn(await getVoterState(representative), VOTER_STATE.ABSENT, 'representative should not have voted')
-                assert.equal(await voting.getVoteCaster(voteId, voter), representative, 'vote caster does not match')
+
+                const voterState = await getCastVote(voter)
+                assertBn(voterState.state, VOTER_STATE.NAY, 'voter should have voted')
+                assert.equal(voterState.caster, representative, 'vote caster does not match')
+
+                const representativeState = await getCastVote(representative)
+                assertBn(representativeState.state, VOTER_STATE.ABSENT, 'representative should not have voted')
+                assertBn(representativeState.caster, ZERO_ADDRESS, 'representative should not have voted')
 
                 assertAmountOfEvents(receipt, 'CastVote')
                 assertEvent(receipt, 'CastVote', { expectedArgs: { voter, voteId, supports: false, stake: bigExp(51, 18) } })
@@ -238,12 +243,16 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
                 const { yeas, nays } = await getVoteState(voting, voteId)
                 assertBn(nays, bigExp(51, 18), 'nays should be 51')
                 assertBn(yeas, 0, 'yeas should be 0')
-                assert.equal(await getVoterState(voter), VOTER_STATE.NAY, 'voter should have voted')
-                assert.equal(await getVoterState(representative), VOTER_STATE.ABSENT, 'representative should not have voted')
-                assert.equal(await voting.getVoteCaster(voteId, voter), representative, 'vote caster does not match')
+
+                const voterState = await getCastVote(voter)
+                assertBn(voterState.state, VOTER_STATE.NAY, 'voter should have voted')
+                assert.equal(voterState.caster, representative, 'vote caster does not match')
+
+                const representativeState = await getCastVote(representative)
+                assertBn(representativeState.state, VOTER_STATE.ABSENT, 'representative should not have voted')
+                assertBn(representativeState.caster, ZERO_ADDRESS, 'representative should not have voted')
 
                 assertAmountOfEvents(receipt, 'CastVote', { expectedAmount: 0 })
-
                 assertAmountOfEvents(receipt, 'ProxyVoteFailure')
                 assertEvent(receipt, 'ProxyVoteFailure', { expectedArgs: { voter, representative, voteId } })
               })
@@ -257,12 +266,16 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
                 const { yeas, nays } = await getVoteState(voting, voteId)
                 assertBn(nays, bigExp(51, 18), 'nays should be 51')
                 assertBn(yeas, 0, 'yeas should be 0')
-                assert.equal(await getVoterState(voter), VOTER_STATE.NAY, 'voter should have voted')
-                assert.equal(await getVoterState(representative), VOTER_STATE.ABSENT, 'representative should not have voted')
-                assert.equal(await voting.getVoteCaster(voteId, voter), representative, 'vote caster does not match')
+
+                const voterState = await getCastVote(voter)
+                assertBn(voterState.state, VOTER_STATE.NAY, 'voter should have voted')
+                assert.equal(voterState.caster, representative, 'vote caster does not match')
+
+                const representativeState = await getCastVote(representative)
+                assertBn(representativeState.state, VOTER_STATE.ABSENT, 'representative should not have voted')
+                assertBn(representativeState.caster, ZERO_ADDRESS, 'representative should not have voted')
 
                 assertAmountOfEvents(receipt, 'CastVote', { expectedAmount: 0 })
-
                 assertAmountOfEvents(receipt, 'ProxyVoteFailure')
                 assertEvent(receipt, 'ProxyVoteFailure', { expectedArgs: { voter, representative: anotherRepresentative, voteId } })
               })
@@ -279,9 +292,14 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
                     const { yeas, nays } = await getVoteState(voting, voteId)
                     assertBn(nays, 0, 'nays should be 0')
                     assertBn(yeas, bigExp(51, 18), 'yeas should be 51')
-                    assert.equal(await getVoterState(voter), VOTER_STATE.YEA, 'voter should have voted')
-                    assert.equal(await getVoterState(representative), VOTER_STATE.ABSENT, 'representative should not have voted')
-                    assert.equal(await voting.getVoteCaster(voteId, voter), voter, 'vote caster does not match')
+
+                    const voterState = await getCastVote(voter)
+                    assertBn(voterState.state, VOTER_STATE.YEA, 'voter should have voted')
+                    assert.equal(voterState.caster, voter, 'vote caster does not match')
+
+                    const representativeState = await getCastVote(representative)
+                    assertBn(representativeState.state, VOTER_STATE.ABSENT, 'representative should not have voted')
+                    assertBn(representativeState.caster, ZERO_ADDRESS, 'representative should not have voted')
 
                     assertAmountOfEvents(receipt, 'CastVote')
                     assertEvent(receipt, 'CastVote', { expectedArgs: { voter, voteId, supports: true, stake: bigExp(51, 18) } })
@@ -412,8 +430,9 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
                 assertBn(nays, 0, 'nays should be 0')
                 assertBn(yeas, bigExp(51, 18), 'yeas should be 51%')
 
-                assert.equal(await getVoterState(voter, voteId), VOTER_STATE.YEA, 'voter should not have voted')
-                assert.equal(await voting.getVoteCaster(voteId, voter), voter, 'vote caster should not exist')
+                const voterState = await getCastVote(voter)
+                assertBn(voterState.state, VOTER_STATE.YEA, 'voter should have voted')
+                assert.equal(voterState.caster, voter, 'vote caster does not match')
               })
 
               it('emits a proxy failed event', async () => {
@@ -530,13 +549,17 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
           assertBn(yeas, bigExp(1, 18), 'yeas should be 1')
           assertBn(nays, bigExp(100, 18), 'nays should be 100')
 
-          assert.equal(await getVoterState(voter, voteId), VOTER_STATE.NAY, 'voter should have voted')
-          assert.equal(await getVoterState(anotherVoter, voteId), VOTER_STATE.NAY, 'another voter should have voted')
-          assert.equal(await getVoterState(previousVoter, voteId), VOTER_STATE.YEA, 'previous voter should have voted')
+          const voterState = await getCastVote(voter)
+          assertBn(voterState.state, VOTER_STATE.NAY, 'voter should have voted')
+          assert.equal(voterState.caster, representative, 'caster of voter does not match')
 
-          assert.equal(await voting.getVoteCaster(voteId, voter), representative, 'vote caster does not match')
-          assert.equal(await voting.getVoteCaster(voteId, anotherVoter), representative, 'vote caster does not match')
-          assert.equal(await voting.getVoteCaster(voteId, previousVoter), previousVoter, 'vote caster does not match')
+          const anotherVoterState = await getCastVote(anotherVoter)
+          assertBn(anotherVoterState.state, VOTER_STATE.NAY, 'another voter should have voted')
+          assertBn(anotherVoterState.caster, representative, 'caster of another voter does not match')
+
+          const previousVoterState = await getCastVote(previousVoter)
+          assertBn(previousVoterState.state, VOTER_STATE.YEA, 'previous voter should have voted')
+          assertBn(previousVoterState.caster, previousVoter, 'caster of previous voter does not match')
         })
       })
 
@@ -653,7 +676,9 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
       assertBn(yeas, bigExp(MAX_DELEGATES_PER_TX * 2, 18), 'yeas should be 200')
 
       for (let i = 0; i < voters.length; i++) {
-        assert.equal(await getVoterState(voters[i], voteId), VOTER_STATE.YEA, 'voter should have voted')
+        const voterState = await getCastVote(voters[i])
+        assertBn(voterState.state, VOTER_STATE.YEA, 'voter should have voted')
+        assert.equal(voterState.caster, representative, 'voter caster does not match')
       }
     }))
   })

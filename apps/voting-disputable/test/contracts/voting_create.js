@@ -44,7 +44,7 @@ contract('Voting', ([_, owner, holder1, holder2, holder20, holder29, holder51, n
       })
 
       context('when there is some supply', () => {
-        let voteId
+        let voteId, receipt
 
         context('with normal token supply', () => {
           let script, executionTarget
@@ -76,20 +76,20 @@ contract('Voting', ([_, owner, holder1, holder2, holder20, holder29, holder51, n
           })
 
           it('has correct state', async () => {
-            const { isOpen, isExecuted, snapshotBlock, support, quorum, overruleWindow, executionDelay, yeas, nays, votingPower, script: execScript } = await getVoteState(voting, voteId)
+            const currentSettingId = await voting.getCurrentSettingId()
+            const { isOpen, isExecuted, snapshotBlock, settingId, yeas, nays, votingPower, pausedAt, pauseDuration, quietEndingExtendedSeconds, executionScript } = await getVoteState(voting, voteId)
 
             assert.isTrue(isOpen, 'vote should be open')
             assert.isFalse(isExecuted, 'vote should not be executed')
             assertBn(snapshotBlock, await web3.eth.getBlockNumber() - 1, 'snapshot block should be correct')
-            assertBn(support, REQUIRED_SUPPORT, 'required support should be app required support')
-            assertBn(quorum, MINIMUM_ACCEPTANCE_QUORUM, 'min quorum should be app min quorum')
-            assertBn(overruleWindow, OVERRULE_WINDOW, 'default overrule window should be correct')
-            assertBn(executionDelay, EXECUTION_DELAY, 'default execution delay should be correct')
+            assertBn(settingId, currentSettingId, 'required support should be app required support')
             assertBn(yeas, 0, 'initial yea should be 0')
             assertBn(nays, 0, 'initial nay should be 0')
             assertBn(votingPower, bigExp(100, 18), 'voting power should be 100')
-            assert.equal(execScript, script, 'script should be correct')
-            assertBn(await voting.getVoterState(voteId, nonHolder), VOTER_STATE.ABSENT, 'nonHolder should not have voted')
+            assertBn(pausedAt, 0, 'paused at does not match')
+            assertBn(pauseDuration, 0, 'pause duration does not match')
+            assertBn(quietEndingExtendedSeconds, 0, 'quiet ending extended seconds does not match')
+            assert.equal(executionScript, script, 'script should be correct')
           })
 
           it('fails getting a vote out of bounds', async () => {

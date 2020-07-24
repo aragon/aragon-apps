@@ -49,12 +49,12 @@ contract('Voting disputable', ([_, owner, representative, voter20, voter29, vote
 
   beforeEach('create vote', async () => {
     ({ voteId } = await createVote({ voting, script, voteContext: CONTEXT, from: voter51 }))
-    actionId = (await voting.getVoteDisputableInfo(voteId))[0]
+    actionId = (await voting.getVote(voteId)).actionId
   })
 
   describe('newVote', () => {
     it('saves the agreement action data', async () => {
-      const { pausedAt, pauseDuration, status } = await voting.getVoteDisputableInfo(voteId)
+      const { pausedAt, pauseDuration, status } = await getVoteState(voting, voteId)
 
       assertBn(actionId, 1, 'action ID does not match')
       assertBn(pausedAt, 0, 'paused at does not match')
@@ -89,7 +89,7 @@ contract('Voting disputable', ([_, owner, representative, voter20, voter29, vote
     })
 
     it('changes the disputable state to closed', async () => {
-      const { actionId: voteActionId, pausedAt, pauseDuration, status } = await voting.getVoteDisputableInfo(voteId)
+      const { actionId: voteActionId, pausedAt, pauseDuration, status } = await getVoteState(voting, voteId)
       assertBn(status, VOTE_STATUS.EXECUTED, 'vote status does not match')
 
       assertBn(voteActionId, actionId, 'action ID does not match')
@@ -125,7 +125,7 @@ contract('Voting disputable', ([_, owner, representative, voter20, voter29, vote
     })
 
     it('pauses the vote', async () => {
-      const { actionId: voteActionId, pausedAt, pauseDuration, status } = await voting.getVoteDisputableInfo(voteId)
+      const { actionId: voteActionId, pausedAt, pauseDuration, status } = await getVoteState(voting, voteId)
       assertBn(status, VOTE_STATUS.PAUSED, 'vote status does not match')
 
       assertBn(voteActionId, actionId, 'action ID does not match')
@@ -175,7 +175,7 @@ contract('Voting disputable', ([_, owner, representative, voter20, voter29, vote
 
     const itResumesTheVote = () => {
       it('resumes the vote', async () => {
-        const { actionId: voteActionId, pausedAt, pauseDuration, status } = await voting.getVoteDisputableInfo(voteId)
+        const { actionId: voteActionId, pausedAt, pauseDuration, status } = await getVoteState(voting, voteId)
         assertBn(status, VOTE_STATUS.ACTIVE, 'vote status does not match')
 
         assertBn(voteActionId, actionId, 'action ID does not match')
@@ -293,7 +293,7 @@ contract('Voting disputable', ([_, owner, representative, voter20, voter29, vote
 
     const itCancelsTheVote = () => {
       it('cancels the vote', async () => {
-        const { actionId: voteActionId, pausedAt, pauseDuration, status } = await voting.getVoteDisputableInfo(voteId)
+        const { actionId: voteActionId, pausedAt, pauseDuration, status } = await getVoteState(voting, voteId)
         assertBn(status, VOTE_STATUS.CANCELLED, 'vote status does not match')
 
         assertBn(voteActionId, actionId, 'action ID does not match')

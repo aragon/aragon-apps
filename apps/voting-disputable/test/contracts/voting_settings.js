@@ -1,5 +1,5 @@
 const deployer = require('../helpers/deployer')(web3, artifacts)
-const { createVote, getVoteState } = require('../helpers/voting')
+const { createVote, getVoteSetting } = require('../helpers/voting')
 const { ARAGON_OS_ERRORS, VOTING_ERRORS } = require('../helpers/errors')
 
 const { ONE_DAY, bn, bigExp, pct16 } = require('@aragon/contract-helpers-test')
@@ -45,12 +45,15 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
         it('changes the required support', async () => {
           await voting.changeSupportRequiredPct(newSupport, { from })
 
-          assertBn(await voting.supportRequiredPct(), newSupport, 'should have changed required support')
+          const currentSettingId = await voting.getCurrentSettingId()
+          const { supportRequiredPct } = await voting.getSetting(currentSettingId)
+          assertBn(supportRequiredPct, newSupport, 'should have changed required support')
         })
 
         it('emits an event', async () => {
           const receipt = await voting.changeSupportRequiredPct(newSupport, { from })
 
+          assertAmountOfEvents(receipt, 'NewSetting')
           assertAmountOfEvents(receipt, 'ChangeSupportRequired')
           assertEvent(receipt, 'ChangeSupportRequired', { expectedArgs: { supportRequiredPct: newSupport } })
         })
@@ -68,8 +71,8 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
           await voting.vote(voteId, false, { from: holder29 })
           await voting.mockIncreaseTime(VOTE_DURATION)
 
-          const { support } = await getVoteState(voting, voteId)
-          assertBn(support, REQUIRED_SUPPORT, 'required support in vote should stay equal')
+          const { supportRequiredPct } = await getVoteSetting(voting, voteId)
+          assertBn(supportRequiredPct, REQUIRED_SUPPORT, 'required support in vote should stay equal')
           await voting.executeVote(voteId) // exec doesn't fail
         })
       })
@@ -108,12 +111,15 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
         it('changes the minimum acceptance quorum', async () => {
           await voting.changeMinAcceptQuorumPct(newQuorum, { from })
 
-          assertBn(await voting.minAcceptQuorumPct(), newQuorum, 'should have changed min acceptance quorum')
+          const currentSettingId = await voting.getCurrentSettingId()
+          const { minAcceptQuorumPct } = await voting.getSetting(currentSettingId)
+          assertBn(minAcceptQuorumPct, newQuorum, 'should have changed min acceptance quorum')
         })
 
         it('emits an event', async () => {
           const receipt = await voting.changeMinAcceptQuorumPct(newQuorum, { from })
 
+          assertAmountOfEvents(receipt, 'NewSetting')
           assertAmountOfEvents(receipt, 'ChangeMinQuorum')
           assertEvent(receipt, 'ChangeMinQuorum', { expectedArgs: { minAcceptQuorumPct: newQuorum } })
         })
@@ -129,8 +135,8 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
           await voting.vote(voteId, true, { from: holder29 })
           await voting.mockIncreaseTime(VOTE_DURATION)
 
-          const { quorum } = await getVoteState(voting, voteId)
-          assertBn(quorum, MINIMUM_ACCEPTANCE_QUORUM, 'acceptance quorum in vote should stay equal')
+          const { minAcceptQuorumPct } = await getVoteSetting(voting, voteId)
+          assertBn(minAcceptQuorumPct, MINIMUM_ACCEPTANCE_QUORUM, 'acceptance quorum in vote should stay equal')
           await voting.executeVote(voteId) // exec doesn't fail
         })
       }
@@ -173,12 +179,15 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
         it('changes the overrule window', async () => {
           await voting.changeOverruleWindow(newWindow, { from })
 
-          assertBn(await voting.overruleWindow(), newWindow, 'overrule window does not match')
+          const currentSettingId = await voting.getCurrentSettingId()
+          const { overruleWindow } = await voting.getSetting(currentSettingId)
+          assertBn(overruleWindow, newWindow, 'overrule window does not match')
         })
 
         it('emits an event', async () => {
           const receipt = await voting.changeOverruleWindow(newWindow, { from })
 
+          assertAmountOfEvents(receipt, 'NewSetting')
           assertAmountOfEvents(receipt, 'ChangeOverruleWindow')
           assertEvent(receipt, 'ChangeOverruleWindow', { expectedArgs: { overruleWindow: newWindow } })
         })
@@ -188,7 +197,7 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
 
           await voting.changeOverruleWindow(newWindow, { from })
 
-          const { overruleWindow } = await getVoteState(voting, voteId)
+          const { overruleWindow } = await getVoteSetting(voting, voteId)
           assertBn(overruleWindow, OVERRULE_WINDOW, 'overrule window does not match')
         })
       }
@@ -232,24 +241,26 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
         it('changes the overrule window', async () => {
           await voting.changeQuietEndingPeriod(newPeriod, newExtension, { from })
 
-          assertBn(await voting.quietEndingPeriod(), newPeriod, 'quiet ending period does not match')
-          assertBn(await voting.quietEndingExtension(), newExtension, 'quiet ending extension does not match')
+          const currentSettingId = await voting.getCurrentSettingId()
+          const { quietEndingPeriod, quietEndingExtension } = await voting.getSetting(currentSettingId)
+          assertBn(quietEndingPeriod, newPeriod, 'quiet ending period does not match')
+          assertBn(quietEndingExtension, newExtension, 'quiet ending extension does not match')
         })
 
         it('emits an event', async () => {
           const receipt = await voting.changeQuietEndingPeriod(newPeriod, newExtension, { from })
 
+          assertAmountOfEvents(receipt, 'NewSetting')
           assertAmountOfEvents(receipt, 'ChangeQuietEndingPeriod')
           assertEvent(receipt, 'ChangeQuietEndingPeriod', { expectedArgs: { quietEndingPeriod: newPeriod, quietEndingExtension: newExtension } })
         })
 
-        // TODO: cannot add quiet ending related variables, let's use checkpointed settings instead of copying all variables
-        it.skip('does not affect previous created votes', async () => {
+        it('does not affect previous created votes', async () => {
           const { voteId } = await createVote({ voting, from: holder51 })
 
           await voting.changeQuietEndingPeriod(newPeriod, newExtension, { from })
 
-          const { quietEndingPeriod, quietEndingExtension } = await getVoteState(voting, voteId)
+          const { quietEndingPeriod, quietEndingExtension } = await getVoteSetting(voting, voteId)
           assertBn(quietEndingPeriod, QUIET_ENDING_PERIOD, 'quiet ending period does not match')
           assertBn(quietEndingExtension, QUIET_ENDING_EXTENSION, 'quiet ending extension does not match')
         })
@@ -346,12 +357,15 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
       it('changes the overrule window', async () => {
         await voting.changeExecutionDelay(newDelay, { from })
 
-        assertBn(await voting.executionDelay(), newDelay, 'execution delay does not match')
+        const currentSettingId = await voting.getCurrentSettingId()
+        const { executionDelay } = await voting.getSetting(currentSettingId)
+        assertBn(executionDelay, newDelay, 'execution delay does not match')
       })
 
       it('emits an event', async () => {
         const receipt = await voting.changeExecutionDelay(newDelay, { from })
 
+        assertAmountOfEvents(receipt, 'NewSetting')
         assertAmountOfEvents(receipt, 'ChangeExecutionDelay')
         assertEvent(receipt, 'ChangeExecutionDelay', { expectedArgs: { executionDelay: newDelay } })
       })
@@ -361,7 +375,7 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
 
         await voting.changeExecutionDelay(newDelay, { from })
 
-        const { executionDelay } = await getVoteState(voting, voteId)
+        const { executionDelay } = await getVoteSetting(voting, voteId)
         assertBn(executionDelay, EXECUTION_DELAY, 'execution delay does not match')
       })
     })

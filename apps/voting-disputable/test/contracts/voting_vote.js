@@ -43,10 +43,10 @@ contract('Voting', ([_, owner, holder20, holder29, holder51, nonHolder, represen
           it('can vote', async () => {
             await voting.vote(voteId, false, { from })
             const { nays } = await getVoteState(voting, voteId)
-            const voterState = await voting.getVoterState(voteId, from)
+            const { state } = await voting.getCastVote(voteId, from)
 
             assertBn(nays, expectedBalance, 'nay vote should have been counted')
-            assert.equal(voterState, VOTER_STATE.NAY, 'should have nay voter status')
+            assertBn(state, VOTER_STATE.NAY, 'should have nay voter status')
           })
 
           it('emits an event', async () => {
@@ -108,14 +108,14 @@ contract('Voting', ([_, owner, holder20, holder29, holder51, nonHolder, represen
                 it('can vote', async () => {
                   await voting.vote(voteId, support, { from })
                   const { yeas, nays } = await getVoteState(voting, voteId)
-                  const voterState = await voting.getVoterState(voteId, from)
+                  const { state } = await voting.getCastVote(voteId, from)
 
                   if (support) {
                     assertBn(yeas, expectedBalance, 'yea vote should have been counted')
-                    assert.equal(voterState, VOTER_STATE.YEA, 'should have yea voter status')
+                    assertBn(state, VOTER_STATE.YEA, 'should have yea voter status')
                   } else {
                     assertBn(nays, previousNays.add(expectedBalance), 'nay vote should have been counted')
-                    assert.equal(voterState, VOTER_STATE.NAY, 'should have nay voter status')
+                    assertBn(state, VOTER_STATE.NAY, 'should have nay voter status')
                   }
                 })
               }
