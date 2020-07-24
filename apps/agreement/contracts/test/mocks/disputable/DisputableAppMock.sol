@@ -2,11 +2,11 @@ pragma solidity 0.4.24;
 
 import "@aragon/os/contracts/lib/math/SafeMath64.sol";
 import "@aragon/os/contracts/apps/disputable/DisputableAragonApp.sol";
-import "@aragon/os/contracts/forwarding/IForwarderWithContextPayable.sol";
+import "@aragon/os/contracts/forwarding/IForwarderWithContext.sol";
 import "@aragon/contract-helpers-test/contracts/0.4/aragonOS/SharedTimeHelpersMock.sol";
 
 
-contract DisputableAppMock is IForwarderWithContextPayable, DisputableAragonApp, SharedTimeHelpersMock {
+contract DisputableAppMock is IForwarderWithContext, DisputableAragonApp, SharedTimeHelpersMock {
     using SafeMath64 for uint64;
 
     bytes4 public constant ERC165_INTERFACE = ERC165_INTERFACE_ID;
@@ -74,7 +74,7 @@ contract DisputableAppMock is IForwarderWithContextPayable, DisputableAragonApp,
     /**
     * @dev IForwarder interface conformance
     */
-    function forward(bytes _evmScript, bytes _context) external payable {
+    function forward(bytes _evmScript, bytes _context) external {
         require(_canForward(msg.sender, _evmScript), ERROR_CANNOT_SUBMIT);
 
         uint256 id = entriesLength++;

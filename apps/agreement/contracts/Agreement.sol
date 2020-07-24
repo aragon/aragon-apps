@@ -281,7 +281,7 @@ contract Agreement is IAgreement, AragonApp {
     * @param _context Link to a human-readable text providing context for the given action
     * @return Unique identification number for the created action in the context of the agreement
     */
-    function newAction(uint256 _disputableActionId, bytes _context, address _submitter) external payable returns (uint256) {
+    function newAction(uint256 _disputableActionId, bytes _context, address _submitter) external returns (uint256) {
         uint256 currentSettingId = _getCurrentSettingId();
         uint256 lastSettingIdSigned = lastSettingSignedBy[_submitter];
         require(lastSettingIdSigned >= currentSettingId, ERROR_SIGNER_MUST_SIGN);
@@ -775,21 +775,14 @@ contract Agreement is IAgreement, AragonApp {
             return;
         }
 
-        if (address(token) == ETH) {
-            // If the app fees are in ETH, we forward all the value we received
-            require(msg.value >= amount, ERROR_INVALID_APP_FEE_AMOUNT);
-        } else {
-            // If the app fees are not ETH, we pull the required amount from
-            // the specified token staking pool and approve them to the cashier
-            require(msg.value == 0, ERROR_UNEXPECTED_APP_FEE_VALUE);
-            Staking staking = stakingFactory.getOrCreateInstance(token);
-            _lockBalance(staking, _submitter, amount);
-            _slashBalance(staking, _submitter, address(this), amount);
-            _approveFor(token, address(aragonAppFeesCashier), amount);
-        }
+        // We pull the required amount from the specified token staking pool and approve them to the cashier
+        Staking staking = stakingFactory.getOrCreateInstance(token);
+        _lockBalance(staking, _submitter, amount);
+        _slashBalance(staking, _submitter, address(this), amount);
+        _approveFor(token, address(aragonAppFeesCashier), amount);
 
         // Pay fees
-        aragonAppFeesCashier.payAppFees.value(msg.value)(appId, abi.encodePacked(_actionId));
+        aragonAppFeesCashier.payAppFees(appId, abi.encodePacked(_actionId));
     }
 
     /**
