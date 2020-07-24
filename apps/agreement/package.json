@@ -32,7 +32,7 @@
     "@aragon/cli": "^7.0.0",
     "@aragon/minime": "^1.0.0",
     "@aragon/contract-helpers-test": "^0.1.0-rc.2",
-    "@aragon/staking": "^0.2.3",
+    "@aragon/staking": "^0.2.4",
     "@aragon/truffle-config-v5": "^1.0.1",
     "chai": "^4.2.0",
     "eth-gas-reporter": "^0.2.0",
