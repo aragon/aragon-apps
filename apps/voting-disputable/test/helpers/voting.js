@@ -1,4 +1,4 @@
-const { decodeEvents } = require('@aragon/contract-helpers-test')
+const { bn, decodeEvents } = require('@aragon/contract-helpers-test')
 const { getArtifacts, getWeb3 } = require('@aragon/contract-helpers-test/src/config')
 const { EMPTY_CALLS_SCRIPT, encodeCallScript } = require('@aragon/contract-helpers-test/src/aragon-os')
 
@@ -16,9 +16,16 @@ const VOTE_STATUS = {
 }
 
 const getVoteState = async (voting, id) => {
+  const { yea, nay, votingPower, settingId, actionId, status, startDate, snapshotBlock, pausedAt, pauseDuration, quietEndingExtendedSeconds, executionScript } = await voting.getVote(id)
   const isOpen = await voting.isVoteOpen(id)
-  const { executed, startDate, snapshotBlock, supportRequired, minAcceptQuorum, voteOverruleWindow, voteExecutionDelay, earlyExecution, yea, nay, votingPower, script } = await voting.getVote(id)
-  return { isOpen, isExecuted: executed, startDate, snapshotBlock, support: supportRequired, quorum: minAcceptQuorum, overruleWindow: voteOverruleWindow, executionDelay: voteExecutionDelay, earlyExecution, yeas: yea, nays: nay, votingPower, script }
+  const isExecuted = status.eq(bn(VOTE_STATUS.EXECUTED))
+  return { isOpen, isExecuted, startDate, snapshotBlock, settingId, status, actionId, yeas: yea, nays: nay, votingPower, pausedAt, pauseDuration, quietEndingExtendedSeconds, executionScript }
+}
+
+const getVoteSetting = async (voting, id) => {
+  const { settingId } = await voting.getVote(id)
+  const { supportRequiredPct, minAcceptQuorumPct, executionDelay, overruleWindow, quietEndingPeriod, quietEndingExtension } = await voting.getSetting(settingId)
+  return { supportRequiredPct, minAcceptQuorumPct, executionDelay, overruleWindow, quietEndingPeriod, quietEndingExtension }
 }
 
 const voteScript = async (actions = 1) => {
@@ -52,5 +59,6 @@ module.exports = {
   VOTE_STATUS,
   voteScript,
   createVote,
-  getVoteState
+  getVoteState,
+  getVoteSetting
 }

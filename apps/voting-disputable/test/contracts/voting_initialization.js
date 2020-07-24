@@ -67,17 +67,20 @@ contract('Voting initialization', ([_, owner]) => {
         await assertRevert(voting.initialize(token.address, REQUIRED_SUPPORT, MINIMUM_ACCEPTANCE_QUORUM, VOTE_DURATION, OVERRULE_WINDOW, QUIET_ENDING_PERIOD, QUIET_ENDING_EXTENSION, EXECUTION_DELAY), ARAGON_OS_ERRORS.INIT_ALREADY_INITIALIZED)
       })
 
-      it('is initialized', async () => {
+      it('is initialized correctly', async () => {
         assert.isTrue(await voting.hasInitialized(), 'voting is not initialized')
 
         assertBn(await voting.token(), token.address, 'token address does not match')
         assertBn(await voting.voteTime(), VOTE_DURATION, 'vote duration does not match')
-        assertBn(await voting.overruleWindow(), OVERRULE_WINDOW, 'overrule window does not match')
-        assertBn(await voting.executionDelay(), EXECUTION_DELAY, 'execution delay does not match')
-        assertBn(await voting.quietEndingPeriod(), QUIET_ENDING_PERIOD, 'quiet ending period does not match')
-        assertBn(await voting.quietEndingExtension(), QUIET_ENDING_EXTENSION, 'quiet ending extension does not match')
-        assertBn(await voting.supportRequiredPct(), REQUIRED_SUPPORT, 'needed support does not match')
-        assertBn(await voting.minAcceptQuorumPct(), MINIMUM_ACCEPTANCE_QUORUM, 'minimum acceptance quorum does not match')
+
+        const currentSettingId = await voting.getCurrentSettingId()
+        const { supportRequiredPct, minAcceptQuorumPct, executionDelay, overruleWindow, quietEndingPeriod, quietEndingExtension } = await voting.getSetting(currentSettingId)
+        assertBn(overruleWindow, OVERRULE_WINDOW, 'overrule window does not match')
+        assertBn(executionDelay, EXECUTION_DELAY, 'execution delay does not match')
+        assertBn(quietEndingPeriod, QUIET_ENDING_PERIOD, 'quiet ending period does not match')
+        assertBn(quietEndingExtension, QUIET_ENDING_EXTENSION, 'quiet ending extension does not match')
+        assertBn(supportRequiredPct, REQUIRED_SUPPORT, 'needed support does not match')
+        assertBn(minAcceptQuorumPct, MINIMUM_ACCEPTANCE_QUORUM, 'minimum acceptance quorum does not match')
       })
     })
   })
