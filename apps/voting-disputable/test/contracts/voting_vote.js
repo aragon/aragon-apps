@@ -52,8 +52,8 @@ contract('Voting', ([_, owner, holder20, holder29, holder51, nonHolder, represen
           it('emits an event', async () => {
             const receipt = await voting.vote(voteId, true, { from })
 
-            assertAmountOfEvents(receipt, 'VoteCast')
-            assertEvent(receipt, 'VoteCast', { expectedArgs: { voteId, voter: from, supports: true, stake: expectedBalance } })
+            assertAmountOfEvents(receipt, 'CastVote')
+            assertEvent(receipt, 'CastVote', { expectedArgs: { voteId, voter: from, supports: true, stake: expectedBalance } })
           })
 
           it('cannot modify vote', async () => {

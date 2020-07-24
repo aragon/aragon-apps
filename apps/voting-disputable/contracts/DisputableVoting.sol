@@ -78,7 +78,7 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
         uint64 quietEndingExtension;
     }
 
-    struct CastVote {
+    struct VoteCast {
         VoterState state;
         address caster;
     }
@@ -96,7 +96,7 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
         uint64 pauseDuration;                               // Duration in seconds while the vote has been paused
         uint64 quietEndingExtendedSeconds;                  // Total number of seconds a vote was extended due to quiet ending
         bytes executionScript;                              // EVM script attached to the vote
-        mapping (address => CastVote) castVotes;            // Cast votes information indexed by voter address: status and caster address
+        mapping (address => VoteCast) castVotes;            // Cast votes information indexed by voter address: status and caster address
     }
 
     uint64 public voteTime;                                 // Duration of each vote
@@ -111,7 +111,7 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     mapping (address => address) internal representatives;  // List of representatives indexed by voter address
 
     event StartVote(uint256 indexed voteId, address indexed creator, bytes context);
-    event VoteCast(uint256 indexed voteId, address indexed voter, bool supports, uint256 stake);
+    event CastVote(uint256 indexed voteId, address indexed voter, bool supports, uint256 stake);
     event PauseVote(uint256 indexed voteId, uint256 indexed challengeId);
     event ResumeVote(uint256 indexed voteId);
     event CancelVote(uint256 indexed voteId);
@@ -977,7 +977,7 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
         returns (uint256, uint256)
     {
         uint256 voterStake = token.balanceOfAt(_voter, vote_.snapshotBlock);
-        CastVote storage castVote = vote_.castVotes[_voter];
+        VoteCast storage castVote = vote_.castVotes[_voter];
         VoterState previousVoterState = castVote.state;
 
         // If voter had previously voted, decrease count
@@ -998,7 +998,7 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
         vote_.nay = _nays;
         castVote.state = _supports ? VoterState.Yea : VoterState.Nay;
         castVote.caster = _caster;
-        emit VoteCast(_voteId, _voter, _supports, voterStake);
+        emit CastVote(_voteId, _voter, _supports, voterStake);
 
         return (_yeas, _nays);
     }

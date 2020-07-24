@@ -224,8 +224,8 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
                 assertBn(representativeState.state, VOTER_STATE.ABSENT, 'representative should not have voted')
                 assertBn(representativeState.caster, ZERO_ADDRESS, 'representative should not have voted')
 
-                assertAmountOfEvents(receipt, 'VoteCast')
-                assertEvent(receipt, 'VoteCast', { expectedArgs: { voter, voteId, supports: false, stake: bigExp(51, 18) } })
+                assertAmountOfEvents(receipt, 'CastVote')
+                assertEvent(receipt, 'CastVote', { expectedArgs: { voter, voteId, supports: false, stake: bigExp(51, 18) } })
               })
 
               it('emits an event', async () => {
@@ -252,7 +252,7 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
                 assertBn(representativeState.state, VOTER_STATE.ABSENT, 'representative should not have voted')
                 assertBn(representativeState.caster, ZERO_ADDRESS, 'representative should not have voted')
 
-                assertAmountOfEvents(receipt, 'VoteCast', { expectedAmount: 0 })
+                assertAmountOfEvents(receipt, 'CastVote', { expectedAmount: 0 })
                 assertAmountOfEvents(receipt, 'ProxyVoteFailure')
                 assertEvent(receipt, 'ProxyVoteFailure', { expectedArgs: { voter, representative, voteId } })
               })
@@ -275,7 +275,7 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
                 assertBn(representativeState.state, VOTER_STATE.ABSENT, 'representative should not have voted')
                 assertBn(representativeState.caster, ZERO_ADDRESS, 'representative should not have voted')
 
-                assertAmountOfEvents(receipt, 'VoteCast', { expectedAmount: 0 })
+                assertAmountOfEvents(receipt, 'CastVote', { expectedAmount: 0 })
                 assertAmountOfEvents(receipt, 'ProxyVoteFailure')
                 assertEvent(receipt, 'ProxyVoteFailure', { expectedArgs: { voter, representative: anotherRepresentative, voteId } })
               })
@@ -301,8 +301,8 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
                     assertBn(representativeState.state, VOTER_STATE.ABSENT, 'representative should not have voted')
                     assertBn(representativeState.caster, ZERO_ADDRESS, 'representative should not have voted')
 
-                    assertAmountOfEvents(receipt, 'VoteCast')
-                    assertEvent(receipt, 'VoteCast', { expectedArgs: { voter, voteId, supports: true, stake: bigExp(51, 18) } })
+                    assertAmountOfEvents(receipt, 'CastVote')
+                    assertEvent(receipt, 'CastVote', { expectedArgs: { voter, voteId, supports: true, stake: bigExp(51, 18) } })
                   })
                 }
 
@@ -536,7 +536,7 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
 
           const receipt = await voting.voteOnBehalfOf(voteId, false, voters, { from: representative })
 
-          assertAmountOfEvents(receipt, 'VoteCast', { expectedAmount: 2 })
+          assertAmountOfEvents(receipt, 'CastVote', { expectedAmount: 2 })
 
           assertAmountOfEvents(receipt, 'ProxyVoteFailure', { expectedAmount: 1 })
           assertEvent(receipt, 'ProxyVoteFailure', { expectedArgs: { voter: previousVoter, representative, voteId }, index: 0 })
@@ -667,7 +667,7 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
       ({ voteId } = await createVote({ voting, from: voter }))
       const receipt = await voting.voteOnBehalfOf(voteId, true, voters, { from: representative })
 
-      assertAmountOfEvents(receipt, 'VoteCast', { expectedAmount: MAX_DELEGATES_PER_TX })
+      assertAmountOfEvents(receipt, 'CastVote', { expectedAmount: MAX_DELEGATES_PER_TX })
       assertAmountOfEvents(receipt, 'ProxyVoteSuccess', { expectedAmount: MAX_DELEGATES_PER_TX })
       assert.isAtMost(receipt.receipt.cumulativeGasUsed, 6.8e6)
 
