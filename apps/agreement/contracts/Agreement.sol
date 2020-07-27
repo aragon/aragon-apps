@@ -325,13 +325,14 @@ contract Agreement is IAgreement, AragonApp {
     */
     function closeAction(uint256 _actionId) external {
         Action storage action = _getAction(_actionId);
-        require(_canClose(action, true), ERROR_CANNOT_CLOSE_ACTION);
-
-        if (!action.closed) {
-            (, CollateralRequirement storage requirement) = _getDisputableFor(action);
-            _unlockBalance(requirement.staking, action.submitter, requirement.actionAmount);
-            _closeAction(_actionId, action);
+        if (action.closed) {
+            return;
         }
+
+        require(_canClose(action), ERROR_CANNOT_CLOSE_ACTION);
+        (, CollateralRequirement storage requirement) = _getDisputableFor(action);
+        _unlockBalance(requirement.staking, action.submitter, requirement.actionAmount);
+        _closeAction(_actionId, action);
     }
 
     /**
@@ -709,7 +710,7 @@ contract Agreement is IAgreement, AragonApp {
     */
     function canClose(uint256 _actionId) external view returns (bool) {
         Action storage action = _getAction(_actionId);
-        return _canClose(action, false);
+        return _canClose(action);
     }
 
     /**
@@ -1154,17 +1155,16 @@ contract Agreement is IAgreement, AragonApp {
     * @return True if the action can be challenged, false otherwise
     */
     function _canChallenge(Action storage _action) internal view returns (bool) {
-        return _canProceed(_action, false) && _action.disputable.canChallenge(_action.disputableActionId);
+        return _canProceed(_action) && _action.disputable.canChallenge(_action.disputableActionId);
     }
 
     /**
     * @dev Tell whether an action can be closed
     * @param _action Action instance to be queried
-    * @param _ignoreIfClosed Ignore close state if requested
     * @return True if the action can be closed, false otherwise
     */
-    function _canClose(Action storage _action, bool _ignoreIfClosed) internal view returns (bool) {
-        if (!_canProceed(_action, _ignoreIfClosed)) {
+    function _canClose(Action storage _action) internal view returns (bool) {
+        if (!_canProceed(_action)) {
             return false;
         }
 
@@ -1175,17 +1175,16 @@ contract Agreement is IAgreement, AragonApp {
     /**
     * @dev Tell whether an action can proceed.
     * @dev An action can proceed if it is not:
-    * @dev  - Closed unless ignored
+    * @dev  - Closed
     * @dev  - Currently challenged
     * @dev  - Ruled as voided
     * @dev  - Ruled in favour of the submitter
     * @param _action Action instance to be queried
-    * @param _ignoreIfClosed Ignore close state if requested
     * @return True if the action can proceed, false otherwise
     */
-    function _canProceed(Action storage _action, bool _ignoreIfClosed) internal view returns (bool) {
+    function _canProceed(Action storage _action) internal view returns (bool) {
         // If the action was already closed, return false
-        if (!_ignoreIfClosed && _action.closed) {
+        if (_action.closed) {
             return false;
         }
 

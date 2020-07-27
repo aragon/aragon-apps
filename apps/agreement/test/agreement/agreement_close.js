@@ -235,7 +235,7 @@ contract('Agreement', ([_, submitter]) => {
                   await disputable.settle({ actionId })
                 })
 
-                itCannotBeClosed()
+                itIgnoresTheRequest()
               })
 
               context('when the challenge was disputed', () => {
@@ -294,7 +294,7 @@ contract('Agreement', ([_, submitter]) => {
                       await disputable.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_CHALLENGER })
                     })
 
-                    itCannotBeClosed()
+                    itIgnoresTheRequest()
                   })
                 })
               })
