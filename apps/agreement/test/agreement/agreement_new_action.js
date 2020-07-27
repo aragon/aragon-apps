@@ -63,12 +63,12 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
                 })
 
                 context('when the signer has enough balance', () => {
-                  const itHandlesNewActionsCorrectly = (appFeesInCollateralTokens, value = bn(0)) => {
+                  const itHandlesNewActionsCorrectly = (appFeesInCollateralTokens) => {
                     context('when the agreement settings did not change', () => {
                       it('creates a new scheduled action', async () => {
                         const currentSettingId = await disputable.getCurrentSettingId()
                         const currentCollateralId = await disputable.getCurrentCollateralRequirementId()
-                        const { actionId, disputableActionId } = await disputable.newAction({ submitter, actionContext, stake, sign, value })
+                        const { actionId, disputableActionId } = await disputable.newAction({ submitter, actionContext, stake, sign })
 
                         const actionData = await disputable.getAction(actionId)
                         assert.equal(actionData.disputable, disputable.disputable.address, 'disputable does not match')
@@ -83,7 +83,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
                       it('locks the collateral amount', async () => {
                         const { locked: previousLockedBalance, available: previousAvailableBalance } = await disputable.getBalance(submitter)
 
-                        await disputable.newAction({ submitter, actionContext, stake, sign, value })
+                        await disputable.newAction({ submitter, actionContext, stake, sign })
 
                         const { locked: currentLockedBalance, available: currentAvailableBalance } = await disputable.getBalance(submitter)
                         assertBn(currentLockedBalance, previousLockedBalance.add(actionCollateral), 'locked balance does not match')
@@ -95,7 +95,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
                         const previousSubmitterBalance = await collateralToken.balanceOf(submitter)
                         const previousStakingBalance = await collateralToken.balanceOf(stakingAddress)
 
-                        await disputable.newAction({ submitter, actionContext, stake, sign, value })
+                        await disputable.newAction({ submitter, actionContext, stake, sign })
 
                         const currentSubmitterBalance = await collateralToken.balanceOf(submitter)
                         assertBn(currentSubmitterBalance, previousSubmitterBalance, 'submitter balance does not match')
@@ -105,7 +105,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
                       })
 
                       it('can be challenged or closed', async () => {
-                        const { actionId } = await disputable.newAction({ submitter, actionContext, stake, sign, value })
+                        const { actionId } = await disputable.newAction({ submitter, actionContext, stake, sign })
 
                         const { canClose, canChallenge, canSettle, canDispute, canClaimSettlement, canRuleDispute } = await disputable.getAllowedPaths(actionId)
                         assert.isTrue(canClose, 'action cannot be closed')
@@ -118,7 +118,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
                       })
 
                       it('emits an event', async () => {
-                        const { receipt, actionId } = await disputable.newAction({ submitter, actionContext, stake, sign, value })
+                        const { receipt, actionId } = await disputable.newAction({ submitter, actionContext, stake, sign })
 
                         assertAmountOfEvents(receipt, AGREEMENT_EVENTS.ACTION_SUBMITTED, { decodeForAbi: disputable.abi })
                         assertEvent(receipt, AGREEMENT_EVENTS.ACTION_SUBMITTED, { expectedArgs: { actionId, disputable: disputable.disputable.address }, decodeForAbi: disputable.abi })
@@ -141,7 +141,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
                       })
 
                       it('can not schedule actions', async () => {
-                        await assertRevert(disputable.newAction({ submitter, actionContext, stake, sign, value }), AGREEMENT_ERRORS.ERROR_SIGNER_MUST_SIGN)
+                        await assertRevert(disputable.newAction({ submitter, actionContext, stake, sign }), AGREEMENT_ERRORS.ERROR_SIGNER_MUST_SIGN)
                       })
 
                       it('can unstake the available balance', async () => {

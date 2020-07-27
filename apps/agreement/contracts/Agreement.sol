@@ -45,8 +45,6 @@ contract Agreement is IAgreement, AragonApp {
     string internal constant ERROR_STAKING_FACTORY_NOT_CONTRACT = "AGR_STAKING_FACTORY_NOT_CONTRACT";
     string internal constant ERROR_ACL_SIGNER_MISSING = "AGR_ACL_ORACLE_SIGNER_MISSING";
     string internal constant ERROR_ACL_SIGNER_NOT_ADDRESS = "AGR_ACL_ORACLE_SIGNER_NOT_ADDR";
-    string internal constant ERROR_INVALID_APP_FEE_AMOUNT = "AGR_INVALID_APP_FEE_AMOUNT";
-    string internal constant ERROR_UNEXPECTED_APP_FEE_VALUE = "AGR_UNEXPECTED_APP_FEE_VALUE";
 
     /* Disputable related errors */
     string internal constant ERROR_SENDER_CANNOT_CHALLENGE_ACTION = "AGR_SENDER_CANT_CHALLENGE_ACTION";
