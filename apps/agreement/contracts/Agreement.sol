@@ -19,7 +19,7 @@ import "@aragon/staking/contracts/StakingFactory.sol";
 import "@aragon/staking/contracts/locking/ILockManager.sol";
 
 
-contract Agreement is IAgreement, AragonApp, ILockManager {
+contract Agreement is ILockManager, IAgreement, AragonApp {
     using SafeMath for uint256;
     using SafeMath64 for uint64;
     using SafeERC20 for ERC20;
@@ -754,7 +754,7 @@ contract Agreement is IAgreement, AragonApp, ILockManager {
     }
 
     /**
-    * @notice Check if a certain amount for a certain address can be unlocked
+    * @notice Check if a certain amount for a certain address can be unlocked in the Staking pool
     * @dev It always returns false because if we allow owners to unlock by themselves,
     *      then the unlock call on closing or settling actions could fail due to
     *      insufficient balance.

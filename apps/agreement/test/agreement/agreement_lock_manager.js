@@ -1,9 +1,5 @@
 const deployer = require('../helpers/utils/deployer')(web3, artifacts)
-const { injectWeb3, injectArtifacts } = require('@aragon/contract-helpers-test')
 const { RULINGS } = require('../helpers/utils/enums')
-
-injectWeb3(web3)
-injectArtifacts(artifacts)
 
 contract('Agreement', ([_, owner, submitter, challenger, someone]) => {
   let disputable, actionCollateral, collateralToken
