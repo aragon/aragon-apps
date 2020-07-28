@@ -26,52 +26,52 @@ contract('Agreement', ([_, owner, submitter, challenger, someone]) => {
       }
 
       before('initial check', async () => {
-        await cannot_unlock()
+        await cannotUnlock()
       })
 
       it('after activation', async () => {
         await disputable.activate({ from: owner })
-        await cannot_unlock()
+        await cannotUnlock()
       })
 
       it('after siging', async () => {
         await disputable.sign(submitter)
-        await cannot_unlock()
+        await cannotUnlock()
       })
 
       it('after allowing manager', async () => {
         await disputable.allowManager({ user: submitter })
-        await cannot_unlock()
+        await cannotUnlock()
       })
 
       it('after staking', async () => {
         await disputable.stake({ amount: actionCollateral, user: submitter })
-        await cannot_unlock()
+        await cannotUnlock()
       })
 
       it('after new action', async () => {
         ({ actionId } = await disputable.newAction({ submitter }))
-        await cannot_unlock()
+        await cannotUnlock()
       })
 
       it('after challenge', async () => {
         await disputable.challenge({ actionId, challenger })
-        await cannot_unlock()
+        await cannotUnlock()
       })
 
       it('after dispute', async () => {
         await disputable.dispute({ actionId })
-        await cannot_unlock()
+        await cannotUnlock()
       })
 
       it('after ruling', async () => {
         await disputable.executeRuling({ actionId, ruling: RULINGS.REFUSED })
-        await cannot_unlock()
+        await cannotUnlock()
       })
 
       it('after close', async () => {
         await disputable.close(actionId)
-        await cannot_unlock()
+        await cannotUnlock()
       })
     })
   })
