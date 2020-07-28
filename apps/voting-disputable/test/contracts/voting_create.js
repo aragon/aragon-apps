@@ -33,7 +33,7 @@ contract('Voting', ([_, owner, holder1, holder2, holder20, holder29, holder51, n
 
       it('fails to forward actions', async () => {
         const { script } = await voteScript()
-        await assertRevert(voting.forward(script, { from: holder51 }), VOTING_ERRORS.VOTING_CANNOT_FORWARD)
+        await assertRevert(voting.forward(script, CONTEXT, { from: holder51 }), VOTING_ERRORS.VOTING_CANNOT_FORWARD)
       })
     })
 
@@ -64,10 +64,10 @@ contract('Voting', ([_, owner, holder1, holder2, holder20, holder29, holder51, n
           })
 
           it('can be forwarded', async () => {
-            const receipt = await voting.forward(script, { from: holder51 })
-            voteId = getEventArgument(receipt, 'StartVote', 'voteId')
+            const receipt = await voting.forward(script, CONTEXT, { from: holder51 })
 
-            assertBn(voteId, 1, 'voting should have been created')
+            assertAmountOfEvents(receipt, 'StartVote')
+            assertEvent(receipt, 'StartVote', { expectedArgs: { voteId: 1, creator: holder51, context: CONTEXT } })
           })
 
           it('emits an event', async () => {

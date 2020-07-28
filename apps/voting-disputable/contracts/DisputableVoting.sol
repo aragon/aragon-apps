@@ -6,13 +6,13 @@ pragma solidity 0.4.24;
 
 import "@aragon/os/contracts/apps/AragonApp.sol";
 import "@aragon/os/contracts/apps/disputable/DisputableAragonApp.sol";
-import "@aragon/os/contracts/forwarding/IForwarder.sol";
+import "@aragon/os/contracts/forwarding/IForwarderWithContext.sol";
 import "@aragon/os/contracts/lib/math/SafeMath.sol";
 import "@aragon/os/contracts/lib/math/SafeMath64.sol";
 import "@aragon/minime/contracts/MiniMeToken.sol";
 
 
-contract DisputableVoting is IForwarder, DisputableAragonApp {
+contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     using SafeMath for uint256;
     using SafeMath64 for uint64;
 
@@ -227,14 +227,14 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
 
     /**
     * @notice Creates a vote to execute the desired action
-    * @dev IForwarder interface conformance
+    * @dev IForwarderWithContext interface conformance
     *      Disputable apps are required to be the initial step in the forwarding chain
     * @param _evmScript EVM script to be executed on approval
+    * @param _context Vote context
     */
-    function forward(bytes _evmScript) external {
+    function forward(bytes _evmScript, bytes _context) external {
         require(_canForward(msg.sender, _evmScript), ERROR_CANNOT_FORWARD);
-        // TODO: Use new forwarding interface with context information
-        _newVote(_evmScript, new bytes(0));
+        _newVote(_evmScript, _context);
     }
 
     /**
@@ -299,7 +299,7 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
 
     /**
     * @dev Tells whether `_sender` can forward actions
-    * @dev IForwarder interface conformance
+    * @dev IForwarderWithContext interface conformance
     * @param _sender Address of the account intending to forward an action
     * @param _evmScript EVM script being forwarded
     * @return True if the given address can create votes
