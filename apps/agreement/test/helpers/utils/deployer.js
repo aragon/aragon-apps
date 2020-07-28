@@ -131,8 +131,8 @@ class AgreementDeployer {
     if (!options.stakingFactory && !this.stakingFactory) await this.deployStakingFactory()
     const stakingFactory = options.stakingFactory || this.stakingFactory
 
-    if (!options.aragonAppFeesCashier && !this.aragonAppFeesCashier) await this.deployAragonAppFeesCashier()
-    const aragonAppFeesCashier = options.aragonAppFeesCashier || this.aragonAppFeesCashier
+    // do not use an app fees cashier by default
+    const aragonAppFeesCashier = options.aragonAppFeesCashier || this.aragonAppFeesCashier || { address: ZERO_ADDRESS }
 
     const defaultOptions = { ...DEFAULT_AGREEMENT_INITIALIZATION_PARAMS, ...options }
     const { title, content } = defaultOptions

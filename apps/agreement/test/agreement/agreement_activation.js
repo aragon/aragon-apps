@@ -24,7 +24,7 @@ contract('Agreement', ([_, someone, owner]) => {
           const receipt = await disputable.activate({ from })
 
           assertAmountOfEvents(receipt, AGREEMENT_EVENTS.DISPUTABLE_ACTIVATED)
-          assertEvent(receipt, AGREEMENT_EVENTS.DISPUTABLE_ACTIVATED, { disputable: disputable.disputable.address })
+          assertEvent(receipt, AGREEMENT_EVENTS.DISPUTABLE_ACTIVATED, { expectedArgs: { disputable: disputable.disputable.address } })
 
           const { activated, currentCollateralRequirementId } = await disputable.getDisputableInfo()
           assert.isTrue(activated, 'disputable state does not match')
@@ -35,7 +35,7 @@ contract('Agreement', ([_, someone, owner]) => {
           const receipt = await disputable.activate({ from })
 
           assertAmountOfEvents(receipt, AGREEMENT_EVENTS.COLLATERAL_REQUIREMENT_CHANGED)
-          assertEvent(receipt, AGREEMENT_EVENTS.COLLATERAL_REQUIREMENT_CHANGED, { disputable: disputable.disputable.address, collateralRequirementId: 1 })
+          assertEvent(receipt, AGREEMENT_EVENTS.COLLATERAL_REQUIREMENT_CHANGED, { expectedArgs: { disputable: disputable.disputable.address, collateralRequirementId: 1 } })
 
           await assertRevert(disputable.getCollateralRequirement(0), AGREEMENT_ERRORS.ERROR_COLLATERAL_REQUIREMENT_DOES_NOT_EXIST)
 
@@ -67,7 +67,7 @@ contract('Agreement', ([_, someone, owner]) => {
             const receipt = await disputable.activate({ from })
 
             assertAmountOfEvents(receipt, AGREEMENT_EVENTS.DISPUTABLE_ACTIVATED)
-            assertEvent(receipt, AGREEMENT_EVENTS.DISPUTABLE_ACTIVATED, { disputable: disputable.disputable.address })
+            assertEvent(receipt, AGREEMENT_EVENTS.DISPUTABLE_ACTIVATED, { expectedArgs: { disputable: disputable.disputable.address } })
 
             const { activated, currentCollateralRequirementId } = await disputable.getDisputableInfo()
             assert.isTrue(activated, 'disputable state does not match')
@@ -80,7 +80,7 @@ contract('Agreement', ([_, someone, owner]) => {
 
             const expectedNewCollateralId = currentCollateralId.add(bn(1))
             assertAmountOfEvents(receipt, AGREEMENT_EVENTS.COLLATERAL_REQUIREMENT_CHANGED)
-            assertEvent(receipt, AGREEMENT_EVENTS.COLLATERAL_REQUIREMENT_CHANGED, { disputable: disputable.disputable.address, collateralRequirementId: expectedNewCollateralId })
+            assertEvent(receipt, AGREEMENT_EVENTS.COLLATERAL_REQUIREMENT_CHANGED, { expectedArgs: { disputable: disputable.disputable.address, collateralRequirementId: expectedNewCollateralId } })
 
             const { collateralToken, actionCollateral, challengeCollateral, challengeDuration } = await disputable.getCollateralRequirement(expectedNewCollateralId)
             assert.equal(collateralToken.address, disputable.collateralToken.address, 'collateral token does not match')
@@ -115,7 +115,7 @@ contract('Agreement', ([_, someone, owner]) => {
             const receipt = await disputable.deactivate({ from })
 
             assertAmountOfEvents(receipt, AGREEMENT_EVENTS.DISPUTABLE_DEACTIVATED)
-            assertEvent(receipt, AGREEMENT_EVENTS.DISPUTABLE_DEACTIVATED, { disputable: disputable.disputable.address })
+            assertEvent(receipt, AGREEMENT_EVENTS.DISPUTABLE_DEACTIVATED, { expectedArgs: { disputable: disputable.disputable.address } })
 
             const { activated, currentCollateralRequirementId } = await disputable.getDisputableInfo()
             assert.isFalse(activated, 'disputable state does not match')

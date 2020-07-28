@@ -134,7 +134,7 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
                     const { currentChallengeId } = await disputable.getAction(actionId)
 
                     assertAmountOfEvents(receipt, AGREEMENT_EVENTS.ACTION_CHALLENGED)
-                    assertEvent(receipt, AGREEMENT_EVENTS.ACTION_CHALLENGED, { actionId, challengeId: currentChallengeId })
+                    assertEvent(receipt, AGREEMENT_EVENTS.ACTION_CHALLENGED, { expectedArgs: { actionId, challengeId: currentChallengeId } })
                   })
 
                   it('it can be answered only', async () => {

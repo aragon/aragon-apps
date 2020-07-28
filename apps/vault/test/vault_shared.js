@@ -263,7 +263,7 @@ module.exports = (vaultName, { accounts, artifacts, web3 }) => {
         })
 
         // MIGRATION: update to aOS 5.x, `transferToVault` is using `.transfer`, not enough gas being forwarded
-        it.skip('set up the default vault correctly to recover ETH from the kernel', async () => {
+        it('set up the default vault correctly to recover ETH from the kernel', async () => {
           await kernel.sendTransaction({ value: 1, gas: 31000 })
           assertBn(await web3.eth.getBalance(kernel.address), 1, 'kernel should have 1 balance')
 
