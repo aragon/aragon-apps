@@ -109,11 +109,6 @@ contract DisputableAppMock is IForwarderWithContext, DisputableAragonApp, Shared
         return _canForward(_sender, _evmScript);
     }
 
-    // TODO: how are we going to implement this from the disputable apps?
-    function forwardFee() external view returns (address, uint256) {
-        return (address(0), 0);
-    }
-
     /**
     * @dev Challenge an entry
     * @param _id Identification number of the entry to be challenged
