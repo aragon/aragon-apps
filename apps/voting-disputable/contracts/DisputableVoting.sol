@@ -94,6 +94,7 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
         uint64 pausedAt;                                    // Datetime when the vote was paused
         uint64 pauseDuration;                               // Duration in seconds while the vote has been paused
         uint64 quietEndingExtendedSeconds;                  // Total number of seconds a vote was extended due to quiet ending
+        VoterState quietEndingSnapshotSupport;              // Snapshot support at the beginning of the quiet ending period
         bytes executionScript;                              // EVM script attached to the vote
         mapping (address => VoteCast) castVotes;            // Cast votes information indexed by voter address: status and caster address
     }
@@ -397,6 +398,7 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     * @return pausedAt Datetime when the vote was paused
     * @return pauseDuration Duration in seconds while the vote has been paused
     * @return quietEndingExtendedSeconds Total number of seconds a vote was extended due to quiet ending
+    * @return quietEndingSnapshotSupport Snapshot support at the beginning of the quiet ending period
     * @return executionScript EVM script attached to the vote
     */
     function getVote(uint256 _voteId)
@@ -414,6 +416,7 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
             uint64 pausedAt,
             uint64 pauseDuration,
             uint64 quietEndingExtendedSeconds,
+            VoterState quietEndingSnapshotSupport,
             bytes executionScript
         )
     {
@@ -430,6 +433,7 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
         pausedAt = vote_.pausedAt;
         pauseDuration = vote_.pauseDuration;
         quietEndingExtendedSeconds = vote_.quietEndingExtendedSeconds;
+        quietEndingSnapshotSupport = vote_.quietEndingSnapshotSupport;
         executionScript = vote_.executionScript;
     }
 
@@ -723,9 +727,7 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
         }
 
         // Check the vote has enough support and has reached the min quorum
-        uint256 yeas = vote_.yea;
-        uint256 totalVotes = yeas.add(vote_.nay);
-        return _isAccepted(yeas, totalVotes, vote_.votingPower, setting.supportRequiredPct, setting.minAcceptQuorumPct);
+        return _isAccepted(vote_, setting);
     }
 
     /**
@@ -809,7 +811,7 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     * @return True if the given vote has ended
     */
     function _hasEnded(Vote storage vote_) internal view returns (bool) {
-        return getTimestamp64() >= _finalVoteEndDate(vote_);
+        return getTimestamp64() >= _finalVoteEndDate(vote_) && !_wasFlipped(vote_);
     }
 
     /**
@@ -872,6 +874,27 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     }
 
     /**
+    * @dev Internal function to tell whether a vote was flipped or not based on its snapshot support
+    *      It assumes the pointer to the vote is valid
+    */
+    function _wasFlipped(Vote storage vote_) internal view returns (bool) {
+        // If there was no snapshot taken, it means no one voted during the quiet ending period. Thus, it was not flipped.
+        VoterState snapshotSupport = vote_.quietEndingSnapshotSupport;
+        if (snapshotSupport == VoterState.Absent) {
+            return false;
+        }
+
+        // Otherwise, we have to know if the vote was flipped comparing if was accepted or not during its last extension
+        bool wasAccepted = snapshotSupport == VoterState.Yea;
+        Setting storage setting = settings[vote_.settingId];
+        uint256 currentExtensions = vote_.quietEndingExtendedSeconds / setting.quietEndingExtension;
+        for (uint256 i = 0; i < currentExtensions; i++) {
+            wasAccepted = !wasAccepted;
+        }
+        return wasAccepted != _isAccepted(vote_, setting);
+    }
+
+    /**
     * @dev Internal function to get the state of a voter
     *      It assumes the pointer to the vote is valid
     */
@@ -920,14 +943,13 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     /**
     * @dev Tells whether a vote is accepted or not
     *      It checks there is enough support and the minimum acceptance quorum has been reached
+    *      It assumes the pointer to the vote and its setting are valid
     */
-    function _isAccepted(uint256 _yeas, uint256 _totalVotes, uint256 _votingPower, uint64 _supportRequired, uint64 _minimumAcceptanceQuorum)
-        internal
-        pure
-        returns (bool)
-    {
-        return _isValuePct(_yeas, _totalVotes, _supportRequired) &&
-        _isValuePct(_yeas, _votingPower, _minimumAcceptanceQuorum);
+    function _isAccepted(Vote storage vote_, Setting storage _setting) internal view returns (bool) {
+        uint256 yeas = vote_.yea;
+        uint256 nays = vote_.nay;
+        return _isValuePct(yeas, yeas.add(nays), _setting.supportRequiredPct)
+            && _isValuePct(yeas, vote_.votingPower, _setting.minAcceptQuorumPct);
     }
 
     /**
@@ -947,58 +969,65 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     *      It assumes the pointer to the vote is valid
     */
     function _castVote(Vote storage vote_, uint256 _voteId, bool _supports, address _voter, address _caster) private {
-        uint256 yeas = vote_.yea;
-        uint256 nays = vote_.nay;
-        uint256 votingPower = vote_.votingPower;
         Setting storage setting = settings[vote_.settingId];
-        uint64 supportRequired = setting.supportRequiredPct;
-        uint64 minimumAcceptanceQuorum = setting.minAcceptQuorumPct;
-
-        bool wasAccepted = _isAccepted(yeas, yeas.add(nays), votingPower, supportRequired, minimumAcceptanceQuorum);
-        (yeas, nays) = _computeCastVote(vote_, _voteId, yeas, nays, _supports, _voter, _caster);
-
-        if (_withinQuietEndingPeriod(vote_, setting)) {
-            bool isAccepted = _isAccepted(yeas, yeas.add(nays), votingPower, supportRequired, minimumAcceptanceQuorum);
-            if (wasAccepted != isAccepted) {
-                vote_.quietEndingExtendedSeconds = vote_.quietEndingExtendedSeconds.add(setting.quietEndingExtension);
-                emit VoteQuietEndingExtension(_voteId, isAccepted);
-            }
-        }
+        _withinQuietEndingPeriod(vote_, setting)
+            ? _computeCastVoteWithQuietEnding(vote_, setting, _voteId, _supports, _voter, _caster)
+            : _computeCastVote(vote_, _voteId, _supports, _voter, _caster);
     }
 
     /**
-    * @dev Private function to compute a cast vote
+    * @dev Private function to compute a cast vote in the normal voting phase
     *      It assumes the pointer to the vote is valid
     */
-    function _computeCastVote(Vote storage vote_, uint256 _voteId, uint256 _yeas, uint256 _nays, bool _supports, address _voter, address _caster)
-        private
-        returns (uint256, uint256)
-    {
+    function _computeCastVote(Vote storage vote_, uint256 _voteId, bool _supports, address _voter, address _caster) private {
+        uint256 yeas = vote_.yea;
+        uint256 nays = vote_.nay;
         uint256 voterStake = token.balanceOfAt(_voter, vote_.snapshotBlock);
+
         VoteCast storage castVote = vote_.castVotes[_voter];
         VoterState previousVoterState = castVote.state;
 
         // If voter had previously voted, decrease count
         // Note that votes can be changed only during the overrule window
         if (previousVoterState == VoterState.Yea) {
-            _yeas = _yeas.sub(voterStake);
+            yeas = yeas.sub(voterStake);
         } else if (previousVoterState == VoterState.Nay) {
-            _nays = _nays.sub(voterStake);
+            nays = nays.sub(voterStake);
         }
 
         if (_supports) {
-            _yeas = _yeas.add(voterStake);
+            yeas = yeas.add(voterStake);
         } else {
-            _nays = _nays.add(voterStake);
+            nays = nays.add(voterStake);
         }
 
-        vote_.yea = _yeas;
-        vote_.nay = _nays;
-        castVote.state = _supports ? VoterState.Yea : VoterState.Nay;
+        vote_.yea = yeas;
+        vote_.nay = nays;
+        castVote.state = _voterStateFor(_supports);
         castVote.caster = _caster;
         emit CastVote(_voteId, _voter, _supports, voterStake);
+    }
 
-        return (_yeas, _nays);
+    /**
+    * @dev Private function to compute a cast vote within the quiet ending period
+    *      It assumes the pointer to the vote and its setting are valid
+    */
+    function _computeCastVoteWithQuietEnding(Vote storage vote_, Setting storage _setting, uint256 _voteId, bool _supports, address _voter, address _caster) private {
+        bool wasAccepted = _isAccepted(vote_, _setting);
+        _computeCastVote(vote_, _voteId, _supports, _voter, _caster);
+
+        if (vote_.quietEndingSnapshotSupport == VoterState.Absent) {
+            // If the snapshot support at beginning of the quiet ending period was not taken yet, we simply store it. Note that if there
+            // were no votes during the quiet ending period, this snapshot is never stored and the vote end date is not affected.
+            vote_.quietEndingSnapshotSupport = _voterStateFor(wasAccepted);
+        } else {
+            // First, we make sure the extension is persisted, if are voting within the extension and it was not considered yet, we store it.
+            // Note that we are trusting `_canVote`, if we reached this point, it means the vote's flip was already confirmed.
+            if (getTimestamp64() >= _finalVoteEndDate(vote_)) {
+                vote_.quietEndingExtendedSeconds = vote_.quietEndingExtendedSeconds.add(_setting.quietEndingExtension);
+                emit VoteQuietEndingExtension(_voteId, wasAccepted);
+            }
+        }
     }
 
     /**
@@ -1023,7 +1052,7 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     }
 
     /**
-    * @dev Internal function to compute the start date of time duration from the original vote end date
+    * @dev Private function to compute the start date of time duration from the original vote end date
     *      It considers the pause duration only if the vote has "returned" from being paused,
     *      and if the pause occurred before the start date of the time duration being queried
     *      It assumes the pointer to the vote is valid
@@ -1039,5 +1068,12 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
         uint64 originalDurationStartDate = _originalVoteEndDate(vote_).sub(_duration);
         bool pausedBeforeDurationStarts = pausedAt != 0 && pausedAt < originalDurationStartDate;
         return pausedBeforeDurationStarts ? originalDurationStartDate.add(vote_.pauseDuration) : originalDurationStartDate;
+    }
+
+    /**
+    * @dev Private function to tell the voter state for a support option
+    */
+    function _voterStateFor(bool _supports) private pure returns (VoterState) {
+        return _supports ? VoterState.Yea : VoterState.Nay;
     }
 }

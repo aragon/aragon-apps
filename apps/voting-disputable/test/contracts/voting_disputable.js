@@ -1,18 +1,18 @@
 const votingDeployer = require('../helpers/deployer')(web3, artifacts)
 const agreementDeployer = require('@aragon/apps-agreement/test/helpers/utils/deployer')(web3, artifacts)
 const { VOTING_ERRORS } = require('../helpers/errors')
-const { VOTE_STATUS, createVote, voteScript, getVoteState } = require('../helpers/voting')
+const { VOTE_STATUS, VOTER_STATE, createVote, voteScript, getVoteState } = require('../helpers/voting')
 
 const { toAscii, utf8ToHex } = require('web3-utils')
 const { RULINGS } = require('@aragon/apps-agreement/test/helpers/utils/enums')
 const { ONE_DAY, pct16, bigExp, bn } = require('@aragon/contract-helpers-test')
-const { assertBn, assertRevert, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/asserts')
+const { assertBn, assertRevert, assertEvent, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/asserts')
 
-contract('Voting disputable', ([_, owner, representative, voter20, voter29, voter51]) => {
+contract('Voting disputable', ([_, owner, representative, voter10, voter20, voter29, voter40]) => {
   let voting, token, agreement, voteId, actionId, collateralToken, executionTarget, script
 
-  const MIN_QUORUM = pct16(20)
-  const MIN_SUPPORT = pct16(20)
+  const MIN_QUORUM = pct16(10)
+  const MIN_SUPPORT = pct16(50)
   const VOTING_DURATION = ONE_DAY * 5
   const OVERRULE_WINDOW = ONE_DAY
   const QUIET_ENDING_PERIOD = ONE_DAY * 2
@@ -23,15 +23,16 @@ contract('Voting disputable', ([_, owner, representative, voter20, voter29, vote
     collateralToken = await agreementDeployer.deployCollateralToken()
     votingDeployer.previousDeploy = agreementDeployer.previousDeploy
 
-    await agreement.sign(voter51)
+    await agreement.sign(voter40)
     await votingDeployer.deployBase({ owner, agreement: true })
   })
 
   before('mint vote tokens', async () => {
     token = await votingDeployer.deployToken({})
-    await token.generateTokens(voter51, bigExp(51, 18))
+    await token.generateTokens(voter40, bigExp(40, 18))
     await token.generateTokens(voter29, bigExp(29, 18))
     await token.generateTokens(voter20, bigExp(20, 18))
+    await token.generateTokens(voter10, bigExp(10, 18))
   })
 
   beforeEach('create voting app', async () => {
@@ -48,7 +49,7 @@ contract('Voting disputable', ([_, owner, representative, voter20, voter29, vote
   })
 
   beforeEach('create vote', async () => {
-    ({ voteId } = await createVote({ voting, script, voteContext: CONTEXT, from: voter51 }))
+    ({ voteId } = await createVote({ voting, script, voteContext: CONTEXT, from: voter40 }))
     actionId = (await voting.getVote(voteId)).actionId
   })
 
@@ -69,12 +70,12 @@ contract('Voting disputable', ([_, owner, representative, voter20, voter29, vote
       assert.equal(disputable, voting.address, 'disputable address does not match')
       assertBn(collateralRequirementId, 1, 'collateral ID does not match')
       assert.equal(toAscii(context), 'some context', 'context does not match')
-      assert.equal(submitter, voter51, 'action submitter does not match')
+      assert.equal(submitter, voter40, 'action submitter does not match')
       assert.isFalse(closed, 'action is not closed')
     })
 
     it('cannot be paused if ready to be executed', async () => {
-      await voting.vote(voteId, true, { from: voter51 })
+      await voting.vote(voteId, true, { from: voter40 })
       await voting.mockIncreaseTime(VOTING_DURATION)
 
       await assertRevert(agreement.challenge({ actionId }), 'AGR_CANNOT_CHALLENGE_ACTION')
@@ -83,7 +84,7 @@ contract('Voting disputable', ([_, owner, representative, voter20, voter29, vote
 
   describe('execute', () => {
     beforeEach('vote', async () => {
-      await voting.vote(voteId, true, { from: voter51 })
+      await voting.vote(voteId, true, { from: voter40 })
       await voting.mockIncreaseTime(VOTING_DURATION)
       await voting.executeVote(voteId)
     })
@@ -107,7 +108,7 @@ contract('Voting disputable', ([_, owner, representative, voter20, voter29, vote
       assert.equal(disputable, voting.address, 'disputable address does not match')
       assertBn(collateralRequirementId, 1, 'collateral ID does not match')
       assert.equal(toAscii(context), 'some context', 'context does not match')
-      assert.equal(submitter, voter51, 'action submitter does not match')
+      assert.equal(submitter, voter40, 'action submitter does not match')
     })
 
     it('cannot be paused', async () => {
@@ -120,7 +121,7 @@ contract('Voting disputable', ([_, owner, representative, voter20, voter29, vote
 
     beforeEach('challenge vote', async () => {
       currentTimestamp = await voting.getTimestampPublic()
-      await voting.vote(voteId, true, { from: voter51 })
+      await voting.vote(voteId, true, { from: voter40 })
       await agreement.challenge({ actionId })
     })
 
@@ -224,20 +225,20 @@ contract('Voting disputable', ([_, owner, representative, voter20, voter29, vote
 
       it('does not affect the overrule window', async () => {
         // the vote duration is 5 days and the overrule is 1 day, there still must be 4 days without overruling
-        await voting.setRepresentative(representative, { from: voter51 })
-        assert.isTrue(await voting.canVoteOnBehalfOf(voteId, [voter51], representative), 'should be able to vote')
+        await voting.setRepresentative(representative, { from: voter40 })
+        assert.isTrue(await voting.canVoteOnBehalfOf(voteId, [voter40], representative), 'should be able to vote')
 
         // move fwd just 1 day
         await voting.mockIncreaseTime(ONE_DAY)
-        assert.isTrue(await voting.canVoteOnBehalfOf(voteId, [voter51], representative), 'should be able to vote')
+        assert.isTrue(await voting.canVoteOnBehalfOf(voteId, [voter40], representative), 'should be able to vote')
 
         // move fwd right before the overrule window starts
         await voting.mockIncreaseTime(ONE_DAY * 3 - 1)
-        assert.isTrue(await voting.canVoteOnBehalfOf(voteId, [voter51], representative), 'should be able to vote')
+        assert.isTrue(await voting.canVoteOnBehalfOf(voteId, [voter40], representative), 'should be able to vote')
 
         // move fwd right when the overrule window starts
         await voting.mockIncreaseTime(1)
-        assert.isFalse(await voting.canVoteOnBehalfOf(voteId, [voter51], representative), 'should be able to vote')
+        assert.isFalse(await voting.canVoteOnBehalfOf(voteId, [voter40], representative), 'should be able to vote')
       })
 
       it('does not affect the quiet ending period', async () => {
@@ -247,10 +248,26 @@ contract('Voting disputable', ([_, owner, representative, voter20, voter29, vote
         const firstReceipt = await voting.vote(voteId, false, { from: voter29 })
         assertAmountOfEvents(firstReceipt, 'VoteQuietEndingExtension', { expectedAmount: 0 })
 
-        // move fwd right when the quiet ending period starts
-        await voting.mockIncreaseTime(1)
-        const secondReceipt = await voting.vote(voteId, true, { from: voter51 })
-        assertAmountOfEvents(secondReceipt, 'VoteQuietEndingExtension', { expectedAmount: 1 })
+        const firstVoteState = await getVoteState(voting, voteId)
+        assertBn(firstVoteState.quietEndingSnapshotSupport, VOTER_STATE.ABSENT, 'quiet ending snapshot does not match')
+
+        // force flipped vote
+        await voting.mockIncreaseTime(ONE_DAY)
+        const secondReceipt = await voting.vote(voteId, true, { from: voter40 })
+        assertAmountOfEvents(secondReceipt, 'VoteQuietEndingExtension', { expectedAmount: 0 })
+
+        const secondVoteState = await getVoteState(voting, voteId)
+        assertBn(secondVoteState.quietEndingSnapshotSupport, VOTER_STATE.NAY, 'quiet ending snapshot does not match')
+
+        // move at the end of the vote and vote
+        await voting.mockIncreaseTime(ONE_DAY * 2)
+        assert.isTrue(await voting.canVote(voteId, voter10), 'voter cannot vote')
+        const thirdReceipt = await voting.vote(voteId, true, { from: voter10 })
+        assertAmountOfEvents(thirdReceipt, 'VoteQuietEndingExtension', { expectedAmount: 1 })
+        assertEvent(thirdReceipt, 'VoteQuietEndingExtension', { voteId, passing: true })
+
+        const thirdVoteState = await getVoteState(voting, voteId)
+        assertBn(thirdVoteState.quietEndingSnapshotSupport, VOTER_STATE.NAY, 'quiet ending snapshot does not match')
       })
 
       it('cannot be challenged again', async () => {
