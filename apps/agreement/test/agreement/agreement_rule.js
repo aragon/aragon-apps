@@ -108,8 +108,10 @@ contract('Agreement', ([_, submitter, challenger]) => {
                         assert.equal(currentChallengeState.challenger, previousChallengeState.challenger, 'challenger does not match')
                         assertBn(currentChallengeState.endDate, previousChallengeState.endDate, 'challenge end date does not match')
                         assertBn(currentChallengeState.settlementOffer, previousChallengeState.settlementOffer, 'challenge settlement offer does not match')
-                        assertBn(currentChallengeState.arbitratorFeeAmount, previousChallengeState.arbitratorFeeAmount, 'arbitrator amount does not match')
-                        assert.equal(currentChallengeState.arbitratorFeeToken, previousChallengeState.arbitratorFeeToken, 'arbitrator token does not match')
+                        assertBn(currentChallengeState.challengerArbitratorFeeAmount, previousChallengeState.challengerArbitratorFeeAmount, 'challenger arbitrator amount does not match')
+                        assert.equal(currentChallengeState.challengerArbitratorFeeToken, previousChallengeState.challengerArbitratorFeeToken, 'challenger arbitrator token does not match')
+                        assertBn(currentChallengeState.submitterArbitratorFeeAmount, previousChallengeState.submitterArbitratorFeeAmount, 'submitter arbitrator amount does not match')
+                        assert.equal(currentChallengeState.submitterArbitratorFeeToken, previousChallengeState.submitterArbitratorFeeToken, 'submitter arbitrator token does not match')
                         assertBn(currentChallengeState.disputeId, previousChallengeState.disputeId, 'challenge dispute ID does not match')
                       })
 

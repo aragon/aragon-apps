@@ -38,8 +38,9 @@ class AgreementWrapper {
   }
 
   async getChallenge(challengeId) {
-    const { actionId, context, endDate, challenger, settlementOffer, arbitratorFeeAmount, arbitratorFeeToken, state, disputeId, ruling, submitterFinishedEvidence, challengerFinishedEvidence } = await this.agreement.getChallenge(challengeId)
-    return { actionId, context, endDate, challenger, settlementOffer, arbitratorFeeAmount, arbitratorFeeToken, state, disputeId, ruling, submitterFinishedEvidence, challengerFinishedEvidence }
+    const { actionId, context, endDate, challenger, settlementOffer, state, disputeId, ruling, submitterFinishedEvidence, challengerFinishedEvidence } = await this.agreement.getChallenge(challengeId)
+    const { challengerArbitratorFeeAmount, challengerArbitratorFeeToken, submitterArbitratorFeeAmount, submitterArbitratorFeeToken }  = await this.agreement.getChallengeFees(challengeId)
+    return { actionId, context, endDate, challenger, settlementOffer, challengerArbitratorFeeAmount, challengerArbitratorFeeToken, submitterArbitratorFeeAmount, submitterArbitratorFeeToken, state, disputeId, ruling, submitterFinishedEvidence, challengerFinishedEvidence }
   }
 
   async getSigner(signer) {
@@ -121,11 +122,11 @@ class AgreementWrapper {
     return this.agreement.closeAction(actionId)
   }
 
-  async challenge({ actionId, challenger = undefined, settlementOffer = 0, challengeContext = '0xdcba', finishedSubmittingEvidence = false, arbitrationFees = undefined }) {
+  async challenge({ actionId, challenger = undefined, settlementOffer = 0, challengeContext = '0xdcba', finishedSubmittingEvidence = false, arbitratorFees = undefined }) {
     if (!challenger) challenger = await this._getSender()
 
-    if (arbitrationFees === undefined) arbitrationFees = await this.halfArbitrationFees()
-    if (arbitrationFees) await this.approveArbitrationFees({ amount: arbitrationFees, from: challenger })
+    if (arbitratorFees === undefined) arbitratorFees = await this.arbitratorFees()
+    if (arbitratorFees) await this.approveArbitratorFees({ amount: arbitratorFees, from: challenger })
 
     const receipt = await this.agreement.challengeAction(actionId, settlementOffer, finishedSubmittingEvidence, challengeContext, { from: challenger })
     const challengeId = getEventArgument(receipt, AGREEMENT_EVENTS.ACTION_CHALLENGED, 'challengeId')
@@ -137,11 +138,11 @@ class AgreementWrapper {
     return this.agreement.settleAction(actionId, { from })
   }
 
-  async dispute({ actionId, from = undefined, finishedSubmittingEvidence = false, arbitrationFees = undefined }) {
+  async dispute({ actionId, from = undefined, finishedSubmittingEvidence = false, arbitratorFees = undefined }) {
     if (!from) from = (await this.getAction(actionId)).submitter
 
-    if (arbitrationFees === undefined) arbitrationFees = await this.missingArbitrationFees(actionId)
-    if (arbitrationFees) await this.approveArbitrationFees({ amount: arbitrationFees, from })
+    if (arbitratorFees === undefined) arbitratorFees = await this.arbitratorFees()
+    if (arbitratorFees) await this.approveArbitratorFees({ amount: arbitratorFees, from })
 
     return this.agreement.disputeAction(actionId, finishedSubmittingEvidence, { from })
   }
@@ -200,35 +201,35 @@ class AgreementWrapper {
     return this.agreement.changeSetting(arbitrator.address, aragonAppFeesCashierAddress, title, content, { from })
   }
 
-  async approveArbitrationFees({ amount = undefined, from = undefined, accumulate = false }) {
+  async approveArbitratorFees({ amount = undefined, from = undefined, accumulate = false }) {
     if (!from) from = await this._getSender()
-    if (amount === undefined) amount = await this.halfArbitrationFees()
+    if (amount === undefined) amount = await this.arbitratorFees()
 
     const feeToken = await this.arbitratorToken()
     await feeToken.generateTokens(from, amount)
     await this.safeApprove(feeToken, from, this.address, amount, accumulate)
   }
 
-  async arbitratorFees() {
+  async getDisputeFees() {
     const { feeToken: feeTokenAddress, feeAmount } = await this.arbitrator.getDisputeFees()
     const MiniMeToken = this._getContract('MiniMeToken')
     const feeToken = await MiniMeToken.at(feeTokenAddress)
     return { feeToken, feeAmount }
   }
 
+  async arbitratorFees() {
+    const { feeAmount } = await this.getDisputeFees()
+    return feeAmount
+  }
+
   async arbitratorToken() {
-    const { feeToken } = await this.arbitratorFees()
+    const { feeToken } = await this.getDisputeFees()
     return feeToken
   }
 
-  async halfArbitrationFees() {
-    const { feeAmount } = await this.arbitratorFees()
+  async halfArbitratorFees() {
+    const feeAmount = await this.arbitratorFees()
     return feeAmount.div(bn(2))
-  }
-
-  async missingArbitrationFees(actionId) {
-    const { missingFees } = await this.agreement.getMissingArbitratorFees(actionId)
-    return missingFees
   }
 
   async currentTimestamp() {
