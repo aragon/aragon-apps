@@ -196,7 +196,7 @@ class AgreementWrapper {
   async changeSetting({ title = 'title', content = '0x1234', arbitrator = undefined, aragonAppFeesCashierAddress = undefined, from = undefined }) {
     if (!from) from = await this._getSender()
     if (!arbitrator) arbitrator = this.arbitrator
-    if (!aragonAppFeesCashierAddress) aragonAppFeesCashierAddress = this.aragonAppFeesCashier.address
+    if (!aragonAppFeesCashierAddress) aragonAppFeesCashierAddress = this.aragonAppFeesCashier ? this.aragonAppFeesCashier.address : ZERO_ADDRESS
     return this.agreement.changeSetting(arbitrator.address, aragonAppFeesCashierAddress, title, content, { from })
   }
 

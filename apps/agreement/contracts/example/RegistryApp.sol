@@ -8,7 +8,7 @@ import "@aragon/os/contracts/apps/disputable/DisputableAragonApp.sol";
 
 
 // TODO: Move this sample app to aragonOS
-contract Registry is DisputableAragonApp {
+contract RegistryApp is DisputableAragonApp {
     /* Validation errors */
     string internal constant ERROR_CANNOT_REGISTER = "REGISTRY_CANNOT_REGISTER";
     string internal constant ERROR_SENDER_NOT_ALLOWED = "REGISTRY_SENDER_NOT_ALLOWED";
@@ -115,29 +115,6 @@ contract Registry is DisputableAragonApp {
     function canClose(uint256 _id) external view returns (bool) {
         Entry storage entry = entries[bytes32(_id)];
         return _isRegistered(entry) && !_isChallenged(entry);
-    }
-
-    /**
-    * @notice Schedule a new entry
-    * @dev IForwarder interface conformance
-    * @param _data Data requested to be registered
-    */
-    function forward(bytes memory _data) public {
-        require(canForward(msg.sender, _data), ERROR_CANNOT_REGISTER);
-
-        (bytes32 id, bytes memory value) = _decodeData(_data);
-        _register(msg.sender, id, value, new bytes(0));
-    }
-
-    /**
-    * @notice Tells whether `_sender` can forward actions or not
-    * @dev IForwarder interface conformance
-    * @param _sender Address of the account intending to forward an action
-    * @return True if the given address can submit actions, false otherwise
-    */
-    function canForward(address _sender, bytes _data) public view returns (bool) {
-        (bytes32 id,) = _decodeData(_data);
-        return canPerform(_sender, REGISTER_ENTRY_ROLE, arr(id));
     }
 
     /**
@@ -252,25 +229,5 @@ contract Registry is DisputableAragonApp {
         Entry storage entry = entries[_id];
         require(_isRegistered(entry), ERROR_ENTRY_DOES_NOT_EXIST);
         return entry;
-    }
-
-    /*
-    * @dev Decode an arbitrary data array into an entry ID and value
-    * @param _data Arbitrary data array
-    * @return id Identification number of an entry
-    * @return value Value for the entry
-    */
-    function _decodeData(bytes _data) internal pure returns (bytes32 id, bytes memory value) {
-        require(_data.length >= 32, ERROR_CANNOT_DECODE_DATA);
-
-        assembly {
-            id := mload(add(_data, 32))
-        }
-
-        uint256 remainingDataLength = _data.length - 32;
-        value = new bytes(remainingDataLength);
-        for (uint256 i = 0; i < remainingDataLength; i++) {
-            value[i] = _data[i + 32];
-        }
     }
 }

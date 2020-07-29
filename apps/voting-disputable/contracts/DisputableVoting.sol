@@ -683,7 +683,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @dev Internal function to create a new setting object
     * @return New setting object
     */
-    function _newSetting() private returns (Setting storage setting, uint256 settingId) {
+    function _newSetting() internal returns (Setting storage setting, uint256 settingId) {
         settingId = settingsLength++;
         setting = settings[settingId];
         emit NewSetting(settingId);
