@@ -256,10 +256,10 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     * @param _supports Whether voter supports the vote
     */
     function vote(uint256 _voteId, bool _supports) external {
-        Vote storage vote_ = _getVote(_voteId);
-        require(_canVote(vote_, msg.sender), ERROR_CANNOT_VOTE);
+        Vote storage _vote = _getVote(_voteId);
+        require(_canVote(_vote, msg.sender), ERROR_CANNOT_VOTE);
 
-        _castVote(vote_, _voteId, _supports, msg.sender, address(0));
+        _castVote(_vote, _voteId, _supports, msg.sender, address(0));
     }
 
     /**
@@ -282,17 +282,17 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     * @param _voteId Id for vote
     */
     function executeVote(uint256 _voteId) external {
-        Vote storage vote_ = _getVote(_voteId);
-        require(_canExecute(vote_), ERROR_CANNOT_EXECUTE);
+        Vote storage _vote = _getVote(_voteId);
+        require(_canExecute(_vote), ERROR_CANNOT_EXECUTE);
 
-        vote_.status = VoteStatus.Executed;
-        _closeAgreementAction(vote_.actionId);
+        _vote.status = VoteStatus.Executed;
+        _closeAgreementAction(_vote.actionId);
 
         // Add Agreement to blacklist to disallow the stored EVMScript from directly calling the
         // linked Agreement from this app's context (e.g. maliciously creating a new action)
         address[] memory blacklist = new address[](1);
         blacklist[0] = address(_getAgreement());
-        runScript(vote_.executionScript, new bytes(0), blacklist);
+        runScript(_vote.executionScript, new bytes(0), blacklist);
         emit ExecuteVote(_voteId);
     }
 
@@ -317,8 +317,8 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     * @return True if the given vote can be challenged
     */
     function canChallenge(uint256 _voteId) external view returns (bool) {
-        Vote storage vote_ = _getVote(_voteId);
-        return _isVoteOpenForVoting(vote_) && vote_.pausedAt == 0;
+        Vote storage _vote = _getVote(_voteId);
+        return _isVoteOpenForVoting(_vote) && _vote.pausedAt == 0;
     }
 
     /**
@@ -327,8 +327,8 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     * @return True if the given vote can be closed
     */
     function canClose(uint256 _voteId) external view returns (bool) {
-        Vote storage vote_ = _getVote(_voteId);
-        return (_isActive(vote_) || _isExecuted(vote_)) && _hasEnded(vote_);
+        Vote storage _vote = _getVote(_voteId);
+        return (_isActive(_vote) || _isExecuted(_vote)) && _hasEnded(_vote);
     }
 
     // Getter fns
@@ -366,15 +366,15 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     * @return True if the given representative can vote on behalf of the given voter in a certain vote
     */
     function canVoteOnBehalfOf(uint256 _voteId, address[] _voters, address _representative) external view returns (bool) {
-        Vote storage vote_ = _getVote(_voteId);
+        Vote storage _vote = _getVote(_voteId);
 
-        if (!_canDelegateVote(vote_)) {
+        if (!_canDelegateVote(_vote)) {
             return false;
         }
 
         for (uint256 i = 0; i < _voters.length; i++) {
             address voter = _voters[i];
-            if (!_hasVotingPower(vote_, voter) || !_isRepresentativeOf(voter, _representative) || _hasCastVote(vote_, voter)) {
+            if (!_hasVotingPower(_vote, voter) || !_isRepresentativeOf(voter, _representative) || _hasCastVote(_vote, voter)) {
                 return false;
             }
         }
@@ -420,21 +420,21 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
             bytes executionScript
         )
     {
-        Vote storage vote_ = _getVote(_voteId);
+        Vote storage _vote = _getVote(_voteId);
 
-        yea = vote_.yea;
-        nay = vote_.nay;
-        votingPower = vote_.votingPower;
-        settingId = vote_.settingId;
-        actionId = vote_.actionId;
-        status = vote_.status;
-        startDate = vote_.startDate;
-        snapshotBlock = vote_.snapshotBlock;
-        pausedAt = vote_.pausedAt;
-        pauseDuration = vote_.pauseDuration;
-        quietEndingExtendedSeconds = vote_.quietEndingExtendedSeconds;
-        quietEndingSnapshotSupport = vote_.quietEndingSnapshotSupport;
-        executionScript = vote_.executionScript;
+        yea = _vote.yea;
+        nay = _vote.nay;
+        votingPower = _vote.votingPower;
+        settingId = _vote.settingId;
+        actionId = _vote.actionId;
+        status = _vote.status;
+        startDate = _vote.startDate;
+        snapshotBlock = _vote.snapshotBlock;
+        pausedAt = _vote.pausedAt;
+        pauseDuration = _vote.pauseDuration;
+        quietEndingExtendedSeconds = _vote.quietEndingExtendedSeconds;
+        quietEndingSnapshotSupport = _vote.quietEndingSnapshotSupport;
+        executionScript = _vote.executionScript;
     }
 
     /**
@@ -447,9 +447,9 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     * @return caster Address of the caster of the voter's vote
     */
     function getCastVote(uint256 _voteId, address _voter) external view returns (VoterState state, address caster) {
-        Vote storage vote_ = _getVote(_voteId);
-        state = _voterState(vote_, _voter);
-        caster = _voteCaster(vote_, _voter);
+        Vote storage _vote = _getVote(_voteId);
+        state = _voterState(_vote, _voter);
+        caster = _voteCaster(_vote, _voter);
     }
 
     /**
@@ -522,8 +522,8 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     * @return True if the requested vote is within the overrule window for delegated votes
     */
     function withinOverruleWindow(uint256 _voteId) external view returns (bool) {
-        Vote storage vote_ = _getVote(_voteId);
-        return _isVoteOpenForVoting(vote_) && _withinOverruleWindow(vote_);
+        Vote storage _vote = _getVote(_voteId);
+        return _isVoteOpenForVoting(_vote) && _withinOverruleWindow(_vote);
     }
 
     // DisputableAragonApp callback implementations
@@ -534,11 +534,11 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     * @param _challengeId Identification number of the challenge associated to the vote in the Agreement app
     */
     function _onDisputableActionChallenged(uint256 _voteId, uint256 _challengeId, address /* _challenger */) internal {
-        Vote storage vote_ = _getVote(_voteId);
-        require(_isActive(vote_), ERROR_CANNOT_PAUSE_VOTE);
+        Vote storage _vote = _getVote(_voteId);
+        require(_isActive(_vote), ERROR_CANNOT_PAUSE_VOTE);
 
-        vote_.status = VoteStatus.Paused;
-        vote_.pausedAt = getTimestamp64();
+        _vote.status = VoteStatus.Paused;
+        _vote.pausedAt = getTimestamp64();
         emit PauseVote(_voteId, _challengeId);
     }
 
@@ -547,11 +547,11 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     * @param _voteId Id for vote to be allowed
     */
     function _onDisputableActionAllowed(uint256 _voteId) internal {
-        Vote storage vote_ = _getVote(_voteId);
-        require(_isPaused(vote_), ERROR_VOTE_NOT_PAUSED);
+        Vote storage _vote = _getVote(_voteId);
+        require(_isPaused(_vote), ERROR_VOTE_NOT_PAUSED);
 
-        vote_.status = VoteStatus.Active;
-        vote_.pauseDuration = getTimestamp64().sub(vote_.pausedAt);
+        _vote.status = VoteStatus.Active;
+        _vote.pauseDuration = getTimestamp64().sub(_vote.pausedAt);
         emit ResumeVote(_voteId);
     }
 
@@ -560,11 +560,11 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     * @param _voteId Id for vote to be rejected
     */
     function _onDisputableActionRejected(uint256 _voteId) internal {
-        Vote storage vote_ = _getVote(_voteId);
-        require(_isPaused(vote_), ERROR_VOTE_NOT_PAUSED);
+        Vote storage _vote = _getVote(_voteId);
+        require(_isPaused(_vote), ERROR_VOTE_NOT_PAUSED);
 
-        vote_.status = VoteStatus.Cancelled;
-        vote_.pauseDuration = getTimestamp64().sub(vote_.pausedAt);
+        _vote.status = VoteStatus.Cancelled;
+        _vote.pauseDuration = getTimestamp64().sub(_vote.pausedAt);
         emit CancelVote(_voteId);
     }
 
@@ -647,17 +647,17 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
 
         voteId = votesLength++;
 
-        Vote storage vote_ = votes[voteId];
-        vote_.startDate = getTimestamp64();
-        vote_.snapshotBlock = snapshotBlock;
-        vote_.settingId = _getCurrentSettingId();
-        vote_.votingPower = votingPower;
-        vote_.executionScript = _executionScript;
-        vote_.status = VoteStatus.Active;
+        Vote storage _vote = votes[voteId];
+        _vote.startDate = getTimestamp64();
+        _vote.snapshotBlock = snapshotBlock;
+        _vote.settingId = _getCurrentSettingId();
+        _vote.votingPower = votingPower;
+        _vote.executionScript = _executionScript;
+        _vote.status = VoteStatus.Active;
 
         // Notify the Agreement app tied to the current voting app about the vote created.
         // This is mandatory to make the vote disputable, by storing a reference to it on the Agreement app.
-        vote_.actionId = _newAgreementAction(voteId, _context, msg.sender);
+        _vote.actionId = _newAgreementAction(voteId, _context, msg.sender);
 
         emit StartVote(voteId, msg.sender, _context);
     }
@@ -666,16 +666,16 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     * @dev Internal function for a representative to cast a vote on behalf of many voters. It assumes the queried vote exists.
     */
     function _voteOnBehalfOf(uint256 _voteId, bool _supports, address[] _voters) internal {
-        Vote storage vote_ = _getVote(_voteId);
-        require(_canDelegateVote(vote_), ERROR_CANNOT_DELEGATE_VOTE);
+        Vote storage _vote = _getVote(_voteId);
+        require(_canDelegateVote(_vote), ERROR_CANNOT_DELEGATE_VOTE);
 
         for (uint256 i = 0; i < _voters.length; i++) {
             address voter = _voters[i];
-            require(_hasVotingPower(vote_, voter), ERROR_CANNOT_VOTE);
+            require(_hasVotingPower(_vote, voter), ERROR_CANNOT_VOTE);
             require(_isRepresentativeOf(voter, msg.sender), ERROR_NOT_REPRESENTATIVE);
 
-            if (!_hasCastVote(vote_, voter)) {
-                _castVote(vote_, _voteId, _supports, voter, msg.sender);
+            if (!_hasCastVote(_vote, voter)) {
+                _castVote(_vote, _voteId, _supports, voter, msg.sender);
                 emit ProxyVoteSuccess(_voteId, voter, msg.sender, _supports);
             } else {
                 emit ProxyVoteFailure(_voteId, voter, msg.sender);
@@ -709,25 +709,25 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     *      It assumes the pointer to the vote is valid
     * @return True if the given vote can be executed
     */
-    function _canExecute(Vote storage vote_) internal view returns (bool) {
+    function _canExecute(Vote storage _vote) internal view returns (bool) {
         // If vote is executed, paused, or cancelled, it cannot be executed
-        if (!_isActive(vote_)) {
+        if (!_isActive(_vote)) {
             return false;
         }
 
         // If the vote is still open, it cannot be executed
-        if (!_hasEnded(vote_)) {
+        if (!_hasEnded(_vote)) {
             return false;
         }
 
         // If the vote is within its execution delay window, it cannot be executed
-        Setting storage setting = settings[vote_.settingId];
-        if (_withinExecutionDelayWindow(vote_, setting)) {
+        Setting storage setting = settings[_vote.settingId];
+        if (_withinExecutionDelayWindow(_vote, setting)) {
             return false;
         }
 
         // Check the vote has enough support and has reached the min quorum
-        return _isAccepted(vote_, setting);
+        return _isAccepted(_vote, setting);
     }
 
     /**
@@ -735,8 +735,8 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     *      It assumes the pointer to the vote is valid
     * @return True if the given vote can receive delegated votes
     */
-    function _canDelegateVote(Vote storage vote_) internal view returns (bool) {
-        return _isActive(vote_) && !_withinOverruleWindow(vote_);
+    function _canDelegateVote(Vote storage _vote) internal view returns (bool) {
+        return _isActive(_vote) && !_withinOverruleWindow(_vote);
     }
 
     /**
@@ -744,8 +744,8 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     *      It assumes the pointer to the vote is valid
     * @return True if the given voter can participate a certain vote
     */
-    function _canVote(Vote storage vote_, address _voter) internal view returns (bool) {
-        return _isVoteOpenForVoting(vote_) && _hasVotingPower(vote_, _voter) && _voteCaster(vote_, _voter) != _voter;
+    function _canVote(Vote storage _vote, address _voter) internal view returns (bool) {
+        return _isVoteOpenForVoting(_vote) && _hasVotingPower(_vote, _voter) && _voteCaster(_vote, _voter) != _voter;
     }
 
     /**
@@ -753,8 +753,8 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     *      It assumes the pointer to the vote is valid
     * @return True if the given voter has voting power for a certain vote
     */
-    function _hasVotingPower(Vote storage vote_, address _voter) internal view returns (bool) {
-        return token.balanceOfAt(_voter, vote_.snapshotBlock) > 0;
+    function _hasVotingPower(Vote storage _vote, address _voter) internal view returns (bool) {
+        return token.balanceOfAt(_voter, _vote.snapshotBlock) > 0;
     }
 
     /**
@@ -762,8 +762,8 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     *      It assumes the pointer to the vote is valid
     * @return True if a vote for the given voter has already been cast
     */
-    function _hasCastVote(Vote storage vote_, address _voter) internal view returns (bool) {
-        return _voterState(vote_, _voter) != VoterState.Absent;
+    function _hasCastVote(Vote storage _vote, address _voter) internal view returns (bool) {
+        return _voterState(_vote, _voter) != VoterState.Absent;
     }
 
     /**
@@ -777,41 +777,41 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     /**
     * @dev Tell whether a vote is active
     *      It assumes the pointer to the vote is valid
-    * @param vote_ Vote action instance being queried
+    * @param _vote Vote action instance being queried
     * @return True if the given vote is active
     */
-    function _isActive(Vote storage vote_) internal view returns (bool) {
-        return vote_.status == VoteStatus.Active;
+    function _isActive(Vote storage _vote) internal view returns (bool) {
+        return _vote.status == VoteStatus.Active;
     }
 
     /**
     * @dev Tell whether a vote is executed
     *      It assumes the pointer to the vote is valid
-    * @param vote_ Vote action instance being queried
+    * @param _vote Vote action instance being queried
     * @return True if the given vote is executed
     */
-    function _isExecuted(Vote storage vote_) internal view returns (bool) {
-        return vote_.status == VoteStatus.Executed;
+    function _isExecuted(Vote storage _vote) internal view returns (bool) {
+        return _vote.status == VoteStatus.Executed;
     }
 
     /**
     * @dev Tell whether a vote is paused
     *      It assumes the pointer to the vote is valid
-    * @param vote_ Vote action instance being queried
+    * @param _vote Vote action instance being queried
     * @return True if the given vote is paused
     */
-    function _isPaused(Vote storage vote_) internal view returns (bool) {
-        return vote_.status == VoteStatus.Paused;
+    function _isPaused(Vote storage _vote) internal view returns (bool) {
+        return _vote.status == VoteStatus.Paused;
     }
 
     /**
     * @dev Tell whether a vote has ended or not
     *      It assumes the pointer to the vote is valid
-    * @param vote_ Vote action instance being queried
+    * @param _vote Vote action instance being queried
     * @return True if the given vote has ended
     */
-    function _hasEnded(Vote storage vote_) internal view returns (bool) {
-        return getTimestamp64() >= _finalVoteEndDate(vote_) && !_wasFlipped(vote_);
+    function _hasEnded(Vote storage _vote) internal view returns (bool) {
+        return getTimestamp64() >= _finalVoteEndDate(_vote) && !_wasFlipped(_vote);
     }
 
     /**
@@ -819,8 +819,8 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     *      It assumes the pointer to the vote is valid
     * @return True if the given vote is open for voting
     */
-    function _isVoteOpenForVoting(Vote storage vote_) internal view returns (bool) {
-        return _isActive(vote_) && !_hasEnded(vote_);
+    function _isVoteOpenForVoting(Vote storage _vote) internal view returns (bool) {
+        return _isActive(_vote) && !_hasEnded(_vote);
     }
 
     /**
@@ -829,9 +829,9 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     *      It assumes the pointer to the vote is valid
     * @return True if the given vote is within its overrule window
     */
-    function _withinOverruleWindow(Vote storage vote_) internal view returns (bool) {
-        Setting storage setting = settings[vote_.settingId];
-        return getTimestamp64() >= _durationStartDate(vote_, setting.overruleWindow);
+    function _withinOverruleWindow(Vote storage _vote) internal view returns (bool) {
+        Setting storage setting = settings[_vote.settingId];
+        return getTimestamp64() >= _durationStartDate(_vote, setting.overruleWindow);
     }
 
     /**
@@ -840,8 +840,8 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     *      It assumes the pointer to the vote is valid
     * @return True if the given vote is within its quiet ending period
     */
-    function _withinQuietEndingPeriod(Vote storage vote_, Setting storage _setting) internal view returns (bool) {
-        return getTimestamp64() >= _durationStartDate(vote_, _setting.quietEndingPeriod);
+    function _withinQuietEndingPeriod(Vote storage _vote, Setting storage _setting) internal view returns (bool) {
+        return getTimestamp64() >= _durationStartDate(_vote, _setting.quietEndingPeriod);
     }
 
     /**
@@ -849,8 +849,8 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     *      It assumes the pointer to the vote is valid
     * @return True if the given vote is within its execution delay window
     */
-    function _withinExecutionDelayWindow(Vote storage vote_, Setting storage _setting) internal view returns (bool) {
-        return getTimestamp64() < _finalVoteEndDate(vote_).add(_setting.executionDelay);
+    function _withinExecutionDelayWindow(Vote storage _vote, Setting storage _setting) internal view returns (bool) {
+        return getTimestamp64() < _finalVoteEndDate(_vote).add(_setting.executionDelay);
     }
 
     /**
@@ -858,8 +858,8 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     *      It does not consider the paused nor quiet ending extensions
     *      It assumes the pointer to the vote is valid
     */
-    function _originalVoteEndDate(Vote storage vote_) internal view returns (uint64) {
-        return vote_.startDate.add(voteTime);
+    function _originalVoteEndDate(Vote storage _vote) internal view returns (uint64) {
+        return _vote.startDate.add(voteTime);
     }
 
     /**
@@ -868,48 +868,48 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     *      The pause duration will be included only after the vote has "returned" from being paused
     *      It assumes the pointer to the vote is valid
     */
-    function _finalVoteEndDate(Vote storage vote_) internal view returns (uint64) {
-        uint64 endDateAfterPause = _originalVoteEndDate(vote_).add(vote_.pauseDuration);
-        return endDateAfterPause.add(vote_.quietEndingExtendedSeconds);
+    function _finalVoteEndDate(Vote storage _vote) internal view returns (uint64) {
+        uint64 endDateAfterPause = _originalVoteEndDate(_vote).add(_vote.pauseDuration);
+        return endDateAfterPause.add(_vote.quietEndingExtendedSeconds);
     }
 
     /**
     * @dev Internal function to tell whether a vote was flipped or not based on its snapshot support
     *      It assumes the pointer to the vote is valid
     */
-    function _wasFlipped(Vote storage vote_) internal view returns (bool) {
+    function _wasFlipped(Vote storage _vote) internal view returns (bool) {
         // If there was no snapshot taken, it means no one voted during the quiet ending period. Thus, it was not flipped.
-        VoterState snapshotSupport = vote_.quietEndingSnapshotSupport;
+        VoterState snapshotSupport = _vote.quietEndingSnapshotSupport;
         if (snapshotSupport == VoterState.Absent) {
             return false;
         }
 
         // Otherwise, we have to know if the vote was flipped comparing if was accepted or not during its last extension
         bool wasInitiallyAccepted = snapshotSupport == VoterState.Yea;
-        Setting storage setting = settings[vote_.settingId];
-        uint256 currentExtensions = vote_.quietEndingExtendedSeconds / setting.quietEndingExtension;
+        Setting storage setting = settings[_vote.settingId];
+        uint256 currentExtensions = _vote.quietEndingExtendedSeconds / setting.quietEndingExtension;
         bool wasAcceptedBeforeLastFlip = wasInitiallyAccepted != (currentExtensions % 2 != 0);
-        return wasAcceptedBeforeLastFlip != _isAccepted(vote_, setting);
+        return wasAcceptedBeforeLastFlip != _isAccepted(_vote, setting);
     }
 
     /**
     * @dev Internal function to get the state of a voter
     *      It assumes the pointer to the vote is valid
     */
-    function _voterState(Vote storage vote_, address _voter) internal view returns (VoterState) {
-        return vote_.castVotes[_voter].state;
+    function _voterState(Vote storage _vote, address _voter) internal view returns (VoterState) {
+        return _vote.castVotes[_voter].state;
     }
 
     /**
     * @dev Internal function to get the caster of a vote
     *      It assumes the pointer to the vote is valid
     */
-    function _voteCaster(Vote storage vote_, address _voter) internal view returns (address) {
-        if (!_hasCastVote(vote_, _voter)) {
+    function _voteCaster(Vote storage _vote, address _voter) internal view returns (address) {
+        if (!_hasCastVote(_vote, _voter)) {
             return address(0);
         }
 
-        address _caster = vote_.castVotes[_voter].caster;
+        address _caster = _vote.castVotes[_voter].caster;
         return _caster == address(0) ? _voter : _caster;
     }
 
@@ -943,11 +943,11 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     *      It checks there is enough support and the minimum acceptance quorum has been reached
     *      It assumes the pointer to the vote and its setting are valid
     */
-    function _isAccepted(Vote storage vote_, Setting storage _setting) internal view returns (bool) {
-        uint256 yeas = vote_.yea;
-        uint256 nays = vote_.nay;
+    function _isAccepted(Vote storage _vote, Setting storage _setting) internal view returns (bool) {
+        uint256 yeas = _vote.yea;
+        uint256 nays = _vote.nay;
         return _isValuePct(yeas, yeas.add(nays), _setting.supportRequiredPct)
-            && _isValuePct(yeas, vote_.votingPower, _setting.minAcceptQuorumPct);
+            && _isValuePct(yeas, _vote.votingPower, _setting.minAcceptQuorumPct);
     }
 
     /**
@@ -966,15 +966,15 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     * @dev Private function to cast a vote
     *      It assumes the pointer to the vote is valid
     */
-    function _castVote(Vote storage vote_, uint256 _voteId, bool _supports, address _voter, address _caster) private {
-        Setting storage setting = settings[vote_.settingId];
-        bool wasAccepted = _isAccepted(vote_, setting);
+    function _castVote(Vote storage _vote, uint256 _voteId, bool _supports, address _voter, address _caster) private {
+        Setting storage setting = settings[_vote.settingId];
+        bool wasAccepted = _isAccepted(_vote, setting);
 
-        uint256 yeas = vote_.yea;
-        uint256 nays = vote_.nay;
-        uint256 voterStake = token.balanceOfAt(_voter, vote_.snapshotBlock);
+        uint256 yeas = _vote.yea;
+        uint256 nays = _vote.nay;
+        uint256 voterStake = token.balanceOfAt(_voter, _vote.snapshotBlock);
 
-        VoteCast storage castVote = vote_.castVotes[_voter];
+        VoteCast storage castVote = _vote.castVotes[_voter];
         VoterState previousVoterState = castVote.state;
 
         // If voter had previously voted, decrease count
@@ -991,14 +991,14 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
             nays = nays.add(voterStake);
         }
 
-        vote_.yea = yeas;
-        vote_.nay = nays;
+        _vote.yea = yeas;
+        _vote.nay = nays;
         castVote.state = _voterStateFor(_supports);
         castVote.caster = _caster;
         emit CastVote(_voteId, _voter, _supports, voterStake);
 
-        if (_withinQuietEndingPeriod(vote_, setting)) {
-            _ensureQuietEnding(vote_, setting, _voteId, wasAccepted);
+        if (_withinQuietEndingPeriod(_vote, setting)) {
+            _ensureQuietEnding(_vote, setting, _voteId, wasAccepted);
         }
     }
 
@@ -1006,16 +1006,16 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     * @dev Private function to make sure we keep track of the information related to ensure a quiet ending
     *      It assumes the pointer to the vote and its setting are valid
     */
-    function _ensureQuietEnding(Vote storage vote_, Setting storage _setting, uint256 _voteId, bool _wasAccepted) private {
-        if (vote_.quietEndingSnapshotSupport == VoterState.Absent) {
+    function _ensureQuietEnding(Vote storage _vote, Setting storage _setting, uint256 _voteId, bool _wasAccepted) private {
+        if (_vote.quietEndingSnapshotSupport == VoterState.Absent) {
             // If the snapshot support at beginning of the quiet ending period was not taken yet, we simply store it. Note that if there
             // were no votes during the quiet ending period, this snapshot is never stored and the vote end date is not affected.
-            vote_.quietEndingSnapshotSupport = _voterStateFor(_wasAccepted);
+            _vote.quietEndingSnapshotSupport = _voterStateFor(_wasAccepted);
         } else {
             // First, we make sure the extension is persisted, if are voting within the extension and it was not considered yet, we store it.
             // Note that we are trusting `_canVote`, if we reached this point, it means the vote's flip was already confirmed.
-            if (getTimestamp64() >= _finalVoteEndDate(vote_)) {
-                vote_.quietEndingExtendedSeconds = vote_.quietEndingExtendedSeconds.add(_setting.quietEndingExtension);
+            if (getTimestamp64() >= _finalVoteEndDate(_vote)) {
+                _vote.quietEndingExtendedSeconds = _vote.quietEndingExtendedSeconds.add(_setting.quietEndingExtension);
                 emit VoteQuietEndingExtension(_voteId, _wasAccepted);
             }
         }
@@ -1054,11 +1054,11 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     *      |                                           |                      |
     *  vote starts                            duration start date         vote ends
     */
-    function _durationStartDate(Vote storage vote_, uint64 _duration) private view returns (uint64) {
-        uint64 pausedAt = vote_.pausedAt;
-        uint64 originalDurationStartDate = _originalVoteEndDate(vote_).sub(_duration);
+    function _durationStartDate(Vote storage _vote, uint64 _duration) private view returns (uint64) {
+        uint64 pausedAt = _vote.pausedAt;
+        uint64 originalDurationStartDate = _originalVoteEndDate(_vote).sub(_duration);
         bool pausedBeforeDurationStarts = pausedAt != 0 && pausedAt < originalDurationStartDate;
-        return pausedBeforeDurationStarts ? originalDurationStartDate.add(vote_.pauseDuration) : originalDurationStartDate;
+        return pausedBeforeDurationStarts ? originalDurationStartDate.add(_vote.pauseDuration) : originalDurationStartDate;
     }
 
     /**
