@@ -6,7 +6,7 @@ pragma solidity 0.4.24;
 
 import "@aragon/os/contracts/apps/AragonApp.sol";
 import "@aragon/os/contracts/apps/disputable/IAgreement.sol";
-import "@aragon/os/contracts/apps/disputable/IDisputable.sol";
+import "@aragon/os/contracts/apps/disputable/DisputableAragonApp.sol";
 import "@aragon/os/contracts/common/ConversionHelpers.sol";
 import "@aragon/os/contracts/common/SafeERC20.sol";
 import "@aragon/os/contracts/common/TimeHelpers.sol";
@@ -16,9 +16,10 @@ import "@aragon/os/contracts/lib/math/SafeMath.sol";
 import "@aragon/os/contracts/lib/math/SafeMath64.sol";
 import "@aragon/staking/contracts/Staking.sol";
 import "@aragon/staking/contracts/StakingFactory.sol";
+import "@aragon/staking/contracts/locking/ILockManager.sol";
 
 
-contract Agreement is IAgreement, AragonApp {
+contract Agreement is ILockManager, IAgreement, AragonApp {
     using SafeMath for uint256;
     using SafeMath64 for uint64;
     using SafeERC20 for ERC20;
@@ -62,7 +63,7 @@ contract Agreement is IAgreement, AragonApp {
     string internal constant ERROR_SUBMITTER_FINISHED_EVIDENCE = "AGR_SUBMITTER_FINISHED_EVIDENCE";
     string internal constant ERROR_CHALLENGER_FINISHED_EVIDENCE = "AGR_CHALLENGER_FINISHED_EVIDENCE";
 
-    // This role is checked against the disputable apps when users try to challenge disuptable actions.
+    // This role is checked against the disputable apps when users try to challenge disputable actions.
     // Thus, it must be configured per disputable app. Please take a look at `canPerformChallenge` for reference.
     // bytes32 public constant CHALLENGE_ROLE = keccak256("CHALLENGE_ROLE");
     bytes32 public constant CHALLENGE_ROLE = 0xef025787d7cd1a96d9014b8dc7b44899b8c1350859fb9e1e05f5a546dd65158d;
@@ -81,7 +82,7 @@ contract Agreement is IAgreement, AragonApp {
     }
 
     struct Action {
-        IDisputable disputable;             // Address of the disputable that created the action
+        DisputableAragonApp disputable;     // Address of the disputable that created the action
         uint256 disputableActionId;         // Identification number of the disputable action in the context of the disputable instance
         uint256 collateralRequirementId;    // Identification number of the collateral requirements for the given action
         uint256 settingId;                  // Identification number of the agreement setting for the given action
@@ -184,7 +185,7 @@ contract Agreement is IAgreement, AragonApp {
         DisputableInfo storage disputableInfo = disputableInfos[_disputableAddress];
         _ensureInactiveDisputable(disputableInfo);
 
-        IDisputable disputable = IDisputable(_disputableAddress);
+        DisputableAragonApp disputable = DisputableAragonApp(_disputableAddress);
         disputableInfo.activated = true;
         emit DisputableAppActivated(disputable);
 
@@ -221,7 +222,7 @@ contract Agreement is IAgreement, AragonApp {
     * @param _challengeAmount Amount of collateral tokens that will be locked every time an action is challenged
     */
     function changeCollateralRequirement(
-        IDisputable _disputable,
+        DisputableAragonApp _disputable,
         ERC20 _collateralToken,
         uint256 _actionAmount,
         uint256 _challengeAmount,
@@ -292,7 +293,7 @@ contract Agreement is IAgreement, AragonApp {
         CollateralRequirement storage requirement = _getCollateralRequirement(disputableInfo, currentCollateralRequirementId);
         _lockBalance(requirement.staking, _submitter, requirement.actionAmount);
 
-        IDisputable disputable = IDisputable(msg.sender);
+        DisputableAragonApp disputable = DisputableAragonApp(msg.sender);
 
         uint256 id = nextActionId++;
         Action storage action = actions[id];
@@ -315,18 +316,21 @@ contract Agreement is IAgreement, AragonApp {
     /**
     * @notice Close action #`_actionId`
     * @dev If allowed by the originating Disputable app, this function allows users to close actions that are not:
-    *      - Closed
     *      - Currently challenged
     *      - Ruled as voided
     *      - Ruled in favour of the submitter
+    *      It does nothing if the action is already closed
     *      Initialization check is implicitly provided by `_canClose()` as disputable actions can be created only
     *      via `newAction()` which already requires initialization implicitly through `activate()`
     * @param _actionId Identification number of the action to be closed
     */
     function closeAction(uint256 _actionId) external {
         Action storage action = _getAction(_actionId);
-        require(_canClose(action), ERROR_CANNOT_CLOSE_ACTION);
+        if (action.closed) {
+            return;
+        }
 
+        require(_canClose(action), ERROR_CANNOT_CLOSE_ACTION);
         (, CollateralRequirement storage requirement) = _getDisputableFor(action);
         _unlockBalance(requirement.staking, action.submitter, requirement.actionAmount);
         _closeAction(_actionId, action);
@@ -345,7 +349,7 @@ contract Agreement is IAgreement, AragonApp {
         Action storage action = _getAction(_actionId);
         require(_canChallenge(action), ERROR_CANNOT_CHALLENGE_ACTION);
 
-        (IDisputable disputable, CollateralRequirement storage requirement) = _getDisputableFor(action);
+        (DisputableAragonApp disputable, CollateralRequirement storage requirement) = _getDisputableFor(action);
         require(_canPerformChallenge(disputable, msg.sender), ERROR_SENDER_CANNOT_CHALLENGE_ACTION);
         require(_settlementOffer <= requirement.actionAmount, ERROR_INVALID_SETTLEMENT_OFFER);
 
@@ -378,7 +382,7 @@ contract Agreement is IAgreement, AragonApp {
             require(_canClaimSettlement(challenge), ERROR_CANNOT_SETTLE_ACTION);
         }
 
-        (IDisputable disputable, CollateralRequirement storage requirement) = _getDisputableFor(action);
+        (DisputableAragonApp disputable, CollateralRequirement storage requirement) = _getDisputableFor(action);
         uint256 actionCollateral = requirement.actionAmount;
         uint256 settlementOffer = challenge.settlementOffer;
 
@@ -750,6 +754,17 @@ contract Agreement is IAgreement, AragonApp {
         return _isDisputed(challenge);
     }
 
+    /**
+    * @notice Check if a certain amount for a certain address can be unlocked in the Staking pool
+    * @dev It always returns false because if we allow owners to unlock by themselves,
+    *      then the unlock call on closing or settling actions could fail due to
+    *      insufficient balance.
+    * @return Whether given lock of given owner can be unlocked by given sender
+    */
+    function canUnlock(address, uint256) external view returns (bool) {
+        return false;
+    }
+
     // Internal fns
 
     /**
@@ -759,7 +774,7 @@ contract Agreement is IAgreement, AragonApp {
     * @param _submitter Address of the user that has submitted the action
     * @param _actionId Identification number of the action to be paid for
     */
-    function _payAppFees(Setting storage _setting, IDisputable _disputable, address _submitter, uint256 _actionId) internal {
+    function _payAppFees(Setting storage _setting, DisputableAragonApp _disputable, address _submitter, uint256 _actionId) internal {
         // Get fees
         IAragonAppFeesCashier aragonAppFeesCashier = _setting.aragonAppFeesCashier;
         if (aragonAppFeesCashier == IAragonAppFeesCashier(0)) {
@@ -773,15 +788,13 @@ contract Agreement is IAgreement, AragonApp {
             return;
         }
 
-        // Get staking pool
+        // We pull the required amount from the specified token staking pool and approve them to the cashier
         Staking staking = stakingFactory.getOrCreateInstance(token);
-
-        // Pull required fee amount from staking pool
         _lockBalance(staking, _submitter, amount);
         _slashBalance(staking, _submitter, address(this), amount);
+        _approveFor(token, address(aragonAppFeesCashier), amount);
 
         // Pay fees
-        _approveFor(token, address(aragonAppFeesCashier), amount);
         aragonAppFeesCashier.payAppFees(appId, abi.encodePacked(_actionId));
     }
 
@@ -938,7 +951,7 @@ contract Agreement is IAgreement, AragonApp {
         _challenge.state = ChallengeState.Accepted;
 
         address challenger = _challenge.challenger;
-        (IDisputable disputable, CollateralRequirement storage requirement) = _getDisputableFor(_action);
+        (DisputableAragonApp disputable, CollateralRequirement storage requirement) = _getDisputableFor(_action);
         _slashBalance(requirement.staking, _action.submitter, challenger, requirement.actionAmount);
         _transferTo(requirement.token, challenger, requirement.challengeAmount);
         // try/catch for:
@@ -960,7 +973,7 @@ contract Agreement is IAgreement, AragonApp {
         _challenge.state = ChallengeState.Rejected;
 
         address submitter = _action.submitter;
-        (IDisputable disputable, CollateralRequirement storage requirement) = _getDisputableFor(_action);
+        (DisputableAragonApp disputable, CollateralRequirement storage requirement) = _getDisputableFor(_action);
         _transferTo(requirement.token, submitter, requirement.challengeAmount);
         // try/catch for:
         // disputable.onDisputableActionAllowed(_action.disputableActionId);
@@ -978,7 +991,7 @@ contract Agreement is IAgreement, AragonApp {
     function _voidAction(uint256 _actionId, Action storage _action, uint256 _challengeId, Challenge storage _challenge) internal {
         _challenge.state = ChallengeState.Voided;
 
-        (IDisputable disputable, CollateralRequirement storage requirement) = _getDisputableFor(_action);
+        (DisputableAragonApp disputable, CollateralRequirement storage requirement) = _getDisputableFor(_action);
         _transferTo(requirement.token, _challenge.challenger, requirement.challengeAmount);
         // try/catch for:
         // disputable.onDisputableActionVoided(_action.disputableActionId);
@@ -1108,7 +1121,7 @@ contract Agreement is IAgreement, AragonApp {
     * @param _challengeDuration Challenge duration in seconds, during which the submitter can raise a dispute
     */
     function _changeCollateralRequirement(
-        IDisputable _disputable,
+        DisputableAragonApp _disputable,
         DisputableInfo storage _disputableInfo,
         ERC20 _collateralToken,
         uint256 _actionAmount,
@@ -1137,7 +1150,7 @@ contract Agreement is IAgreement, AragonApp {
     * @param _challenger Address of the challenger
     * @return True if the challenger can be challenge actions on the Disputable app, false otherwise
     */
-    function _canPerformChallenge(IDisputable _disputable, address _challenger) internal view returns (bool) {
+    function _canPerformChallenge(DisputableAragonApp _disputable, address _challenger) internal view returns (bool) {
         IKernel currentKernel = kernel();
         if (currentKernel == IKernel(0)) {
             return false;
@@ -1165,8 +1178,8 @@ contract Agreement is IAgreement, AragonApp {
             return false;
         }
 
-        IDisputable disputable = _action.disputable;
-        return IDisputable(msg.sender) == disputable || disputable.canClose(_action.disputableActionId);
+        DisputableAragonApp disputable = _action.disputable;
+        return DisputableAragonApp(msg.sender) == disputable || disputable.canClose(_action.disputableActionId);
     }
 
     /**
@@ -1356,7 +1369,7 @@ contract Agreement is IAgreement, AragonApp {
     function _getDisputableFor(Action storage _action)
         internal
         view
-        returns (IDisputable disputable, CollateralRequirement storage requirement)
+        returns (DisputableAragonApp disputable, CollateralRequirement storage requirement)
     {
         disputable = _action.disputable;
         DisputableInfo storage disputableInfo = disputableInfos[address(disputable)];
