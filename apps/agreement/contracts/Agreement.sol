@@ -316,18 +316,21 @@ contract Agreement is ILockManager, IAgreement, AragonApp {
     /**
     * @notice Close action #`_actionId`
     * @dev If allowed by the originating Disputable app, this function allows users to close actions that are not:
-    *      - Closed
     *      - Currently challenged
     *      - Ruled as voided
     *      - Ruled in favour of the submitter
+    *      It does nothing if the action is already closed
     *      Initialization check is implicitly provided by `_canClose()` as disputable actions can be created only
     *      via `newAction()` which already requires initialization implicitly through `activate()`
     * @param _actionId Identification number of the action to be closed
     */
     function closeAction(uint256 _actionId) external {
         Action storage action = _getAction(_actionId);
-        require(_canClose(action), ERROR_CANNOT_CLOSE_ACTION);
+        if (action.closed) {
+            return;
+        }
 
+        require(_canClose(action), ERROR_CANNOT_CLOSE_ACTION);
         (, CollateralRequirement storage requirement) = _getDisputableFor(action);
         _unlockBalance(requirement.staking, action.submitter, requirement.actionAmount);
         _closeAction(_actionId, action);
