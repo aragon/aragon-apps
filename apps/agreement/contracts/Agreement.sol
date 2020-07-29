@@ -318,7 +318,7 @@ contract Agreement is IAgreement, AragonApp {
     *      - Currently challenged
     *      - Ruled as voided
     *      - Ruled in favour of the submitter
-    *      It ignores if the action is already closed, without re-closing it
+    *      It does nothing if the action is already closed
     *      Initialization check is implicitly provided by `_canClose()` as disputable actions can be created only
     *      via `newAction()` which already requires initialization implicitly through `activate()`
     * @param _actionId Identification number of the action to be closed
