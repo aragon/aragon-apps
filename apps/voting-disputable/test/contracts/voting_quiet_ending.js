@@ -125,7 +125,7 @@ contract('Voting', ([_, owner, holder10, holder20, holder30, holder40, holder50]
       })
     }
 
-    context('when there were no votes casted before the quiet ending period', () => {
+    context('when there were no votes cast before the quiet ending period', () => {
       context('when there were no votes during the quiet ending period', () => {
         beforeEach('move to the middle of the quiet ending period', async () => {
           await voting.mockIncreaseTime(VOTE_DURATION - QUIET_ENDING_PERIOD / 2)
@@ -146,7 +146,7 @@ contract('Voting', ([_, owner, holder10, holder20, holder30, holder40, holder50]
         itExtendsTheVoteDuration(currentSupport)
       })
 
-      context('when there were a few votes casted during the quiet ending period', () => {
+      context('when there were a few votes cast during the quiet ending period', () => {
         const currentSupport = true
 
         beforeEach('cast some votes', async () => {
@@ -159,7 +159,7 @@ contract('Voting', ([_, owner, holder10, holder20, holder30, holder40, holder50]
       })
     })
 
-    context('when there was a vote casted before the quiet ending period', () => {
+    context('when there was a vote cast before the quiet ending period', () => {
       const previousSupport = true
 
       beforeEach('cast a votes', async () => {
@@ -202,7 +202,7 @@ contract('Voting', ([_, owner, holder10, holder20, holder30, holder40, holder50]
         })
       })
 
-      context('when there were a few votes casted during the quiet ending period', () => {
+      context('when there were a few votes cast during the quiet ending period', () => {
         beforeEach('move to the middle of the quiet ending period', async () => {
           await voting.mockIncreaseTime(VOTE_DURATION - QUIET_ENDING_PERIOD / 2)
         })
@@ -232,7 +232,7 @@ contract('Voting', ([_, owner, holder10, holder20, holder30, holder40, holder50]
       })
     })
 
-    context('when there were a few votes casted before the quiet ending period', () => {
+    context('when there were a few votes cast before the quiet ending period', () => {
       const previousSupport = false
 
       beforeEach('cast some votes', async () => {

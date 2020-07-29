@@ -50,7 +50,7 @@ contract('Voting', ([_, owner, voter]) => {
     })
 
     context('vote', () => {
-      itCostsAtMost(120e3, async () => await voting.vote(voteId, true, { from: voter }))
+      itCostsAtMost(123e3, async () => await voting.vote(voteId, true, { from: voter }))
     })
 
     context('challenge', () => {

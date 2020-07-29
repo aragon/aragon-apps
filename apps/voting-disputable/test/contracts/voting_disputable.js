@@ -16,6 +16,7 @@ contract('Voting disputable', ([_, owner, representative, voter10, voter20, vote
   const VOTING_DURATION = ONE_DAY * 5
   const OVERRULE_WINDOW = ONE_DAY
   const QUIET_ENDING_PERIOD = ONE_DAY * 2
+  const QUIET_ENDING_EXTENSION = ONE_DAY
   const CONTEXT = utf8ToHex('some context')
 
   before('deploy agreement and base voting', async () => {
@@ -36,7 +37,7 @@ contract('Voting disputable', ([_, owner, representative, voter10, voter20, vote
   })
 
   beforeEach('create voting app', async () => {
-    voting = await votingDeployer.deployAndInitialize({ owner, agreement: true, requiredSupport: MIN_SUPPORT, minimumAcceptanceQuorum: MIN_QUORUM, voteDuration: VOTING_DURATION, quietEndingPeriod: QUIET_ENDING_PERIOD, overruleWindow: OVERRULE_WINDOW })
+    voting = await votingDeployer.deployAndInitialize({ owner, agreement: true, requiredSupport: MIN_SUPPORT, minimumAcceptanceQuorum: MIN_QUORUM, voteDuration: VOTING_DURATION, quietEndingPeriod: QUIET_ENDING_PERIOD, quietEndingExtension: QUIET_ENDING_EXTENSION, overruleWindow: OVERRULE_WINDOW })
     await voting.mockSetTimestamp(await agreement.currentTimestamp())
 
     const SET_AGREEMENT_ROLE = await voting.SET_AGREEMENT_ROLE()
@@ -242,25 +243,25 @@ contract('Voting disputable', ([_, owner, representative, voter10, voter20, vote
       })
 
       it('does not affect the quiet ending period', async () => {
-        // the vote duration is 5 days and the quiet ending is 2 days, there still must be 3 days without quiet ending
         // move fwd right before the quiet ending period starts
-        await voting.mockIncreaseTime(ONE_DAY * 3 - 1)
+        const beforeQuietEnding = currentTimestamp.add(bn(VOTING_DURATION)).sub(bn(QUIET_ENDING_PERIOD + 1))
+        await voting.mockSetTimestamp(beforeQuietEnding)
         const firstReceipt = await voting.vote(voteId, false, { from: voter29 })
         assertAmountOfEvents(firstReceipt, 'VoteQuietEndingExtension', { expectedAmount: 0 })
 
         const firstVoteState = await getVoteState(voting, voteId)
         assertBn(firstVoteState.quietEndingSnapshotSupport, VOTER_STATE.ABSENT, 'quiet ending snapshot does not match')
 
-        // force flipped vote
-        await voting.mockIncreaseTime(ONE_DAY)
+        // force flipped vote, move within quiet ending period
+        await voting.mockIncreaseTime(QUIET_ENDING_PERIOD / 2)
         const secondReceipt = await voting.vote(voteId, true, { from: voter40 })
         assertAmountOfEvents(secondReceipt, 'VoteQuietEndingExtension', { expectedAmount: 0 })
 
         const secondVoteState = await getVoteState(voting, voteId)
         assertBn(secondVoteState.quietEndingSnapshotSupport, VOTER_STATE.NAY, 'quiet ending snapshot does not match')
 
-        // move at the end of the vote and vote
-        await voting.mockIncreaseTime(ONE_DAY * 2)
+        // move after the end of the vote and vote
+        await voting.mockIncreaseTime(QUIET_ENDING_PERIOD / 2 + QUIET_ENDING_EXTENSION / 2)
         assert.isTrue(await voting.canVote(voteId, voter10), 'voter cannot vote')
         const thirdReceipt = await voting.vote(voteId, true, { from: voter10 })
         assertAmountOfEvents(thirdReceipt, 'VoteQuietEndingExtension', { expectedAmount: 1 })

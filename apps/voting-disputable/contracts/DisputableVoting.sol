@@ -885,13 +885,11 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
         }
 
         // Otherwise, we have to know if the vote was flipped comparing if was accepted or not during its last extension
-        bool wasAccepted = snapshotSupport == VoterState.Yea;
+        bool wasInitiallyAccepted = snapshotSupport == VoterState.Yea;
         Setting storage setting = settings[vote_.settingId];
         uint256 currentExtensions = vote_.quietEndingExtendedSeconds / setting.quietEndingExtension;
-        for (uint256 i = 0; i < currentExtensions; i++) {
-            wasAccepted = !wasAccepted;
-        }
-        return wasAccepted != _isAccepted(vote_, setting);
+        bool wasAcceptedBeforeLastFlip = wasInitiallyAccepted != (currentExtensions % 2 != 0);
+        return wasAcceptedBeforeLastFlip != _isAccepted(vote_, setting);
     }
 
     /**
@@ -970,16 +968,8 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
     */
     function _castVote(Vote storage vote_, uint256 _voteId, bool _supports, address _voter, address _caster) private {
         Setting storage setting = settings[vote_.settingId];
-        _withinQuietEndingPeriod(vote_, setting)
-            ? _computeCastVoteWithQuietEnding(vote_, setting, _voteId, _supports, _voter, _caster)
-            : _computeCastVote(vote_, _voteId, _supports, _voter, _caster);
-    }
+        bool wasAccepted = _isAccepted(vote_, setting);
 
-    /**
-    * @dev Private function to compute a cast vote in the normal voting phase
-    *      It assumes the pointer to the vote is valid
-    */
-    function _computeCastVote(Vote storage vote_, uint256 _voteId, bool _supports, address _voter, address _caster) private {
         uint256 yeas = vote_.yea;
         uint256 nays = vote_.nay;
         uint256 voterStake = token.balanceOfAt(_voter, vote_.snapshotBlock);
@@ -1006,26 +996,27 @@ contract DisputableVoting is IForwarder, DisputableAragonApp {
         castVote.state = _voterStateFor(_supports);
         castVote.caster = _caster;
         emit CastVote(_voteId, _voter, _supports, voterStake);
+
+        if (_withinQuietEndingPeriod(vote_, setting)) {
+            _ensureQuietEnding(vote_, setting, _voteId, wasAccepted);
+        }
     }
 
     /**
-    * @dev Private function to compute a cast vote within the quiet ending period
+    * @dev Private function to make sure we keep track of the information related to ensure a quiet ending
     *      It assumes the pointer to the vote and its setting are valid
     */
-    function _computeCastVoteWithQuietEnding(Vote storage vote_, Setting storage _setting, uint256 _voteId, bool _supports, address _voter, address _caster) private {
-        bool wasAccepted = _isAccepted(vote_, _setting);
-        _computeCastVote(vote_, _voteId, _supports, _voter, _caster);
-
+    function _ensureQuietEnding(Vote storage vote_, Setting storage _setting, uint256 _voteId, bool _wasAccepted) private {
         if (vote_.quietEndingSnapshotSupport == VoterState.Absent) {
             // If the snapshot support at beginning of the quiet ending period was not taken yet, we simply store it. Note that if there
             // were no votes during the quiet ending period, this snapshot is never stored and the vote end date is not affected.
-            vote_.quietEndingSnapshotSupport = _voterStateFor(wasAccepted);
+            vote_.quietEndingSnapshotSupport = _voterStateFor(_wasAccepted);
         } else {
             // First, we make sure the extension is persisted, if are voting within the extension and it was not considered yet, we store it.
             // Note that we are trusting `_canVote`, if we reached this point, it means the vote's flip was already confirmed.
             if (getTimestamp64() >= _finalVoteEndDate(vote_)) {
                 vote_.quietEndingExtendedSeconds = vote_.quietEndingExtendedSeconds.add(_setting.quietEndingExtension);
-                emit VoteQuietEndingExtension(_voteId, wasAccepted);
+                emit VoteQuietEndingExtension(_voteId, _wasAccepted);
             }
         }
     }
