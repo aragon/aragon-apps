@@ -39,8 +39,19 @@ class AgreementWrapper {
 
   async getChallenge(challengeId) {
     const { actionId, context, endDate, challenger, settlementOffer, state, disputeId, ruling, submitterFinishedEvidence, challengerFinishedEvidence } = await this.agreement.getChallenge(challengeId)
-    const { challengerArbitratorFeeAmount, challengerArbitratorFeeToken, submitterArbitratorFeeAmount, submitterArbitratorFeeToken }  = await this.agreement.getChallengeFees(challengeId)
-    return { actionId, context, endDate, challenger, settlementOffer, challengerArbitratorFeeAmount, challengerArbitratorFeeToken, submitterArbitratorFeeAmount, submitterArbitratorFeeToken, state, disputeId, ruling, submitterFinishedEvidence, challengerFinishedEvidence }
+    return { actionId, context, endDate, challenger, settlementOffer, state, disputeId, ruling, submitterFinishedEvidence, challengerFinishedEvidence }
+  }
+
+  async getChallengeArbitratorFees(challengeId) {
+    const { challengerArbitratorFeesAmount, challengerArbitratorFeesToken: challengerArbitratorFeesTokenAddress, submitterArbitratorFeesAmount, submitterArbitratorFeesToken: submitterArbitratorFeesTokenAddress }  = await this.agreement.getChallengeArbitratorFees(challengeId)
+    const MiniMeToken = this._getContract('MiniMeToken')
+    return { challengerArbitratorFeesAmount, challengerArbitratorFeesToken: await MiniMeToken.at(challengerArbitratorFeesTokenAddress), submitterArbitratorFeesAmount, submitterArbitratorFeesToken: await MiniMeToken.at(submitterArbitratorFeesTokenAddress) }
+  }
+
+  async getChallengeWithArbitratorFees(challengeId) {
+    const { actionId, context, endDate, challenger, settlementOffer, state, disputeId, ruling, submitterFinishedEvidence, challengerFinishedEvidence } = await this.agreement.getChallenge(challengeId)
+    const { challengerArbitratorFeesAmount, challengerArbitratorFeesToken, submitterArbitratorFeesAmount, submitterArbitratorFeesToken }  = await this.agreement.getChallengeArbitratorFees(challengeId)
+    return { actionId, context, endDate, challenger, settlementOffer, challengerArbitratorFeesAmount, challengerArbitratorFeesToken, submitterArbitratorFeesAmount, submitterArbitratorFeesToken, state, disputeId, ruling, submitterFinishedEvidence, challengerFinishedEvidence }
   }
 
   async getSigner(signer) {
@@ -225,11 +236,6 @@ class AgreementWrapper {
   async arbitratorToken() {
     const { feeToken } = await this.getDisputeFees()
     return feeToken
-  }
-
-  async halfArbitratorFees() {
-    const feeAmount = await this.arbitratorFees()
-    return feeAmount.div(bn(2))
   }
 
   async currentTimestamp() {

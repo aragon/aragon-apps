@@ -64,7 +64,7 @@ contract('Agreement', ([_, user]) => {
         await disputable.challenge({ actionId })
       })
 
-      itCostsAtMost(346e3, () => disputable.dispute({ actionId }))
+      itCostsAtMost(366e3, () => disputable.dispute({ actionId }))
     })
 
     context('executeRuling', () => {

@@ -52,21 +52,21 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
             context('when the challenge was not answered', () => {
               const itSettlesTheChallengeProperly = from => {
                 it('updates the challenge state only', async () => {
-                  const previousChallengeState = await disputable.getChallenge(challengeId)
+                  const previousChallengeState = await disputable.getChallengeWithArbitratorFees(challengeId)
 
                   await disputable.settle({ actionId, from })
 
-                  const currentChallengeState = await disputable.getChallenge(challengeId)
+                  const currentChallengeState = await disputable.getChallengeWithArbitratorFees(challengeId)
                   assertBn(currentChallengeState.state, CHALLENGES_STATE.SETTLED, 'challenge state does not match')
 
                   assert.equal(currentChallengeState.context, previousChallengeState.context, 'challenge context does not match')
                   assert.equal(currentChallengeState.challenger, previousChallengeState.challenger, 'challenger does not match')
                   assertBn(currentChallengeState.endDate, previousChallengeState.endDate, 'challenge end date does not match')
                   assertBn(currentChallengeState.settlementOffer, previousChallengeState.settlementOffer, 'challenge settlement offer does not match')
-                  assertBn(currentChallengeState.challengerArbitratorFeeAmount, previousChallengeState.challengerArbitratorFeeAmount, 'challenger arbitrator amount does not match')
-                  assert.equal(currentChallengeState.challengerArbitratorFeeToken, previousChallengeState.challengerArbitratorFeeToken, 'challenger arbitrator token does not match')
-                  assertBn(currentChallengeState.submitterArbitratorFeeAmount, previousChallengeState.submitterArbitratorFeeAmount, 'submitter arbitrator amount does not match')
-                  assert.equal(currentChallengeState.submitterArbitratorFeeToken, previousChallengeState.submitterArbitratorFeeToken, 'submitter arbitrator token does not match')
+                  assertBn(currentChallengeState.challengerArbitratorFeesAmount, previousChallengeState.challengerArbitratorFeesAmount, 'challenger arbitrator amount does not match')
+                  assert.equal(currentChallengeState.challengerArbitratorFeesToken, previousChallengeState.challengerArbitratorFeesToken, 'challenger arbitrator token does not match')
+                  assertBn(currentChallengeState.submitterArbitratorFeesAmount, previousChallengeState.submitterArbitratorFeesAmount, 'submitter arbitrator amount does not match')
+                  assert.equal(currentChallengeState.submitterArbitratorFeesToken, previousChallengeState.submitterArbitratorFeesToken, 'submitter arbitrator token does not match')
                   assertBn(currentChallengeState.disputeId, previousChallengeState.disputeId, 'challenge dispute ID does not match')
                 })
 
