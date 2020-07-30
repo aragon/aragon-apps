@@ -52,19 +52,21 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
             context('when the challenge was not answered', () => {
               const itSettlesTheChallengeProperly = from => {
                 it('updates the challenge state only', async () => {
-                  const previousChallengeState = await disputable.getChallenge(challengeId)
+                  const previousChallengeState = await disputable.getChallengeWithArbitratorFees(challengeId)
 
                   await disputable.settle({ actionId, from })
 
-                  const currentChallengeState = await disputable.getChallenge(challengeId)
+                  const currentChallengeState = await disputable.getChallengeWithArbitratorFees(challengeId)
                   assertBn(currentChallengeState.state, CHALLENGES_STATE.SETTLED, 'challenge state does not match')
 
                   assert.equal(currentChallengeState.context, previousChallengeState.context, 'challenge context does not match')
                   assert.equal(currentChallengeState.challenger, previousChallengeState.challenger, 'challenger does not match')
                   assertBn(currentChallengeState.endDate, previousChallengeState.endDate, 'challenge end date does not match')
                   assertBn(currentChallengeState.settlementOffer, previousChallengeState.settlementOffer, 'challenge settlement offer does not match')
-                  assertBn(currentChallengeState.arbitratorFeeAmount, previousChallengeState.arbitratorFeeAmount, 'arbitrator amount does not match')
-                  assert.equal(currentChallengeState.arbitratorFeeToken, previousChallengeState.arbitratorFeeToken, 'arbitrator token does not match')
+                  assertBn(currentChallengeState.challengerArbitratorFeesAmount, previousChallengeState.challengerArbitratorFeesAmount, 'challenger arbitrator amount does not match')
+                  assert.equal(currentChallengeState.challengerArbitratorFeesToken, previousChallengeState.challengerArbitratorFeesToken, 'challenger arbitrator token does not match')
+                  assertBn(currentChallengeState.submitterArbitratorFeesAmount, previousChallengeState.submitterArbitratorFeesAmount, 'submitter arbitrator amount does not match')
+                  assert.equal(currentChallengeState.submitterArbitratorFeesToken, previousChallengeState.submitterArbitratorFeesToken, 'submitter arbitrator token does not match')
                   assertBn(currentChallengeState.disputeId, previousChallengeState.disputeId, 'challenge dispute ID does not match')
                 })
 
@@ -121,7 +123,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
 
                 it('transfers the arbitrator fees back to the challenger', async () => {
                   const arbitratorToken = await disputable.arbitratorToken()
-                  const halfArbitrationFees = await disputable.halfArbitrationFees()
+                  const arbitratorFees = await disputable.arbitratorFees()
 
                   const previousAgreementBalance = await arbitratorToken.balanceOf(disputable.address)
                   const previousChallengerBalance = await arbitratorToken.balanceOf(challenger)
@@ -129,10 +131,10 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                   await disputable.settle({ actionId, from })
 
                   const currentAgreementBalance = await arbitratorToken.balanceOf(disputable.address)
-                  assertBn(currentAgreementBalance, previousAgreementBalance.sub(halfArbitrationFees), 'agreement balance does not match')
+                  assertBn(currentAgreementBalance, previousAgreementBalance.sub(arbitratorFees), 'agreement balance does not match')
 
                   const currentChallengerBalance = await arbitratorToken.balanceOf(challenger)
-                  assertBn(currentChallengerBalance, previousChallengerBalance.add(halfArbitrationFees), 'challenger balance does not match')
+                  assertBn(currentChallengerBalance, previousChallengerBalance.add(arbitratorFees), 'challenger balance does not match')
                 })
 
                 it('emits an event', async () => {
