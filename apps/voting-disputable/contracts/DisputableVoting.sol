@@ -946,8 +946,8 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     function _isAccepted(Vote storage _vote, Setting storage _setting) internal view returns (bool) {
         uint256 yeas = _vote.yea;
         uint256 nays = _vote.nay;
-        return _isValuePct(yeas, yeas.add(nays), _setting.supportRequiredPct)
-            && _isValuePct(yeas, _vote.votingPower, _setting.minAcceptQuorumPct);
+        return _isValuePct(yeas, yeas.add(nays), _setting.supportRequiredPct) &&
+               _isValuePct(yeas, _vote.votingPower, _setting.minAcceptQuorumPct);
     }
 
     /**
