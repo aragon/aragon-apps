@@ -256,10 +256,10 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @param _supports Whether voter supports the vote
     */
     function vote(uint256 _voteId, bool _supports) external {
-        Vote storage _vote = _getVote(_voteId);
-        require(_canVote(_vote, msg.sender), ERROR_CANNOT_VOTE);
+        Vote storage vote_ = _getVote(_voteId);
+        require(_canVote(vote_, msg.sender), ERROR_CANNOT_VOTE);
 
-        _castVote(_vote, _voteId, _supports, msg.sender, address(0));
+        _castVote(vote_, _voteId, _supports, msg.sender, address(0));
     }
 
     /**
@@ -282,17 +282,17 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @param _voteId Id for vote
     */
     function executeVote(uint256 _voteId) external {
-        Vote storage _vote = _getVote(_voteId);
-        require(_canExecute(_vote), ERROR_CANNOT_EXECUTE);
+        Vote storage vote_ = _getVote(_voteId);
+        require(_canExecute(vote_), ERROR_CANNOT_EXECUTE);
 
-        _vote.status = VoteStatus.Executed;
-        _closeAgreementAction(_vote.actionId);
+        vote_.status = VoteStatus.Executed;
+        _closeAgreementAction(vote_.actionId);
 
         // Add Agreement to blacklist to disallow the stored EVMScript from directly calling the
         // linked Agreement from this app's context (e.g. maliciously creating a new action)
         address[] memory blacklist = new address[](1);
         blacklist[0] = address(_getAgreement());
-        runScript(_vote.executionScript, new bytes(0), blacklist);
+        runScript(vote_.executionScript, new bytes(0), blacklist);
         emit ExecuteVote(_voteId);
     }
 
@@ -317,8 +317,8 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @return True if the given vote can be challenged
     */
     function canChallenge(uint256 _voteId) external view returns (bool) {
-        Vote storage _vote = _getVote(_voteId);
-        return _isVoteOpenForVoting(_vote) && _vote.pausedAt == 0;
+        Vote storage vote_ = _getVote(_voteId);
+        return _isVoteOpenForVoting(vote_) && vote_.pausedAt == 0;
     }
 
     /**
@@ -327,8 +327,8 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @return True if the given vote can be closed
     */
     function canClose(uint256 _voteId) external view returns (bool) {
-        Vote storage _vote = _getVote(_voteId);
-        return (_isActive(_vote) || _isExecuted(_vote)) && _hasEnded(_vote);
+        Vote storage vote_ = _getVote(_voteId);
+        return (_isActive(vote_) || _isExecuted(vote_)) && _hasEnded(vote_);
     }
 
     // Getter fns
@@ -366,15 +366,15 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @return True if the given representative can vote on behalf of the given voter in a certain vote
     */
     function canVoteOnBehalfOf(uint256 _voteId, address[] _voters, address _representative) external view returns (bool) {
-        Vote storage _vote = _getVote(_voteId);
+        Vote storage vote_ = _getVote(_voteId);
 
-        if (!_canDelegateVote(_vote)) {
+        if (!_canDelegateVote(vote_)) {
             return false;
         }
 
         for (uint256 i = 0; i < _voters.length; i++) {
             address voter = _voters[i];
-            if (!_hasVotingPower(_vote, voter) || !_isRepresentativeOf(voter, _representative) || _hasCastVote(_vote, voter)) {
+            if (!_hasVotingPower(vote_, voter) || !_isRepresentativeOf(voter, _representative) || _hasCastVote(vote_, voter)) {
                 return false;
             }
         }
@@ -420,21 +420,21 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
             bytes executionScript
         )
     {
-        Vote storage _vote = _getVote(_voteId);
+        Vote storage vote_ = _getVote(_voteId);
 
-        yea = _vote.yea;
-        nay = _vote.nay;
-        votingPower = _vote.votingPower;
-        settingId = _vote.settingId;
-        actionId = _vote.actionId;
-        status = _vote.status;
-        startDate = _vote.startDate;
-        snapshotBlock = _vote.snapshotBlock;
-        pausedAt = _vote.pausedAt;
-        pauseDuration = _vote.pauseDuration;
-        quietEndingExtendedSeconds = _vote.quietEndingExtendedSeconds;
-        quietEndingSnapshotSupport = _vote.quietEndingSnapshotSupport;
-        executionScript = _vote.executionScript;
+        yea = vote_.yea;
+        nay = vote_.nay;
+        votingPower = vote_.votingPower;
+        settingId = vote_.settingId;
+        actionId = vote_.actionId;
+        status = vote_.status;
+        startDate = vote_.startDate;
+        snapshotBlock = vote_.snapshotBlock;
+        pausedAt = vote_.pausedAt;
+        pauseDuration = vote_.pauseDuration;
+        quietEndingExtendedSeconds = vote_.quietEndingExtendedSeconds;
+        quietEndingSnapshotSupport = vote_.quietEndingSnapshotSupport;
+        executionScript = vote_.executionScript;
     }
 
     /**
@@ -447,9 +447,9 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @return caster Address of the caster of the voter's vote
     */
     function getCastVote(uint256 _voteId, address _voter) external view returns (VoterState state, address caster) {
-        Vote storage _vote = _getVote(_voteId);
-        state = _voterState(_vote, _voter);
-        caster = _voteCaster(_vote, _voter);
+        Vote storage vote_ = _getVote(_voteId);
+        state = _voterState(vote_, _voter);
+        caster = _voteCaster(vote_, _voter);
     }
 
     /**
@@ -522,8 +522,8 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @return True if the requested vote is within the overrule window for delegated votes
     */
     function withinOverruleWindow(uint256 _voteId) external view returns (bool) {
-        Vote storage _vote = _getVote(_voteId);
-        return _isVoteOpenForVoting(_vote) && _withinOverruleWindow(_vote);
+        Vote storage vote_ = _getVote(_voteId);
+        return _isVoteOpenForVoting(vote_) && _withinOverruleWindow(vote_);
     }
 
     // DisputableAragonApp callback implementations
@@ -534,11 +534,11 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @param _challengeId Identification number of the challenge associated to the vote in the Agreement app
     */
     function _onDisputableActionChallenged(uint256 _voteId, uint256 _challengeId, address /* _challenger */) internal {
-        Vote storage _vote = _getVote(_voteId);
-        require(_isActive(_vote), ERROR_CANNOT_PAUSE_VOTE);
+        Vote storage vote_ = _getVote(_voteId);
+        require(_isActive(vote_), ERROR_CANNOT_PAUSE_VOTE);
 
-        _vote.status = VoteStatus.Paused;
-        _vote.pausedAt = getTimestamp64();
+        vote_.status = VoteStatus.Paused;
+        vote_.pausedAt = getTimestamp64();
         emit PauseVote(_voteId, _challengeId);
     }
 
@@ -547,11 +547,11 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @param _voteId Id for vote to be allowed
     */
     function _onDisputableActionAllowed(uint256 _voteId) internal {
-        Vote storage _vote = _getVote(_voteId);
-        require(_isPaused(_vote), ERROR_VOTE_NOT_PAUSED);
+        Vote storage vote_ = _getVote(_voteId);
+        require(_isPaused(vote_), ERROR_VOTE_NOT_PAUSED);
 
-        _vote.status = VoteStatus.Active;
-        _vote.pauseDuration = getTimestamp64().sub(_vote.pausedAt);
+        vote_.status = VoteStatus.Active;
+        vote_.pauseDuration = getTimestamp64().sub(vote_.pausedAt);
         emit ResumeVote(_voteId);
     }
 
@@ -560,11 +560,11 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @param _voteId Id for vote to be rejected
     */
     function _onDisputableActionRejected(uint256 _voteId) internal {
-        Vote storage _vote = _getVote(_voteId);
-        require(_isPaused(_vote), ERROR_VOTE_NOT_PAUSED);
+        Vote storage vote_ = _getVote(_voteId);
+        require(_isPaused(vote_), ERROR_VOTE_NOT_PAUSED);
 
-        _vote.status = VoteStatus.Cancelled;
-        _vote.pauseDuration = getTimestamp64().sub(_vote.pausedAt);
+        vote_.status = VoteStatus.Cancelled;
+        vote_.pauseDuration = getTimestamp64().sub(vote_.pausedAt);
         emit CancelVote(_voteId);
     }
 
@@ -647,17 +647,17 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
 
         voteId = votesLength++;
 
-        Vote storage _vote = votes[voteId];
-        _vote.startDate = getTimestamp64();
-        _vote.snapshotBlock = snapshotBlock;
-        _vote.settingId = _getCurrentSettingId();
-        _vote.votingPower = votingPower;
-        _vote.executionScript = _executionScript;
-        _vote.status = VoteStatus.Active;
+        Vote storage vote_ = votes[voteId];
+        vote_.startDate = getTimestamp64();
+        vote_.snapshotBlock = snapshotBlock;
+        vote_.settingId = _getCurrentSettingId();
+        vote_.votingPower = votingPower;
+        vote_.executionScript = _executionScript;
+        vote_.status = VoteStatus.Active;
 
         // Notify the Agreement app tied to the current voting app about the vote created.
         // This is mandatory to make the vote disputable, by storing a reference to it on the Agreement app.
-        _vote.actionId = _newAgreementAction(voteId, _context, msg.sender);
+        vote_.actionId = _newAgreementAction(voteId, _context, msg.sender);
 
         emit StartVote(voteId, msg.sender, _context);
     }
@@ -666,16 +666,16 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @dev Internal function for a representative to cast a vote on behalf of many voters. It assumes the queried vote exists.
     */
     function _voteOnBehalfOf(uint256 _voteId, bool _supports, address[] _voters) internal {
-        Vote storage _vote = _getVote(_voteId);
-        require(_canDelegateVote(_vote), ERROR_CANNOT_DELEGATE_VOTE);
+        Vote storage vote_ = _getVote(_voteId);
+        require(_canDelegateVote(vote_), ERROR_CANNOT_DELEGATE_VOTE);
 
         for (uint256 i = 0; i < _voters.length; i++) {
             address voter = _voters[i];
-            require(_hasVotingPower(_vote, voter), ERROR_CANNOT_VOTE);
+            require(_hasVotingPower(vote_, voter), ERROR_CANNOT_VOTE);
             require(_isRepresentativeOf(voter, msg.sender), ERROR_NOT_REPRESENTATIVE);
 
-            if (!_hasCastVote(_vote, voter)) {
-                _castVote(_vote, _voteId, _supports, voter, msg.sender);
+            if (!_hasCastVote(vote_, voter)) {
+                _castVote(vote_, _voteId, _supports, voter, msg.sender);
                 emit ProxyVoteSuccess(_voteId, voter, msg.sender, _supports);
             } else {
                 emit ProxyVoteFailure(_voteId, voter, msg.sender);
