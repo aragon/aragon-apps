@@ -29,7 +29,7 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
       const itCanChallengeActions = () => {
         context('when the challenger has permissions', () => {
           const stake = false // do not stake challenge collateral before creating challenge
-          const arbitratorFees = false // do not approve arbitration fees before creating challenge
+          const arbitratorFees = false // do not approve arbitrator fees before creating challenge
 
           const itCannotBeChallenged = () => {
             it('reverts', async () => {

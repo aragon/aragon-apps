@@ -949,10 +949,12 @@ contract Agreement is ILockManager, IAgreement, AragonApp {
 
         address challenger = _challenge.challenger;
         (DisputableAragonApp disputable, CollateralRequirement storage requirement) = _getDisputableFor(_action);
+
+        // Transfer action collateral, challenge collateral, and challenger arbitrator fees to the challenger
         _slashBalance(requirement.staking, _action.submitter, challenger, requirement.actionAmount);
         _transferTo(requirement.token, challenger, requirement.challengeAmount);
-        // return fees to challenger
         _transferTo(_challenge.challengerArbitratorFeeToken, challenger, _challenge.challengerArbitratorFeeAmount);
+        
         // try/catch for:
         // disputable.onDisputableActionRejected(_action.disputableActionId);
         address(disputable).call(abi.encodeWithSelector(disputable.onDisputableActionRejected.selector, _action.disputableActionId));
@@ -973,9 +975,11 @@ contract Agreement is ILockManager, IAgreement, AragonApp {
 
         address submitter = _action.submitter;
         (DisputableAragonApp disputable, CollateralRequirement storage requirement) = _getDisputableFor(_action);
+
+        // Transfer challenge collateral and challenger arbitrator fees to the submitter
         _transferTo(requirement.token, submitter, requirement.challengeAmount);
-        // return fees to submitter
         _transferTo(_challenge.challengerArbitratorFeeToken, submitter, _challenge.challengerArbitratorFeeAmount);
+        
         // try/catch for:
         // disputable.onDisputableActionAllowed(_action.disputableActionId);
         address(disputable).call(abi.encodeWithSelector(disputable.onDisputableActionAllowed.selector, _action.disputableActionId));
@@ -994,15 +998,18 @@ contract Agreement is ILockManager, IAgreement, AragonApp {
 
         (DisputableAragonApp disputable, CollateralRequirement storage requirement) = _getDisputableFor(_action);
         address challenger = _challenge.challenger;
+
+        // Return challenge collateral to the challenger, and split the challenger arbitrator fees between the challenger and the submitter
+        // Note that the action collateral is unlocked once the action is closed
         _transferTo(requirement.token, challenger, requirement.challengeAmount);
-        // return half of the fees to submitter and the other half to challenger
         uint256 challengerArbitratorFeeAmount = _challenge.challengerArbitratorFeeAmount;
         ERC20 challengerArbitratorFeeToken = _challenge.challengerArbitratorFeeToken;
         uint256 submitterPayBack = challengerArbitratorFeeAmount / 2;
-        // no need for Safemath because of previous computation
+        // No need for Safemath because of previous computation
         uint256 challengerPayBack = challengerArbitratorFeeAmount - submitterPayBack;
         _transferTo(challengerArbitratorFeeToken, _action.submitter, submitterPayBack);
         _transferTo(challengerArbitratorFeeToken, challenger, challengerPayBack);
+        
         // try/catch for:
         // disputable.onDisputableActionVoided(_action.disputableActionId);
         address(disputable).call(abi.encodeWithSelector(disputable.onDisputableActionVoided.selector, _action.disputableActionId));
