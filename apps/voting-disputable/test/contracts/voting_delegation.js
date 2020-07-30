@@ -3,7 +3,7 @@ const { VOTING_ERRORS } = require('../helpers/errors')
 const { VOTER_STATE, createVote, getVoteState } = require('../helpers/voting')
 
 const { skipCoverage } = require('@aragon/os/test/helpers/coverage')
-const { ONE_DAY, pct16, bigExp } = require('@aragon/contract-helpers-test')
+const { ONE_DAY, pct16, bigExp, bn } = require('@aragon/contract-helpers-test')
 const { assertBn, assertRevert, assertEvent, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/asserts')
 
 contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, representative, anotherRepresentative, anyone]) => {
@@ -13,6 +13,7 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
   const MIN_SUPPORT = pct16(30)
   const OVERRULE_WINDOW = ONE_DAY
   const QUIET_ENDING_PERIOD = ONE_DAY * 4
+  const QUIET_ENDING_EXTENSION = ONE_DAY * 5
   const VOTE_DURATION = ONE_DAY * 5
   const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
@@ -24,7 +25,7 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
   })
 
   beforeEach('deploy voting', async () => {
-    voting = await deployer.deployAndInitialize({ owner, minimumAcceptanceQuorum: MIN_QUORUM, requiredSupport: MIN_SUPPORT, voteDuration: VOTE_DURATION, overruleWindow: OVERRULE_WINDOW, quietEndingPeriod: QUIET_ENDING_PERIOD })
+    voting = await deployer.deployAndInitialize({ owner, minimumAcceptanceQuorum: MIN_QUORUM, requiredSupport: MIN_SUPPORT, voteDuration: VOTE_DURATION, overruleWindow: OVERRULE_WINDOW, quietEndingPeriod: QUIET_ENDING_PERIOD, quietEndingExtension: QUIET_ENDING_EXTENSION })
   })
 
   const getCastVote = async (voter, id = voteId) => voting.getCastVote(id, voter)
@@ -388,10 +389,28 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
 
                       if (shouldExtendVote) {
                         it('extends the vote duration', async () => {
-                          const receipt = await voting.voteOnBehalfOf(voteId, support, [voter], { from })
+                          // vote and move after the vote's end date
+                          await voting.voteOnBehalfOf(voteId, support, [voter], { from })
+                          await voting.mockIncreaseTime(QUIET_ENDING_PERIOD / 2)
 
+                          assert.isTrue(await voting.canVote(voteId, thirdVoter), 'voter cannot vote')
+
+                          const receipt = await voting.vote(voteId, true, { from: thirdVoter })
                           assertAmountOfEvents(receipt, 'VoteQuietEndingExtension')
                           assertEvent(receipt, 'VoteQuietEndingExtension', { expectedArgs: { voteId, passing: support } })
+                        })
+
+                        it('stores the vote extension in the following vote', async () => {
+                          // vote and move after the vote's end date
+                          await voting.voteOnBehalfOf(voteId, support, [voter], { from })
+                          await voting.mockIncreaseTime(QUIET_ENDING_PERIOD / 2)
+
+                          const { quietEndingExtendedSeconds: previousExtendedSeconds } = await getVoteState(voting, voteId)
+
+                          await voting.vote(voteId, true, { from: thirdVoter })
+
+                          const { quietEndingExtendedSeconds: currentExtendedSeconds } = await getVoteState(voting, voteId)
+                          assertBn(currentExtendedSeconds, previousExtendedSeconds.add(bn(QUIET_ENDING_EXTENSION)), 'vote extended seconds do not match')
                         })
                       } else {
                         itDoesNotExtendTheVoteDuration(support)
@@ -409,7 +428,7 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
                     const shouldExtendVote = true
 
                     beforeEach('move to the middle of the quiet ending period', async () => {
-                      await voting.mockIncreaseTime(VOTE_DURATION - QUIET_ENDING_PERIOD + 1)
+                      await voting.mockIncreaseTime(VOTE_DURATION - QUIET_ENDING_PERIOD / 2)
                     })
 
                     itHandlesVoteDurationProperly(shouldExtendVote)

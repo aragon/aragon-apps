@@ -13,6 +13,7 @@ contract('Voting', ([_, owner, holder20, holder29, holder51, nonHolder, represen
   const OVERRULE_WINDOW = ONE_DAY
   const EXECUTION_DELAY = 0
   const QUIET_ENDING_PERIOD = 2 * ONE_DAY
+  const QUIET_ENDING_EXTENSION = ONE_DAY
   const REQUIRED_SUPPORT = pct16(10)
   const MINIMUM_ACCEPTANCE_QUORUM = pct16(5)
 
@@ -24,7 +25,7 @@ contract('Voting', ([_, owner, holder20, holder29, holder51, nonHolder, represen
   })
 
   beforeEach('deploy voting', async () => {
-    voting = await deployer.deployAndInitialize({ owner, minimumAcceptanceQuorum: MINIMUM_ACCEPTANCE_QUORUM, requiredSupport: REQUIRED_SUPPORT, voteDuration: VOTE_DURATION, overruleWindow: OVERRULE_WINDOW, quietEndingPeriod: QUIET_ENDING_PERIOD, executionDelay: EXECUTION_DELAY })
+    voting = await deployer.deployAndInitialize({ owner, minimumAcceptanceQuorum: MINIMUM_ACCEPTANCE_QUORUM, requiredSupport: REQUIRED_SUPPORT, voteDuration: VOTE_DURATION, overruleWindow: OVERRULE_WINDOW, quietEndingPeriod: QUIET_ENDING_PERIOD, quietEndingExtension: QUIET_ENDING_EXTENSION, executionDelay: EXECUTION_DELAY })
   })
 
   describe('vote', () => {
@@ -82,6 +83,13 @@ contract('Voting', ([_, owner, holder20, holder29, holder51, nonHolder, represen
               const receipt = await voting.vote(voteId, true, { from })
               assertAmountOfEvents(receipt, 'VoteQuietEndingExtension', { expectedAmount: 0 })
             })
+
+            it('does not store the quiet ending snapshot support', async () => {
+              await voting.vote(voteId, true, { from })
+
+              const { quietEndingSnapshotSupport } = await getVoteState(voting, voteId)
+              assertBn(quietEndingSnapshotSupport, VOTER_STATE.ABSENT, 'quiet ending snapshot does not match')
+            })
           })
 
           context('when cast during the quiet ending period', () => {
@@ -89,11 +97,31 @@ contract('Voting', ([_, owner, holder20, holder29, holder51, nonHolder, represen
               await voting.mockIncreaseTime(VOTE_DURATION - QUIET_ENDING_PERIOD / 2)
             })
 
-            it('extends the vote duration', async () => {
-              const receipt = await voting.vote(voteId, true, { from })
+            beforeEach('vote and move to vote end date', async () => {
+              await voting.vote(voteId, true, { from })
+              await voting.mockIncreaseTime(QUIET_ENDING_PERIOD / 2)
+            })
 
+            it('stores the quiet ending snapshot support', async () => {
+              const { quietEndingSnapshotSupport } = await getVoteState(voting, voteId)
+              assertBn(quietEndingSnapshotSupport, VOTER_STATE.NAY, 'quiet ending snapshot does not match')
+            })
+
+            it('extends the vote duration', async () => {
+              assert.isTrue(await voting.canVote(voteId, holder51), 'voter cannot vote')
+
+              const receipt = await voting.vote(voteId, true, { from: holder51 })
               assertAmountOfEvents(receipt, 'VoteQuietEndingExtension')
               assertEvent(receipt, 'VoteQuietEndingExtension', { expectedArgs: { voteId, passing: true } })
+            })
+
+            it('stores the vote extension in the following vote', async () => {
+              const { quietEndingExtendedSeconds: previousExtendedSeconds } = await getVoteState(voting, voteId)
+
+              await voting.vote(voteId, true, { from: holder51 })
+
+              const { quietEndingExtendedSeconds: currentExtendedSeconds } = await getVoteState(voting, voteId)
+              assertBn(currentExtendedSeconds, previousExtendedSeconds.add(bn(QUIET_ENDING_EXTENSION)), 'vote extended seconds do not match')
             })
           })
         })
@@ -142,10 +170,27 @@ contract('Voting', ([_, owner, holder20, holder29, holder51, nonHolder, represen
 
                 if (extendsWhenFlipped) {
                   it('extends the vote duration', async () => {
-                    const receipt = await voting.vote(voteId, support, { from })
+                    // vote and move after the vote's end date
+                    await voting.vote(voteId, support, { from })
+                    await voting.mockIncreaseTime(QUIET_ENDING_PERIOD)
 
+                    assert.isTrue(await voting.canVote(voteId, holder51), 'voter cannot vote')
+
+                    const receipt = await voting.vote(voteId, true, { from: holder51 })
                     assertAmountOfEvents(receipt, 'VoteQuietEndingExtension')
                     assertEvent(receipt, 'VoteQuietEndingExtension', { expectedArgs: { voteId, passing: support } })
+                  })
+
+                  it('stores the vote extension in the following vote', async () => {
+                    // vote and move after the vote's end date
+                    await voting.vote(voteId, support, { from })
+                    await voting.mockIncreaseTime(QUIET_ENDING_PERIOD)
+                    const { quietEndingExtendedSeconds: previousExtendedSeconds } = await getVoteState(voting, voteId)
+
+                    await voting.vote(voteId, true, { from: holder51 })
+
+                    const { quietEndingExtendedSeconds: currentExtendedSeconds } = await getVoteState(voting, voteId)
+                    assertBn(currentExtendedSeconds, previousExtendedSeconds.add(bn(QUIET_ENDING_EXTENSION)), 'vote extended seconds do not match')
                   })
                 } else {
                   itDoesNotExtendTheVoteDuration(support)
