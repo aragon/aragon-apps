@@ -92,16 +92,25 @@ contract Agreement is ILockManager, IAgreement, AragonApp {
         uint256 currentChallengeId;         // Identification number of the action's currently open challenge, if any
     }
 
+    struct ArbitratorFees {
+        ERC20 token;
+        uint256 amount;
+    }
+
     struct Challenge {
         uint256 actionId;                      // Identification number of the action associated to the challenge
         address challenger;                    // Address that challenged the action
         uint64 endDate;                        // Last date the submitter can raise a dispute against the challenge
         bytes context;                         // Link to a human-readable text providing context for the challenge
         uint256 settlementOffer;               // Amount of collateral tokens the challenger would accept without involving the arbitrator
+        ArbitratorFees challengerArbitratorFees;
+        ArbitratorFees submitterArbitratorFees;
+        /*
         uint256 challengerArbitratorFeeAmount; // Amount of arbitration fees paid by the challenger in advance
         ERC20 challengerArbitratorFeeToken;    // ERC20 token used for the arbitration fees paid by the challenger in advance
         uint256 submitterArbitratorFeeAmount;  // Amount of arbitration fees paid by the challenger in advance
         ERC20 submitterArbitratorFeeToken;     // ERC20 token used for the arbitration fees paid by the challenger in advance
+        */
         ChallengeState state;                  // Current state of the action challenge
         bool submitterFinishedEvidence;        // Whether the action submitter has finished submitting evidence for a raised dispute
         bool challengerFinishedEvidence;       // Whether the action challenger has finished submitting evidence for a raised dispute
@@ -394,7 +403,7 @@ contract Agreement is ILockManager, IAgreement, AragonApp {
         address challenger = challenge.challenger;
         _unlockAndSlashBalance(requirement.staking, submitter, unlockedAmount, challenger, slashedAmount);
         _transferTo(requirement.token, challenger, requirement.challengeAmount);
-        _transferTo(challenge.challengerArbitratorFeeToken, challenger, challenge.challengerArbitratorFeeAmount);
+        _transferTo(challenge.challengerArbitratorFees.token, challenger, challenge.challengerArbitratorFees.amount);
 
         challenge.state = ChallengeState.Settled;
         // try/catch for:
@@ -652,7 +661,7 @@ contract Agreement is ILockManager, IAgreement, AragonApp {
     * @return submitterArbitratorFeeAmount Amount of arbitration fees paid by the submitter when the challenge is raised to the arbitrator
     * @return submitterArbitratorFeeToken ERC20 token used for the arbitration fees paid by the submitter
     */
-    function getChallengeFees(uint256 _challengeId)
+    function getChallengeArbitratorFees(uint256 _challengeId)
         external
         view
         returns (
@@ -664,10 +673,10 @@ contract Agreement is ILockManager, IAgreement, AragonApp {
     {
         Challenge storage challenge = _getChallenge(_challengeId);
 
-        challengerArbitratorFeeAmount = challenge.challengerArbitratorFeeAmount;
-        challengerArbitratorFeeToken = challenge.challengerArbitratorFeeToken;
-        submitterArbitratorFeeAmount = challenge.submitterArbitratorFeeAmount;
-        submitterArbitratorFeeToken = challenge.submitterArbitratorFeeToken;
+        challengerArbitratorFeeAmount = challenge.challengerArbitratorFees.amount;
+        challengerArbitratorFeeToken = challenge.challengerArbitratorFees.token;
+        submitterArbitratorFeeAmount = challenge.submitterArbitratorFees.amount;
+        submitterArbitratorFeeToken = challenge.submitterArbitratorFees.token;
     }
 
     /**
@@ -851,8 +860,8 @@ contract Agreement is ILockManager, IAgreement, AragonApp {
         // Transfer Arbitrator fees
         IArbitrator arbitrator = _getArbitratorFor(_action);
         (, ERC20 feeToken, uint256 feeAmount) = arbitrator.getDisputeFees();
-        challenge.challengerArbitratorFeeToken = feeToken;
-        challenge.challengerArbitratorFeeAmount = feeAmount;
+        challenge.challengerArbitratorFees.token = feeToken;
+        challenge.challengerArbitratorFees.amount = feeAmount;
         _depositFrom(feeToken, _challenger, feeAmount);
         return challengeId;
     }
@@ -871,8 +880,8 @@ contract Agreement is ILockManager, IAgreement, AragonApp {
     {
         // Compute missing fees for dispute
         (address disputeFeeRecipient, ERC20 feeToken, uint256 feeAmount) = _arbitrator.getDisputeFees();
-        _challenge.submitterArbitratorFeeToken = feeToken;
-        _challenge.submitterArbitratorFeeAmount = feeAmount;
+        _challenge.submitterArbitratorFees.token = feeToken;
+        _challenge.submitterArbitratorFees.amount = feeAmount;
 
         // Pull arbitration fees from submitter, note that if missing fees is zero this doesn't revert
         address submitter = _action.submitter;
@@ -953,8 +962,7 @@ contract Agreement is ILockManager, IAgreement, AragonApp {
         // Transfer action collateral, challenge collateral, and challenger arbitrator fees to the challenger
         _slashBalance(requirement.staking, _action.submitter, challenger, requirement.actionAmount);
         _transferTo(requirement.token, challenger, requirement.challengeAmount);
-        _transferTo(_challenge.challengerArbitratorFeeToken, challenger, _challenge.challengerArbitratorFeeAmount);
-        
+        _transferTo(_challenge.challengerArbitratorFees.token, challenger, _challenge.challengerArbitratorFees.amount);
         // try/catch for:
         // disputable.onDisputableActionRejected(_action.disputableActionId);
         address(disputable).call(abi.encodeWithSelector(disputable.onDisputableActionRejected.selector, _action.disputableActionId));
@@ -978,8 +986,7 @@ contract Agreement is ILockManager, IAgreement, AragonApp {
 
         // Transfer challenge collateral and challenger arbitrator fees to the submitter
         _transferTo(requirement.token, submitter, requirement.challengeAmount);
-        _transferTo(_challenge.challengerArbitratorFeeToken, submitter, _challenge.challengerArbitratorFeeAmount);
-        
+        _transferTo(_challenge.challengerArbitratorFees.token, submitter, _challenge.challengerArbitratorFees.amount);
         // try/catch for:
         // disputable.onDisputableActionAllowed(_action.disputableActionId);
         address(disputable).call(abi.encodeWithSelector(disputable.onDisputableActionAllowed.selector, _action.disputableActionId));
@@ -1002,14 +1009,13 @@ contract Agreement is ILockManager, IAgreement, AragonApp {
         // Return challenge collateral to the challenger, and split the challenger arbitrator fees between the challenger and the submitter
         // Note that the action collateral is unlocked once the action is closed
         _transferTo(requirement.token, challenger, requirement.challengeAmount);
-        uint256 challengerArbitratorFeeAmount = _challenge.challengerArbitratorFeeAmount;
-        ERC20 challengerArbitratorFeeToken = _challenge.challengerArbitratorFeeToken;
-        uint256 submitterPayBack = challengerArbitratorFeeAmount / 2;
+        uint256 challengerArbitratorFeesAmount = _challenge.challengerArbitratorFees.amount;
+        ERC20 challengerArbitratorFeesToken = _challenge.challengerArbitratorFees.token;
+        uint256 submitterPayBack = challengerArbitratorFeesAmount / 2;
         // No need for Safemath because of previous computation
-        uint256 challengerPayBack = challengerArbitratorFeeAmount - submitterPayBack;
-        _transferTo(challengerArbitratorFeeToken, _action.submitter, submitterPayBack);
-        _transferTo(challengerArbitratorFeeToken, challenger, challengerPayBack);
-        
+        uint256 challengerPayBack = challengerArbitratorFeesAmount - submitterPayBack;
+        _transferTo(challengerArbitratorFeesToken, _action.submitter, submitterPayBack);
+        _transferTo(challengerArbitratorFeesToken, challenger, challengerPayBack);
         // try/catch for:
         // disputable.onDisputableActionVoided(_action.disputableActionId);
         address(disputable).call(abi.encodeWithSelector(disputable.onDisputableActionVoided.selector, _action.disputableActionId));
