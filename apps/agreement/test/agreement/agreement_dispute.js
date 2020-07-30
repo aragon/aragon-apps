@@ -4,7 +4,7 @@ const { AGREEMENT_EVENTS } = require('../helpers/utils/events')
 const { RULINGS, CHALLENGES_STATE } = require('../helpers/utils/enums')
 
 const { padLeft } = require('web3-utils')
-const { bn, getEventArgument, injectWeb3, injectArtifacts } = require('@aragon/contract-helpers-test')
+const { bn, bigExp, getEventArgument, injectWeb3, injectArtifacts } = require('@aragon/contract-helpers-test')
 const { assertBn, assertRevert, assertEvent, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/asserts')
 
 injectWeb3(web3)
@@ -20,7 +20,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
   describe('dispute', () => {
     context('when the given action exists', () => {
       const actionContext = '0xab'
-      const arbitrationFees = false // do not approve arbitration fees before disputing challenge
+      const arbitratorFees = false // do not approve arbitration fees before disputing challenge
 
       beforeEach('create action', async () => {
         ({ actionId } = await disputable.newAction({ submitter, actionContext }))
@@ -54,22 +54,22 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
 
             context('when the challenge was not answered', () => {
               const itDisputesTheChallengeProperly = (extraTestCases = () => {}) => {
-                context('when the submitter has approved the missing arbitration fees', () => {
-                  beforeEach('approve half arbitration fees', async () => {
-                    const amount = await disputable.missingArbitrationFees(actionId)
-                    await disputable.approveArbitrationFees({ amount, from: submitter })
+                context('when the submitter has approved the arbitration fees', () => {
+                  beforeEach('approve arbitration fees', async () => {
+                    const amount = await disputable.arbitratorFees()
+                    await disputable.approveArbitratorFees({ amount, from: submitter })
                   })
 
                   context('when the sender is the action submitter', () => {
                     const from = submitter
 
                     it('updates the challenge state only and its associated dispute', async () => {
-                      const previousChallengeState = await disputable.getChallenge(challengeId)
+                      const previousChallengeState = await disputable.getChallengeWithArbitratorFees(challengeId)
 
-                      const receipt = await disputable.dispute({ actionId, from, arbitrationFees })
+                      const receipt = await disputable.dispute({ actionId, from, arbitratorFees })
                       const disputeId = getEventArgument(receipt, 'NewDispute', 'disputeId', { decodeForAbi: disputable.arbitrator.abi })
 
-                      const currentChallengeState = await disputable.getChallenge(challengeId)
+                      const currentChallengeState = await disputable.getChallengeWithArbitratorFees(challengeId)
                       assertBn(currentChallengeState.disputeId, disputeId, 'challenge dispute ID does not match')
                       assertBn(currentChallengeState.state, CHALLENGES_STATE.DISPUTED, 'challenge state does not match')
 
@@ -77,14 +77,17 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                       assert.equal(currentChallengeState.challenger, previousChallengeState.challenger, 'challenger does not match')
                       assertBn(currentChallengeState.endDate, previousChallengeState.endDate, 'challenge end date does not match')
                       assertBn(currentChallengeState.settlementOffer, previousChallengeState.settlementOffer, 'challenge settlement offer does not match')
-                      assertBn(currentChallengeState.arbitratorFeeAmount, previousChallengeState.arbitratorFeeAmount, 'arbitrator amount does not match')
+                      assertBn(currentChallengeState.challengerArbitratorFeesAmount, previousChallengeState.challengerArbitratorFeesAmount, 'challenger arbitrator amount does not match')
+                      const feeAmount = await disputable.arbitratorFees()
+                      assertBn(currentChallengeState.submitterArbitratorFeesAmount, feeAmount, 'current submitter arbitrator amount does not match')
+                      assertBn(previousChallengeState.submitterArbitratorFeesAmount, bn(0), 'previous submitter arbitrator amount does not match')
                       assert.equal(currentChallengeState.arbitratorFeeToken, previousChallengeState.arbitratorFeeToken, 'arbitrator token does not match')
                     })
 
                     it('does not alter the action', async () => {
                       const previousActionState = await disputable.getAction(actionId)
 
-                      await disputable.dispute({ actionId, from, arbitrationFees })
+                      await disputable.dispute({ actionId, from, arbitratorFees })
 
                       const currentActionState = await disputable.getAction(actionId)
                       assert.equal(currentActionState.closed, previousActionState.closed, 'action closed state does not match')
@@ -98,7 +101,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                     })
 
                     it('creates a dispute', async () => {
-                      const receipt = await disputable.dispute({ actionId, from, arbitrationFees })
+                      const receipt = await disputable.dispute({ actionId, from, arbitratorFees })
                       const { disputeId, ruling, submitterFinishedEvidence, challengerFinishedEvidence } = await disputable.getChallenge(challengeId)
 
                       assertBn(ruling, RULINGS.MISSING, 'ruling does not match')
@@ -114,7 +117,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                     })
 
                     it('submits both parties context as evidence', async () => {
-                      const receipt = await disputable.dispute({ actionId, from, arbitrationFees })
+                      const receipt = await disputable.dispute({ actionId, from, arbitratorFees })
                       const { disputeId } = await disputable.getChallenge(challengeId)
 
                       assertAmountOfEvents(receipt, 'EvidenceSubmitted', { expectedAmount: 2, decodeForAbi: disputable.abi })
@@ -125,7 +128,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                     it('does not affect the submitter staked balances', async () => {
                       const { locked: previousLockedBalance, available: previousAvailableBalance } = await disputable.getBalance(submitter)
 
-                      await disputable.dispute({ actionId, from, arbitrationFees })
+                      await disputable.dispute({ actionId, from, arbitratorFees })
 
                       const { locked: currentLockedBalance, available: currentAvailableBalance } = await disputable.getBalance(submitter)
                       assertBn(currentLockedBalance, previousLockedBalance, 'locked balance does not match')
@@ -140,7 +143,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                       const previousChallengerBalance = await collateralToken.balanceOf(challenger)
                       const previousStakingBalance = await collateralToken.balanceOf(stakingAddress)
 
-                      await disputable.dispute({ actionId, from, arbitrationFees })
+                      await disputable.dispute({ actionId, from, arbitratorFees })
 
                       const currentSubmitterBalance = await collateralToken.balanceOf(submitter)
                       assertBn(currentSubmitterBalance, previousSubmitterBalance, 'submitter balance does not match')
@@ -154,14 +157,14 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
 
                     it('emits an event', async () => {
                       const { currentChallengeId } = await disputable.getAction(actionId)
-                      const receipt = await disputable.dispute({ actionId, from, arbitrationFees })
+                      const receipt = await disputable.dispute({ actionId, from, arbitratorFees })
 
                       assertAmountOfEvents(receipt, AGREEMENT_EVENTS.ACTION_DISPUTED)
                       assertEvent(receipt, AGREEMENT_EVENTS.ACTION_DISPUTED, { expectedArgs: { actionId, challengeId: currentChallengeId } })
                     })
 
                     it('can be ruled', async () => {
-                      await disputable.dispute({ actionId, from, arbitrationFees })
+                      await disputable.dispute({ actionId, from, arbitratorFees })
 
                       const { canClose, canChallenge, canSettle, canDispute, canClaimSettlement, canRuleDispute } = await disputable.getAllowedPaths(actionId)
                       assert.isTrue(canRuleDispute, 'action dispute cannot be ruled')
@@ -180,7 +183,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                     const from = challenger
 
                     it('reverts', async () => {
-                      await assertRevert(disputable.dispute({ actionId, from, arbitrationFees }), AGREEMENT_ERRORS.ERROR_SENDER_NOT_ALLOWED)
+                      await assertRevert(disputable.dispute({ actionId, from, arbitratorFees }), AGREEMENT_ERRORS.ERROR_SENDER_NOT_ALLOWED)
                     })
                   })
 
@@ -188,51 +191,50 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                     const from = someone
 
                     it('reverts', async () => {
-                      await assertRevert(disputable.dispute({ actionId, from, arbitrationFees }), AGREEMENT_ERRORS.ERROR_SENDER_NOT_ALLOWED)
+                      await assertRevert(disputable.dispute({ actionId, from, arbitratorFees }), AGREEMENT_ERRORS.ERROR_SENDER_NOT_ALLOWED)
                     })
                   })
                 })
 
-                context('when the submitter approved less than the missing arbitration fees', () => {
-                  beforeEach('approve less than the missing arbitration fees', async () => {
-                    const amount = await disputable.missingArbitrationFees(actionId)
-                    await disputable.approveArbitrationFees({ amount: amount.div(bn(2)), from: submitter, accumulate: false })
+                context('when the submitter approved less than the arbitration fees', () => {
+                  beforeEach('approve less than the arbitration fees', async () => {
+                    const amount = await disputable.arbitratorFees()
+                    await disputable.approveArbitratorFees({ amount: amount.div(bn(2)), from: submitter, accumulate: false })
                   })
 
                   it('reverts', async () => {
-                    await assertRevert(disputable.dispute({ actionId, arbitrationFees }), AGREEMENT_ERRORS.ERROR_TOKEN_DEPOSIT_FAILED)
+                    await assertRevert(disputable.dispute({ actionId, arbitratorFees }), AGREEMENT_ERRORS.ERROR_TOKEN_DEPOSIT_FAILED)
                   })
                 })
 
                 context('when the submitter did not approve any arbitration fees', () => {
                   beforeEach('remove arbitration fees approval', async () => {
-                    await disputable.approveArbitrationFees({ amount: 0, from: submitter, accumulate: false })
+                    await disputable.approveArbitratorFees({ amount: 0, from: submitter, accumulate: false })
                   })
 
                   it('reverts', async () => {
-                    await assertRevert(disputable.dispute({ actionId, arbitrationFees }), AGREEMENT_ERRORS.ERROR_TOKEN_DEPOSIT_FAILED)
+                    await assertRevert(disputable.dispute({ actionId, arbitratorFees }), AGREEMENT_ERRORS.ERROR_TOKEN_DEPOSIT_FAILED)
                   })
                 })
               }
 
-              const itDisputesTheChallengeProperlyDespiteArbitrationFees = () => {
+              const itDisputesTheChallengeProperlyDespiteArbitratorFees = () => {
                 context('when the arbitration fees did not change', () => {
                   itDisputesTheChallengeProperly(() => {
                     it('transfers the arbitration fees to the arbitrator', async () => {
-                      const { feeToken, feeAmount } = await disputable.arbitratorFees()
-                      const missingArbitrationFees = await disputable.missingArbitrationFees(actionId)
+                      const { feeToken, feeAmount } = await disputable.getDisputeFees()
 
                       const previousSubmitterBalance = await feeToken.balanceOf(submitter)
                       const previousAgreementBalance = await feeToken.balanceOf(disputable.address)
                       const previousArbitratorBalance = await feeToken.balanceOf(disputable.arbitrator.address)
 
-                      await disputable.dispute({ actionId, from: submitter, arbitrationFees })
+                      await disputable.dispute({ actionId, from: submitter, arbitratorFees })
 
                       const currentSubmitterBalance = await feeToken.balanceOf(submitter)
-                      assertBn(currentSubmitterBalance, previousSubmitterBalance.sub(missingArbitrationFees), 'submitter balance does not match')
+                      assertBn(currentSubmitterBalance, previousSubmitterBalance.sub(feeAmount), 'submitter balance does not match')
 
                       const currentAgreementBalance = await feeToken.balanceOf(disputable.address)
-                      assertBn(currentAgreementBalance, previousAgreementBalance.sub(feeAmount.sub(missingArbitrationFees)), 'agreement balance does not match')
+                      assertBn(currentAgreementBalance, previousAgreementBalance.sub(feeAmount.sub(feeAmount)), 'agreement balance does not match')
 
                       const currentArbitratorBalance = await feeToken.balanceOf(disputable.arbitrator.address)
                       assertBn(currentArbitratorBalance, previousArbitratorBalance.add(feeAmount), 'arbitrator balance does not match')
@@ -241,96 +243,70 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                 })
 
                 context('when the arbitration fees increased', () => {
-                  let previousFeeToken, previousHalfFeeAmount, newArbitrationFeeToken, newArbitrationFeeAmount
+                  let previousFeeToken, previousFeeAmount, newArbitratorFeesToken, newArbitratorFeesAmount
 
                   beforeEach('increase arbitration fees', async () => {
                     previousFeeToken = await disputable.arbitratorToken()
-                    previousHalfFeeAmount = await disputable.halfArbitrationFees()
-                    newArbitrationFeeToken = await deployer.deployToken({ name: 'New Arbitration Token', symbol: 'NAT', decimals: 18 })
-                    newArbitrationFeeAmount = previousHalfFeeAmount.mul(bn(3))
-                    await disputable.arbitrator.setFees(newArbitrationFeeToken.address, newArbitrationFeeAmount)
+                    previousFeeAmount = await disputable.arbitratorFees()
+                    newArbitratorFeesToken = await deployer.deployToken({ name: 'New Arbitration Token', symbol: 'NAT', decimals: 18 })
+                    newArbitratorFeesAmount = previousFeeAmount.add(bigExp(3, 16))
+                    await disputable.arbitrator.setFees(newArbitratorFeesToken.address, newArbitratorFeesAmount)
                   })
 
                   itDisputesTheChallengeProperly(() => {
                     it('transfers the arbitration fees to the arbitrator', async () => {
-                      const previousSubmitterBalance = await newArbitrationFeeToken.balanceOf(submitter)
-                      const previousAgreementBalance = await newArbitrationFeeToken.balanceOf(disputable.address)
-                      const previousArbitratorBalance = await newArbitrationFeeToken.balanceOf(disputable.arbitrator.address)
+                      const previousSubmitterBalance = await newArbitratorFeesToken.balanceOf(submitter)
+                      const previousAgreementBalance = await newArbitratorFeesToken.balanceOf(disputable.address)
+                      const previousArbitratorBalance = await newArbitratorFeesToken.balanceOf(disputable.arbitrator.address)
 
-                      await disputable.dispute({ actionId, from: submitter, arbitrationFees })
+                      await disputable.dispute({ actionId, from: submitter, arbitratorFees })
 
-                      const currentSubmitterBalance = await newArbitrationFeeToken.balanceOf(submitter)
-                      assertBn(currentSubmitterBalance, previousSubmitterBalance.sub(newArbitrationFeeAmount), 'submitter balance does not match')
+                      const currentSubmitterBalance = await newArbitratorFeesToken.balanceOf(submitter)
+                      assertBn(currentSubmitterBalance, previousSubmitterBalance.sub(newArbitratorFeesAmount), 'submitter balance does not match')
 
-                      const currentAgreementBalance = await newArbitrationFeeToken.balanceOf(disputable.address)
+                      const currentAgreementBalance = await newArbitratorFeesToken.balanceOf(disputable.address)
                       assertBn(currentAgreementBalance, previousAgreementBalance, 'agreement balance does not match')
 
-                      const currentArbitratorBalance = await newArbitrationFeeToken.balanceOf(disputable.arbitrator.address)
-                      assertBn(currentArbitratorBalance, previousArbitratorBalance.add(newArbitrationFeeAmount), 'arbitrator balance does not match')
-                    })
-
-                    it('returns the previous arbitration fees to the challenger', async () => {
-                      const previousAgreementBalance = await previousFeeToken.balanceOf(disputable.address)
-                      const previousChallengerBalance = await previousFeeToken.balanceOf(challenger)
-
-                      await disputable.dispute({ actionId, from: submitter, arbitrationFees })
-
-                      const currentAgreementBalance = await previousFeeToken.balanceOf(disputable.address)
-                      assertBn(currentAgreementBalance, previousAgreementBalance.sub(previousHalfFeeAmount), 'agreement balance does not match')
-
-                      const currentChallengerBalance = await previousFeeToken.balanceOf(challenger)
-                      assertBn(currentChallengerBalance, previousChallengerBalance.add(previousHalfFeeAmount), 'challenger balance does not match')
+                      const currentArbitratorBalance = await newArbitratorFeesToken.balanceOf(disputable.arbitrator.address)
+                      assertBn(currentArbitratorBalance, previousArbitratorBalance.add(newArbitratorFeesAmount), 'arbitrator balance does not match')
                     })
                   })
                 })
 
                 context('when the arbitration fees decreased', () => {
-                  let previousFeeToken, previousHalfFeeAmount, newArbitrationFeeToken, newArbitrationFeeAmount
+                  let previousFeeToken, previousFeeAmount, newArbitratorFeesToken, newArbitratorFeesAmount
 
                   beforeEach('decrease arbitration fees', async () => {
                     previousFeeToken = await disputable.arbitratorToken()
-                    previousHalfFeeAmount = await disputable.halfArbitrationFees()
-                    newArbitrationFeeToken = await deployer.deployToken({ name: 'New Arbitration Token', symbol: 'NAT', decimals: 18 })
-                    newArbitrationFeeAmount = previousHalfFeeAmount.sub(bn(1))
-                    await disputable.arbitrator.setFees(newArbitrationFeeToken.address, newArbitrationFeeAmount)
+                    previousFeeAmount = await disputable.arbitratorFees()
+                    newArbitratorFeesToken = await deployer.deployToken({ name: 'New Arbitration Token', symbol: 'NAT', decimals: 18 })
+                    newArbitratorFeesAmount = previousFeeAmount.sub(bn(1))
+                    await disputable.arbitrator.setFees(newArbitratorFeesToken.address, newArbitratorFeesAmount)
                   })
 
                   itDisputesTheChallengeProperly(() => {
                     it('transfers the arbitration fees to the arbitrator', async () => {
-                      const previousSubmitterBalance = await newArbitrationFeeToken.balanceOf(submitter)
-                      const previousAgreementBalance = await newArbitrationFeeToken.balanceOf(disputable.address)
-                      const previousArbitratorBalance = await newArbitrationFeeToken.balanceOf(disputable.arbitrator.address)
+                      const previousSubmitterBalance = await newArbitratorFeesToken.balanceOf(submitter)
+                      const previousAgreementBalance = await newArbitratorFeesToken.balanceOf(disputable.address)
+                      const previousArbitratorBalance = await newArbitratorFeesToken.balanceOf(disputable.arbitrator.address)
 
-                      await disputable.dispute({ actionId, from: submitter, arbitrationFees })
+                      await disputable.dispute({ actionId, from: submitter, arbitratorFees })
 
-                      const currentSubmitterBalance = await newArbitrationFeeToken.balanceOf(submitter)
-                      assertBn(currentSubmitterBalance, previousSubmitterBalance.sub(newArbitrationFeeAmount), 'submitter balance does not match')
+                      const currentSubmitterBalance = await newArbitratorFeesToken.balanceOf(submitter)
+                      assertBn(currentSubmitterBalance, previousSubmitterBalance.sub(newArbitratorFeesAmount), 'submitter balance does not match')
 
-                      const currentAgreementBalance = await newArbitrationFeeToken.balanceOf(disputable.address)
+                      const currentAgreementBalance = await newArbitratorFeesToken.balanceOf(disputable.address)
                       assertBn(currentAgreementBalance, previousAgreementBalance, 'agreement balance does not match')
 
-                      const currentArbitratorBalance = await newArbitrationFeeToken.balanceOf(disputable.arbitrator.address)
-                      assertBn(currentArbitratorBalance, previousArbitratorBalance.add(newArbitrationFeeAmount), 'arbitrator balance does not match')
-                    })
-
-                    it('returns the previous arbitration fees to the challenger', async () => {
-                      const previousAgreementBalance = await previousFeeToken.balanceOf(disputable.address)
-                      const previousChallengerBalance = await previousFeeToken.balanceOf(challenger)
-
-                      await disputable.dispute({ actionId, from: submitter, arbitrationFees })
-
-                      const currentAgreementBalance = await previousFeeToken.balanceOf(disputable.address)
-                      assertBn(currentAgreementBalance, previousAgreementBalance.sub(previousHalfFeeAmount), 'agreement balance does not match')
-
-                      const currentChallengerBalance = await previousFeeToken.balanceOf(challenger)
-                      assertBn(currentChallengerBalance, previousChallengerBalance.add(previousHalfFeeAmount), 'challenger balance does not match')
+                      const currentArbitratorBalance = await newArbitratorFeesToken.balanceOf(disputable.arbitrator.address)
+                      assertBn(currentArbitratorBalance, previousArbitratorBalance.add(newArbitratorFeesAmount), 'arbitrator balance does not match')
                     })
                   })
                 })
               }
 
               context('at the beginning of the answer period', () => {
-                itDisputesTheChallengeProperlyDespiteArbitrationFees()
+                itDisputesTheChallengeProperlyDespiteArbitratorFees()
               })
 
               context('in the middle of the answer period', () => {
@@ -338,7 +314,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                   await disputable.moveBeforeChallengeEndDate(challengeId)
                 })
 
-                itDisputesTheChallengeProperlyDespiteArbitrationFees()
+                itDisputesTheChallengeProperlyDespiteArbitratorFees()
               })
 
               context('at the end of the answer period', () => {
