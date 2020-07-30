@@ -38,7 +38,7 @@ contract('Agreement', ([_, user]) => {
         ({ actionId } = await disputable.newAction({}))
       })
 
-      itCostsAtMost(85e3, () => disputable.close(actionId))
+      itCostsAtMost(86e3, () => disputable.close(actionId))
     })
 
     context('challenge', () => {
