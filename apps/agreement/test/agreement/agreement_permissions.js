@@ -1,3 +1,4 @@
+const { keccak_256 } = require('js-sha3')
 const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 
 const { bn, bigExp } = require('@aragon/contract-helpers-test')
@@ -202,6 +203,25 @@ contract('Agreement', ([_, owner, someone, submitter, challenger]) => {
           assert.isTrue(await disputable.canChallenge(actionId, challenger), 'challenger cannot challenge')
         })
       })
+    })
+  })
+
+  describe('roles', () => {
+    const COMPUTED_CHALLENGE_ROLE = '0x' + keccak_256("CHALLENGE_ROLE")
+    const COMPUTED_CHANGE_AGREEMENT_ROLE = '0x' + keccak_256("CHANGE_AGREEMENT_ROLE")
+    const COMPUTED_MANAGE_DISPUTABLE_ROLE = '0x' + keccak_256("MANAGE_DISPUTABLE_ROLE")
+
+    let CHALLENGE_ROLE, CHANGE_AGREEMENT_ROLE, MANAGE_DISPUTABLE_ROLE
+
+    before('load role', async () => {
+      CHALLENGE_ROLE = await deployer.base.CHALLENGE_ROLE()
+      CHANGE_AGREEMENT_ROLE = await deployer.base.CHANGE_AGREEMENT_ROLE()
+      MANAGE_DISPUTABLE_ROLE = await deployer.base.MANAGE_DISPUTABLE_ROLE()
+    })
+    it('roles match', async () => {
+      assert.equal(CHALLENGE_ROLE, COMPUTED_CHALLENGE_ROLE, 'CHALLENGE_ROLE doesn’t match')
+      assert.equal(CHANGE_AGREEMENT_ROLE, COMPUTED_CHANGE_AGREEMENT_ROLE, 'CHANGE_AGREEMENT_ROLE doesn’t match')
+      assert.equal(MANAGE_DISPUTABLE_ROLE, COMPUTED_MANAGE_DISPUTABLE_ROLE, 'MANAGE_DISPUTABLE_ROLE doesn’t match')
     })
   })
 })
