@@ -3,7 +3,7 @@ const { AGREEMENT_ERRORS } = require('../helpers/utils/errors')
 const { RULINGS, CHALLENGES_STATE } = require('../helpers/utils/enums')
 const { AGREEMENT_EVENTS, DISPUTABLE_EVENTS } = require('../helpers/utils/events')
 
-const { injectWeb3, injectArtifacts } = require('@aragon/contract-helpers-test')
+const { bn, injectWeb3, injectArtifacts } = require('@aragon/contract-helpers-test')
 const { assertBn, assertRevert, assertEvent, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/asserts')
 
 injectWeb3(web3)
@@ -97,19 +97,21 @@ contract('Agreement', ([_, submitter, challenger]) => {
                   const itRulesTheActionProperly = (ruling, expectedChallengeState) => {
                     context('when the sender is the arbitrator', () => {
                       it('updates the challenge state only', async () => {
-                        const previousChallengeState = await disputable.getChallenge(challengeId)
+                        const previousChallengeState = await disputable.getChallengeWithArbitratorFees(challengeId)
 
                         await disputable.executeRuling({ actionId, ruling })
 
-                        const currentChallengeState = await disputable.getChallenge(challengeId)
+                        const currentChallengeState = await disputable.getChallengeWithArbitratorFees(challengeId)
                         assertBn(currentChallengeState.state, expectedChallengeState, 'challenge state does not match')
 
                         assert.equal(currentChallengeState.context, previousChallengeState.context, 'challenge context does not match')
                         assert.equal(currentChallengeState.challenger, previousChallengeState.challenger, 'challenger does not match')
                         assertBn(currentChallengeState.endDate, previousChallengeState.endDate, 'challenge end date does not match')
                         assertBn(currentChallengeState.settlementOffer, previousChallengeState.settlementOffer, 'challenge settlement offer does not match')
-                        assertBn(currentChallengeState.arbitratorFeeAmount, previousChallengeState.arbitratorFeeAmount, 'arbitrator amount does not match')
-                        assert.equal(currentChallengeState.arbitratorFeeToken, previousChallengeState.arbitratorFeeToken, 'arbitrator token does not match')
+                        assertBn(currentChallengeState.challengerArbitratorFeesAmount, previousChallengeState.challengerArbitratorFeesAmount, 'challenger arbitrator amount does not match')
+                        assert.equal(currentChallengeState.challengerArbitratorFeesToken, previousChallengeState.challengerArbitratorFeesToken, 'challenger arbitrator token does not match')
+                        assertBn(currentChallengeState.submitterArbitratorFeesAmount, previousChallengeState.submitterArbitratorFeesAmount, 'submitter arbitrator amount does not match')
+                        assert.equal(currentChallengeState.submitterArbitratorFeesToken, previousChallengeState.submitterArbitratorFeesToken, 'submitter arbitrator token does not match')
                         assertBn(currentChallengeState.disputeId, previousChallengeState.disputeId, 'challenge dispute ID does not match')
                       })
 
@@ -246,6 +248,20 @@ contract('Agreement', ([_, submitter, challenger]) => {
                       assertBn(currentAgreementBalance, previousAgreementBalance.sub(challengeCollateral), 'agreement balance does not match')
                     })
 
+                    it('transfers the challenger arbitrator fees to the submitter', async () => {
+                      const { challengerArbitratorFeesAmount, challengerArbitratorFeesToken } = await disputable.getChallengeArbitratorFees(challengeId)
+
+                      const previousChallengerArbitratorTokenBalance = await challengerArbitratorFeesToken.balanceOf(challenger)
+                      const previousSubmitterArbitratorTokenBalance = await challengerArbitratorFeesToken.balanceOf(submitter)
+
+                      await disputable.executeRuling({ actionId, ruling })
+
+                      const currentChallengerArbitratorTokenBalance = await challengerArbitratorFeesToken.balanceOf(challenger)
+                      const currentSubmitterArbitratorTokenBalance = await challengerArbitratorFeesToken.balanceOf(submitter)
+                      assertBn(currentChallengerArbitratorTokenBalance, previousChallengerArbitratorTokenBalance, 'challenger balance does not match')
+                      assertBn(currentSubmitterArbitratorTokenBalance, previousSubmitterArbitratorTokenBalance.add(challengerArbitratorFeesAmount), 'submitter balance does not match')
+                    })
+
                     it('emits an event', async () => {
                       const { currentChallengeId } = await disputable.getAction(actionId)
                       const receipt = await disputable.executeRuling({ actionId, ruling })
@@ -297,6 +313,20 @@ contract('Agreement', ([_, submitter, challenger]) => {
                       assertBn(currentStakingBalance, previousStakingBalance.sub(actionCollateral), 'staking balance does not match')
                     })
 
+                    it('transfers the challenger arbitrator fees to the challenger', async () => {
+                      const { challengerArbitratorFeesAmount, challengerArbitratorFeesToken } = await disputable.getChallengeArbitratorFees(challengeId)
+
+                      const previousChallengerArbitratorTokenBalance = await challengerArbitratorFeesToken.balanceOf(challenger)
+                      const previousSubmitterArbitratorTokenBalance = await challengerArbitratorFeesToken.balanceOf(submitter)
+
+                      await disputable.executeRuling({ actionId, ruling })
+
+                      const currentChallengerArbitratorTokenBalance = await challengerArbitratorFeesToken.balanceOf(challenger)
+                      const currentSubmitterArbitratorTokenBalance = await challengerArbitratorFeesToken.balanceOf(submitter)
+                      assertBn(currentChallengerArbitratorTokenBalance, previousChallengerArbitratorTokenBalance.add(challengerArbitratorFeesAmount), 'challenger balance does not match')
+                      assertBn(currentSubmitterArbitratorTokenBalance, previousSubmitterArbitratorTokenBalance, 'submitter balance does not match')
+                    })
+
                     it('emits an event', async () => {
                       const { currentChallengeId } = await disputable.getAction(actionId)
                       const receipt = await disputable.executeRuling({ actionId, ruling })
@@ -345,6 +375,21 @@ contract('Agreement', ([_, submitter, challenger]) => {
 
                       assertAmountOfEvents(receipt, AGREEMENT_EVENTS.ACTION_VOIDED, { decodeForAbi: disputable.abi })
                       assertEvent(receipt, AGREEMENT_EVENTS.ACTION_VOIDED, { expectedArgs: { actionId, challengeId: currentChallengeId }, decodeForAbi: disputable.abi })
+                    })
+
+                    it('splits the challenger arbitrator fees between the challenger and the submitter', async () => {
+                      const { challengerArbitratorFeesAmount, challengerArbitratorFeesToken } = await disputable.getChallengeArbitratorFees(challengeId)
+                      const halfFees = challengerArbitratorFeesAmount.div(bn(2))
+
+                      const previousChallengerArbitratorTokenBalance = await challengerArbitratorFeesToken.balanceOf(challenger)
+                      const previousSubmitterArbitratorTokenBalance = await challengerArbitratorFeesToken.balanceOf(submitter)
+
+                      await disputable.executeRuling({ actionId, ruling })
+
+                      const currentChallengerArbitratorTokenBalance = await challengerArbitratorFeesToken.balanceOf(challenger)
+                      const currentSubmitterArbitratorTokenBalance = await challengerArbitratorFeesToken.balanceOf(submitter)
+                      assertBn(currentChallengerArbitratorTokenBalance, previousChallengerArbitratorTokenBalance.add(halfFees), 'challenger balance does not match')
+                      assertBn(currentSubmitterArbitratorTokenBalance, previousSubmitterArbitratorTokenBalance.add(halfFees), 'submitter balance does not match')
                     })
 
                     it('ignores the disputable callback behavior', async () => {
