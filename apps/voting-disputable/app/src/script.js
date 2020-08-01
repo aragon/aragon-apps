@@ -119,7 +119,7 @@ const initState = tokenAddr => async cachedState => {
     app.identify(`${tokenSymbol} (${supportRequired}%)`)
   } catch (err) {
     console.error(
-      `Failed to load information to identify voting app due to:`,
+      `Failed to load information to identify disputable voting app due to:`,
       err
     )
   }
@@ -185,10 +185,6 @@ async function castVote(state, { voteId, voter }) {
       ...vote.data,
       ...(await loadVoteData(voteId)),
     },
-    disputable: {
-      ...vote.disputable,
-      ...(await loadVoteDisputableInfo(voteId)),
-    },
   })
 
   return updateState({ ...state, connectedAccountVotes }, voteId, transform)
@@ -246,7 +242,6 @@ async function updateVotes(votes, voteId, transform) {
       await transform({
         voteId,
         data: await loadVoteData(voteId),
-        disputable: await loadVoteDisputableInfo(voteId),
       })
     )
   } else {
@@ -337,23 +332,6 @@ function loadVoteData(voteId) {
       .then(vote => loadVoteDescription(marshallVote(vote)))
       .catch(err => {
         console.error(`Error fetching vote (${voteId})`, err)
-        throw err
-      })
-  )
-}
-
-function loadVoteDisputableInfo(voteId) {
-  // Wrap with retry in case the disputable info is somehow not present
-  return retryEvery(() =>
-    app
-      .call('getVoteDisputableInfo', voteId)
-      .toPromise()
-      .then(disputable => marshallDisputableInfo(disputable))
-      .catch(err => {
-        console.error(
-          `Error fetching disputable info from vote (${voteId})`,
-          err
-        )
         throw err
       })
   )
@@ -472,7 +450,7 @@ function loadBlockTimestamp(blockNumber) {
 
 // Apply transformations to a vote received from web3
 // Note: ignores the 'open' field as we calculate that locally
-function marshallVote({
+async function marshallVote({
   executed,
   minAcceptQuorum,
   nay,
@@ -482,6 +460,10 @@ function marshallVote({
   votingPower,
   yea,
   script,
+  actionId,
+  pauseDuration,
+  pausedAt,
+  status,
 }) {
   return {
     executed,
@@ -494,21 +476,14 @@ function marshallVote({
     // Like times, blocks should be safe to represent as real numbers
     snapshotBlock: parseInt(snapshotBlock, 10),
     startDate: marshallDate(startDate),
-  }
-}
-async function marshallDisputableInfo({
-  actionId,
-  pauseDuration,
-  pausedAt,
-  status,
-}) {
-  return {
-    actionId,
-    pauseDuration,
-    pausedAt: marshallDate(pausedAt),
-    status,
-    action: {
-      ...(await getDisputableAction(actionId)),
+    disputable: {
+      actionId,
+      pauseDuration,
+      pausedAt: marshallDate(pausedAt),
+      status,
+      action: {
+        ...(await getDisputableAction(actionId)),
+      },
     },
   }
 }
