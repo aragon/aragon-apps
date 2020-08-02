@@ -44,17 +44,19 @@ function appStateReducer(state) {
               ...data,
               executionDate: data.executionDate && new Date(data.executionDate),
               endDate: new Date(data.startDate + voteTime),
-              minAcceptQuorum: new BN(data.minAcceptQuorum),
+              minAcceptQuorum: new BN(data.setting.minAcceptQuorumPct),
               nay: new BN(data.nay),
               startDate: new Date(data.startDate),
-              supportRequired: new BN(data.supportRequired),
+              supportRequired: new BN(data.setting.supportRequiredPct),
               votingPower: new BN(data.votingPower),
               yea: new BN(data.yea),
             },
             numData: {
-              minAcceptQuorum: parseInt(data.minAcceptQuorum, 10) / pctBaseNum,
+              minAcceptQuorum:
+                parseInt(data.setting.minAcceptQuorumPct, 10) / pctBaseNum,
               nay: parseInt(data.nay, 10) / tokenDecimalsBaseNum,
-              supportRequired: parseInt(data.supportRequired, 10) / pctBaseNum,
+              supportRequired:
+                parseInt(data.setting.supportRequiredPct, 10) / pctBaseNum,
               votingPower:
                 parseInt(data.votingPower, 10) / tokenDecimalsBaseNum,
               yea: parseInt(data.yea, 10) / tokenDecimalsBaseNum,

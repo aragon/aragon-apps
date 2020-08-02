@@ -111,11 +111,12 @@ const initState = tokenAddr => async cachedState => {
   try {
     tokenSymbol = await token.symbol().toPromise()
     const pctBase = parseInt(await app.call('PCT_BASE').toPromise(), 10)
-    const supportRequiredPct = parseInt(
-      await app.call('supportRequiredPct').toPromise(),
-      10
+
+    const settingId = await app.call('getCurrentSettingId').toPromise()
+    const setting = await getVoteSetting(settingId)
+    const supportRequired = Math.round(
+      (setting.supportRequiredPct / pctBase) * 100
     )
-    const supportRequired = Math.round((supportRequiredPct / pctBase) * 100)
     app.identify(`${tokenSymbol} (${supportRequired}%)`)
   } catch (err) {
     console.error(
@@ -406,6 +407,10 @@ async function getCollaterallToken(action) {
   return action
 }
 
+async function getVoteSetting(settingId) {
+  return app.call('getSetting', settingId).toPromise()
+}
+
 function loadVoteSettings() {
   return Promise.all(
     voteSettings.map(([name, key, type = 'string']) =>
@@ -450,42 +455,31 @@ function loadBlockTimestamp(blockNumber) {
 
 // Apply transformations to a vote received from web3
 // Note: ignores the 'open' field as we calculate that locally
-async function marshallVote({
-  executed,
-  minAcceptQuorum,
-  nay,
-  snapshotBlock,
-  startDate,
-  supportRequired,
-  votingPower,
-  yea,
-  script,
-  actionId,
-  pauseDuration,
-  pausedAt,
-  status,
-}) {
-  return {
-    executed,
-    minAcceptQuorum,
-    nay,
-    script,
-    supportRequired,
-    votingPower,
-    yea,
+async function marshallVote(vote) {
+  const marshallVote = {
+    executed: vote.executed,
+    minAcceptQuorum: vote.minAcceptQuorum,
+    nay: vote.nay,
+    script: vote.script,
+    supportRequired: vote.supportRequired,
+    votingPower: vote.votingPower,
+    yea: vote.yea,
     // Like times, blocks should be safe to represent as real numbers
-    snapshotBlock: parseInt(snapshotBlock, 10),
-    startDate: marshallDate(startDate),
+    snapshotBlock: parseInt(vote.snapshotBlock, 10),
+    startDate: marshallDate(vote.startDate),
+    setting: await getVoteSetting(vote.settingId),
     disputable: {
-      actionId,
-      pauseDuration,
-      pausedAt: marshallDate(pausedAt),
-      status,
+      actionId: vote.actionId,
+      pauseDuration: vote.pauseDuration,
+      pausedAt: marshallDate(vote.pausedAt),
+      status: vote.status,
       action: {
-        ...(await getDisputableAction(actionId)),
+        ...(await getDisputableAction(vote.actionId)),
       },
     },
   }
+
+  return marshallVote
 }
 
 function marshallDate(date) {

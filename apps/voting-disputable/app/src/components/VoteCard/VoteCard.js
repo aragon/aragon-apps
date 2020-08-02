@@ -16,6 +16,7 @@ import VotedIndicator from './VotedIndicator'
 import VoteStatus from '../VoteStatus'
 import VoteDescription from '../VoteDescription'
 import You from '../You'
+import { hexToAscii } from '../../utils'
 
 function getCardBorderColor(status, theme) {
   const borderColor = {
@@ -39,7 +40,8 @@ function VoteCard({ vote, onOpen }) {
   } = vote
 
   const { votingPower, yea, nay } = numData
-  const { open, metadata, description, endDate } = data
+  const { open, disputable, description, endDate } = data
+  const metadata = hexToAscii(disputable.action.context)
   const options = useMemo(
     () => [
       {
@@ -76,7 +78,9 @@ function VoteCard({ vote, onOpen }) {
   // “highlighted” means either focused or hovered
   const [highlighted, setHighlighted] = useState(false)
 
-  const disputableStatus = DISPUTABLE_VOTE_STATUSES.get(vote.disputable.status)
+  const disputableStatus = DISPUTABLE_VOTE_STATUSES.get(
+    vote.data.disputable.status
+  )
 
   const border = getCardBorderColor(disputableStatus, theme)
 
