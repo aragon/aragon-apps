@@ -6,6 +6,7 @@ import { voteTypeFromContractEnum } from './vote-utils'
 import { EMPTY_CALLSCRIPT } from './evmscript-utils'
 import tokenDecimalsAbi from './abi/token-decimals.json'
 import tokenSymbolAbi from './abi/token-symbol.json'
+import agreementAbi from './abi/agreement.json'
 
 const tokenAbi = [].concat(tokenDecimalsAbi, tokenSymbolAbi)
 
@@ -110,15 +111,16 @@ const initState = tokenAddr => async cachedState => {
   try {
     tokenSymbol = await token.symbol().toPromise()
     const pctBase = parseInt(await app.call('PCT_BASE').toPromise(), 10)
-    const supportRequiredPct = parseInt(
-      await app.call('supportRequiredPct').toPromise(),
-      10
+
+    const settingId = await app.call('getCurrentSettingId').toPromise()
+    const setting = await getVoteSetting(settingId)
+    const supportRequired = Math.round(
+      (setting.supportRequiredPct / pctBase) * 100
     )
-    const supportRequired = Math.round((supportRequiredPct / pctBase) * 100)
     app.identify(`${tokenSymbol} (${supportRequired}%)`)
   } catch (err) {
     console.error(
-      `Failed to load information to identify voting app due to:`,
+      `Failed to load information to identify disputable voting app due to:`,
       err
     )
   }
@@ -184,10 +186,6 @@ async function castVote(state, { voteId, voter }) {
       ...vote.data,
       ...(await loadVoteData(voteId)),
     },
-    disputable: {
-      ...vote.disputable,
-      ...(await loadVoteDisputableInfo(voteId)),
-    },
   })
 
   return updateState({ ...state, connectedAccountVotes }, voteId, transform)
@@ -245,7 +243,6 @@ async function updateVotes(votes, voteId, transform) {
       await transform({
         voteId,
         data: await loadVoteData(voteId),
-        disputable: await loadVoteDisputableInfo(voteId),
       })
     )
   } else {
@@ -281,9 +278,9 @@ async function loadVoterState({ connectedAccount, voteId }) {
   // Wrap with retry in case the vote is somehow not present
   return retryEvery(() =>
     app
-      .call('getVoterState', voteId, connectedAccount)
+      .call('getCastVote', voteId, connectedAccount)
       .toPromise()
-      .then(voteTypeFromContractEnum)
+      .then(result => voteTypeFromContractEnum(result.state))
       .then(voteType => ({ voteId, voteType }))
       .catch(err => {
         console.error(
@@ -341,21 +338,77 @@ function loadVoteData(voteId) {
   )
 }
 
-function loadVoteDisputableInfo(voteId) {
-  // Wrap with retry in case the disputable info is somehow not present
+function getAgreement() {
   return retryEvery(() =>
     app
-      .call('getVoteDisputableInfo', voteId)
+      .call('getAgreement')
       .toPromise()
-      .then(vote => marshallDisputableInfo(vote))
       .catch(err => {
-        console.error(
-          `Error fetching disputable info from vote (${voteId})`,
-          err
-        )
+        console.error(`Error fetching agreement address`, err)
         throw err
       })
   )
+}
+
+async function getDisputableAction(actionId) {
+  const agreementAddress = await getAgreement()
+  const agreement = app.external(agreementAddress, agreementAbi)
+
+  return agreement
+    .getAction(actionId)
+    .toPromise()
+    .then(action => getChallenge(agreement, action))
+    .then(action => getCollaterall(agreement, action))
+    .then(action => getCollaterallToken(action))
+}
+
+async function getChallenge(agreement, action) {
+  if (action.currentChallengeId && parseInt(action.currentChallengeId) > 0) {
+    return {
+      ...action,
+      challenge: await agreement
+        .getChallenge(action.currentChallengeId)
+        .toPromise(),
+    }
+  }
+  return action
+}
+
+async function getCollaterall(agreement, action) {
+  if (action.disputable && action.collateralRequirementId) {
+    return {
+      ...action,
+      collateral: await agreement
+        .getCollateralRequirement(
+          action.disputable,
+          action.collateralRequirementId
+        )
+        .toPromise(),
+    }
+  }
+  return action
+}
+
+async function getCollaterallToken(action) {
+  const collateralToken = app.external(
+    action.collateral.collateralToken,
+    tokenAbi
+  )
+  if (action.collateral && action.collateral.collateralToken) {
+    return {
+      ...action,
+      collateral: {
+        ...action.collateral,
+        symbol: await collateralToken.symbol().toPromise(),
+        decimals: await collateralToken.decimals().toPromise(),
+      },
+    }
+  }
+  return action
+}
+
+async function getVoteSetting(settingId) {
+  return app.call('getSetting', settingId).toPromise()
 }
 
 function loadVoteSettings() {
@@ -402,37 +455,32 @@ function loadBlockTimestamp(blockNumber) {
 
 // Apply transformations to a vote received from web3
 // Note: ignores the 'open' field as we calculate that locally
-function marshallVote({
-  executed,
-  minAcceptQuorum,
-  nay,
-  snapshotBlock,
-  startDate,
-  supportRequired,
-  votingPower,
-  yea,
-  script,
-}) {
-  return {
-    executed,
-    minAcceptQuorum,
-    nay,
-    script,
-    supportRequired,
-    votingPower,
-    yea,
+async function marshallVote(vote) {
+  const marshallVote = {
+    executed: vote.executed,
+    minAcceptQuorum: vote.minAcceptQuorum,
+    nay: vote.nay,
+    script: vote.script,
+    executionTargets: vote.executionTargets || [],
+    supportRequired: vote.supportRequired,
+    votingPower: vote.votingPower,
+    yea: vote.yea,
     // Like times, blocks should be safe to represent as real numbers
-    snapshotBlock: parseInt(snapshotBlock, 10),
-    startDate: marshallDate(startDate),
+    snapshotBlock: parseInt(vote.snapshotBlock, 10),
+    startDate: marshallDate(vote.startDate),
+    setting: await getVoteSetting(vote.settingId),
+    disputable: {
+      actionId: vote.actionId,
+      pauseDuration: vote.pauseDuration,
+      pausedAt: marshallDate(vote.pausedAt),
+      status: vote.status,
+      action: {
+        ...(await getDisputableAction(vote.actionId)),
+      },
+    },
   }
-}
-function marshallDisputableInfo({ actionId, pauseDuration, pausedAt, status }) {
-  return {
-    actionId,
-    pauseDuration,
-    pausedAt: marshallDate(pausedAt),
-    status,
-  }
+
+  return marshallVote
 }
 
 function marshallDate(date) {

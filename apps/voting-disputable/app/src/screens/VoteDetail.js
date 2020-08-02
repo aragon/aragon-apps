@@ -30,9 +30,9 @@ import VoteInfoBoxes from '../components/VoteDetail/VoteInfoBoxes'
 import VoteStatus from '../components/VoteStatus'
 import { percentageList, round, safeDiv } from '../math-utils'
 import { getQuorumProgress } from '../vote-utils'
+import { hexToAscii } from '../utils'
 import { VOTE_NAY, VOTE_YEA } from '../vote-types'
 import { addressesEqual } from '../web3-utils'
-import { getMockVoteActionById } from '../agreementsMockData'
 
 const DEFAULT_DESCRIPTION =
   'No additional description has been provided for this proposal.'
@@ -50,11 +50,9 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
     voteId,
   } = vote
 
-  //TODO: Remove this once we have real data
-  vote.disputable.action = getMockVoteActionById(voteId)
-
   const { minAcceptQuorum, supportRequired, yea, nay } = numData
-  const { creator, description, metadata, open, path: executionPath } = data
+  const { creator, description, disputable, open, path: executionPath } = data
+  const metadata = hexToAscii(disputable.action.context)
   const quorumProgress = getQuorumProgress(vote)
   const totalVotes = yea + nay
   const votesYeaVotersSize = safeDiv(yea, totalVotes)

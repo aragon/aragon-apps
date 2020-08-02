@@ -14,3 +14,12 @@ export function noop() {}
 export function formatDate(date) {
   return `${format(date, 'yyyy-MM-dd, HH:mm')}`
 }
+
+export function hexToAscii(hexadecimal) {
+  var hex = hexadecimal.toString()
+  var string = ''
+  for (var n = 0; n < hex.length; n += 2) {
+    string += String.fromCharCode(parseInt(hex.substr(n, 2), 16))
+  }
+  return string
+}

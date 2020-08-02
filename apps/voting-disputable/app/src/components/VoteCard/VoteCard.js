@@ -16,8 +16,7 @@ import VotedIndicator from './VotedIndicator'
 import VoteStatus from '../VoteStatus'
 import VoteDescription from '../VoteDescription'
 import You from '../You'
-//TODO: remove once we have real data
-import { getMockVoteActionById } from '../../agreementsMockData'
+import { hexToAscii } from '../../utils'
 
 function getCardBorderColor(status, theme) {
   const borderColor = {
@@ -40,11 +39,9 @@ function VoteCard({ vote, onOpen }) {
     voteId,
   } = vote
 
-  //TODO: Remove this once we have real data
-  vote.disputable.action = getMockVoteActionById(voteId)
-
   const { votingPower, yea, nay } = numData
-  const { open, metadata, description, endDate } = data
+  const { open, disputable, description, endDate } = data
+  const metadata = hexToAscii(disputable.action.context)
   const options = useMemo(
     () => [
       {
@@ -81,7 +78,9 @@ function VoteCard({ vote, onOpen }) {
   // “highlighted” means either focused or hovered
   const [highlighted, setHighlighted] = useState(false)
 
-  const disputableStatus = DISPUTABLE_VOTE_STATUSES.get(vote.disputable.status)
+  const disputableStatus = DISPUTABLE_VOTE_STATUSES.get(
+    vote.data.disputable.status
+  )
 
   const border = getCardBorderColor(disputableStatus, theme)
 
