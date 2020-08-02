@@ -1,5 +1,14 @@
 import React from 'react'
-import { Box, GU, IconLock, Info, Link, textStyle, useTheme } from '@aragon/ui'
+import {
+  Box,
+  formatTokenAmount,
+  GU,
+  IconLock,
+  Info,
+  Link,
+  textStyle,
+  useTheme,
+} from '@aragon/ui'
 import {
   DISPUTABLE_VOTE_STATUSES,
   VOTE_STATUS_PAUSED,
@@ -11,9 +20,9 @@ import DisputableStatusLabel from '../DisputableStatusLabel'
 
 function hasDispute(vote) {
   return (
-    vote.disputable &&
-    vote.disputable.action &&
-    vote.disputable.action.challenge
+    vote.data.disputable &&
+    vote.data.disputable.action &&
+    vote.data.disputable.action.challenge
   )
 }
 
@@ -21,9 +30,14 @@ function DisputableActionStatus({ vote }) {
   //TODO: get agreement and vote real data
   const agreement = getAgreement()
 
-  const { challengeAmount, collateralToken } = vote.disputable.action.collateral
+  const {
+    actionAmount,
+    decimals,
+    symbol,
+  } = vote.data.disputable.action.collateral
   const disputableStatus =
-    vote.disputable && DISPUTABLE_VOTE_STATUSES.get(vote.disputable.status)
+    vote.data.disputable &&
+    DISPUTABLE_VOTE_STATUSES.get(vote.data.disputable.status)
 
   const challenged = disputableStatus === VOTE_STATUS_PAUSED
 
@@ -42,7 +56,7 @@ function DisputableActionStatus({ vote }) {
               align-items: center;
             `}
           >
-            {challengeAmount} {collateralToken}
+            {formatTokenAmount(actionAmount, decimals, { symbol: symbol })}
             <span
               css={`
                 display: inline-flex;
@@ -57,7 +71,7 @@ function DisputableActionStatus({ vote }) {
           <DisputablePeriod
             startDate={
               challenged
-                ? vote.disputable.pausedAt
+                ? vote.data.disputable.pausedAt
                 : new Date(vote.data.startDate).getTime()
             }
           />
@@ -68,9 +82,9 @@ function DisputableActionStatus({ vote }) {
         {hasDispute(vote) && (
           <Item label="Dispute">
             <Link
-              href={`https://court.aragon.org/disputes/${vote.disputable.action.challenge.disputeId}`}
+              href={`https://court.aragon.org/disputes/${vote.data.disputable.action.challenge.disputeId}`}
             >
-              Dispute #{vote.disputable.action.currentChallengeId}
+              Dispute #{vote.data.disputable.action.currentChallengeId}
             </Link>
           </Item>
         )}
@@ -86,7 +100,7 @@ function DisputableActionStatus({ vote }) {
           {disputableStatus && (
             <DisputableActions
               status={disputableStatus}
-              submitter={vote.disputable.action.submitter}
+              submitter={vote.data.disputable.action.submitter}
             />
           )}
         </Item>

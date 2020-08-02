@@ -6,6 +6,7 @@ import usePanelState from './hooks/usePanelState'
 import useVotes from './hooks/useVotes'
 import { noop } from './utils'
 import { VOTE_YEA } from './vote-types'
+import { toHex } from 'web3-utils'
 
 const VOTE_ID_PATH_RE = /^\/vote\/([0-9]+)\/?$/
 const NO_VOTE_ID = '-1'
@@ -49,11 +50,12 @@ export function useSelectedVote(votes) {
 // Create a new vote
 export function useCreateVoteAction(onDone = noop) {
   const api = useApi()
+
   return useCallback(
     question => {
       if (api) {
         // Don't care about response
-        api['newVote(bytes,string)'](EMPTY_CALLSCRIPT, question).toPromise()
+        api.newVote(EMPTY_CALLSCRIPT, toHex(question)).toPromise()
         onDone()
       }
     },
@@ -67,7 +69,7 @@ export function useVoteAction(onDone = noop) {
   return useCallback(
     (voteId, voteType, executesIfDecided = true) => {
       // Don't care about response
-      api.vote(voteId, voteType === VOTE_YEA, executesIfDecided).toPromise()
+      api.vote(voteId, voteType === VOTE_YEA).toPromise()
       onDone()
     },
     [api, onDone]
