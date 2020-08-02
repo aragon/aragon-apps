@@ -35,7 +35,7 @@ jobs:
       name: "Vault"
     - script: yarn test:voting
       name: "Voting"
-    - script: npm run test:voting-disputable
+    - script: yarn test:voting-disputable
       name: "Voting Disputable"
 
     - stage: coverage
@@ -51,7 +51,7 @@ jobs:
       name: "Vault"
     - script: yarn coverage:voting
       name: "Voting"
-    - script: npm run coverage:voting-disputable
+    - script: yarn coverage:voting-disputable
       name: "Voting Disputable"
 after_success:
   - ./node_modules/.bin/lcov-result-merger 'apps/*/coverage/lcov.info' | ./node_modules/.bin/coveralls
