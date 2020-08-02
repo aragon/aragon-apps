@@ -278,9 +278,9 @@ async function loadVoterState({ connectedAccount, voteId }) {
   // Wrap with retry in case the vote is somehow not present
   return retryEvery(() =>
     app
-      .call('getVoterState', voteId, connectedAccount)
+      .call('getCastVote', voteId, connectedAccount)
       .toPromise()
-      .then(voteTypeFromContractEnum)
+      .then(result => voteTypeFromContractEnum(result.state))
       .then(voteType => ({ voteId, voteType }))
       .catch(err => {
         console.error(
@@ -461,6 +461,7 @@ async function marshallVote(vote) {
     minAcceptQuorum: vote.minAcceptQuorum,
     nay: vote.nay,
     script: vote.script,
+    executionTargets: vote.executionTargets || [],
     supportRequired: vote.supportRequired,
     votingPower: vote.votingPower,
     yea: vote.yea,
