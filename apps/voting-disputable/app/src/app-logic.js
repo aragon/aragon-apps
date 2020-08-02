@@ -67,7 +67,7 @@ export function useVoteAction(onDone = noop) {
   return useCallback(
     (voteId, voteType, executesIfDecided = true) => {
       // Don't care about response
-      api.vote(voteId, voteType === VOTE_YEA, executesIfDecided).toPromise()
+      const voteAction = api.vote(voteId, voteType === VOTE_YEA).toPromise()
       onDone()
     },
     [api, onDone]
