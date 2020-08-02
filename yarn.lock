@@ -102,10 +102,10 @@
     mkdirp "^0.5.1"
     truffle-flattener "^1.2.9"
 
-"@aragon/os@5.0.0-beta.5":
-  version "5.0.0-beta.5"
-  resolved "https://registry.yarnpkg.com/@aragon/os/-/os-5.0.0-beta.5.tgz#62073c55a41030d3b6383488896fd703c2ff6c8e"
-  integrity sha512-C6ACeiF6YLtHgy/FrBGqbgVbw8AX+8w0lfwnEqJahW2RDju/uCRVh8+wczCmkUFcXT4n0I4PgUpHHEJ5Tw3pVg==
+"@aragon/os@5.0.0-beta.6":
+  version "5.0.0-beta.6"
+  resolved "https://registry.yarnpkg.com/@aragon/os/-/os-5.0.0-beta.6.tgz#1c060b2e51b48b7a6c1c2be956e1ce428accba67"
+  integrity sha512-aJd5uc9U0QZfzROuXFuSSGR6vdm/fdHfEf3ukARttl33RMVse+l2U4CzgFtHC4goQnjI223qGaJi4ht70iSAIg==
 
 "@aragon/rpc-messenger@^2.0.0":
   version "2.0.0"

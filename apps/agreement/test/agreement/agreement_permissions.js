@@ -1,15 +1,16 @@
 const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 
+const { sha3 } = require('web3-utils')
 const { bn, bigExp } = require('@aragon/contract-helpers-test')
 const { ANY_ENTITY } = require('@aragon/contract-helpers-test/src/aragon-os')
 
 const TokenBalanceOracle = artifacts.require('TokenBalanceOracle')
 
 contract('Agreement', ([_, owner, someone, submitter, challenger]) => {
-  let disputable
+  let agreement, disputable
 
   before('deploy base contracts', async () => {
-    await deployer.deployBase()
+    agreement = await deployer.deployBase()
     await deployer.deployBaseDisputable()
   })
 
@@ -202,6 +203,19 @@ contract('Agreement', ([_, owner, someone, submitter, challenger]) => {
           assert.isTrue(await disputable.canChallenge(actionId, challenger), 'challenger cannot challenge')
         })
       })
+    })
+  })
+
+  describe('roles', () => {
+    it('computes roles properly', async () => {
+      const EXPECTED_CHALLENGE_ROLE = sha3('CHALLENGE_ROLE')
+      assert.equal(await agreement.CHALLENGE_ROLE(), EXPECTED_CHALLENGE_ROLE, 'CHALLENGE_ROLE doesn’t match')
+
+      const EXPECTED_CHANGE_AGREEMENT_ROLE = sha3('CHANGE_AGREEMENT_ROLE')
+      assert.equal(await agreement.CHANGE_AGREEMENT_ROLE(), EXPECTED_CHANGE_AGREEMENT_ROLE, 'CHANGE_AGREEMENT_ROLE doesn’t match')
+
+      const EXPECTED_MANAGE_DISPUTABLE_ROLE = sha3('MANAGE_DISPUTABLE_ROLE')
+      assert.equal(await agreement.MANAGE_DISPUTABLE_ROLE(), EXPECTED_MANAGE_DISPUTABLE_ROLE, 'MANAGE_DISPUTABLE_ROLE doesn’t match')
     })
   })
 })

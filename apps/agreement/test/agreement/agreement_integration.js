@@ -177,7 +177,7 @@ contract('Agreement', ([_, challenger, holder0, holder1, holder2, holder3, holde
     })
 
     it('transfer the arbitration fees properly', async () => {
-      const { feeToken, feeAmount } = await disputable.arbitratorFees()
+      const { feeToken, feeAmount } = await disputable.getDisputeFees()
       const disputedActions = actions.filter(action => !!action.ruling)
       const totalArbitrationFees = feeAmount.mul(bn(disputedActions.length))
 
