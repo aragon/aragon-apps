@@ -22,7 +22,7 @@ function getAttributes(status, theme) {
       Icon: IconClock,
     },
     [VOTE_STATUS_CANCELLED]: {
-      background: theme.surfaceUnde,
+      background: theme.surfaceUnder,
       label: 'Cancelled',
       Icon: IconClose,
       color: theme.disabledContent,
