@@ -27,7 +27,7 @@ contract('Agreement', ([_, signer]) => {
       })
 
       it('is not allowed through ACL oracle', async () => {
-        assert.isFalse(await agreement.canPerform(from, ANY_ENTITY, ANY_ENTITY, '0x', []), 'signer can perform through ACL')
+        assert.isFalse(await agreement.canPerform(ANY_ENTITY, ANY_ENTITY, '0x', [from]), 'signer can perform through ACL')
       })
 
       it('can sign the agreement', async () => {
@@ -43,7 +43,7 @@ contract('Agreement', ([_, signer]) => {
       it('is allowed through ACL oracle after signing the agreement', async () => {
         await agreement.sign(from)
 
-        assert.isTrue(await agreement.canPerform(from, ANY_ENTITY, ANY_ENTITY, '0x', []), 'signer cannot perform through ACL')
+        assert.isTrue(await agreement.canPerform(ANY_ENTITY, ANY_ENTITY, '0x', [from]), 'signer cannot perform through ACL')
       })
 
       it('emits an event', async () => {
