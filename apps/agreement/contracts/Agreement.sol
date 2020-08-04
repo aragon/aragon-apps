@@ -678,15 +678,18 @@ contract Agreement is ILockManager, IAgreement, AragonApp {
 
     /**
     * @dev ACL oracle interface - Tells whether an address has already signed the Agreement
-    * @param _who Sender of the original call
-    * @return True if the original sender has signed the current version of the Agreement, false otherwise
+    * @return True if a parameterized address has signed the current version of the Agreement, false otherwise
     */
-    function canPerform(address _who, address /* _grantee */, address /* _where */, bytes32 /* _what */, uint256[] /* _how */)
+    function canPerform(address /* _grantee */, address /* _where */, bytes32 /* _what */, uint256[] _how)
         external
         view
         returns (bool)
     {
-        (, bool mustSign) = _getSigner(_who);
+        require(_how.length > 0, ERROR_ACL_SIGNER_MISSING);
+        require(_how[0] < 2**160, ERROR_ACL_SIGNER_NOT_ADDRESS);
+
+        address signer = address(_how[0]);
+        (, bool mustSign) = _getSigner(signer);
         return !mustSign;
     }
 
@@ -1176,7 +1179,8 @@ contract Agreement is ILockManager, IAgreement, AragonApp {
             return false;
         }
 
-        return currentKernel.hasPermission(_challenger, address(_disputable), CHALLENGE_ROLE, new bytes(0));
+        bytes memory params = ConversionHelpers.dangerouslyCastUintArrayToBytes(arr(_challenger));
+        return currentKernel.hasPermission(_challenger, address(_disputable), CHALLENGE_ROLE, params);
     }
 
     /**
