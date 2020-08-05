@@ -1,11 +1,11 @@
 const deployer = require('../helpers/deployer')(web3, artifacts)
 const { ARAGON_OS_ERRORS, VOTING_ERRORS } = require('../helpers/errors')
-const { VOTER_STATE, createVote, voteScript, getVoteState } = require('../helpers/voting')
+const { createVote, voteScript, getVoteState } = require('../helpers/voting')
 
 const { ONE_DAY, bigExp, pct16, getEventArgument } = require('@aragon/contract-helpers-test')
 const { assertBn, assertRevert, assertEvent, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/asserts')
 
-contract('Voting', ([_, owner, holder1, holder2, holder20, holder29, holder51, nonHolder]) => {
+contract('Voting', ([_, owner, holder1, holder2, holder20, holder29, holder51, agreement]) => {
   let voting, token
 
   const CONTEXT = '0xabcdef'
@@ -64,6 +64,8 @@ contract('Voting', ([_, owner, holder1, holder2, holder20, holder29, holder51, n
           })
 
           it('can be forwarded', async () => {
+            await voting.setAgreement(agreement, { from: owner })
+
             const receipt = await voting.forward(script, CONTEXT, { from: holder51 })
 
             assertAmountOfEvents(receipt, 'StartVote')
