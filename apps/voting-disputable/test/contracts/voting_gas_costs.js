@@ -25,6 +25,9 @@ contract('Voting', ([_, owner, voter]) => {
   beforeEach('create voting app', async () => {
     voting = await votingDeployer.deployAndInitialize({ owner, agreement: true })
     await voting.mockSetTimestamp(await agreement.currentTimestamp())
+
+    const SET_AGREEMENT_ROLE = await voting.SET_AGREEMENT_ROLE()
+    await votingDeployer.acl.grantPermission(agreement.address, voting.address, SET_AGREEMENT_ROLE, { from: owner })
     await agreement.activate({ disputable: voting, collateralToken, actionCollateral: 0, challengeCollateral: 0, challengeDuration: ONE_DAY, from: owner })
   })
 
