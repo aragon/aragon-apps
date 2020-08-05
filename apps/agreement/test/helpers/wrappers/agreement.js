@@ -24,8 +24,8 @@ class AgreementWrapper {
     return this.agreement.address
   }
 
-  async canPerform(who, grantee, where, what, how) {
-    return this.agreement.canPerform(who, grantee, where, what, how)
+  async canPerform(grantee, where, what, how) {
+    return this.agreement.canPerform(grantee, where, what, how)
   }
 
   async getCurrentSettingId() {

@@ -151,6 +151,6 @@ contract DisputableAppMock is IForwarderWithContext, DisputableAragonApp, Shared
     * @return True if the given address can submit actions, false otherwise
     */
     function _canForward(address _sender, bytes) internal view returns (bool) {
-        return canPerform(_sender, SUBMIT_ROLE, arr());
+        return canPerform(_sender, SUBMIT_ROLE, arr(_sender));
     }
 }
