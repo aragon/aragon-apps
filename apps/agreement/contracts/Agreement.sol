@@ -1179,6 +1179,9 @@ contract Agreement is ILockManager, IAgreement, AragonApp {
             return false;
         }
 
+        // To make sure the challenger address is reachable by ACL oracles, we need to pass it as arguments.
+        // ACL oracles are set for ANY_ENTITY, therefor there is no default way to know the original sender
+        // for an ACL oracle in case the challenge permission was configured with one
         bytes memory params = ConversionHelpers.dangerouslyCastUintArrayToBytes(arr(_challenger));
         return currentKernel.hasPermission(_challenger, address(_disputable), CHALLENGE_ROLE, params);
     }
