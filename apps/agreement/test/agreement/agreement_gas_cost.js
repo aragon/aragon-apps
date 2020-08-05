@@ -30,7 +30,7 @@ contract('Agreement', ([_, user]) => {
     })
 
     context('newAction', () => {
-      itCostsAtMost(296e3, async () => (await disputable.newAction({})).receipt)
+      itCostsAtMost(297e3, async () => (await disputable.newAction({})).receipt)
     })
 
     context('closeAction', () => {
