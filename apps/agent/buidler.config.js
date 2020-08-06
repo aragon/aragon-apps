@@ -27,11 +27,11 @@ module.exports = {
     enabled: process.env.GAS_REPORTER ? true : false,
   },
   etherscan: {
-  // The url for the Etherscan API.
-  url: "https://api.etherscan.io/api",
-  // API key for Etherscan
-  apiKey: process.env.ETHERSCAN_KEY
-},
+    // The url for the Etherscan API.
+    url: "https://api.etherscan.io/api",
+    // API key for Etherscan
+    apiKey: process.env.ETHERSCAN_KEY
+  },
   aragon: {
     appServePort: 3005,
     clientServePort: 3000,
