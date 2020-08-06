@@ -699,9 +699,12 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @return True if the given address can create votes
     */
     function _canForward(address _sender, bytes) internal view returns (bool) {
-        // TODO: Handle the case where a Disputable app doesn't have an Agreement set
+        IAgreement agreement = _getAgreement();
+        // To make sure the sender address is reachable by ACL oracles, we need to pass it as an argument.
+        // ACL oracles are set for ANY_ENTITY, therefore there is no default way to know the original sender
+        // for an ACL oracle in case the CREATE_VOTES_ROLE permission was configured with one
         // Note that `canPerform()` implicitly does an initialization check itself
-        return canPerform(_sender, CREATE_VOTES_ROLE, arr());
+        return agreement != IAgreement(0) && canPerform(_sender, CREATE_VOTES_ROLE, arr(_sender));
     }
 
     /**
