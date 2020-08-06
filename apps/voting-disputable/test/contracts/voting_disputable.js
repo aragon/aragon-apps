@@ -41,7 +41,7 @@ contract('Voting disputable', ([_, owner, representative, voter10, voter20, vote
     await voting.mockSetTimestamp(await agreement.currentTimestamp())
 
     const SET_AGREEMENT_ROLE = await voting.SET_AGREEMENT_ROLE()
-    await votingDeployer.acl.createPermission(agreement.address, voting.address, SET_AGREEMENT_ROLE, owner, { from: owner })
+    await votingDeployer.acl.grantPermission(agreement.address, voting.address, SET_AGREEMENT_ROLE, { from: owner })
     await agreement.activate({ disputable: voting, collateralToken, actionCollateral: 0, challengeCollateral: 0, challengeDuration: ONE_DAY, from: owner })
   })
 
