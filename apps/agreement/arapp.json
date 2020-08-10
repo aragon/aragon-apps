@@ -1,5 +1,4 @@
 {
-  "appName": "agreement.aragonpm.eth",
   "path": "contracts/Agreement.sol",
   "environments": {
     "default": {
