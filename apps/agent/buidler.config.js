@@ -1,8 +1,6 @@
 const { usePlugin } = require('@nomiclabs/buidler/config')
-const hooks = require('./scripts/buidler-hooks')
 
-usePlugin('@aragon/buidler-aragon')
-usePlugin("@nomiclabs/buidler-etherscan");
+usePlugin("@nomiclabs/buidler-truffle5")
 usePlugin('buidler-gas-reporter')
 usePlugin('solidity-coverage')
 
@@ -25,18 +23,5 @@ module.exports = {
   },
   gasReporter: {
     enabled: process.env.GAS_REPORTER ? true : false,
-  },
-  etherscan: {
-    // The url for the Etherscan API.
-    url: "https://api.etherscan.io/api",
-    // API key for Etherscan
-    apiKey: process.env.ETHERSCAN_KEY
-  },
-  aragon: {
-    appServePort: 3005,
-    clientServePort: 3000,
-    appSrcPath: 'app/',
-    appBuildOutputPath: 'dist/',
-    hooks,
-  },
+  }
 }
