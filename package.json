@@ -13,9 +13,6 @@
     "Sebastián Galiano <sebastian.galiano@altoros.com>"
   ],
   "license": "(GPL-3.0-or-later OR AGPL-3.0-or-later)",
-  "engines": {
-    "node": "^10.0.0"
-  },
   "devDependencies": {
     "coveralls": "^3.0.1",
     "lcov-result-merger": "^3.1.0",
