@@ -2393,6 +2393,15 @@ buffer@^5.0.5, buffer@^5.2.1, buffer@^5.5.0, buffer@^5.6.0:
     base64-js "^1.0.2"
     ieee754 "^1.1.4"
 
+buidler-extract@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/buidler-extract/-/buidler-extract-1.0.0.tgz#d86d6b32e3fb69108eaac92c7b1a6952dcfe4da3"
+  integrity sha512-zgkXHQMjRySYLxGD+XASgANmWzt6k5PvDWxuczxasAUQ4c4Goz3prf4zBKqe+PNfwBSlLZ6Re5Ker373w4XeCw==
+  dependencies:
+    mkdirp "^0.5.1"
+    rimraf "^2.6.2"
+    yargs "^12.0.1"
+
 buidler-gas-reporter@^0.1.3:
   version "0.1.3"
   resolved "https://registry.yarnpkg.com/buidler-gas-reporter/-/buidler-gas-reporter-0.1.3.tgz#1c18d37e44391cd9a2907fe1820941fcaab18d76"
@@ -9866,15 +9875,6 @@ trim-repeated@^1.0.0:
   integrity sha1-42RqLqTokTEr9+rObPsFOAvAHCE=
   dependencies:
     escape-string-regexp "^1.0.2"
-
-truffle-extract@^1.2.1:
-  version "1.2.1"
-  resolved "https://registry.yarnpkg.com/truffle-extract/-/truffle-extract-1.2.1.tgz#0581365acaaf89835c64a73661df54d862fb6ebe"
-  integrity sha512-zM3N4xKergcS6ZcH164GwuAl+bWscHthsBgWUb4yD3K7zz5O9OfxRNbyW6AwqNZph03fsUgHwe5/ivjPgniOwg==
-  dependencies:
-    mkdirp "^0.5.1"
-    rimraf "^2.6.2"
-    yargs "^12.0.1"
 
 truffle-flattener@^1.2.9:
   version "1.4.4"

@@ -10,7 +10,7 @@
     "test": "buidler test",
     "test:gas": "REPORT_GAS=true buidler test --network localhost",
     "coverage": "buidler coverage --network coverage",
-    "abi:extract": "truffle-extract --output abi/ --build-dir artifacts/ --keys abi"
+    "abi:extract": "buidler-extract --output abi/ --keys abi"
   },
   "files": [
     "/abi",
@@ -41,7 +41,7 @@
     "ethereumjs-util": "^7.0.4",
     "solidity-coverage": "^0.7.9",
     "solium": "^1.2.5",
-    "truffle-extract": "^1.2.1",
+    "buidler-extract": "^1.0.0",
     "web3": "^1.2.11"
   }
 }
