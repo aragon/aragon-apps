@@ -7,10 +7,10 @@
     "devchain": "buidler node",
     "build": "cd app && yarn build",
     "lint": "solium --dir ./contracts",
-    "test": "yarn ganache-cli:test",
-    "test:gas": "GAS_REPORTER=true yarn ganache-cli:test",
-    "coverage": "SOLIDITY_COVERAGE=true npm run ganache-cli:test",
-    "ganache-cli:test": "./scripts/ganache-cli.sh"
+    "test": "buidler test",
+    "test:gas": "REPORT_GAS=true buidler test --network localhost",
+    "coverage": "buidler coverage --network coverage",
+    "abi:extract": "truffle-extract --output abi/ --build-dir artifacts/ --keys abi"
   },
   "files": [
     "/abi",
@@ -39,9 +39,9 @@
     "chai": "^4.2.0",
     "eth-ens-namehash": "^2.0.8",
     "ethereumjs-util": "^7.0.4",
-    "ganache-cli": "^6.10.1",
     "solidity-coverage": "^0.7.9",
     "solium": "^1.2.5",
+    "truffle-extract": "^1.2.1",
     "web3": "^1.2.11"
   }
 }

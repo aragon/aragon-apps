@@ -2,20 +2,15 @@
   "name": "@aragon/apps-vault",
   "version": "4.1.0",
   "scripts": {
-    "prepare": "yarn compile",
-    "start": "buidler start",
     "console": "buidler console",
     "compile": "buidler compile --force",
     "devchain": "buidler node",
     "build": "cd app && yarn build",
     "lint": "solium --dir ./contracts",
-    "test": "yarn ganache-cli:test",
-    "test:gas": "GAS_REPORTER=true yarn ganache-cli:test",
-    "coverage": "SOLIDITY_COVERAGE=true npm run ganache-cli:test",
-    "ganache-cli:test": "./scripts/ganache-cli.sh",
-    "apm:publish:major": "buidler publish major",
-    "apm:publish:minor": "buidler publish minor",
-    "apm:publish:patch": "buidler publish patch"
+    "test": "buidler test",
+    "test:gas": "REPORT_GAS=true buidler test --network localhost",
+    "coverage": "buidler coverage --network coverage",
+    "abi:extract": "truffle-extract --output abi/ --build-dir artifacts/ --keys abi"
   },
   "keywords": [],
   "files": [
@@ -38,19 +33,16 @@
     "@aragon/os": "4.4.0"
   },
   "devDependencies": {
-    "@aragon/buidler-aragon": "^0.2.9",
     "@aragon/contract-helpers-test": "^0.1.0-rc.2",
     "@nomiclabs/buidler": "^1.4.3",
-    "@nomiclabs/buidler-etherscan": "^1.3.3",
     "@nomiclabs/buidler-truffle5": "^1.3.4",
     "@nomiclabs/buidler-web3": "^1.3.4",
     "buidler-gas-reporter": "^0.1.3",
     "chai": "^4.2.0",
     "eth-ens-namehash": "^2.0.8",
-    "eth-gas-reporter": "^0.2.0",
-    "ganache-cli": "^6.10.1",
     "solidity-coverage": "^0.7.9",
     "solium": "^1.2.5",
+    "truffle-extract": "^1.2.1",
     "web3": "^1.2.11"
   }
 }
