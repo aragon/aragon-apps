@@ -27,6 +27,10 @@ module.exports = {
       httpHeaders: { origin: 'buidler' },
       url: 'http://localhost:1248',
     },
+    ganache: {
+      gasLimit: 6000000000,
+      defaultBalanceEther: 100
+    }
   },
   solc: {
     version: '0.4.24',

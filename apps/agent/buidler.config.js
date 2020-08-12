@@ -1,5 +1,6 @@
 const { usePlugin } = require('@nomiclabs/buidler/config')
 
+usePlugin("@nomiclabs/buidler-ganache")
 usePlugin('@nomiclabs/buidler-truffle5')
 usePlugin('buidler-gas-reporter')
 usePlugin('solidity-coverage')
@@ -27,6 +28,10 @@ module.exports = {
       httpHeaders: { origin: 'buidler' },
       url: 'http://localhost:1248',
     },
+    ganache: {
+      gasLimit: 6000000000,
+      defaultBalanceEther: 100
+    }
   },
   solc: {
     version: '0.4.24',

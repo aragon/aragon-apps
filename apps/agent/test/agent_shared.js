@@ -815,7 +815,7 @@ module.exports = (agentName, { accounts, artifacts, web3 }) => {
           } of signatureTests) {
             const sign = signFunctionGenerator(signFunction, signatureModifier)
 
-            context(`> Signature mode: ${name}`, () => {
+            context.only(`> Signature mode: ${name}`, () => {
               beforeEach(async () => {
                 const signer = await getSigner()
                 await agent.setDesignatedSigner(signer, { from: signerDesignator })
