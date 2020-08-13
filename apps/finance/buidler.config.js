@@ -1,5 +1,6 @@
 const { usePlugin } = require('@nomiclabs/buidler/config')
 
+usePlugin("@nomiclabs/buidler-ganache")
 usePlugin('@nomiclabs/buidler-truffle5')
 usePlugin('buidler-gas-reporter')
 usePlugin('solidity-coverage')
