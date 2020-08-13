@@ -6,8 +6,8 @@ usePlugin('buidler-gas-reporter')
 usePlugin('solidity-coverage')
 
 module.exports = {
+  defaultNetwork: "ganache",
   networks: {
-    defaultNetwork: "ganache",
     // Local development network using ganache. You can set any of the 
     // Ganache's options. All of them are supported, with the exception
     // of accounts.
