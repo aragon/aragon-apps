@@ -734,11 +734,14 @@ module.exports = (agentName, { accounts, artifacts, web3 }) => {
         context('> Designated signer', () => {
           const ethSign = async (hash, signer) => {
             const packedSig = await web3.eth.sign(hash, signer)
+            const chainId = await web3.eth.net.getId()
+            // If we detect buidlerevm we don't use ganache encoding
+            const offset = chainId === 31337 ? 0 : 27
 
             return {
               r: ethUtil.toBuffer('0x' + packedSig.substring(2, 66)),
               s: ethUtil.toBuffer('0x' + packedSig.substring(66, 130)),
-              v: parseInt(packedSig.substring(130, 132), 16) + 27,
+              v: parseInt(packedSig.substring(130, 132), 16) + offset,
               mode: ethUtil.toBuffer(SIGNATURE_MODES.EthSign)
             }
           }

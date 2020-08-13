@@ -7,7 +7,7 @@
     "devchain": "buidler node",
     "build": "cd app && yarn build",
     "lint": "solium --dir ./contracts",
-    "test": "buidler test --network ganache",
+    "test": "buidler test",
     "test:gas": "REPORT_GAS=true buidler test --network localhost",
     "coverage": "buidler coverage --network coverage",
     "abi:extract": "buidler-extract --output abi/ --keys abi"
