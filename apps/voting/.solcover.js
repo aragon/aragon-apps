@@ -2,7 +2,7 @@ module.exports = {
   skipFiles: [
     'test',
     '@aragon/os',
-    '@aragon/apps-shared-minime',
+    '@aragon/minime',
     '@aragon/contract-helpers-test',
   ],
 }

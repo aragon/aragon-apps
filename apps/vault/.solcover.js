@@ -1,3 +1,7 @@
 module.exports = {
-  skipFiles: ['test', '@aragon/os'],
+  skipFiles: [
+    'test',
+    '@aragon/os',
+    '@aragon/contract-helpers-test',
+  ],
 }
