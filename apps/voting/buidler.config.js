@@ -28,6 +28,7 @@ module.exports = {
       url: 'http://localhost:1248',
     },
     ganache: {
+      url: 'http://localhost:8545',
       gasLimit: 6000000000,
       defaultBalanceEther: 100
     }
