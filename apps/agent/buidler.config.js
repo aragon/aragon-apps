@@ -45,7 +45,7 @@ module.exports = {
   // chain yet. In the mean time we should 'npx buidler node' and
   // then attach to running process using '--network localhost' as
   // explained in: https://buidler.dev/buidler-evm/#connecting-to-buidler-evm-from-wallets-and-other-software.
-  // You can also ran 'yarn devchain' and on a separate window 'yarn test:gas'
+  // You can also run 'yarn devchain' and on a separate terminal run 'yarn test:gas'
   gasReporter: {
     enabled: process.env.REPORT_GAS ? true : false,
   },
