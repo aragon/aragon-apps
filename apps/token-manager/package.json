@@ -2,25 +2,21 @@
   "name": "@aragon/apps-token-manager",
   "version": "2.1.0",
   "scripts": {
-    "compile": "truffle compile",
-    "build": "cd app && npm run build",
-    "apm:prepublish": "npm run compile",
-    "apm:publish:major": "aragon apm publish major --files app/build/ --prepublish-script apm:prepublish",
-    "apm:publish:minor": "aragon apm publish minor --files app/build/ --prepublish-script apm:prepublish/",
-    "apm:publish:patch": "aragon apm publish patch --files app/build/ --prepublish-script apm:prepublish/",
+    "console": "buidler console",
+    "compile": "buidler compile --force",
+    "build": "cd app && yarn build",
+    "devchain": "buidler node",
     "lint": "solium --dir ./contracts",
-    "test": "TRUFFLE_TEST=true npm run ganache-cli:test",
-    "test:gas": "GAS_REPORTER=true npm test",
-    "coverage": "npx truffle run coverage",
-    "ganache-cli:test": "./node_modules/@aragon/contract-helpers-test/scripts/ganache-cli.sh",
-    "abi:extract": "truffle-extract --output abi/ --keys abi",
-    "prepublishOnly": "truffle compile --all && npm run abi:extract -- --no-compile"
+    "test": "buidler test",
+    "test:gas": "REPORT_GAS=true buidler test --network localhost",
+    "coverage": "buidler coverage --network coverage",
+    "abi:extract": "buidler-extract --output abi/ --keys abi"
   },
   "keywords": [],
   "files": [
     "/abi",
     "/arapp.json",
-    "/build",
+    "/artifacts",
     "/contracts",
     "/test"
   ],
@@ -33,22 +29,21 @@
   ],
   "license": "(GPL-3.0-or-later OR AGPL-3.0-or-later)",
   "description": "",
-  "devDependencies": {
-    "@aragon/apps-shared-migrations": "1.0.0",
-    "@aragon/cli": "^7.0.0",
-    "@aragon/contract-helpers-test": "^0.1.0-rc.2",
-    "@aragon/truffle-config-v5": "^1.0.1",
-    "chai": "^4.2.0",
-    "eth-gas-reporter": "^0.2.0",
-    "ethereumjs-testrpc-sc": "^6.5.1-sc.0",
-    "ganache-cli": "6.9.0",
-    "solidity-coverage": "^0.7.5",
-    "solium": "^1.2.3",
-    "truffle": "5.1.34",
-    "truffle-extract": "^1.2.1"
-  },
   "dependencies": {
     "@aragon/minime": "1.0.0",
     "@aragon/os": "4.4.0"
+  },
+  "devDependencies": {
+    "@aragon/contract-helpers-test": "^0.1.0-rc.3",
+    "@nomiclabs/buidler": "^1.4.3",
+    "@nomiclabs/buidler-ganache": "^1.3.3",
+    "@nomiclabs/buidler-truffle5": "^1.3.4",
+    "@nomiclabs/buidler-web3": "^1.3.4",
+    "buidler-gas-reporter": "^0.1.3",
+    "chai": "^4.2.0",
+    "solidity-coverage": "^0.7.9",
+    "solium": "^1.2.5",
+    "buidler-extract": "^1.0.0",
+    "web3": "^1.2.11"
   }
 }

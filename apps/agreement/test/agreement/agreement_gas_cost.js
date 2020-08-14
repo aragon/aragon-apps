@@ -10,7 +10,7 @@ contract('Agreement', ([_, user]) => {
 
   describe('gas costs', () => {
     const itCostsAtMost = (expectedCost, call) => {
-      it(`should cost up to ${expectedCost.toLocaleString()} gas`, async () => {
+      it(`should cost up to ${expectedCost.toLocaleString()} gas [ @skip-on-coverage ]`, async () => {
         const { receipt: { gasUsed } } = await call()
         console.log(`gas costs: ${gasUsed.toLocaleString()}`)
         assert.isAtMost(gasUsed, expectedCost)

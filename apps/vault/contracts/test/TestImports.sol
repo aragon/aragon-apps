@@ -6,7 +6,6 @@ import "@aragon/os/contracts/factory/DAOFactory.sol";
 import "@aragon/os/contracts/kernel/Kernel.sol";
 import "@aragon/os/contracts/kernel/KernelProxy.sol";
 
-import "@aragon/apps-shared-migrations/contracts/Migrations.sol";
 import "@aragon/contract-helpers-test/contracts/0.4/aragonOS/EtherTokenConstantMock.sol";
 import "@aragon/contract-helpers-test/contracts/0.4/token/TokenMock.sol";
 import "@aragon/contract-helpers-test/contracts/0.4/token/TokenReturnFalseMock.sol";
