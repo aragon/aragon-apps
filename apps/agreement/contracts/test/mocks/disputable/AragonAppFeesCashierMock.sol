@@ -1,14 +1,12 @@
 pragma solidity ^0.4.24;
 
-import "@aragon/os/contracts/common/EtherTokenConstant.sol";
 import "@aragon/os/contracts/common/IsContract.sol";
 import "@aragon/os/contracts/lib/arbitration/IAragonAppFeesCashier.sol";
 
 
-contract AragonAppFeesCashierMock is IAragonAppFeesCashier, EtherTokenConstant, IsContract {
+contract AragonAppFeesCashierMock is IAragonAppFeesCashier, IsContract {
     string private constant ERROR_WRONG_TOKEN = "AAFC_WRONG_TOKEN";
     string private constant ERROR_APP_FEE_NOT_SET = "AAFC_APP_FEE_NOT_SET";
-    string private constant ERROR_FEE_ETH_DEPOSIT_FAILED = "AAFC_FEE_ETH_DEPOSIT_FAILED";
     string private constant ERROR_FEE_TOKEN_DEPOSIT_FAILED = "AAFC_FEE_TOKEN_DEPOSIT_FAILED";
 
     struct AppFee {
@@ -63,16 +61,12 @@ contract AragonAppFeesCashierMock is IAragonAppFeesCashier, EtherTokenConstant, 
     * @notice Unset fees for multiple apps
     * @param _appId App id paying for
     */
-    function payAppFees(bytes32 _appId, bytes) external payable {
+    function payAppFees(bytes32 _appId, bytes) external {
         AppFee storage appFee = appFees[_appId];
         require(appFee.set, ERROR_APP_FEE_NOT_SET);
 
         ERC20 token = appFee.token;
-        if (address(token) == ETH) {
-            require(msg.value == appFee.amount, ERROR_FEE_ETH_DEPOSIT_FAILED);
-        } else {
-            require(token.transferFrom(msg.sender, address(this), appFee.amount), ERROR_FEE_TOKEN_DEPOSIT_FAILED);
-        }
+        require(token.transferFrom(msg.sender, address(this), appFee.amount), ERROR_FEE_TOKEN_DEPOSIT_FAILED);
     }
 
     /**
@@ -90,7 +84,7 @@ contract AragonAppFeesCashierMock is IAragonAppFeesCashier, EtherTokenConstant, 
     * @dev Internal function to set app fees
     */
     function _setAppFee(bytes32 _appId, ERC20 _token, uint256 _amount) internal {
-        require(address(_token) == ETH || isContract(address(_token)), ERROR_WRONG_TOKEN);
+        require(isContract(address(_token)), ERROR_WRONG_TOKEN);
         AppFee storage appFee = appFees[_appId];
         appFee.set = true;
         appFee.token = _token;

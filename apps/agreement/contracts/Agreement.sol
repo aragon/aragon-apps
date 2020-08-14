@@ -6,7 +6,7 @@ pragma solidity 0.4.24;
 
 import "@aragon/os/contracts/apps/AragonApp.sol";
 import "@aragon/os/contracts/apps/disputable/IAgreement.sol";
-import "@aragon/os/contracts/apps/disputable/IDisputable.sol";
+import "@aragon/os/contracts/apps/disputable/DisputableAragonApp.sol";
 import "@aragon/os/contracts/common/ConversionHelpers.sol";
 import "@aragon/os/contracts/common/SafeERC20.sol";
 import "@aragon/os/contracts/common/TimeHelpers.sol";
@@ -16,9 +16,10 @@ import "@aragon/os/contracts/lib/math/SafeMath.sol";
 import "@aragon/os/contracts/lib/math/SafeMath64.sol";
 import "@aragon/staking/contracts/Staking.sol";
 import "@aragon/staking/contracts/StakingFactory.sol";
+import "@aragon/staking/contracts/locking/ILockManager.sol";
 
 
-contract Agreement is IAgreement, AragonApp {
+contract Agreement is ILockManager, IAgreement, AragonApp {
     using SafeMath for uint256;
     using SafeMath64 for uint64;
     using SafeERC20 for ERC20;
@@ -45,8 +46,6 @@ contract Agreement is IAgreement, AragonApp {
     string internal constant ERROR_STAKING_FACTORY_NOT_CONTRACT = "AGR_STAKING_FACTORY_NOT_CONTRACT";
     string internal constant ERROR_ACL_SIGNER_MISSING = "AGR_ACL_ORACLE_SIGNER_MISSING";
     string internal constant ERROR_ACL_SIGNER_NOT_ADDRESS = "AGR_ACL_ORACLE_SIGNER_NOT_ADDR";
-    string internal constant ERROR_INVALID_APP_FEE_AMOUNT = "AGR_INVALID_APP_FEE_AMOUNT";
-    string internal constant ERROR_UNEXPECTED_APP_FEE_VALUE = "AGR_UNEXPECTED_APP_FEE_VALUE";
 
     /* Disputable related errors */
     string internal constant ERROR_SENDER_CANNOT_CHALLENGE_ACTION = "AGR_SENDER_CANT_CHALLENGE_ACTION";
@@ -83,7 +82,7 @@ contract Agreement is IAgreement, AragonApp {
     }
 
     struct Action {
-        IDisputable disputable;             // Address of the disputable that created the action
+        DisputableAragonApp disputable;     // Address of the disputable that created the action
         uint256 disputableActionId;         // Identification number of the disputable action in the context of the disputable instance
         uint256 collateralRequirementId;    // Identification number of the collateral requirements for the given action
         uint256 settingId;                  // Identification number of the agreement setting for the given action
@@ -93,19 +92,24 @@ contract Agreement is IAgreement, AragonApp {
         uint256 currentChallengeId;         // Identification number of the action's currently open challenge, if any
     }
 
+    struct ArbitratorFees {
+        ERC20 token;                        // ERC20 token used for the arbitration fees
+        uint256 amount;                     // Amount of arbitration fees
+    }
+
     struct Challenge {
-        uint256 actionId;                   // Identification number of the action associated to the challenge
-        address challenger;                 // Address that challenged the action
-        uint64 endDate;                     // Last date the submitter can raise a dispute against the challenge
-        bytes context;                      // Link to a human-readable text providing context for the challenge
-        uint256 settlementOffer;            // Amount of collateral tokens the challenger would accept without involving the arbitrator
-        uint256 arbitratorFeeAmount;        // Amount of arbitration fees paid by the challenger in advance
-        ERC20 arbitratorFeeToken;           // ERC20 token used for the arbitration fees paid by the challenger in advance
-        ChallengeState state;               // Current state of the action challenge
-        bool submitterFinishedEvidence;     // Whether the action submitter has finished submitting evidence for a raised dispute
-        bool challengerFinishedEvidence;    // Whether the action challenger has finished submitting evidence for a raised dispute
-        uint256 disputeId;                  // Identification number of the dispute on the arbitrator
-        uint256 ruling;                     // Ruling given for the action's dispute
+        uint256 actionId;                        // Identification number of the action associated to the challenge
+        address challenger;                      // Address that challenged the action
+        uint64 endDate;                          // Last date the submitter can raise a dispute against the challenge
+        bytes context;                           // Link to a human-readable text providing context for the challenge
+        uint256 settlementOffer;                 // Amount of collateral tokens the challenger would accept without involving the arbitrator
+        ArbitratorFees challengerArbitratorFees; // Arbitration fees paid by the challenger in advance
+        ArbitratorFees submitterArbitratorFees;  // Arbitration fees paid by the submitter
+        ChallengeState state;                    // Current state of the action challenge
+        bool submitterFinishedEvidence;          // Whether the action submitter has finished submitting evidence for a raised dispute
+        bool challengerFinishedEvidence;         // Whether the action challenger has finished submitting evidence for a raised dispute
+        uint256 disputeId;                       // Identification number of the dispute on the arbitrator
+        uint256 ruling;                          // Ruling given for the action's dispute
     }
 
     struct CollateralRequirement {
@@ -186,7 +190,7 @@ contract Agreement is IAgreement, AragonApp {
         DisputableInfo storage disputableInfo = disputableInfos[_disputableAddress];
         _ensureInactiveDisputable(disputableInfo);
 
-        IDisputable disputable = IDisputable(_disputableAddress);
+        DisputableAragonApp disputable = DisputableAragonApp(_disputableAddress);
         disputableInfo.activated = true;
         emit DisputableAppActivated(disputable);
 
@@ -223,7 +227,7 @@ contract Agreement is IAgreement, AragonApp {
     * @param _challengeAmount Amount of collateral tokens that will be locked every time an action is challenged
     */
     function changeCollateralRequirement(
-        IDisputable _disputable,
+        DisputableAragonApp _disputable,
         ERC20 _collateralToken,
         uint256 _actionAmount,
         uint256 _challengeAmount,
@@ -281,7 +285,7 @@ contract Agreement is IAgreement, AragonApp {
     * @param _context Link to a human-readable text providing context for the given action
     * @return Unique identification number for the created action in the context of the agreement
     */
-    function newAction(uint256 _disputableActionId, bytes _context, address _submitter) external payable returns (uint256) {
+    function newAction(uint256 _disputableActionId, bytes _context, address _submitter) external returns (uint256) {
         uint256 currentSettingId = _getCurrentSettingId();
         uint256 lastSettingIdSigned = lastSettingSignedBy[_submitter];
         require(lastSettingIdSigned >= currentSettingId, ERROR_SIGNER_MUST_SIGN);
@@ -294,7 +298,7 @@ contract Agreement is IAgreement, AragonApp {
         CollateralRequirement storage requirement = _getCollateralRequirement(disputableInfo, currentCollateralRequirementId);
         _lockBalance(requirement.staking, _submitter, requirement.actionAmount);
 
-        IDisputable disputable = IDisputable(msg.sender);
+        DisputableAragonApp disputable = DisputableAragonApp(msg.sender);
 
         uint256 id = nextActionId++;
         Action storage action = actions[id];
@@ -317,18 +321,21 @@ contract Agreement is IAgreement, AragonApp {
     /**
     * @notice Close action #`_actionId`
     * @dev If allowed by the originating Disputable app, this function allows users to close actions that are not:
-    *      - Closed
     *      - Currently challenged
     *      - Ruled as voided
     *      - Ruled in favour of the submitter
+    *      It does nothing if the action is already closed
     *      Initialization check is implicitly provided by `_canClose()` as disputable actions can be created only
     *      via `newAction()` which already requires initialization implicitly through `activate()`
     * @param _actionId Identification number of the action to be closed
     */
     function closeAction(uint256 _actionId) external {
         Action storage action = _getAction(_actionId);
-        require(_canClose(action), ERROR_CANNOT_CLOSE_ACTION);
+        if (action.closed) {
+            return;
+        }
 
+        require(_canClose(action), ERROR_CANNOT_CLOSE_ACTION);
         (, CollateralRequirement storage requirement) = _getDisputableFor(action);
         _unlockBalance(requirement.staking, action.submitter, requirement.actionAmount);
         _closeAction(_actionId, action);
@@ -347,7 +354,7 @@ contract Agreement is IAgreement, AragonApp {
         Action storage action = _getAction(_actionId);
         require(_canChallenge(action), ERROR_CANNOT_CHALLENGE_ACTION);
 
-        (IDisputable disputable, CollateralRequirement storage requirement) = _getDisputableFor(action);
+        (DisputableAragonApp disputable, CollateralRequirement storage requirement) = _getDisputableFor(action);
         require(_canPerformChallenge(disputable, msg.sender), ERROR_SENDER_CANNOT_CHALLENGE_ACTION);
         require(_settlementOffer <= requirement.actionAmount, ERROR_INVALID_SETTLEMENT_OFFER);
 
@@ -380,7 +387,7 @@ contract Agreement is IAgreement, AragonApp {
             require(_canClaimSettlement(challenge), ERROR_CANNOT_SETTLE_ACTION);
         }
 
-        (IDisputable disputable, CollateralRequirement storage requirement) = _getDisputableFor(action);
+        (DisputableAragonApp disputable, CollateralRequirement storage requirement) = _getDisputableFor(action);
         uint256 actionCollateral = requirement.actionAmount;
         uint256 settlementOffer = challenge.settlementOffer;
 
@@ -393,7 +400,7 @@ contract Agreement is IAgreement, AragonApp {
         address challenger = challenge.challenger;
         _unlockAndSlashBalance(requirement.staking, submitter, unlockedAmount, challenger, slashedAmount);
         _transferTo(requirement.token, challenger, requirement.challengeAmount);
-        _transferTo(challenge.arbitratorFeeToken, challenger, challenge.arbitratorFeeAmount);
+        _transferTo(challenge.challengerArbitratorFees.token, challenger, challenge.challengerArbitratorFees.amount);
 
         challenge.state = ChallengeState.Settled;
         // try/catch for:
@@ -606,8 +613,6 @@ contract Agreement is IAgreement, AragonApp {
     * @return endDate Datetime until when the action submitter can answer the challenge
     * @return context Link to a human-readable text providing context for the challenge
     * @return settlementOffer Amount of collateral tokens the challenger would accept for resolving the dispute without involving the arbitrator
-    * @return arbitratorFeeAmount Amount of arbitration fees paid by the challenger in advance in case the challenge is raised to the arbitrator
-    * @return arbitratorFeeToken ERC20 token used for the arbitration fees paid by the challenger in advance
     * @return state Current state of the action challenge
     * @return submitterFinishedEvidence Whether the action submitter has finished submitting evidence for the action's dispute
     * @return challengerFinishedEvidence Whether the action challenger has finished submitting evidence for the action's dispute
@@ -623,8 +628,6 @@ contract Agreement is IAgreement, AragonApp {
             uint64 endDate,
             bytes context,
             uint256 settlementOffer,
-            uint256 arbitratorFeeAmount,
-            ERC20 arbitratorFeeToken,
             ChallengeState state,
             bool submitterFinishedEvidence,
             bool challengerFinishedEvidence,
@@ -639,8 +642,6 @@ contract Agreement is IAgreement, AragonApp {
         endDate = challenge.endDate;
         context = challenge.context;
         settlementOffer = challenge.settlementOffer;
-        arbitratorFeeAmount = challenge.arbitratorFeeAmount;
-        arbitratorFeeToken = challenge.arbitratorFeeToken;
         state = challenge.state;
         submitterFinishedEvidence = challenge.submitterFinishedEvidence;
         challengerFinishedEvidence = challenge.challengerFinishedEvidence;
@@ -649,32 +650,46 @@ contract Agreement is IAgreement, AragonApp {
     }
 
     /**
-    * @dev Tell the amount of leftover arbitration fees that the submitter must pay in order to to raise a dispute for the given action
-    * @param _actionId Identification number of the action being queried
-    * @return feeToken ERC20 token to be used for the arbitration fees
-    * @return missingFees Amount of arbitration fees missing to be able to dispute the action
-    * @return totalFees Total amount of arbitration fees required by the arbitrator to raise a dispute
+    * @dev Tell the fees paid for an action challenge
+    *      Split from getChallenge due to “stack too deep issues”
+    * @param _challengeId Identification number of the challenge being queried
+    * @return challengerArbitratorFeesAmount Amount of arbitration fees paid by the challenger in advance in case the challenge is raised to the arbitrator
+    * @return challengerArbitratorFeesToken ERC20 token used for the arbitration fees paid by the challenger in advance
+    * @return submitterArbitratorFeesAmount Amount of arbitration fees paid by the submitter when the challenge is raised to the arbitrator
+    * @return submitterArbitratorFeesToken ERC20 token used for the arbitration fees paid by the submitter
     */
-    function getMissingArbitratorFees(uint256 _actionId) external view returns (ERC20 feeToken, uint256 missingFees, uint256 totalFees) {
-        (Action storage action, Challenge storage challenge, ) = _getChallengedAction(_actionId);
-        IArbitrator arbitrator = _getArbitratorFor(action);
-        ERC20 challengerFeeToken = challenge.arbitratorFeeToken;
-        uint256 challengerFeeAmount = challenge.arbitratorFeeAmount;
+    function getChallengeArbitratorFees(uint256 _challengeId)
+        external
+        view
+        returns (
+            uint256 challengerArbitratorFeesAmount,
+            ERC20 challengerArbitratorFeesToken,
+            uint256 submitterArbitratorFeesAmount,
+            ERC20 submitterArbitratorFeesToken
+        )
+    {
+        Challenge storage challenge = _getChallenge(_challengeId);
 
-        (, feeToken, missingFees, totalFees, ) = _getMissingArbitratorFees(arbitrator, challengerFeeToken, challengerFeeAmount);
+        challengerArbitratorFeesAmount = challenge.challengerArbitratorFees.amount;
+        challengerArbitratorFeesToken = challenge.challengerArbitratorFees.token;
+        submitterArbitratorFeesAmount = challenge.submitterArbitratorFees.amount;
+        submitterArbitratorFeesToken = challenge.submitterArbitratorFees.token;
     }
 
     /**
     * @dev ACL oracle interface - Tells whether an address has already signed the Agreement
-    * @param _who Sender of the original call
-    * @return True if the original sender has signed the current version of the Agreement, false otherwise
+    * @return True if a parameterized address has signed the current version of the Agreement, false otherwise
     */
-    function canPerform(address _who, address /* _grantee */, address /* _where */, bytes32 /* _what */, uint256[] /* _how */)
+    function canPerform(address /* _grantee */, address /* _where */, bytes32 /* _what */, uint256[] _how)
         external
         view
         returns (bool)
     {
-        (, bool mustSign) = _getSigner(_who);
+        require(_how.length > 0, ERROR_ACL_SIGNER_MISSING);
+        require(_how[0] < 2**160, ERROR_ACL_SIGNER_NOT_ADDRESS);
+
+        address signer = address(_how[0]);
+        (, bool mustSign) = _getSigner(signer);
         return !mustSign;
     }
 
@@ -752,6 +767,17 @@ contract Agreement is IAgreement, AragonApp {
         return _isDisputed(challenge);
     }
 
+    /**
+    * @notice Check if a certain amount for a certain address can be unlocked in the Staking pool
+    * @dev It always returns false because if we allow owners to unlock by themselves,
+    *      then the unlock call on closing or settling actions could fail due to
+    *      insufficient balance.
+    * @return Whether given lock of given owner can be unlocked by given sender
+    */
+    function canUnlock(address, uint256) external view returns (bool) {
+        return false;
+    }
+
     // Internal fns
 
     /**
@@ -761,7 +787,7 @@ contract Agreement is IAgreement, AragonApp {
     * @param _submitter Address of the user that has submitted the action
     * @param _actionId Identification number of the action to be paid for
     */
-    function _payAppFees(Setting storage _setting, IDisputable _disputable, address _submitter, uint256 _actionId) internal {
+    function _payAppFees(Setting storage _setting, DisputableAragonApp _disputable, address _submitter, uint256 _actionId) internal {
         // Get fees
         IAragonAppFeesCashier aragonAppFeesCashier = _setting.aragonAppFeesCashier;
         if (aragonAppFeesCashier == IAragonAppFeesCashier(0)) {
@@ -775,21 +801,14 @@ contract Agreement is IAgreement, AragonApp {
             return;
         }
 
-        if (address(token) == ETH) {
-            // If the app fees are in ETH, we forward all the value we received
-            require(msg.value >= amount, ERROR_INVALID_APP_FEE_AMOUNT);
-        } else {
-            // If the app fees are not ETH, we pull the required amount from
-            // the specified token staking pool and approve them to the cashier
-            require(msg.value == 0, ERROR_UNEXPECTED_APP_FEE_VALUE);
-            Staking staking = stakingFactory.getOrCreateInstance(token);
-            _lockBalance(staking, _submitter, amount);
-            _slashBalance(staking, _submitter, address(this), amount);
-            _approveFor(token, address(aragonAppFeesCashier), amount);
-        }
+        // We pull the required amount from the specified token staking pool and approve them to the cashier
+        Staking staking = stakingFactory.getOrCreateInstance(token);
+        _lockBalance(staking, _submitter, amount);
+        _slashBalance(staking, _submitter, address(this), amount);
+        _approveFor(token, address(aragonAppFeesCashier), amount);
 
         // Pay fees
-        aragonAppFeesCashier.payAppFees.value(msg.value)(appId, abi.encodePacked(_actionId));
+        aragonAppFeesCashier.payAppFees(appId, abi.encodePacked(_actionId));
     }
 
     /**
@@ -838,13 +857,12 @@ contract Agreement is IAgreement, AragonApp {
         // Transfer challenge collateral
         _depositFrom(_requirement.token, _challenger, _requirement.challengeAmount);
 
-        // Transfer half of the Arbitrator fees
+        // Transfer Arbitrator fees
         IArbitrator arbitrator = _getArbitratorFor(_action);
         (, ERC20 feeToken, uint256 feeAmount) = arbitrator.getDisputeFees();
-        uint256 arbitratorFees = feeAmount / 2;
-        challenge.arbitratorFeeToken = feeToken;
-        challenge.arbitratorFeeAmount = arbitratorFees;
-        _depositFrom(feeToken, _challenger, arbitratorFees);
+        challenge.challengerArbitratorFees.token = feeToken;
+        challenge.challengerArbitratorFees.amount = feeAmount;
+        _depositFrom(feeToken, _challenger, feeAmount);
         return challengeId;
     }
 
@@ -861,27 +879,21 @@ contract Agreement is IAgreement, AragonApp {
         returns (uint256)
     {
         // Compute missing fees for dispute
-        ERC20 challengerFeeToken = _challenge.arbitratorFeeToken;
-        uint256 challengerFeeAmount = _challenge.arbitratorFeeAmount;
-        (address disputeFeeRecipient, ERC20 feeToken, uint256 missingFees, uint256 totalFees, uint256 challengerRefund) =
-            _getMissingArbitratorFees(_arbitrator, challengerFeeToken, challengerFeeAmount); // solium-disable-previous-line operator-whitespace
+        (address disputeFeeRecipient, ERC20 feeToken, uint256 feeAmount) = _arbitrator.getDisputeFees();
+        _challenge.submitterArbitratorFees.token = feeToken;
+        _challenge.submitterArbitratorFees.amount = feeAmount;
 
         // Pull arbitration fees from submitter, note that if missing fees is zero this doesn't revert
         address submitter = _action.submitter;
-        _depositFrom(feeToken, submitter, missingFees);
+        _depositFrom(feeToken, submitter, feeAmount);
 
         // Create dispute. The arbitrator should pull any arbitration fees from this Agreement here.
         // To be safe, we first set the allowance to zero in case there is a remaining approval for the arbitrator.
         // This is not strictly necessary for ERC20s, but some tokens, e.g. MiniMe (ANT and ANJ),
         // revert on an approval if an outstanding allowance exists
         _approveFor(feeToken, disputeFeeRecipient, 0);
-        _approveFor(feeToken, disputeFeeRecipient, totalFees);
+        _approveFor(feeToken, disputeFeeRecipient, feeAmount);
         uint256 disputeId = _arbitrator.createDispute(DISPUTES_POSSIBLE_OUTCOMES, _metadata);
-
-        // Return any remaining portion of the pre-paid arbitrator fees to the challenger, if necessary
-        if (challengerRefund != 0) {
-            _transferTo(challengerFeeToken, _challenge.challenger, challengerRefund);
-        }
 
         return disputeId;
     }
@@ -945,9 +957,12 @@ contract Agreement is IAgreement, AragonApp {
         _challenge.state = ChallengeState.Accepted;
 
         address challenger = _challenge.challenger;
-        (IDisputable disputable, CollateralRequirement storage requirement) = _getDisputableFor(_action);
+        (DisputableAragonApp disputable, CollateralRequirement storage requirement) = _getDisputableFor(_action);
+
+        // Transfer action collateral, challenge collateral, and challenger arbitrator fees to the challenger
         _slashBalance(requirement.staking, _action.submitter, challenger, requirement.actionAmount);
         _transferTo(requirement.token, challenger, requirement.challengeAmount);
+        _transferTo(_challenge.challengerArbitratorFees.token, challenger, _challenge.challengerArbitratorFees.amount);
         // try/catch for:
         // disputable.onDisputableActionRejected(_action.disputableActionId);
         address(disputable).call(abi.encodeWithSelector(disputable.onDisputableActionRejected.selector, _action.disputableActionId));
@@ -967,8 +982,11 @@ contract Agreement is IAgreement, AragonApp {
         _challenge.state = ChallengeState.Rejected;
 
         address submitter = _action.submitter;
-        (IDisputable disputable, CollateralRequirement storage requirement) = _getDisputableFor(_action);
+        (DisputableAragonApp disputable, CollateralRequirement storage requirement) = _getDisputableFor(_action);
+
+        // Transfer challenge collateral and challenger arbitrator fees to the submitter
         _transferTo(requirement.token, submitter, requirement.challengeAmount);
+        _transferTo(_challenge.challengerArbitratorFees.token, submitter, _challenge.challengerArbitratorFees.amount);
         // try/catch for:
         // disputable.onDisputableActionAllowed(_action.disputableActionId);
         address(disputable).call(abi.encodeWithSelector(disputable.onDisputableActionAllowed.selector, _action.disputableActionId));
@@ -985,8 +1003,19 @@ contract Agreement is IAgreement, AragonApp {
     function _voidAction(uint256 _actionId, Action storage _action, uint256 _challengeId, Challenge storage _challenge) internal {
         _challenge.state = ChallengeState.Voided;
 
-        (IDisputable disputable, CollateralRequirement storage requirement) = _getDisputableFor(_action);
-        _transferTo(requirement.token, _challenge.challenger, requirement.challengeAmount);
+        (DisputableAragonApp disputable, CollateralRequirement storage requirement) = _getDisputableFor(_action);
+        address challenger = _challenge.challenger;
+
+        // Return challenge collateral to the challenger, and split the challenger arbitrator fees between the challenger and the submitter
+        // Note that the action collateral is unlocked once the action is closed
+        _transferTo(requirement.token, challenger, requirement.challengeAmount);
+        uint256 challengerArbitratorFeesAmount = _challenge.challengerArbitratorFees.amount;
+        ERC20 challengerArbitratorFeesToken = _challenge.challengerArbitratorFees.token;
+        uint256 submitterPayBack = challengerArbitratorFeesAmount / 2;
+        // No need for Safemath because of previous computation
+        uint256 challengerPayBack = challengerArbitratorFeesAmount - submitterPayBack;
+        _transferTo(challengerArbitratorFeesToken, _action.submitter, submitterPayBack);
+        _transferTo(challengerArbitratorFeesToken, challenger, challengerPayBack);
         // try/catch for:
         // disputable.onDisputableActionVoided(_action.disputableActionId);
         address(disputable).call(abi.encodeWithSelector(disputable.onDisputableActionVoided.selector, _action.disputableActionId));
@@ -1115,7 +1144,7 @@ contract Agreement is IAgreement, AragonApp {
     * @param _challengeDuration Challenge duration in seconds, during which the submitter can raise a dispute
     */
     function _changeCollateralRequirement(
-        IDisputable _disputable,
+        DisputableAragonApp _disputable,
         DisputableInfo storage _disputableInfo,
         ERC20 _collateralToken,
         uint256 _actionAmount,
@@ -1144,13 +1173,17 @@ contract Agreement is IAgreement, AragonApp {
     * @param _challenger Address of the challenger
     * @return True if the challenger can be challenge actions on the Disputable app, false otherwise
     */
-    function _canPerformChallenge(IDisputable _disputable, address _challenger) internal view returns (bool) {
+    function _canPerformChallenge(DisputableAragonApp _disputable, address _challenger) internal view returns (bool) {
         IKernel currentKernel = kernel();
         if (currentKernel == IKernel(0)) {
             return false;
         }
 
-        return currentKernel.hasPermission(_challenger, address(_disputable), CHALLENGE_ROLE, new bytes(0));
+        // To make sure the challenger address is reachable by ACL oracles, we need to pass it as arguments.
+        // ACL oracles are set for ANY_ENTITY, therefor there is no default way to know the original sender
+        // for an ACL oracle in case the challenge permission was configured with one
+        bytes memory params = ConversionHelpers.dangerouslyCastUintArrayToBytes(arr(_challenger));
+        return currentKernel.hasPermission(_challenger, address(_disputable), CHALLENGE_ROLE, params);
     }
 
     /**
@@ -1172,8 +1205,8 @@ contract Agreement is IAgreement, AragonApp {
             return false;
         }
 
-        IDisputable disputable = _action.disputable;
-        return IDisputable(msg.sender) == disputable || disputable.canClose(_action.disputableActionId);
+        DisputableAragonApp disputable = _action.disputable;
+        return DisputableAragonApp(msg.sender) == disputable || disputable.canClose(_action.disputableActionId);
     }
 
     /**
@@ -1363,7 +1396,7 @@ contract Agreement is IAgreement, AragonApp {
     function _getDisputableFor(Action storage _action)
         internal
         view
-        returns (IDisputable disputable, CollateralRequirement storage requirement)
+        returns (DisputableAragonApp disputable, CollateralRequirement storage requirement)
     {
         disputable = _action.disputable;
         DisputableInfo storage disputableInfo = disputableInfos[address(disputable)];
@@ -1409,42 +1442,5 @@ contract Agreement is IAgreement, AragonApp {
     */
     function _ensureInactiveDisputable(DisputableInfo storage _disputableInfo) internal view {
         require(!_disputableInfo.activated, ERROR_DISPUTABLE_APP_ALREADY_EXISTS);
-    }
-
-    /**
-    * @dev Tell the amount of leftover arbitration fees that the submitter must pay in order to to raise a dispute to the arbitrator
-    * @param _arbitrator Arbitrator to query
-    * @param _challengerFeeToken ERC20 token used for the arbitration fees paid by the challenger in advance
-    * @param _challengerFeeAmount Amount of arbitration fees paid by the challenger in advance
-    * @return Address where the arbitration fees must be transferred to
-    * @return ERC20 token to be used for the arbitration fees
-    * @return Amount of arbitration fees missing
-    * @return Total amount of arbitration fees required by the arbitrator to raise a dispute
-    * @return Total amount of challenger fee tokens to be refunded to the challenger
-    */
-    function _getMissingArbitratorFees(IArbitrator _arbitrator, ERC20 _challengerFeeToken, uint256 _challengerFeeAmount)
-        internal
-        view
-        returns (address, ERC20, uint256, uint256, uint256)
-    {
-        (address disputeFeeRecipient, ERC20 feeToken, uint256 disputeFees) = _arbitrator.getDisputeFees();
-
-        uint256 missingFees;
-        uint256 challengerRefund;
-
-        if (_challengerFeeToken == feeToken) {
-            if (_challengerFeeAmount >= disputeFees) {
-                missingFees = 0;
-                challengerRefund = _challengerFeeAmount - disputeFees;
-            } else {
-                missingFees = disputeFees - _challengerFeeAmount;
-                challengerRefund = 0;
-            }
-        } else {
-            missingFees = disputeFees;
-            challengerRefund = _challengerFeeAmount;
-        }
-
-        return (disputeFeeRecipient, feeToken, missingFees, disputeFees, challengerRefund);
     }
 }
