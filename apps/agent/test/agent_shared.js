@@ -735,6 +735,9 @@ module.exports = (agentName, { accounts, artifacts, web3 }) => {
           const ethSign = async (hash, signer) => {
             const packedSig = await web3.eth.sign(hash, signer)
             const chainId = await web3.eth.net.getId()
+            // Ganache encodes the v value of the signature as 0 or 1, 
+            // while it should be 27 or 28. Buidler uses the same 
+            // values as geth. 
             // If we detect buidlerevm we don't use ganache encoding
             const offset = chainId === 31337 ? 0 : 27
 
