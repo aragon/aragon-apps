@@ -1,8 +1,0 @@
-{
-  "name": "@aragon/apps-shared-migrations",
-  "version": "1.0.0",
-  "description": "",
-  "scripts": {
-    "test": "echo \"No tests\""
-  }
-}
