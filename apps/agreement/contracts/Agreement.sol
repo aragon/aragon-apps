@@ -1142,6 +1142,10 @@ contract Agreement is ILockManager, IAgreement, AragonApp {
         setting.title = _title;
         setting.content = _content;
         setting.arbitrator = _arbitrator;
+
+        // Note that if the Agreement app didn't have an app fees cashier set at the start, then it must be explicit later.
+        // Arbitrators must always have at least some sort of subscription module, and having the flexibility to turn this off
+        // on the Agreement side is useful.
         setting.aragonAppFeesCashier = _setAppFeesCashier ? _getArbitratorFeesCashier(_arbitrator) : IAragonAppFeesCashier(0);
         emit SettingChanged(id);
     }
