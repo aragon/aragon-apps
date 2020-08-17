@@ -1,6 +1,3 @@
-# aragon-cli
-*/**/artifact.json
-
 # Dependencies
 node_modules
 **/**/node_modules
@@ -15,10 +12,9 @@ node_modules
 # lerna
 lerna-debug.log
 
-# truffle build artifacts
+# build artifacts
 # Ignore only for first level to select just the contract build directories
 */*/abi
-*/*/build
 */*/dist
 */*/cache
 */*/artifacts

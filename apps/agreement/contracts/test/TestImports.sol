@@ -4,7 +4,6 @@ import "@aragon/os/contracts/acl/ACL.sol";
 import "@aragon/os/contracts/factory/DAOFactory.sol";
 import "@aragon/os/contracts/factory/EVMScriptRegistryFactory.sol";
 import "@aragon/minime/contracts/MiniMeToken.sol";
-import "@aragon/apps-shared-migrations/contracts/Migrations.sol";
 import "@aragon/contract-helpers-test/contracts/0.4/misc/ExecutionTarget.sol";
 
 
