@@ -5,7 +5,7 @@ import "@aragon/os/contracts/lib/token/ERC20.sol";
 
 /**
 * @title AragonAppFeesCashier interface
-* @dev This interface is the one of the `IAgreement` dependencies apart from the `IArbitrator`
+* @dev This interface is derived from the `IArbitrator`'s subscriptions module.
 *      It is used to pay the fees corresponding to the usage of a disputable app.
 *      This interface was manually-copied from https://github.com/aragon/aragon-court/blob/v1.2.0/contracts/subscriptions/IAragonAppFeesCashier.sol
 *      since we are using different solidity versions.
