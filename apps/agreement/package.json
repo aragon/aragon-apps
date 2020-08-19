@@ -22,7 +22,7 @@
     "abi:extract": "buidler-extract --output abi/ --keys abi"
   },
   "dependencies": {
-    "@aragon/os": "5.0.0-beta.7"
+    "@aragon/os": "5.0.0-beta.8"
   },
   "devDependencies": {
     "@aragon/contract-helpers-test": "^0.1.0-rc.3",
