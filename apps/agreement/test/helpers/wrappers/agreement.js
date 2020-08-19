@@ -5,12 +5,11 @@ const { AGREEMENT_ERRORS } = require('../utils/errors')
 const { ZERO_ADDRESS, EMPTY_BYTES, bn, getEventArgument } = require('@aragon/contract-helpers-test')
 
 class AgreementWrapper {
-  constructor(artifacts, web3, agreement, arbitrator, aragonAppFeesCashier, stakingFactory, clock) {
+  constructor(artifacts, web3, agreement, arbitrator, stakingFactory, clock) {
     this.artifacts = artifacts
     this.web3 = web3
     this.agreement = agreement
     this.arbitrator = arbitrator
-    this.aragonAppFeesCashier = aragonAppFeesCashier
     this.stakingFactory = stakingFactory
     this.clock = clock
     this.staking = {}
@@ -30,6 +29,15 @@ class AgreementWrapper {
 
   async getCurrentSettingId() {
     return this.agreement.getCurrentSettingId()
+  }
+
+  async getSetting(settingId = undefined) {
+    if (!settingId) settingId = await this.getCurrentSettingId()
+    return this.agreement.getSetting(settingId)
+  }
+
+  async syncAppFeesCashier() {
+    return this.agreement.syncAppFeesCashier()
   }
 
   async getAction(actionId) {
@@ -124,9 +132,10 @@ class AgreementWrapper {
     return { canClose, canChallenge, canSettle, canDispute, canClaimSettlement, canRuleDispute }
   }
 
-  async sign(from) {
+  async sign({ settingId = undefined, from = undefined }) {
+    if (!settingId) settingId = await this.getCurrentSettingId()
     if (!from) from = await this._getSender()
-    return this.agreement.sign({ from })
+    return this.agreement.sign(settingId, { from })
   }
 
   async close(actionId) {
@@ -205,11 +214,10 @@ class AgreementWrapper {
     return this.agreement.changeCollateralRequirement(options.disputable.address, collateralToken.address, actionCollateral, challengeCollateral, challengeDuration, { from })
   }
 
-  async changeSetting({ title = 'title', content = '0x1234', arbitrator = undefined, aragonAppFeesCashierAddress = undefined, from = undefined }) {
+  async changeSetting({ title = 'title', content = '0x1234', arbitrator = undefined, setCashier = false, from = undefined }) {
     if (!from) from = await this._getSender()
     if (!arbitrator) arbitrator = this.arbitrator
-    if (!aragonAppFeesCashierAddress) aragonAppFeesCashierAddress = this.aragonAppFeesCashier ? this.aragonAppFeesCashier.address : ZERO_ADDRESS
-    return this.agreement.changeSetting(arbitrator.address, aragonAppFeesCashierAddress, title, content, { from })
+    return this.agreement.changeSetting(arbitrator.address, setCashier, title, content, { from })
   }
 
   async approveArbitratorFees({ amount = undefined, from = undefined, accumulate = false }) {
@@ -236,6 +244,11 @@ class AgreementWrapper {
   async arbitratorToken() {
     const { feeToken } = await this.getDisputeFees()
     return feeToken
+  }
+
+  async appFeesCashier() {
+    const { recipient } = await this.arbitrator.getSubscriptionFees(ZERO_ADDRESS)
+    return this._getContract('IAragonAppFeesCashier').at(recipient)
   }
 
   async currentTimestamp() {

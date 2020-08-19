@@ -4,8 +4,8 @@ const { AGREEMENT_EVENTS, DISPUTABLE_EVENTS } = require('../utils/events')
 const { MAX_UINT192, bn, getEventArgument } = require('@aragon/contract-helpers-test')
 
 class DisputableWrapper extends AgreementWrapper {
-  constructor(artifacts, web3, agreement, arbitrator, aragonAppFeesCashier, stakingFactory, clock, disputable, collateralRequirement = {}) {
-    super(artifacts, web3, agreement, arbitrator, aragonAppFeesCashier, stakingFactory, clock)
+  constructor(artifacts, web3, agreement, arbitrator, stakingFactory, clock, disputable, collateralRequirement = {}) {
+    super(artifacts, web3, agreement, arbitrator, stakingFactory, clock)
     this.disputable = disputable
     this.collateralRequirement = collateralRequirement
   }
@@ -92,7 +92,7 @@ class DisputableWrapper extends AgreementWrapper {
     if (stake) await this.approveAndCall({ amount: stake, from: submitter })
 
     if (sign === undefined && (await this.getSigner(submitter)).mustSign) {
-      await this.sign(submitter)
+      await this.sign({ from: submitter })
       await this.allowManager({ user: submitter })
     }
 
@@ -141,7 +141,8 @@ class DisputableWrapper extends AgreementWrapper {
   async setAppFee({ token = undefined, amount }) {
     if (!token) token = this.collateralToken
     const appId = await this.disputable.appId()
-    return this.aragonAppFeesCashier.setAppFee(appId, token.address, amount)
+    const cashier = await this.appFeesCashier()
+    return cashier.setAppFee(appId, token.address, amount)
   }
 
   async mockDisputable(options = {}) {

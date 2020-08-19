@@ -4,13 +4,13 @@
 
 pragma solidity 0.4.24;
 
+import "@aragon/os/contracts/acl/IACLOracle.sol";
 import "@aragon/os/contracts/apps/AragonApp.sol";
 import "@aragon/os/contracts/apps/disputable/IAgreement.sol";
 import "@aragon/os/contracts/apps/disputable/DisputableAragonApp.sol";
 import "@aragon/os/contracts/common/ConversionHelpers.sol";
 import "@aragon/os/contracts/common/SafeERC20.sol";
 import "@aragon/os/contracts/common/TimeHelpers.sol";
-import "@aragon/os/contracts/lib/arbitration/IAragonAppFeesCashier.sol";
 import "@aragon/os/contracts/lib/token/ERC20.sol";
 import "@aragon/os/contracts/lib/math/SafeMath.sol";
 import "@aragon/os/contracts/lib/math/SafeMath64.sol";
@@ -18,8 +18,11 @@ import "@aragon/staking/contracts/Staking.sol";
 import "@aragon/staking/contracts/StakingFactory.sol";
 import "@aragon/staking/contracts/locking/ILockManager.sol";
 
+import "./arbitration/IArbitrable.sol";
+import "./arbitration/IAragonAppFeesCashier.sol";
 
-contract Agreement is ILockManager, IAgreement, AragonApp {
+
+contract Agreement is ILockManager, IAgreement, IArbitrable, IACLOracle, AragonApp {
     using SafeMath for uint256;
     using SafeMath64 for uint64;
     using SafeERC20 for ERC20;
@@ -33,6 +36,7 @@ contract Agreement is ILockManager, IAgreement, AragonApp {
     string internal constant ERROR_SENDER_NOT_ALLOWED = "AGR_SENDER_NOT_ALLOWED";
     string internal constant ERROR_SIGNER_MUST_SIGN = "AGR_SIGNER_MUST_SIGN";
     string internal constant ERROR_SIGNER_ALREADY_SIGNED = "AGR_SIGNER_ALREADY_SIGNED";
+    string internal constant ERROR_INVALID_SIGNING_SETTING = "AGR_INVALID_SIGNING_SETTING";
     string internal constant ERROR_INVALID_SETTLEMENT_OFFER = "AGR_INVALID_SETTLEMENT_OFFER";
     string internal constant ERROR_ACTION_DOES_NOT_EXIST = "AGR_ACTION_DOES_NOT_EXIST";
     string internal constant ERROR_CHALLENGE_DOES_NOT_EXIST = "AGR_CHALLENGE_DOES_NOT_EXIST";
@@ -42,7 +46,6 @@ contract Agreement is ILockManager, IAgreement, AragonApp {
     string internal constant ERROR_TOKEN_NOT_CONTRACT = "AGR_TOKEN_NOT_CONTRACT";
     string internal constant ERROR_SETTING_DOES_NOT_EXIST = "AGR_SETTING_DOES_NOT_EXIST";
     string internal constant ERROR_ARBITRATOR_NOT_CONTRACT = "AGR_ARBITRATOR_NOT_CONTRACT";
-    string internal constant ERROR_APP_FEE_CASHIER_NOT_CONTRACT = "AGR_APP_FEE_CASHIER_NOT_CONTRACT";
     string internal constant ERROR_STAKING_FACTORY_NOT_CONTRACT = "AGR_STAKING_FACTORY_NOT_CONTRACT";
     string internal constant ERROR_ACL_SIGNER_MISSING = "AGR_ACL_ORACLE_SIGNER_MISSING";
     string internal constant ERROR_ACL_SIGNER_NOT_ADDRESS = "AGR_ACL_ORACLE_SIGNER_NOT_ADDR";
@@ -74,11 +77,18 @@ contract Agreement is ILockManager, IAgreement, AragonApp {
     // bytes32 public constant MANAGE_DISPUTABLE_ROLE = keccak256("MANAGE_DISPUTABLE_ROLE");
     bytes32 public constant MANAGE_DISPUTABLE_ROLE = 0x2309a8cbbd5c3f18649f3b7ac47a0e7b99756c2ac146dda1ffc80d3f80827be6;
 
+    event Signed(address indexed signer, uint256 settingId);
+    event SettingChanged(uint256 settingId);
+    event DisputableAppActivated(address indexed disputable);
+    event DisputableAppDeactivated(address indexed disputable);
+    event CollateralRequirementChanged(address indexed disputable, uint256 collateralRequirementId);
+    event AppFeesCashierSynced(IAragonAppFeesCashier newAppFeesCashier);
+
     struct Setting {
         string title;
         bytes content;
         IArbitrator arbitrator;
-        IAragonAppFeesCashier aragonAppFeesCashier; // Cashier to deposit new action transaction fees (usually linked to the selected arbitrator)
+        IAragonAppFeesCashier aragonAppFeesCashier; // Cashier to deposit new action app fees (usually linked to the selected arbitrator)
     }
 
     struct Action {
@@ -145,14 +155,14 @@ contract Agreement is ILockManager, IAgreement, AragonApp {
     * @param _title String indicating a short description
     * @param _content Link to a human-readable text that describes the initial rules for the Agreements instance
     * @param _arbitrator Address of the IArbitrator that will be used to resolve disputes
-    * @param _aragonAppFeesCashier Cashier contract to handle app transaction fees for new actions
+    * @param _setAppFeesCashier Whether or not the cashier integration should be set up or not
     * @param _stakingFactory Staking factory to be used for the collateral staking pools
     */
     function initialize(
         string _title,
         bytes _content,
         IArbitrator _arbitrator,
-        IAragonAppFeesCashier _aragonAppFeesCashier,
+        bool _setAppFeesCashier,
         StakingFactory _stakingFactory
     )
         external
@@ -165,7 +175,7 @@ contract Agreement is ILockManager, IAgreement, AragonApp {
         nextActionId = 1;    // Action ID zero is considered the null action for further validations
         nextChallengeId = 1; // Challenge ID zero is considered the null challenge for further validations
         nextSettingId = 1;   // Setting ID zero is considered the null setting for further validations
-        _newSetting(_arbitrator, _aragonAppFeesCashier, _title, _content);
+        _newSetting(_arbitrator, _setAppFeesCashier, _title, _content);
     }
 
     /**
@@ -246,32 +256,50 @@ contract Agreement is ILockManager, IAgreement, AragonApp {
     * @notice Update Agreement to title "`_title`" and content "`_content`", with arbitrator `_arbitrator`
     * @dev Initialization check is implicitly provided by the `auth()` modifier
     * @param _arbitrator Address of the IArbitrator that will be used to resolve disputes
-    * @param _aragonAppFeesCashier Cashier contract to handle app transaction fees for new actions
+    * @param _setAppFeesCashier Whether or not the cashier integration should be set up or not
     * @param _title String indicating a short description
     * @param _content Link to a human-readable text that describes the rules for the Agreements instance
     */
     function changeSetting(
         IArbitrator _arbitrator,
-        IAragonAppFeesCashier _aragonAppFeesCashier,
+        bool _setAppFeesCashier,
         string _title,
         bytes _content
     )
         external
         auth(CHANGE_AGREEMENT_ROLE)
     {
-        _newSetting(_arbitrator, _aragonAppFeesCashier, _title, _content);
+        _newSetting(_arbitrator, _setAppFeesCashier, _title, _content);
     }
 
     /**
-    * @notice Sign the agreement
+    * @notice Sync app fees cashier address
+    * @dev The app fees cashier address is being cached in the contract, in case the arbitrator changes the address
+    *      this permission-less function allows anyone to have it synced
     */
-    function sign() external isInitialized {
-        uint256 currentSettingId = _getCurrentSettingId();
-        uint256 lastSettingIdSigned = lastSettingSignedBy[msg.sender];
-        require(lastSettingIdSigned < currentSettingId, ERROR_SIGNER_ALREADY_SIGNED);
+    function syncAppFeesCashier() external {
+        Setting storage setting = _getSetting(_getCurrentSettingId());
+        IAragonAppFeesCashier newAppFeesCashier = _getArbitratorFeesCashier(setting.arbitrator);
+        IAragonAppFeesCashier currentAppFeesCashier = setting.aragonAppFeesCashier;
 
-        lastSettingSignedBy[msg.sender] = currentSettingId;
-        emit Signed(msg.sender, currentSettingId);
+        // Sync the app fees cashier only if there was one set before and it's different from the current Arbitrator's one
+        if (currentAppFeesCashier != IAragonAppFeesCashier(0) && currentAppFeesCashier != newAppFeesCashier) {
+            setting.aragonAppFeesCashier = newAppFeesCashier;
+            emit AppFeesCashierSynced(newAppFeesCashier);
+        }
+    }
+
+    /**
+    * @notice Sign the agreement up-to setting #`_settingId`
+    * @param _settingId Last setting ID the user is agreeing with
+    */
+    function sign(uint256 _settingId) external isInitialized {
+        uint256 lastSettingIdSigned = lastSettingSignedBy[msg.sender];
+        require(lastSettingIdSigned < _settingId, ERROR_SIGNER_ALREADY_SIGNED);
+        require(_settingId < nextSettingId, ERROR_INVALID_SIGNING_SETTING);
+
+        lastSettingSignedBy[msg.sender] = _settingId;
+        emit Signed(msg.sender, _settingId);
     }
 
     /**
@@ -511,7 +539,7 @@ contract Agreement is ILockManager, IAgreement, AragonApp {
     * @return title String indicating a short description
     * @return content Link to a human-readable text that describes the rules for the Agreements instance
     * @return arbitrator Address of the IArbitrator that will be used to resolve disputes
-    * @return aragonAppFeesCashier Cashier contract to handle app transaction fees for new actions
+    * @return aragonAppFeesCashier Cashier contract to handle app fees for new actions
     */
     function getSetting(uint256 _settingId)
         external
@@ -775,6 +803,14 @@ contract Agreement is ILockManager, IAgreement, AragonApp {
     * @return Whether given lock of given owner can be unlocked by given sender
     */
     function canUnlock(address, uint256) external view returns (bool) {
+        return false;
+    }
+
+    /**
+    * @dev Disable recovery escape hatch, as it could be used  maliciously to transfer funds away from the contract
+    * @return Always false
+    */
+    function allowRecoverability(address /* _token */) public view returns (bool) {
         return false;
     }
 
@@ -1115,22 +1151,23 @@ contract Agreement is ILockManager, IAgreement, AragonApp {
     /**
     * @dev Change Agreement settings
     * @param _arbitrator Address of the IArbitrator that will be used to resolve disputes
-    * @param _aragonAppFeesCashier Cashier contract to handle app transaction fees for new actions
+    * @param _setAppFeesCashier Whether or not the cashier integration should be set up or not
     * @param _title String indicating a short description
     * @param _content Link to a human-readable text that describes the initial rules for the Agreements instance
     */
-    function _newSetting(IArbitrator _arbitrator, IAragonAppFeesCashier _aragonAppFeesCashier, string _title, bytes _content) internal {
+    function _newSetting(IArbitrator _arbitrator, bool _setAppFeesCashier, string _title, bytes _content) internal {
         require(isContract(address(_arbitrator)), ERROR_ARBITRATOR_NOT_CONTRACT);
-
-        bool unsetCashier = _aragonAppFeesCashier == IAragonAppFeesCashier(0);
-        require(unsetCashier || isContract(address(_aragonAppFeesCashier)), ERROR_APP_FEE_CASHIER_NOT_CONTRACT);
 
         uint256 id = nextSettingId++;
         Setting storage setting = settings[id];
         setting.title = _title;
         setting.content = _content;
         setting.arbitrator = _arbitrator;
-        setting.aragonAppFeesCashier = _aragonAppFeesCashier;
+
+        // Note that if the Agreement app didn't have an app fees cashier set at the start, then it must be explicit later.
+        // Arbitrators must always have at least some sort of subscription module, and having the flexibility to turn this off
+        // on the Agreement side is useful.
+        setting.aragonAppFeesCashier = _setAppFeesCashier ? _getArbitratorFeesCashier(_arbitrator) : IAragonAppFeesCashier(0);
         emit SettingChanged(id);
     }
 
@@ -1385,6 +1422,16 @@ contract Agreement is ILockManager, IAgreement, AragonApp {
     function _getArbitratorFor(Action storage _action) internal view returns (IArbitrator) {
         Setting storage setting = _getSetting(_action.settingId);
         return setting.arbitrator;
+    }
+
+    /**
+    * @dev Tell the app fees cashier instance associated to an arbitrator
+    * @param _arbitrator Arbitrator querying the app fees cashier for
+    * @return Address of the app fees cashier associated to the arbitrator
+    */
+    function _getArbitratorFeesCashier(IArbitrator _arbitrator) internal view returns (IAragonAppFeesCashier) {
+        (address cashier,,) = _arbitrator.getSubscriptionFees(address(this));
+        return IAragonAppFeesCashier(cashier);
     }
 
     /**

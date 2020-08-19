@@ -1,12 +1,14 @@
 pragma solidity ^0.4.24;
 
 import "@aragon/os/contracts/common/IsContract.sol";
-import "@aragon/os/contracts/lib/arbitration/IAragonAppFeesCashier.sol";
+
+import "../../../arbitration/IAragonAppFeesCashier.sol";
 
 
 contract AragonAppFeesCashierMock is IAragonAppFeesCashier, IsContract {
     string private constant ERROR_WRONG_TOKEN = "AAFC_WRONG_TOKEN";
     string private constant ERROR_APP_FEE_NOT_SET = "AAFC_APP_FEE_NOT_SET";
+    string private constant ERROR_ETH_APP_FEE_NOT_ALLOWED = "AAFC_ETH_APP_FEE_NOT_ALLOWED";
     string private constant ERROR_FEE_TOKEN_DEPOSIT_FAILED = "AAFC_FEE_TOKEN_DEPOSIT_FAILED";
 
     struct AppFee {
@@ -61,9 +63,10 @@ contract AragonAppFeesCashierMock is IAragonAppFeesCashier, IsContract {
     * @notice Unset fees for multiple apps
     * @param _appId App id paying for
     */
-    function payAppFees(bytes32 _appId, bytes) external {
+    function payAppFees(bytes32 _appId, bytes) external payable {
         AppFee storage appFee = appFees[_appId];
         require(appFee.set, ERROR_APP_FEE_NOT_SET);
+        require(msg.value == 0, ERROR_ETH_APP_FEE_NOT_ALLOWED);
 
         ERC20 token = appFee.token;
         require(token.transferFrom(msg.sender, address(this), appFee.amount), ERROR_FEE_TOKEN_DEPOSIT_FAILED);
