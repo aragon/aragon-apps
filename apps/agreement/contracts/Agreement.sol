@@ -291,14 +291,12 @@ contract Agreement is ILockManager, IAgreement, IArbitrable, IACLOracle, AragonA
 
     /**
     * @notice Sign the agreement up-to setting #`_settingId`
-    * @param _settingId Last setting ID the user is agreeing with, including all past settings
+    * @param _settingId Last setting ID the user is agreeing with
     */
     function sign(uint256 _settingId) external isInitialized {
         uint256 lastSettingIdSigned = lastSettingSignedBy[msg.sender];
         require(lastSettingIdSigned < _settingId, ERROR_SIGNER_ALREADY_SIGNED);
-
-        uint256 currentSettingId = _getCurrentSettingId();
-        require(_settingId <= currentSettingId, ERROR_INVALID_SIGNING_SETTING);
+        require(_settingId < nextSettingId, ERROR_INVALID_SIGNING_SETTING);
 
         lastSettingSignedBy[msg.sender] = _settingId;
         emit Signed(msg.sender, _settingId);
