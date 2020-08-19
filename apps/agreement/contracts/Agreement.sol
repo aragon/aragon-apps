@@ -4,13 +4,13 @@
 
 pragma solidity 0.4.24;
 
+import "@aragon/os/contracts/acl/IACLOracle.sol";
 import "@aragon/os/contracts/apps/AragonApp.sol";
 import "@aragon/os/contracts/apps/disputable/IAgreement.sol";
 import "@aragon/os/contracts/apps/disputable/DisputableAragonApp.sol";
 import "@aragon/os/contracts/common/ConversionHelpers.sol";
 import "@aragon/os/contracts/common/SafeERC20.sol";
 import "@aragon/os/contracts/common/TimeHelpers.sol";
-import "@aragon/os/contracts/lib/arbitration/IAragonAppFeesCashier.sol";
 import "@aragon/os/contracts/lib/token/ERC20.sol";
 import "@aragon/os/contracts/lib/math/SafeMath.sol";
 import "@aragon/os/contracts/lib/math/SafeMath64.sol";
@@ -18,8 +18,11 @@ import "@aragon/staking/contracts/Staking.sol";
 import "@aragon/staking/contracts/StakingFactory.sol";
 import "@aragon/staking/contracts/locking/ILockManager.sol";
 
+import "./arbitration/IArbitrable.sol";
+import "./arbitration/IAragonAppFeesCashier.sol";
 
-contract Agreement is ILockManager, IAgreement, AragonApp {
+
+contract Agreement is ILockManager, IAgreement, IArbitrable, IACLOracle, AragonApp {
     using SafeMath for uint256;
     using SafeMath64 for uint64;
     using SafeERC20 for ERC20;
@@ -73,6 +76,11 @@ contract Agreement is ILockManager, IAgreement, AragonApp {
     // bytes32 public constant MANAGE_DISPUTABLE_ROLE = keccak256("MANAGE_DISPUTABLE_ROLE");
     bytes32 public constant MANAGE_DISPUTABLE_ROLE = 0x2309a8cbbd5c3f18649f3b7ac47a0e7b99756c2ac146dda1ffc80d3f80827be6;
 
+    event Signed(address indexed signer, uint256 settingId);
+    event SettingChanged(uint256 settingId);
+    event DisputableAppActivated(address indexed disputable);
+    event DisputableAppDeactivated(address indexed disputable);
+    event CollateralRequirementChanged(address indexed disputable, uint256 collateralRequirementId);
     event AppFeesCashierSynced(IAragonAppFeesCashier newAppFeesCashier);
 
     struct Setting {
