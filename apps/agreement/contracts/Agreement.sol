@@ -804,6 +804,14 @@ contract Agreement is ILockManager, IAgreement, IArbitrable, IACLOracle, AragonA
         return false;
     }
 
+    /**
+    * @dev Disable recovery escape hatch, as it could be used  maliciously to transfer funds away from the contract
+    * @return Always false
+    */
+    function allowRecoverability(address /* _token */) public view returns (bool) {
+        return false;
+    }
+
     // Internal fns
 
     /**

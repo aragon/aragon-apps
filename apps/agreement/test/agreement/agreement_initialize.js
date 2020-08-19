@@ -70,6 +70,10 @@ contract('Agreement', ([_, EOA]) => {
         const { recipient: expectedCashier } = await arbitrator.getSubscriptionFees(ZERO_ADDRESS)
         assert.equal(setting.aragonAppFeesCashier, expectedCashier, 'aragon app fees cashier does not match')
       })
+
+      it('does not allow recovering funds', async () => {
+        assert.isFalse(await agreement.allowRecoverability(ZERO_ADDRESS), 'agreement allows recovering ETH')
+      })
     })
   })
 })
