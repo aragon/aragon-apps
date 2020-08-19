@@ -132,9 +132,10 @@ class AgreementWrapper {
     return { canClose, canChallenge, canSettle, canDispute, canClaimSettlement, canRuleDispute }
   }
 
-  async sign(from) {
+  async sign({ settingId = undefined, from = undefined }) {
+    if (!settingId) settingId = await this.getCurrentSettingId()
     if (!from) from = await this._getSender()
-    return this.agreement.sign({ from })
+    return this.agreement.sign(settingId, { from })
   }
 
   async close(actionId) {

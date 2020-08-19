@@ -39,7 +39,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
           context('when the signer has already signed the agreement', () => {
             beforeEach('sign and allow agreement', async () => {
               const { mustSign } = await disputable.getSigner(submitter)
-              if (mustSign) await disputable.sign(submitter)
+              if (mustSign) await disputable.sign({ from: submitter })
             })
 
             context('when the signer did not allow the agreement as the lock manager', () => {
@@ -291,7 +291,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
 
                     beforeEach('remove app fee cashier', async () => {
                       await disputable.changeSetting({ setCashier: false, from: owner })
-                      await disputable.sign(submitter)
+                      await disputable.sign({ from: submitter })
                     })
 
                     itHandlesNewActionsCorrectly(appFeesInCollateralTokens)
@@ -323,7 +323,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
         context('when the app is unregistered', () => {
           beforeEach('mark as unregistered', async () => {
             await disputable.changeSetting({ setCashier: false, from: owner })
-            await disputable.sign(submitter)
+            await disputable.sign({ from: submitter })
             await disputable.newAction({ submitter })
             await disputable.deactivate({ from: owner })
           })

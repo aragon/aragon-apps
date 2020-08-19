@@ -36,6 +36,7 @@ contract Agreement is ILockManager, IAgreement, IArbitrable, IACLOracle, AragonA
     string internal constant ERROR_SENDER_NOT_ALLOWED = "AGR_SENDER_NOT_ALLOWED";
     string internal constant ERROR_SIGNER_MUST_SIGN = "AGR_SIGNER_MUST_SIGN";
     string internal constant ERROR_SIGNER_ALREADY_SIGNED = "AGR_SIGNER_ALREADY_SIGNED";
+    string internal constant ERROR_INVALID_SIGNING_SETTING = "AGR_INVALID_SIGNING_SETTING";
     string internal constant ERROR_INVALID_SETTLEMENT_OFFER = "AGR_INVALID_SETTLEMENT_OFFER";
     string internal constant ERROR_ACTION_DOES_NOT_EXIST = "AGR_ACTION_DOES_NOT_EXIST";
     string internal constant ERROR_CHALLENGE_DOES_NOT_EXIST = "AGR_CHALLENGE_DOES_NOT_EXIST";
@@ -289,15 +290,16 @@ contract Agreement is ILockManager, IAgreement, IArbitrable, IACLOracle, AragonA
     }
 
     /**
-    * @notice Sign the agreement
+    * @notice Sign the agreement up-to setting #`_settingId`
+    * @param _settingId Last setting ID the user is agreeing with
     */
-    function sign() external isInitialized {
-        uint256 currentSettingId = _getCurrentSettingId();
+    function sign(uint256 _settingId) external isInitialized {
         uint256 lastSettingIdSigned = lastSettingSignedBy[msg.sender];
-        require(lastSettingIdSigned < currentSettingId, ERROR_SIGNER_ALREADY_SIGNED);
+        require(lastSettingIdSigned < _settingId, ERROR_SIGNER_ALREADY_SIGNED);
+        require(_settingId < nextSettingId, ERROR_INVALID_SIGNING_SETTING);
 
-        lastSettingSignedBy[msg.sender] = currentSettingId;
-        emit Signed(msg.sender, currentSettingId);
+        lastSettingSignedBy[msg.sender] = _settingId;
+        emit Signed(msg.sender, _settingId);
     }
 
     /**
@@ -801,6 +803,14 @@ contract Agreement is ILockManager, IAgreement, IArbitrable, IACLOracle, AragonA
     * @return Whether given lock of given owner can be unlocked by given sender
     */
     function canUnlock(address, uint256) external view returns (bool) {
+        return false;
+    }
+
+    /**
+    * @dev Disable recovery escape hatch, as it could be used  maliciously to transfer funds away from the contract
+    * @return Always false
+    */
+    function allowRecoverability(address /* _token */) public view returns (bool) {
         return false;
     }
 
