@@ -92,7 +92,7 @@ class DisputableWrapper extends AgreementWrapper {
     if (stake) await this.approveAndCall({ amount: stake, from: submitter })
 
     if (sign === undefined && (await this.getSigner(submitter)).mustSign) {
-      await this.sign(submitter)
+      await this.sign({ from: submitter })
       await this.allowManager({ user: submitter })
     }
 
