@@ -2,13 +2,13 @@ const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 const { AGREEMENT_EVENTS } = require('../helpers/utils/events')
 const { ARAGON_OS_ERRORS, AGREEMENT_ERRORS } = require('../helpers/utils/errors')
 
-const { ZERO_ADDRESS, injectWeb3, injectArtifacts } = require('@aragon/contract-helpers-test')
+const { ZERO_ADDRESS, bigExp, injectWeb3, injectArtifacts } = require('@aragon/contract-helpers-test')
 const { assertBn, assertEvent, assertRevert } = require('@aragon/contract-helpers-test/src/asserts')
 
 injectWeb3(web3)
 injectArtifacts(artifacts)
 
-contract('Agreement', ([_, EOA]) => {
+contract('Agreement', ([_, EOA, owner]) => {
   let arbitrator, stakingFactory, agreement
 
   const title = 'Sample Agreement'
@@ -17,7 +17,7 @@ contract('Agreement', ([_, EOA]) => {
   before('deploy instances', async () => {
     arbitrator = await deployer.deployArbitrator()
     stakingFactory = await deployer.deployStakingFactory()
-    agreement = await deployer.deploy()
+    agreement = await deployer.deploy({ owner })
   })
 
   describe('initialize', () => {
@@ -72,7 +72,14 @@ contract('Agreement', ([_, EOA]) => {
       })
 
       it('does not allow recovering funds', async () => {
-        assert.isFalse(await agreement.allowRecoverability(ZERO_ADDRESS), 'agreement allows recovering ETH')
+        const token = await deployer.deployToken({})
+        const balance = bigExp(10, 18)
+        await token.generateTokens(agreement.address, balance)
+        assertBn(await token.balanceOf(agreement.address), balance, 'agreement token balance does not match')
+
+        await assertRevert(agreement.transferToVault(token.address), ARAGON_OS_ERRORS.ERROR_RECOVER_DISALLOWED)
+        assertBn(await token.balanceOf(agreement.address), balance, 'agreement token balance does not match')
+        assert.isFalse(await agreement.allowRecoverability(token.address), 'agreement allows recovering funds')
       })
     })
   })
