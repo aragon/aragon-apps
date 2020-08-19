@@ -1,11 +1,11 @@
 pragma solidity 0.4.24;
 
 import "@aragon/os/contracts/lib/token/ERC20.sol";
-import "@aragon/os/contracts/lib/arbitration/IArbitrable.sol";
-import "@aragon/os/contracts/lib/arbitration/IArbitrator.sol";
-import "@aragon/os/contracts/lib/arbitration/IAragonAppFeesCashier.sol";
 
 import "./AragonAppFeesCashierMock.sol";
+import "../../../arbitration/IArbitrable.sol";
+import "../../../arbitration/IArbitrator.sol";
+import "../../../arbitration/IAragonAppFeesCashier.sol";
 
 contract ArbitratorMock is IArbitrator {
     string internal constant ERROR_DISPUTE_NOT_RULED_YET = "ARBITRATOR_DISPUTE_NOT_RULED_YET";

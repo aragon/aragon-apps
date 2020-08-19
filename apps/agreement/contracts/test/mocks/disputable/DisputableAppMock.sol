@@ -68,7 +68,7 @@ contract DisputableAppMock is IForwarderWithContext, DisputableAragonApp, Shared
     * @dev Helper function to close actions
     */
     function closeAction(uint256 _id) external {
-        _closeAgreementAction(entries[_id].actionId);
+        _closeDisputableAction(entries[_id].actionId);
     }
 
     /**
@@ -78,7 +78,7 @@ contract DisputableAppMock is IForwarderWithContext, DisputableAragonApp, Shared
         require(_canForward(msg.sender, _evmScript), ERROR_CANNOT_SUBMIT);
 
         uint256 id = entriesLength++;
-        entries[id].actionId = _newAgreementAction(id, _context, msg.sender);
+        entries[id].actionId = _registerDisputableAction(id, _context, msg.sender);
 
         emit DisputableSubmitted(id);
     }
