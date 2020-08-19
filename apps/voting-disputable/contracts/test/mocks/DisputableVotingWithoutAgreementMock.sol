@@ -11,14 +11,14 @@ import "./DisputableVotingMock.sol";
 contract DisputableVotingWithoutAgreementMock is DisputableVotingMock {
     uint256 private actionsLength;
 
-    function _newAgreementAction(uint256 /* _disputableActionId */, bytes /* _context */, address /* _submitter */)
+    function _registerDisputableAction(uint256 /* _disputableActionId */, bytes /* _context */, address /* _submitter */)
         internal
         returns (uint256)
     {
         return actionsLength++;
     }
 
-    function _closeAgreementAction(uint256 /* _actionId */) internal {
+    function _closeDisputableAction(uint256 /* _actionId */) internal {
         // do nothing
     }
 }

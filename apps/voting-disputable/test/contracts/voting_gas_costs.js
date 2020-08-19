@@ -13,7 +13,7 @@ contract('Voting', ([_, owner, voter]) => {
     collateralToken = await agreementDeployer.deployCollateralToken()
     votingDeployer.previousDeploy = agreementDeployer.previousDeploy
 
-    await agreement.sign(voter)
+    await agreement.sign({ from: voter })
     await votingDeployer.deployBase({ owner, agreement: true })
   })
 
