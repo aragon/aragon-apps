@@ -1,7 +1,8 @@
 pragma solidity ^0.4.24;
 
 import "@aragon/os/contracts/common/IsContract.sol";
-import "@aragon/os/contracts/lib/arbitration/IAragonAppFeesCashier.sol";
+
+import "../../../arbitration/IAragonAppFeesCashier.sol";
 
 
 contract AragonAppFeesCashierMock is IAragonAppFeesCashier, IsContract {
@@ -61,7 +62,7 @@ contract AragonAppFeesCashierMock is IAragonAppFeesCashier, IsContract {
     * @notice Unset fees for multiple apps
     * @param _appId App id paying for
     */
-    function payAppFees(bytes32 _appId, bytes) external {
+    function payAppFees(bytes32 _appId, bytes) external payable {
         AppFee storage appFee = appFees[_appId];
         require(appFee.set, ERROR_APP_FEE_NOT_SET);
 
