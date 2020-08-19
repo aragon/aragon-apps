@@ -2,23 +2,22 @@ const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 const { AGREEMENT_EVENTS } = require('../helpers/utils/events')
 const { ARAGON_OS_ERRORS, AGREEMENT_ERRORS } = require('../helpers/utils/errors')
 
-const { injectWeb3, injectArtifacts } = require('@aragon/contract-helpers-test')
+const { ZERO_ADDRESS, bigExp, injectWeb3, injectArtifacts } = require('@aragon/contract-helpers-test')
 const { assertBn, assertEvent, assertRevert } = require('@aragon/contract-helpers-test/src/asserts')
 
 injectWeb3(web3)
 injectArtifacts(artifacts)
 
-contract('Agreement', ([_, EOA]) => {
-  let arbitrator, aragonAppFeesCashier, stakingFactory, agreement
+contract('Agreement', ([_, EOA, owner]) => {
+  let arbitrator, stakingFactory, agreement
 
   const title = 'Sample Agreement'
   const content = '0xabcd'
 
   before('deploy instances', async () => {
     arbitrator = await deployer.deployArbitrator()
-    aragonAppFeesCashier = await deployer.deployAragonAppFeesCashier()
     stakingFactory = await deployer.deployStakingFactory()
-    agreement = await deployer.deploy()
+    agreement = await deployer.deploy({ owner })
   })
 
   describe('initialize', () => {
@@ -26,26 +25,20 @@ contract('Agreement', ([_, EOA]) => {
       const base = deployer.base
 
       assert(await base.isPetrified(), 'base agreement contract should be petrified')
-      await assertRevert(base.initialize(title, content, arbitrator.address, aragonAppFeesCashier.address, stakingFactory.address), ARAGON_OS_ERRORS.ERROR_ALREADY_INITIALIZED)
+      await assertRevert(base.initialize(title, content, arbitrator.address, true, stakingFactory.address), ARAGON_OS_ERRORS.ERROR_ALREADY_INITIALIZED)
     })
 
     context('when the initialization fails', () => {
       it('fails when using a non-contract arbitrator', async () => {
         const court = EOA
 
-        await assertRevert(agreement.initialize(title, content, court, aragonAppFeesCashier.address, stakingFactory.address), AGREEMENT_ERRORS.ERROR_ARBITRATOR_NOT_CONTRACT)
-      })
-
-      it('fails when using a non-contract aragon app fees cashier', async () => {
-        const cashier = EOA
-
-        await assertRevert(agreement.initialize(title, content, arbitrator.address, cashier, stakingFactory.address), AGREEMENT_ERRORS.ERROR_APP_FEE_CASHIER_NOT_CONTRACT)
+        await assertRevert(agreement.initialize(title, content, court, true, stakingFactory.address), AGREEMENT_ERRORS.ERROR_ARBITRATOR_NOT_CONTRACT)
       })
 
       it('fails when using a non-contract staking factory', async () => {
         const factory = EOA
 
-        await assertRevert(agreement.initialize(title, content, arbitrator.address, aragonAppFeesCashier.address, factory), AGREEMENT_ERRORS.ERROR_STAKING_FACTORY_NOT_CONTRACT)
+        await assertRevert(agreement.initialize(title, content, arbitrator.address, true, factory), AGREEMENT_ERRORS.ERROR_STAKING_FACTORY_NOT_CONTRACT)
       })
     })
 
@@ -53,11 +46,11 @@ contract('Agreement', ([_, EOA]) => {
       let receipt
 
       before('initialize agreement DAO', async () => {
-        receipt = await agreement.initialize(title, content, arbitrator.address, aragonAppFeesCashier.address, stakingFactory.address)
+        receipt = await agreement.initialize(title, content, arbitrator.address, true, stakingFactory.address)
       })
 
       it('cannot be initialized again', async () => {
-        await assertRevert(agreement.initialize(title, content, arbitrator.address, aragonAppFeesCashier.address, stakingFactory.address), ARAGON_OS_ERRORS.ERROR_ALREADY_INITIALIZED)
+        await assertRevert(agreement.initialize(title, content, arbitrator.address, true, stakingFactory.address), ARAGON_OS_ERRORS.ERROR_ALREADY_INITIALIZED)
       })
 
       it('initializes the first setting', async () => {
@@ -73,7 +66,20 @@ contract('Agreement', ([_, EOA]) => {
         assert.equal(setting.title, title, 'title does not match')
         assert.equal(setting.content, content, 'content does not match')
         assert.equal(setting.arbitrator, arbitrator.address, 'arbitrator does not match')
-        assert.equal(setting.aragonAppFeesCashier, aragonAppFeesCashier.address, 'aragon app fees cashier does not match')
+
+        const { recipient: expectedCashier } = await arbitrator.getSubscriptionFees(ZERO_ADDRESS)
+        assert.equal(setting.aragonAppFeesCashier, expectedCashier, 'aragon app fees cashier does not match')
+      })
+
+      it('does not allow recovering funds', async () => {
+        const token = await deployer.deployToken({})
+        const balance = bigExp(10, 18)
+        await token.generateTokens(agreement.address, balance)
+        assertBn(await token.balanceOf(agreement.address), balance, 'agreement token balance does not match')
+
+        await assertRevert(agreement.transferToVault(token.address), ARAGON_OS_ERRORS.ERROR_RECOVER_DISALLOWED)
+        assertBn(await token.balanceOf(agreement.address), balance, 'agreement token balance does not match')
+        assert.isFalse(await agreement.allowRecoverability(token.address), 'agreement allows recovering funds')
       })
     })
   })

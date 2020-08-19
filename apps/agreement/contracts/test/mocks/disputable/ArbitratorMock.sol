@@ -1,9 +1,11 @@
 pragma solidity 0.4.24;
 
 import "@aragon/os/contracts/lib/token/ERC20.sol";
-import "@aragon/os/contracts/lib/arbitration/IArbitrable.sol";
-import "@aragon/os/contracts/lib/arbitration/IArbitrator.sol";
 
+import "./AragonAppFeesCashierMock.sol";
+import "../../../arbitration/IArbitrable.sol";
+import "../../../arbitration/IArbitrator.sol";
+import "../../../arbitration/IAragonAppFeesCashier.sol";
 
 contract ArbitratorMock is IArbitrator {
     string internal constant ERROR_DISPUTE_NOT_RULED_YET = "ARBITRATOR_DISPUTE_NOT_RULED_YET";
@@ -19,6 +21,8 @@ contract ArbitratorMock is IArbitrator {
     }
 
     Fee public fee;
+    IAragonAppFeesCashier public appFeesCashier;
+
     uint256 public disputesLength;
     mapping (uint256 => Dispute) public disputes;
 
@@ -29,6 +33,7 @@ contract ArbitratorMock is IArbitrator {
         fee.token = _feeToken;
         fee.amount = _feeAmount;
         disputesLength++;
+        appFeesCashier = new AragonAppFeesCashierMock();
     }
 
     function createDispute(uint256 _possibleRulings, bytes _metadata) external returns (uint256) {
@@ -60,11 +65,15 @@ contract ArbitratorMock is IArbitrator {
         fee.amount = _feeAmount;
     }
 
+    function setAppFeesCashier(IAragonAppFeesCashier _newAppFeesCashier) external {
+        appFeesCashier = _newAppFeesCashier;
+    }
+
     function getDisputeFees() public view returns (address recipient, ERC20 feeToken, uint256 feeAmount) {
         return (address(this), fee.token, fee.amount);
     }
 
-    function getSubscriptionFees(address) external view returns (address, ERC20, uint256) {
-        return (address(this), fee.token, 0);
+    function getSubscriptionFees(address) external view returns (address recipient, ERC20 feeToken, uint256 feeAmount) {
+        return (address(appFeesCashier), fee.token, 0);
     }
 }
