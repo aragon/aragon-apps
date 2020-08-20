@@ -24,7 +24,7 @@ contract('Voting disputable', ([_, owner, representative, voter10, voter20, vote
     collateralToken = await agreementDeployer.deployCollateralToken()
     votingDeployer.previousDeploy = agreementDeployer.previousDeploy
 
-    await agreement.sign(voter40)
+    await agreement.sign({ from: voter40 })
     await votingDeployer.deployBase({ owner, agreement: true })
   })
 
