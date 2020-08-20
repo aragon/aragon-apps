@@ -1,12 +1,11 @@
 const votingDeployer = require('../helpers/deployer')(web3, artifacts)
-const agreementDeployer = require('@aragon/apps-agreement/test/helpers/utils/deployer')(web3, artifacts)
 const { createVote } = require('../helpers/voting')
 
 const { ONE_DAY, bigExp } = require('@aragon/contract-helpers-test')
+const agreementDeployer = require('@aragon/apps-agreement/test/helpers/utils/deployer')(web3, artifacts)
 
 contract('Voting', ([_, owner, voter]) => {
   let voting, token, agreement, voteId, actionId, collateralToken, receipt
-
 
   before('deploy agreement and base voting', async () => {
     agreement = await agreementDeployer.deployAndInitializeAgreementWrapper({ owner })
@@ -38,7 +37,7 @@ contract('Voting', ([_, owner, voter]) => {
 
   describe('gas costs', () => {
     const itCostsAtMost = (expectedCost, call) => {
-      it(`should cost up to ${expectedCost.toLocaleString()} gas`, async () => {
+      it(`should cost up to ${expectedCost.toLocaleString()} gas [ @skip-on-coverage ]`, async () => {
         const { receipt: { gasUsed } } = await call()
         console.log(`gas costs: ${gasUsed.toLocaleString()}`)
         assert.isAtMost(gasUsed, expectedCost)

@@ -2,7 +2,6 @@ const deployer = require('../helpers/deployer')(web3, artifacts)
 const { VOTING_ERRORS } = require('../helpers/errors')
 const { VOTER_STATE, createVote, getVoteState } = require('../helpers/voting')
 
-const { skipCoverage } = require('@aragon/os/test/helpers/coverage')
 const { ONE_DAY, pct16, bigExp, bn } = require('@aragon/contract-helpers-test')
 const { assertBn, assertRevert, assertEvent, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/asserts')
 
@@ -659,11 +658,11 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
     })
   })
 
-  describe('gas costs', () => {
+  describe('gas costs [ @skip-on-coverage ]', () => {
     const MAX_DELEGATES_PER_TX = 10
     const MAX_DELEGATE_GAS_OVERHEAD = 65e3
 
-    it('adds 65k of gas per cast vote', skipCoverage(async () => {
+    it('adds 65k of gas per cast vote', async () => {
       ({ voteId } = await createVote({ voting, from: voter }))
       await voting.setRepresentative(representative, { from: voter })
       await voting.setRepresentative(representative, { from: anotherVoter })
@@ -672,9 +671,9 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
       const { receipt: { cumulativeGasUsed: twoVotesCumulativeGasUsed } } = await voting.voteOnBehalfOf(voteId, true, [voter, anotherVoter], { from: representative })
 
       assert.isAtMost(twoVotesCumulativeGasUsed - oneVoteCumulativeGasUsed, MAX_DELEGATE_GAS_OVERHEAD)
-    }))
+    })
 
-    it(`can delegate up to ${MAX_DELEGATES_PER_TX} votes`, skipCoverage(async () => {
+    it(`can delegate up to ${MAX_DELEGATES_PER_TX} votes`, async () => {
       const accounts = await web3.eth.getAccounts()
       const voters = accounts.slice(accounts.length - MAX_DELEGATES_PER_TX, accounts.length)
 
@@ -699,6 +698,6 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
         assertBn(voterState.state, VOTER_STATE.YEA, 'voter should have voted')
         assert.equal(voterState.caster, representative, 'voter caster does not match')
       }
-    }))
+    })
   })
 })
