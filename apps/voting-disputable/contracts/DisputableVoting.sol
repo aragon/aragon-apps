@@ -286,7 +286,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         require(_canExecute(vote_), ERROR_CANNOT_EXECUTE);
 
         vote_.status = VoteStatus.Executed;
-        _closeAgreementAction(vote_.actionId);
+        _closeDisputableAction(vote_.actionId);
 
         // Add Agreement to blacklist to disallow the stored EVMScript from directly calling the
         // linked Agreement from this app's context (e.g. maliciously creating a new action)
@@ -657,7 +657,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
 
         // Notify the Agreement app tied to the current voting app about the vote created.
         // This is mandatory to make the vote disputable, by storing a reference to it on the Agreement app.
-        vote_.actionId = _newAgreementAction(voteId, _context, msg.sender);
+        vote_.actionId = _registerDisputableAction(voteId, _context, msg.sender);
 
         emit StartVote(voteId, msg.sender, _context);
     }
