@@ -9,6 +9,6 @@ module.exports = {
     },
   },
   paths: {
-    sources: "./staking",
+    sources: "./mocks/staking",
   }
 }
