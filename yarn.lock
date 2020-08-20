@@ -10,7 +10,7 @@
     web3-eth-abi "1.2.5"
     web3-utils "1.2.5"
 
-"@aragon/minime@1.0.0", "@aragon/minime@^1.0.0":
+"@aragon/minime@1.0.0":
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/@aragon/minime/-/minime-1.0.0.tgz#994284b38e2ca36b5ae923f090928948041c928f"
   integrity sha512-FU6xQXkkRfaxo0n6HEnlsizSA12Te2bghozqW9XLdDbzpC84yDeqUOQAxmrHo5yQPIezRfz7IrNzpLVL6ZBORA==
@@ -30,10 +30,10 @@
   resolved "https://registry.yarnpkg.com/@aragon/os/-/os-5.0.0-beta.8.tgz#9bd4db2a24273debbbde49b01fc5f82cce33ed5f"
   integrity sha512-XISU169ceBgKWPZUfvnCOnJ040Z+sOI0IgBT40PzjWTfpduymZYQURp+zhqozFgtaxPUJ+DqgB650b+AFrY9sA==
 
-"@aragon/staking@^0.2.4":
-  version "0.2.4"
-  resolved "https://registry.yarnpkg.com/@aragon/staking/-/staking-0.2.4.tgz#36fb13b1e41dfdc475220f8fd9aa82ea51091800"
-  integrity sha512-vB1tb696poRadtZ7f/MLML2T5Ce2w0NSB5doNwRKWciG9zwmuH0Lna8NLD2JFtcZ1OQkpcOjMrS+bh7/5ziugA==
+"@aragon/staking@0.2.9":
+  version "0.2.9"
+  resolved "https://registry.yarnpkg.com/@aragon/staking/-/staking-0.2.9.tgz#e678716757e771049797b86b44c76445c1aa2b1c"
+  integrity sha512-1KK4SsUTD4ZweZ+hLlDUvDoyY4CN8xiGo/ENe+OlMX/CcU3a3fHl0ix4uHaCzJ9gCJQGG65inxlml2lzFnmP9A==
 
 "@aragon/truffle-config-v4@^1.0.1":
   version "1.0.1"
