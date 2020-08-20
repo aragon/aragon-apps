@@ -9,24 +9,23 @@ contract('Voting', ([_, owner, holder1, holder2, holder20, holder29, holder51, a
   let voting, token
 
   const CONTEXT = '0xabcdef'
-  const VOTE_DURATION = 5 * ONE_DAY
+  const VOTING_DURATION = 5 * ONE_DAY
   const OVERRULE_WINDOW = ONE_DAY
-  const EXECUTION_DELAY = 0
   const QUIET_ENDING_PERIOD = ONE_DAY
   const QUIET_ENDING_EXTENSION = ONE_DAY / 2
   const REQUIRED_SUPPORT = pct16(50)
   const MINIMUM_ACCEPTANCE_QUORUM = pct16(20)
 
-  beforeEach('deploy voting', async () => {
-    voting = await deployer.deploy({ owner })
-  })
-
   describe('newVote', () => {
-    it('it is a forwarder', async () => {
-      assert.isTrue(await voting.isForwarder())
-    })
-
     context('when the app was not initialized', async () => {
+      beforeEach('deploy voting', async () => {
+        voting = await deployer.deploy({ owner })
+      })
+
+      it('it is a forwarder', async () => {
+        assert.isTrue(await voting.isForwarder())
+      })
+
       it('fails creating a vote', async () => {
         await assertRevert(createVote({ voting, script: false }), ARAGON_OS_ERRORS.APP_AUTH_FAILED)
       })
@@ -38,9 +37,9 @@ contract('Voting', ([_, owner, holder1, holder2, holder20, holder29, holder51, a
     })
 
     context('when the app was initialized', () => {
-      beforeEach('initialize voting', async () => {
+      beforeEach('deploy and initialize voting', async () => {
         token = await deployer.deployToken({})
-        await voting.initialize(token.address, REQUIRED_SUPPORT, MINIMUM_ACCEPTANCE_QUORUM, VOTE_DURATION, OVERRULE_WINDOW, QUIET_ENDING_PERIOD, QUIET_ENDING_EXTENSION, EXECUTION_DELAY)
+        voting = await deployer.deployAndInitialize({ owner, requiredSupport: REQUIRED_SUPPORT, minimumAcceptanceQuorum: MINIMUM_ACCEPTANCE_QUORUM, voteDuration: VOTING_DURATION, quietEndingPeriod: QUIET_ENDING_PERIOD, quietEndingExtension: QUIET_ENDING_EXTENSION, overruleWindow: OVERRULE_WINDOW })
       })
 
       context('when there is some supply', () => {
@@ -64,8 +63,6 @@ contract('Voting', ([_, owner, holder1, holder2, holder20, holder29, holder51, a
           })
 
           it('can be forwarded', async () => {
-            await voting.setAgreement(agreement, { from: owner })
-
             const receipt = await voting.forward(script, CONTEXT, { from: holder51 })
 
             assertAmountOfEvents(receipt, 'StartVote')
@@ -111,7 +108,7 @@ contract('Voting', ([_, owner, holder1, holder2, holder20, holder29, holder51, a
             assert.isFalse(await voting.canExecute(voteId), 'vote cannot be executed')
 
             await voting.vote(voteId, true, { from: holder1 })
-            await voting.mockIncreaseTime(VOTE_DURATION)
+            await voting.mockIncreaseTime(VOTING_DURATION)
             await voting.executeVote(voteId)
 
             const { isOpen, isExecuted } = await getVoteState(voting, voteId)
