@@ -39,7 +39,7 @@ jobs:
       name: "Voting Disputable"
 
     - stage: coverage
-      script: yarn coverage:agreement
+      script: echo "Skipping Agreements coverage since buidler plugin cannot be overriden for custom compilation yet" # yarn coverage:agreement
       name: "Agreement"
     - script: yarn coverage:agent
       name: "Agent"
