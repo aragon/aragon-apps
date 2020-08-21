@@ -239,7 +239,6 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
 
         DisputableAragonApp disputable = DisputableAragonApp(_disputableAddress);
         disputableInfo.activated = true;
-        emit DisputableAppActivated(disputable);
 
         // If the disputable app is being activated for the first time, then we need to set-up its initial collateral
         // requirement and set its Agreement reference to here.
@@ -249,6 +248,8 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
             disputableInfo.nextCollateralRequirementsId = nextId > 0 ? nextId : 1;
         }
         _changeCollateralRequirement(disputable, disputableInfo, _collateralToken, _actionAmount, _challengeAmount, _challengeDuration);
+
+        emit DisputableAppActivated(disputable);
     }
 
     /**
