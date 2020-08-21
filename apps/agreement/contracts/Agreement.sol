@@ -1023,7 +1023,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         } else if (_submitter == _challenge.challenger) {
             require(!challengerFinishedEvidence, ERROR_CHALLENGER_FINISHED_EVIDENCE);
             if (_finished) {
-                submitterFinishedEvidence = _finished;
+                challengerFinishedEvidence = _finished;
                 _challenge.challengerFinishedEvidence = _finished;
             }
         } else {
