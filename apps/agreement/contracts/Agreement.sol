@@ -365,7 +365,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         }
 
         require(_canClose(action), ERROR_CANNOT_CLOSE_ACTION);
-        (, CollateralRequirement storage requirement) = _getDisputableFor(action);
+        (, CollateralRequirement storage requirement) = _getDisputableInfoFor(action);
         _unlockBalance(requirement.staking, action.submitter, requirement.actionAmount);
         _closeAction(_actionId, action);
     }
@@ -384,7 +384,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         Action storage action = _getAction(_actionId);
         require(_canChallenge(action), ERROR_CANNOT_CHALLENGE_ACTION);
 
-        (DisputableAragonApp disputable, CollateralRequirement storage requirement) = _getDisputableFor(action);
+        (DisputableAragonApp disputable, CollateralRequirement storage requirement) = _getDisputableInfoFor(action);
         require(_canPerformChallenge(disputable, msg.sender), ERROR_SENDER_CANNOT_CHALLENGE_ACTION);
         require(_settlementOffer <= requirement.actionAmount, ERROR_INVALID_SETTLEMENT_OFFER);
 
@@ -418,7 +418,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
             require(_canClaimSettlement(challenge), ERROR_CANNOT_SETTLE_ACTION);
         }
 
-        (DisputableAragonApp disputable, CollateralRequirement storage requirement) = _getDisputableFor(action);
+        (DisputableAragonApp disputable, CollateralRequirement storage requirement) = _getDisputableInfoFor(action);
         uint256 actionCollateral = requirement.actionAmount;
         uint256 settlementOffer = challenge.settlementOffer;
 
@@ -1001,7 +1001,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         _challenge.state = ChallengeState.Accepted;
 
         address challenger = _challenge.challenger;
-        (DisputableAragonApp disputable, CollateralRequirement storage requirement) = _getDisputableFor(_action);
+        (DisputableAragonApp disputable, CollateralRequirement storage requirement) = _getDisputableInfoFor(_action);
 
         // Transfer action collateral, challenge collateral, and challenger arbitrator fees to the challenger
         _slashBalance(requirement.staking, _action.submitter, challenger, requirement.actionAmount);
@@ -1026,7 +1026,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         _challenge.state = ChallengeState.Rejected;
 
         address submitter = _action.submitter;
-        (DisputableAragonApp disputable, CollateralRequirement storage requirement) = _getDisputableFor(_action);
+        (DisputableAragonApp disputable, CollateralRequirement storage requirement) = _getDisputableInfoFor(_action);
 
         // Transfer challenge collateral and challenger arbitrator fees to the submitter
         _transferTo(requirement.token, submitter, requirement.challengeAmount);
@@ -1049,7 +1049,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     function _voidAction(uint256 _actionId, Action storage _action, uint256 _challengeId, Challenge storage _challenge) internal {
         _challenge.state = ChallengeState.Voided;
 
-        (DisputableAragonApp disputable, CollateralRequirement storage requirement) = _getDisputableFor(_action);
+        (DisputableAragonApp disputable, CollateralRequirement storage requirement) = _getDisputableInfoFor(_action);
         address challenger = _challenge.challenger;
 
         // Return challenge collateral to the challenger, and split the challenger arbitrator fees between the challenger and the submitter
@@ -1449,7 +1449,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     * @return disputable Address of the Disputable app associated with the action
     * @return requirement Collateral requirement instance applicable to the action
     */
-    function _getDisputableFor(Action storage _action)
+    function _getDisputableInfoFor(Action storage _action)
         internal
         view
         returns (DisputableAragonApp disputable, CollateralRequirement storage requirement)
