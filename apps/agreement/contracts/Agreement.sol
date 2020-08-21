@@ -1444,12 +1444,8 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     * @return True if the challenge settlement can be claimed, false otherwise
     */
     function _canClaimSettlement(Challenge storage _challenge) internal view returns (bool) {
-        if (!_isWaitingChallengeAnswer(_challenge)) {
-            return false;
-        }
-
-        return getTimestamp() >= uint256(_challenge.endDate);
-     }
+        return _isWaitingChallengeAnswer(_challenge) && getTimestamp() >= uint256(_challenge.endDate);
+    }
 
     /**
     * @dev Tell whether a challenge can be disputed
@@ -1457,11 +1453,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     * @return True if the challenge can be disputed, false otherwise
     */
     function _canDispute(Challenge storage _challenge) internal view returns (bool) {
-        if (!_isWaitingChallengeAnswer(_challenge)) {
-            return false;
-        }
-
-        return uint256(_challenge.endDate) > getTimestamp();
+        return _isWaitingChallengeAnswer(_challenge) && uint256(_challenge.endDate) > getTimestamp();
     }
 
     /**
