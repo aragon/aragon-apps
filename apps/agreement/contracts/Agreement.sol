@@ -172,9 +172,9 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
 
         stakingFactory = _stakingFactory;
 
+        nextSettingId = 1;   // Agreement setting ID zero is considered the null agreement setting for further validations
         nextActionId = 1;    // Action ID zero is considered the null action for further validations
         nextChallengeId = 1; // Challenge ID zero is considered the null challenge for further validations
-        nextSettingId = 1;   // Agreement setting ID zero is considered the null agreement setting for further validations
         _newSetting(_arbitrator, _setAppFeesCashier, _title, _content);
     }
 
@@ -332,11 +332,11 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         uint256 id = nextActionId++;
         Action storage action = actions[id];
         action.disputable = disputable;
-        action.collateralRequirementId = currentCollateralRequirementId;
         action.disputableActionId = _disputableActionId;
+        action.collateralRequirementId = currentCollateralRequirementId;
+        action.settingId = currentSettingId;
         action.submitter = _submitter;
         action.context = _context;
-        action.settingId = currentSettingId;
 
         emit ActionSubmitted(id, msg.sender);
 
@@ -463,8 +463,8 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         _submitEvidence(arbitrator, disputeId, challenge.challenger, challenge.context, challenge.challengerFinishedEvidence);
 
         challenge.state = ChallengeState.Disputed;
-        challenge.disputeId = disputeId;
         challenge.submitterFinishedEvidence = _submitterFinishedEvidence;
+        challenge.disputeId = disputeId;
         challengeByDispute[disputeId] = challengeId;
         emit ActionDisputed(_actionId, challengeId);
     }
@@ -702,10 +702,10 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     {
         Challenge storage challenge = _getChallenge(_challengeId);
 
-        challengerArbitratorFeesAmount = challenge.challengerArbitratorFees.amount;
         challengerArbitratorFeesToken = challenge.challengerArbitratorFees.token;
-        submitterArbitratorFeesAmount = challenge.submitterArbitratorFees.amount;
+        challengerArbitratorFeesAmount = challenge.challengerArbitratorFees.amount;
         submitterArbitratorFeesToken = challenge.submitterArbitratorFees.token;
+        submitterArbitratorFeesAmount = challenge.submitterArbitratorFees.amount;
     }
 
     /**
@@ -893,9 +893,9 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         Challenge storage challenge = challenges[challengeId];
         challenge.actionId = _actionId;
         challenge.challenger = _challenger;
+        challenge.endDate = getTimestamp64().add(_requirement.challengeDuration);
         challenge.context = _context;
         challenge.settlementOffer = _settlementOffer;
-        challenge.endDate = getTimestamp64().add(_requirement.challengeDuration);
         challenge.challengerFinishedEvidence = _finishedSubmittingEvidence;
 
         // Pull challenge collateral
@@ -1054,8 +1054,8 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
 
         // Return challenge collateral to the challenger, and split the challenger arbitrator fees between the challenger and the submitter
         _transferTo(requirement.token, challenger, requirement.challengeAmount);
-        uint256 challengerArbitratorFeesAmount = _challenge.challengerArbitratorFees.amount;
         ERC20 challengerArbitratorFeesToken = _challenge.challengerArbitratorFees.token;
+        uint256 challengerArbitratorFeesAmount = _challenge.challengerArbitratorFees.amount;
         uint256 submitterPayBack = challengerArbitratorFeesAmount / 2;
         // No need for Safemath because of previous computation
         uint256 challengerPayBack = challengerArbitratorFeesAmount - submitterPayBack;
@@ -1207,10 +1207,10 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         uint256 id = _disputableInfo.nextCollateralRequirementsId++;
         CollateralRequirement storage collateralRequirement = _disputableInfo.collateralRequirements[id];
         collateralRequirement.token = _collateralToken;
-        collateralRequirement.staking = staking;
+        collateralRequirement.challengeDuration = _challengeDuration;
         collateralRequirement.actionAmount = _actionAmount;
         collateralRequirement.challengeAmount = _challengeAmount;
-        collateralRequirement.challengeDuration = _challengeDuration;
+        collateralRequirement.staking = staking;
 
         emit CollateralRequirementChanged(_disputable, id);
     }
@@ -1273,7 +1273,6 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         }
 
         uint256 challengeId = _action.currentChallengeId;
-        Challenge storage challenge = challenges[challengeId];
 
         // If the action has not been challenged yet, return true
         if (!_existChallenge(challengeId)) {
@@ -1281,6 +1280,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         }
 
         // If the action was previously challenged but ruled in favour of the submitter or voided, return true
+        Challenge storage challenge = challenges[challengeId];
         ChallengeState state = challenge.state;
         return state == ChallengeState.Rejected || state == ChallengeState.Voided;
     }
