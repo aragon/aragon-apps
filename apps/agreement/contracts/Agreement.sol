@@ -79,16 +79,30 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
 
     event Signed(address indexed signer, uint256 settingId);
     event SettingChanged(uint256 settingId);
+    event AppFeesCashierSynced(IAragonAppFeesCashier newAppFeesCashier);
     event DisputableAppActivated(address indexed disputable);
     event DisputableAppDeactivated(address indexed disputable);
     event CollateralRequirementChanged(address indexed disputable, uint256 collateralRequirementId);
-    event AppFeesCashierSynced(IAragonAppFeesCashier newAppFeesCashier);
 
     struct Setting {
         string title;
         bytes content;
         IArbitrator arbitrator;
         IAragonAppFeesCashier aragonAppFeesCashier; // Fees cashier to deposit action fees (linked to the selected arbitrator)
+    }
+
+    struct CollateralRequirement {
+        ERC20 token;                        // ERC20 token to be used for collateral
+        uint64 challengeDuration;           // Challenge duration in seconds, during which the submitter can raise a dispute
+        uint256 actionAmount;               // Amount of collateral token to be locked from the submitter's staking pool when creating actions
+        uint256 challengeAmount;            // Amount of collateral token to be locked from the challenger's own balance when challenging actions
+        IStaking staking;                   // Staking pool cache for the collateral token -- will never change
+    }
+
+    struct DisputableInfo {
+        bool activated;                                                     // Whether the Disputable app is active
+        uint256 nextCollateralRequirementsId;                               // Identification number of the next collateral requirement
+        mapping (uint256 => CollateralRequirement) collateralRequirements;  // List of collateral requirements indexed by ID
     }
 
     struct Action {
@@ -120,20 +134,6 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         bool challengerFinishedEvidence;         // Whether the action challenger has finished submitting evidence for the raised dispute
         uint256 disputeId;                       // Identification number of the dispute on the arbitrator
         uint256 ruling;                          // Ruling given from the arbitrator for the dispute
-    }
-
-    struct CollateralRequirement {
-        ERC20 token;                        // ERC20 token to be used for collateral
-        uint64 challengeDuration;           // Challenge duration in seconds, during which the submitter can raise a dispute
-        uint256 actionAmount;               // Amount of collateral token to be locked from the submitter's staking pool when creating actions
-        uint256 challengeAmount;            // Amount of collateral token to be locked from the challenger's own balance when challenging actions
-        IStaking staking;                   // Staking pool cache for the collateral token -- will never change
-    }
-
-    struct DisputableInfo {
-        bool activated;                                                     // Whether the Disputable app is active
-        uint256 nextCollateralRequirementsId;                               // Identification number of the next collateral requirement
-        mapping (uint256 => CollateralRequirement) collateralRequirements;  // List of collateral requirements indexed by ID
     }
 
     IStakingFactory public stakingFactory;                           // Staking factory, for finding each collateral token's staking pool
@@ -176,6 +176,43 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         nextActionId = 1;    // Action ID zero is considered the null action for further validations
         nextChallengeId = 1; // Challenge ID zero is considered the null challenge for further validations
         _newSetting(_arbitrator, _setAppFeesCashier, _title, _content);
+    }
+
+    /**
+    * @notice Update Agreement to title "`_title`" and content "`_content`", with arbitrator `_arbitrator`
+    * @dev Initialization check is implicitly provided by the `auth()` modifier
+    * @param _arbitrator Address of the IArbitrator that will be used to resolve disputes
+    * @param _setAppFeesCashier Whether to integrate with the IArbitrator's fee cashier
+    * @param _title String indicating a short description
+    * @param _content Link to a human-readable text that describes the new rules for the Agreement
+    */
+    function changeSetting(
+        IArbitrator _arbitrator,
+        bool _setAppFeesCashier,
+        string _title,
+        bytes _content
+    )
+        external
+        auth(CHANGE_AGREEMENT_ROLE)
+    {
+        _newSetting(_arbitrator, _setAppFeesCashier, _title, _content);
+    }
+
+    /**
+    * @notice Sync app fees cashier address
+    * @dev The app fees cashier address is being cached in the contract to save gas.
+    *      This can be called permission-lessly to allow any account to re-sync the cashier when changed by the arbitrator.
+    */
+    function syncAppFeesCashier() external {
+        Setting storage setting = _getSetting(_getCurrentSettingId());
+        IAragonAppFeesCashier newAppFeesCashier = _getArbitratorFeesCashier(setting.arbitrator);
+        IAragonAppFeesCashier currentAppFeesCashier = setting.aragonAppFeesCashier;
+
+        // Sync the app fees cashier only if there was one set before and it's different from the arbitrator's current one
+        if (currentAppFeesCashier != IAragonAppFeesCashier(0) && currentAppFeesCashier != newAppFeesCashier) {
+            setting.aragonAppFeesCashier = newAppFeesCashier;
+            emit AppFeesCashierSynced(newAppFeesCashier);
+        }
     }
 
     /**
@@ -250,43 +287,6 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         _ensureActiveDisputable(disputableInfo);
 
         _changeCollateralRequirement(_disputable, disputableInfo, _collateralToken, _actionAmount, _challengeAmount, _challengeDuration);
-    }
-
-    /**
-    * @notice Update Agreement to title "`_title`" and content "`_content`", with arbitrator `_arbitrator`
-    * @dev Initialization check is implicitly provided by the `auth()` modifier
-    * @param _arbitrator Address of the IArbitrator that will be used to resolve disputes
-    * @param _setAppFeesCashier Whether to integrate with the IArbitrator's fee cashier
-    * @param _title String indicating a short description
-    * @param _content Link to a human-readable text that describes the new rules for the Agreement
-    */
-    function changeSetting(
-        IArbitrator _arbitrator,
-        bool _setAppFeesCashier,
-        string _title,
-        bytes _content
-    )
-        external
-        auth(CHANGE_AGREEMENT_ROLE)
-    {
-        _newSetting(_arbitrator, _setAppFeesCashier, _title, _content);
-    }
-
-    /**
-    * @notice Sync app fees cashier address
-    * @dev The app fees cashier address is being cached in the contract to save gas.
-    *      This can be called permission-lessly to allow any account to re-sync the cashier when changed by the arbitrator.
-    */
-    function syncAppFeesCashier() external {
-        Setting storage setting = _getSetting(_getCurrentSettingId());
-        IAragonAppFeesCashier newAppFeesCashier = _getArbitratorFeesCashier(setting.arbitrator);
-        IAragonAppFeesCashier currentAppFeesCashier = setting.aragonAppFeesCashier;
-
-        // Sync the app fees cashier only if there was one set before and it's different from the arbitrator's current one
-        if (currentAppFeesCashier != IAragonAppFeesCashier(0) && currentAppFeesCashier != newAppFeesCashier) {
-            setting.aragonAppFeesCashier = newAppFeesCashier;
-            emit AppFeesCashierSynced(newAppFeesCashier);
-        }
     }
 
     /**
@@ -520,16 +520,6 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     // Getter fns
 
     /**
-    * @dev Tell the information related to a signer
-    * @param _signer Address of signer
-    * @return lastSettingIdSigned Identification number of the last agreement setting signed by the signer
-    * @return mustSign Whether the requested signer needs to sign the current agreement setting before submitting an action
-    */
-    function getSigner(address _signer) external view returns (uint256 lastSettingIdSigned, bool mustSign) {
-        (lastSettingIdSigned, mustSign) = _getSigner(_signer);
-    }
-
-    /**
     * @dev Tell the identification number of the current agreement setting
     * @return Identification number of the current agreement setting
     */
@@ -597,6 +587,16 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         actionAmount = collateral.actionAmount;
         challengeAmount = collateral.challengeAmount;
         challengeDuration = collateral.challengeDuration;
+    }
+
+    /**
+    * @dev Tell the information related to a signer
+    * @param _signer Address of signer
+    * @return lastSettingIdSigned Identification number of the last agreement setting signed by the signer
+    * @return mustSign Whether the requested signer needs to sign the current agreement setting before submitting an action
+    */
+    function getSigner(address _signer) external view returns (uint256 lastSettingIdSigned, bool mustSign) {
+        (lastSettingIdSigned, mustSign) = _getSigner(_signer);
     }
 
     /**
@@ -709,37 +709,6 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     }
 
     /**
-    * @notice Tells whether an address has already signed the Agreement
-    * @dev ACL oracle interface conformance
-    * @return True if a parameterized address has signed the current version of the Agreement, false otherwise
-    */
-    function canPerform(address /* _grantee */, address /* _where */, bytes32 /* _what */, uint256[] _how)
-        external
-        view
-        returns (bool)
-    {
-        // We currently expect the address as the only permission parameter because an ACL Oracle's `grantee`
-        // argument is not provided with the original sender if the permission is set for ANY_ENTITY.
-        require(_how.length > 0, ERROR_ACL_ORACLE_SIGNER_MISSING);
-        require(_how[0] < 2**160, ERROR_ACL_ORACLE_SIGNER_NOT_ADDRESS);
-
-        address signer = address(_how[0]);
-        (, bool mustSign) = _getSigner(signer);
-        return !mustSign;
-    }
-
-    /**
-    * @dev Tell whether an address can challenge an action
-    * @param _actionId Identification number of the action
-    * @param _challenger Address of the challenger
-    * @return True if the challenger can challenge the action, false otherwise
-    */
-    function canPerformChallenge(uint256 _actionId, address _challenger) external view returns (bool) {
-        Action storage action = _getAction(_actionId);
-        return _canPerformChallenge(action.disputable, _challenger);
-    }
-
-    /**
     * @dev Tell whether an action can be challenged
     * @param _actionId Identification number of the action
     * @return True if the action can be challenged, false otherwise
@@ -773,16 +742,6 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     }
 
     /**
-    * @dev Tell whether an action can be disputed
-    * @param _actionId Identification number of the action
-    * @return True if the action can be disputed, false otherwise
-    */
-    function canDispute(uint256 _actionId) external view returns (bool) {
-        (, Challenge storage challenge, ) = _getChallengedAction(_actionId);
-        return _canDispute(challenge);
-    }
-
-    /**
     * @dev Tell whether an action's current challenge settlement can be claimed
     * @param _actionId Identification number of the action
     * @return True if the action settlement can be claimed, false otherwise
@@ -793,6 +752,16 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     }
 
     /**
+    * @dev Tell whether an action can be disputed
+    * @param _actionId Identification number of the action
+    * @return True if the action can be disputed, false otherwise
+    */
+    function canDispute(uint256 _actionId) external view returns (bool) {
+        (, Challenge storage challenge, ) = _getChallengedAction(_actionId);
+        return _canDispute(challenge);
+    }
+
+    /**
     * @dev Tell whether an action's dispute can be ruled
     * @param _actionId Identification number of the action
     * @return True if the action's dispute can be ruled, false otherwise
@@ -800,6 +769,37 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     function canRuleDispute(uint256 _actionId) external view returns (bool) {
         (, Challenge storage challenge, ) = _getChallengedAction(_actionId);
         return _isDisputed(challenge);
+    }
+
+    /**
+    * @dev Tell whether an address can challenge an action
+    * @param _actionId Identification number of the action
+    * @param _challenger Address of the challenger
+    * @return True if the challenger can challenge the action, false otherwise
+    */
+    function canPerformChallenge(uint256 _actionId, address _challenger) external view returns (bool) {
+        Action storage action = _getAction(_actionId);
+        return _canPerformChallenge(action.disputable, _challenger);
+    }
+
+    /**
+    * @notice Tells whether an address has already signed the Agreement
+    * @dev ACL oracle interface conformance
+    * @return True if a parameterized address has signed the current version of the Agreement, false otherwise
+    */
+    function canPerform(address /* _grantee */, address /* _where */, bytes32 /* _what */, uint256[] _how)
+        external
+        view
+        returns (bool)
+    {
+        // We currently expect the address as the only permission parameter because an ACL Oracle's `grantee`
+        // argument is not provided with the original sender if the permission is set for ANY_ENTITY.
+        require(_how.length > 0, ERROR_ACL_ORACLE_SIGNER_MISSING);
+        require(_how[0] < 2**160, ERROR_ACL_ORACLE_SIGNER_NOT_ADDRESS);
+
+        address signer = address(_how[0]);
+        (, bool mustSign) = _getSigner(signer);
+        return !mustSign;
     }
 
     /**
@@ -823,6 +823,62 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     }
 
     // Internal fns
+
+    /**
+    * @dev Change agreement settings
+    * @param _arbitrator Address of the IArbitrator that will be used to resolve disputes
+    * @param _setAppFeesCashier Whether to integrate with the IArbitrator's fee cashier
+    * @param _title String indicating a short description
+    * @param _content Link to a human-readable text that describes the new rules for the Agreement
+    */
+    function _newSetting(IArbitrator _arbitrator, bool _setAppFeesCashier, string _title, bytes _content) internal {
+        require(isContract(address(_arbitrator)), ERROR_ARBITRATOR_NOT_CONTRACT);
+
+        uint256 id = nextSettingId++;
+        Setting storage setting = settings[id];
+        setting.title = _title;
+        setting.content = _content;
+        setting.arbitrator = _arbitrator;
+
+        // Note that if the Agreement app didn't have an app fees cashier set at the start, then it must be explicitly set later.
+        // Arbitrators must always have at least some sort of subscription module, and having the flexibility to turn this off
+        // on the Agreement side can be useful.
+        setting.aragonAppFeesCashier = _setAppFeesCashier ? _getArbitratorFeesCashier(_arbitrator) : IAragonAppFeesCashier(0);
+        emit SettingChanged(id);
+    }
+
+    /**
+    * @dev Change the collateral requirements of an active Disputable app
+    * @param _disputable Address of the Disputable app
+    * @param _disputableInfo Disputable info instance for the Disputable app
+    * @param _collateralToken Address of the ERC20 token to be used for collateral
+    * @param _actionAmount Amount of collateral tokens that will be locked every time an action is submitted
+    * @param _challengeAmount Amount of collateral tokens that will be locked every time an action is challenged
+    * @param _challengeDuration Challenge duration in seconds, during which the submitter can raise a dispute
+    */
+    function _changeCollateralRequirement(
+        DisputableAragonApp _disputable,
+        DisputableInfo storage _disputableInfo,
+        ERC20 _collateralToken,
+        uint256 _actionAmount,
+        uint256 _challengeAmount,
+        uint64 _challengeDuration
+    )
+        internal
+    {
+        require(isContract(address(_collateralToken)), ERROR_TOKEN_NOT_CONTRACT);
+
+        IStaking staking = stakingFactory.getOrCreateInstance(_collateralToken);
+        uint256 id = _disputableInfo.nextCollateralRequirementsId++;
+        CollateralRequirement storage collateralRequirement = _disputableInfo.collateralRequirements[id];
+        collateralRequirement.token = _collateralToken;
+        collateralRequirement.challengeDuration = _challengeDuration;
+        collateralRequirement.actionAmount = _actionAmount;
+        collateralRequirement.challengeAmount = _challengeAmount;
+        collateralRequirement.staking = staking;
+
+        emit CollateralRequirementChanged(_disputable, id);
+    }
 
     /**
     * @dev Pay transactions fees required for new actions
@@ -1160,182 +1216,100 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     }
 
     /**
-    * @dev Change agreement settings
-    * @param _arbitrator Address of the IArbitrator that will be used to resolve disputes
-    * @param _setAppFeesCashier Whether to integrate with the IArbitrator's fee cashier
-    * @param _title String indicating a short description
-    * @param _content Link to a human-readable text that describes the new rules for the Agreement
+    * @dev Fetch an agreement setting instance by identification number
+    * @param _settingId Identification number of the agreement setting
+    * @return Agreement setting instance associated to the given identification number
     */
-    function _newSetting(IArbitrator _arbitrator, bool _setAppFeesCashier, string _title, bytes _content) internal {
-        require(isContract(address(_arbitrator)), ERROR_ARBITRATOR_NOT_CONTRACT);
-
-        uint256 id = nextSettingId++;
-        Setting storage setting = settings[id];
-        setting.title = _title;
-        setting.content = _content;
-        setting.arbitrator = _arbitrator;
-
-        // Note that if the Agreement app didn't have an app fees cashier set at the start, then it must be explicitly set later.
-        // Arbitrators must always have at least some sort of subscription module, and having the flexibility to turn this off
-        // on the Agreement side can be useful.
-        setting.aragonAppFeesCashier = _setAppFeesCashier ? _getArbitratorFeesCashier(_arbitrator) : IAragonAppFeesCashier(0);
-        emit SettingChanged(id);
+    function _getSetting(uint256 _settingId) internal view returns (Setting storage) {
+        require(_settingId > 0 && _settingId < nextSettingId, ERROR_SETTING_DOES_NOT_EXIST);
+        return settings[_settingId];
     }
 
     /**
-    * @dev Change the collateral requirements of an active Disputable app
-    * @param _disputable Address of the Disputable app
-    * @param _disputableInfo Disputable info instance for the Disputable app
-    * @param _collateralToken Address of the ERC20 token to be used for collateral
-    * @param _actionAmount Amount of collateral tokens that will be locked every time an action is submitted
-    * @param _challengeAmount Amount of collateral tokens that will be locked every time an action is challenged
-    * @param _challengeDuration Challenge duration in seconds, during which the submitter can raise a dispute
+    * @dev Tell the identification number of the current agreement setting
+    * @return Identification number of the current agreement setting
     */
-    function _changeCollateralRequirement(
-        DisputableAragonApp _disputable,
-        DisputableInfo storage _disputableInfo,
-        ERC20 _collateralToken,
-        uint256 _actionAmount,
-        uint256 _challengeAmount,
-        uint64 _challengeDuration
-    )
+    function _getCurrentSettingId() internal view returns (uint256) {
+        return nextSettingId - 1; // an initial setting is created during initialization, thus length will be always greater than 0
+    }
+
+    /**
+    * @dev Tell the arbitrator to be used for an action
+    * @param _action Action instance
+    * @return arbitrator Address of the IArbitrator that will be used to resolve disputes
+    */
+    function _getArbitratorFor(Action storage _action) internal view returns (IArbitrator) {
+        Setting storage setting = _getSetting(_action.settingId);
+        return setting.arbitrator;
+    }
+
+    /**
+    * @dev Tell the app fees cashier instance associated to an arbitrator
+    * @param _arbitrator Arbitrator querying the app fees cashier for
+    * @return Address of the app fees cashier associated to the arbitrator
+    */
+    function _getArbitratorFeesCashier(IArbitrator _arbitrator) internal view returns (IAragonAppFeesCashier) {
+        (address cashier,,) = _arbitrator.getSubscriptionFees(address(this));
+        return IAragonAppFeesCashier(cashier);
+    }
+
+    /**
+    * @dev Ensure a Disputable app is activate
+    * @param _disputableInfo Disputable info of the app
+    */
+    function _ensureActiveDisputable(DisputableInfo storage _disputableInfo) internal view {
+        require(_disputableInfo.activated, ERROR_DISPUTABLE_NOT_ACTIVE);
+    }
+
+    /**
+    * @dev Ensure a Disputable app is inactive
+    * @param _disputableInfo Disputable info of the app
+    */
+    function _ensureInactiveDisputable(DisputableInfo storage _disputableInfo) internal view {
+        require(!_disputableInfo.activated, ERROR_DISPUTABLE_ALREADY_ACTIVE);
+    }
+
+    /**
+    * @dev Tell the disputable-related information about an action
+    * @param _action Action instance
+    * @return disputable Address of the Disputable app associated with the action
+    * @return requirement Collateral requirement instance applicable to the action
+    */
+    function _getDisputableInfoFor(Action storage _action)
         internal
+        view
+        returns (DisputableAragonApp disputable, CollateralRequirement storage requirement)
     {
-        require(isContract(address(_collateralToken)), ERROR_TOKEN_NOT_CONTRACT);
-
-        IStaking staking = stakingFactory.getOrCreateInstance(_collateralToken);
-        uint256 id = _disputableInfo.nextCollateralRequirementsId++;
-        CollateralRequirement storage collateralRequirement = _disputableInfo.collateralRequirements[id];
-        collateralRequirement.token = _collateralToken;
-        collateralRequirement.challengeDuration = _challengeDuration;
-        collateralRequirement.actionAmount = _actionAmount;
-        collateralRequirement.challengeAmount = _challengeAmount;
-        collateralRequirement.staking = staking;
-
-        emit CollateralRequirementChanged(_disputable, id);
+        disputable = _action.disputable;
+        DisputableInfo storage disputableInfo = disputableInfos[address(disputable)];
+        requirement = _getCollateralRequirement(disputableInfo, _action.collateralRequirementId);
     }
 
     /**
-    * @dev Tell whether an address has permission to challenge actions on a specific Disputable app
-    * @param _disputable Address of the Disputable app
-    * @param _challenger Address of the challenger
-    * @return True if the challenger can challenge actions on the Disputable app, false otherwise
+    * @dev Fetch the collateral requirement instance by identification number for a Disputable app
+    * @param _disputableInfo Disputable info instance
+    * @param _collateralRequirementId Identification number of the collateral requirement
+    * @return Collateral requirement instance associated to the given identification number
     */
-    function _canPerformChallenge(DisputableAragonApp _disputable, address _challenger) internal view returns (bool) {
-        IKernel currentKernel = kernel();
-        if (currentKernel == IKernel(0)) {
-            return false;
-        }
-
-        // To make sure the challenger address is reachable by ACL oracles, we need to pass it as the first argument.
-        // Permissions set with ANY_ENTITY do not provide the original sender's address into the ACL Oracle's `grantee` argument.
-        bytes memory params = ConversionHelpers.dangerouslyCastUintArrayToBytes(arr(_challenger));
-        return currentKernel.hasPermission(_challenger, address(_disputable), CHALLENGE_ROLE, params);
+    function _getCollateralRequirement(DisputableInfo storage _disputableInfo, uint256 _collateralRequirementId)
+        internal
+        view
+        returns (CollateralRequirement storage)
+    {
+        bool exists = _collateralRequirementId > 0 && _collateralRequirementId < _disputableInfo.nextCollateralRequirementsId;
+        require(exists, ERROR_COLLATERAL_REQUIREMENT_DOES_NOT_EXIST);
+        return _disputableInfo.collateralRequirements[_collateralRequirementId];
     }
 
     /**
-    * @dev Tell whether an action can be challenged
-    * @param _action Action instance
-    * @return True if the action can be challenged, false otherwise
+    * @dev Tell the information related to a signer
+    * @param _signer Address of signer
+    * @return lastSettingIdSigned Identification number of the last agreement setting signed by the signer
+    * @return mustSign Whether the signer needs to sign the current agreement setting before submitting an action
     */
-    function _canChallenge(Action storage _action) internal view returns (bool) {
-        return _canProceed(_action) && _action.disputable.canChallenge(_action.disputableActionId);
-    }
-
-    /**
-    * @dev Tell whether an action can be manually closed
-    * @param _action Action instance
-    * @return True if the action can be closed, false otherwise
-    */
-    function _canClose(Action storage _action) internal view returns (bool) {
-        if (!_canProceed(_action)) {
-            return false;
-        }
-
-        DisputableAragonApp disputable = _action.disputable;
-        // Assume that the Disputable app does not need to be checked if it's the one asking us to close an action
-        return DisputableAragonApp(msg.sender) == disputable || disputable.canClose(_action.disputableActionId);
-    }
-
-    /**
-    * @dev Tell whether an action can proceed to another state.
-    * @dev An action can proceed if it is not:
-    *       - Closed
-    *       - Currently challenged or disputed
-    *       - Settled or ruled in favour of the challenger (the action will have been closed automatically)
-    * @param _action Action instance
-    * @return True if the action can proceed, false otherwise
-    */
-    function _canProceed(Action storage _action) internal view returns (bool) {
-        // If the action was already closed, return false
-        if (_action.closed) {
-            return false;
-        }
-
-        uint256 challengeId = _action.currentChallengeId;
-
-        // If the action has not been challenged yet, return true
-        if (!_existChallenge(challengeId)) {
-            return true;
-        }
-
-        // If the action was previously challenged but ruled in favour of the submitter or voided, return true
-        Challenge storage challenge = challenges[challengeId];
-        ChallengeState state = challenge.state;
-        return state == ChallengeState.Rejected || state == ChallengeState.Voided;
-    }
-
-    /**
-    * @dev Tell whether a challenge can be settled
-    * @param _challenge Challenge instance
-    * @return True if the challenge can be settled, false otherwise
-    */
-    function _canSettle(Challenge storage _challenge) internal view returns (bool) {
-        return _isWaitingChallengeAnswer(_challenge);
-    }
-
-    /**
-    * @dev Tell whether a challenge can be disputed
-    * @param _challenge Challenge instance
-    * @return True if the challenge can be disputed, false otherwise
-    */
-    function _canDispute(Challenge storage _challenge) internal view returns (bool) {
-        if (!_isWaitingChallengeAnswer(_challenge)) {
-            return false;
-        }
-
-        return uint256(_challenge.endDate) > getTimestamp();
-    }
-
-    /**
-    * @dev Tell whether a challenge settlement can be claimed
-    * @param _challenge Challenge instance
-    * @return True if the challenge settlement can be claimed, false otherwise
-    */
-    function _canClaimSettlement(Challenge storage _challenge) internal view returns (bool) {
-        if (!_isWaitingChallengeAnswer(_challenge)) {
-            return false;
-        }
-
-        return getTimestamp() >= uint256(_challenge.endDate);
-    }
-
-    /**
-    * @dev Tell whether a challenge is waiting to be answered
-    * @param _challenge Challenge instance
-    * @return True if the challenge is waiting to be answered, false otherwise
-    */
-    function _isWaitingChallengeAnswer(Challenge storage _challenge) internal view returns (bool) {
-        return _challenge.state == ChallengeState.Waiting;
-    }
-
-    /**
-    * @dev Tell whether a challenge is disputed
-    * @param _challenge Challenge instance
-    * @return True if the challenge is disputed, false otherwise
-    */
-    function _isDisputed(Challenge storage _challenge) internal view returns (bool) {
-        return _challenge.state == ChallengeState.Disputed;
+    function _getSigner(address _signer) internal view returns (uint256 lastSettingIdSigned, bool mustSign) {
+        lastSettingIdSigned = lastSettingSignedBy[_signer];
+        mustSign = lastSettingIdSigned < _getCurrentSettingId();
     }
 
     /**
@@ -1395,87 +1369,6 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     }
 
     /**
-    * @dev Fetch an agreement setting instance by identification number
-    * @param _settingId Identification number of the agreement setting
-    * @return Agreement setting instance associated to the given identification number
-    */
-    function _getSetting(uint256 _settingId) internal view returns (Setting storage) {
-        require(_settingId > 0 && _settingId < nextSettingId, ERROR_SETTING_DOES_NOT_EXIST);
-        return settings[_settingId];
-    }
-
-    /**
-    * @dev Tell the identification number of the current agreement setting
-    * @return Identification number of the current agreement setting
-    */
-    function _getCurrentSettingId() internal view returns (uint256) {
-        return nextSettingId - 1; // an initial setting is created during initialization, thus length will be always greater than 0
-    }
-
-    /**
-    * @dev Tell the information related to a signer
-    * @param _signer Address of signer
-    * @return lastSettingIdSigned Identification number of the last agreement setting signed by the signer
-    * @return mustSign Whether the signer needs to sign the current agreement setting before submitting an action
-    */
-    function _getSigner(address _signer) internal view returns (uint256 lastSettingIdSigned, bool mustSign) {
-        lastSettingIdSigned = lastSettingSignedBy[_signer];
-        mustSign = lastSettingIdSigned < _getCurrentSettingId();
-    }
-
-    /**
-    * @dev Tell the arbitrator to be used for an action
-    * @param _action Action instance
-    * @return arbitrator Address of the IArbitrator that will be used to resolve disputes
-    */
-    function _getArbitratorFor(Action storage _action) internal view returns (IArbitrator) {
-        Setting storage setting = _getSetting(_action.settingId);
-        return setting.arbitrator;
-    }
-
-    /**
-    * @dev Tell the app fees cashier instance associated to an arbitrator
-    * @param _arbitrator Arbitrator querying the app fees cashier for
-    * @return Address of the app fees cashier associated to the arbitrator
-    */
-    function _getArbitratorFeesCashier(IArbitrator _arbitrator) internal view returns (IAragonAppFeesCashier) {
-        (address cashier,,) = _arbitrator.getSubscriptionFees(address(this));
-        return IAragonAppFeesCashier(cashier);
-    }
-
-    /**
-    * @dev Tell the disputable-related information about an action
-    * @param _action Action instance
-    * @return disputable Address of the Disputable app associated with the action
-    * @return requirement Collateral requirement instance applicable to the action
-    */
-    function _getDisputableInfoFor(Action storage _action)
-        internal
-        view
-        returns (DisputableAragonApp disputable, CollateralRequirement storage requirement)
-    {
-        disputable = _action.disputable;
-        DisputableInfo storage disputableInfo = disputableInfos[address(disputable)];
-        requirement = _getCollateralRequirement(disputableInfo, _action.collateralRequirementId);
-    }
-
-    /**
-    * @dev Fetch the collateral requirement instance by identification number for a Disputable app
-    * @param _disputableInfo Disputable info instance
-    * @param _collateralRequirementId Identification number of the collateral requirement
-    * @return Collateral requirement instance associated to the given identification number
-    */
-    function _getCollateralRequirement(DisputableInfo storage _disputableInfo, uint256 _collateralRequirementId)
-        internal
-        view
-        returns (CollateralRequirement storage)
-    {
-        bool exists = _collateralRequirementId > 0 && _collateralRequirementId < _disputableInfo.nextCollateralRequirementsId;
-        require(exists, ERROR_COLLATERAL_REQUIREMENT_DOES_NOT_EXIST);
-        return _disputableInfo.collateralRequirements[_collateralRequirementId];
-    }
-
-    /**
     * @dev Tell whether a challenge exists
     * @param _challengeId Identification number of the challenge
     * @return True if the requested challenge exists, false otherwise
@@ -1485,18 +1378,125 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     }
 
     /**
-    * @dev Ensure a Disputable app is activate
-    * @param _disputableInfo Disputable info of the app
+    * @dev Tell whether an action can be manually closed
+    * @param _action Action instance
+    * @return True if the action can be closed, false otherwise
     */
-    function _ensureActiveDisputable(DisputableInfo storage _disputableInfo) internal view {
-        require(_disputableInfo.activated, ERROR_DISPUTABLE_NOT_ACTIVE);
+    function _canClose(Action storage _action) internal view returns (bool) {
+        if (!_canProceed(_action)) {
+            return false;
+        }
+
+        DisputableAragonApp disputable = _action.disputable;
+        // Assume that the Disputable app does not need to be checked if it's the one asking us to close an action
+        return DisputableAragonApp(msg.sender) == disputable || disputable.canClose(_action.disputableActionId);
     }
 
     /**
-    * @dev Ensure a Disputable app is inactive
-    * @param _disputableInfo Disputable info of the app
+    * @dev Tell whether an action can be challenged
+    * @param _action Action instance
+    * @return True if the action can be challenged, false otherwise
     */
-    function _ensureInactiveDisputable(DisputableInfo storage _disputableInfo) internal view {
-        require(!_disputableInfo.activated, ERROR_DISPUTABLE_ALREADY_ACTIVE);
+    function _canChallenge(Action storage _action) internal view returns (bool) {
+        return _canProceed(_action) && _action.disputable.canChallenge(_action.disputableActionId);
+    }
+
+    /**
+    * @dev Tell whether an action can proceed to another state.
+    * @dev An action can proceed if it is not:
+    *       - Closed
+    *       - Currently challenged or disputed
+    *       - Settled or ruled in favour of the challenger (the action will have been closed automatically)
+    * @param _action Action instance
+    * @return True if the action can proceed, false otherwise
+    */
+    function _canProceed(Action storage _action) internal view returns (bool) {
+        // If the action was already closed, return false
+        if (_action.closed) {
+            return false;
+        }
+
+        uint256 challengeId = _action.currentChallengeId;
+
+        // If the action has not been challenged yet, return true
+        if (!_existChallenge(challengeId)) {
+            return true;
+        }
+
+        // If the action was previously challenged but ruled in favour of the submitter or voided, return true
+        Challenge storage challenge = challenges[challengeId];
+        ChallengeState state = challenge.state;
+        return state == ChallengeState.Rejected || state == ChallengeState.Voided;
+    }
+
+    /**
+    * @dev Tell whether a challenge can be settled
+    * @param _challenge Challenge instance
+    * @return True if the challenge can be settled, false otherwise
+    */
+    function _canSettle(Challenge storage _challenge) internal view returns (bool) {
+        return _isWaitingChallengeAnswer(_challenge);
+    }
+
+    /**
+    * @dev Tell whether a challenge settlement can be claimed
+    * @param _challenge Challenge instance
+    * @return True if the challenge settlement can be claimed, false otherwise
+    */
+    function _canClaimSettlement(Challenge storage _challenge) internal view returns (bool) {
+        if (!_isWaitingChallengeAnswer(_challenge)) {
+            return false;
+        }
+
+        return getTimestamp() >= uint256(_challenge.endDate);
+     }
+
+    /**
+    * @dev Tell whether a challenge can be disputed
+    * @param _challenge Challenge instance
+    * @return True if the challenge can be disputed, false otherwise
+    */
+    function _canDispute(Challenge storage _challenge) internal view returns (bool) {
+        if (!_isWaitingChallengeAnswer(_challenge)) {
+            return false;
+        }
+
+        return uint256(_challenge.endDate) > getTimestamp();
+    }
+
+    /**
+    * @dev Tell whether a challenge is waiting to be answered
+    * @param _challenge Challenge instance
+    * @return True if the challenge is waiting to be answered, false otherwise
+    */
+    function _isWaitingChallengeAnswer(Challenge storage _challenge) internal view returns (bool) {
+        return _challenge.state == ChallengeState.Waiting;
+    }
+
+    /**
+    * @dev Tell whether a challenge is disputed
+    * @param _challenge Challenge instance
+    * @return True if the challenge is disputed, false otherwise
+    */
+    function _isDisputed(Challenge storage _challenge) internal view returns (bool) {
+        return _challenge.state == ChallengeState.Disputed;
+    }
+
+    /**
+    * @dev Tell whether an address has permission to challenge actions on a specific Disputable app
+    * @param _disputable Address of the Disputable app
+    * @param _challenger Address of the challenger
+    * @return True if the challenger can challenge actions on the Disputable app, false otherwise
+    */
+    function _canPerformChallenge(DisputableAragonApp _disputable, address _challenger) internal view returns (bool) {
+        IKernel currentKernel = kernel();
+        if (currentKernel == IKernel(0)) {
+            return false;
+        }
+
+        // To make sure the challenger address is reachable by ACL oracles, we need to pass it as the first argument.
+        // Permissions set with ANY_ENTITY do not provide the original sender's address into the ACL Oracle's `grantee` argument.
+        bytes memory params = ConversionHelpers.dangerouslyCastUintArrayToBytes(arr(_challenger));
+        return currentKernel.hasPermission(_challenger, address(_disputable), CHALLENGE_ROLE, params);
     }
 }
