@@ -14,9 +14,10 @@ import "@aragon/os/contracts/common/TimeHelpers.sol";
 import "@aragon/os/contracts/lib/token/ERC20.sol";
 import "@aragon/os/contracts/lib/math/SafeMath.sol";
 import "@aragon/os/contracts/lib/math/SafeMath64.sol";
-import "@aragon/staking/contracts/Staking.sol";
-import "@aragon/staking/contracts/StakingFactory.sol";
-import "@aragon/staking/contracts/locking/ILockManager.sol";
+
+import "@aragon/staking/interfaces/IStaking.sol";
+import "@aragon/staking/interfaces/IStakingFactory.sol";
+import "@aragon/staking/interfaces/ILockManager.sol";
 
 import "./arbitration/IArbitrable.sol";
 import "./arbitration/IAragonAppFeesCashier.sol";
@@ -127,7 +128,7 @@ contract Agreement is ILockManager, IAgreement, IArbitrable, IACLOracle, AragonA
         uint64 challengeDuration;           // Challenge duration in seconds, during which the submitter can raise a dispute
         uint256 actionAmount;               // Amount of collateral token to be locked from the submitter's staking pool when creating actions
         uint256 challengeAmount;            // Amount of collateral token to be locked from the challenger's own balance when challenging actions
-        Staking staking;                    // Staking pool cache for the collateral token
+        IStaking staking;                   // Staking pool cache for the collateral token
     }
 
     struct DisputableInfo {
@@ -136,7 +137,7 @@ contract Agreement is ILockManager, IAgreement, IArbitrable, IACLOracle, AragonA
         mapping (uint256 => CollateralRequirement) collateralRequirements;  // List of collateral requirements indexed by id
     }
 
-    StakingFactory public stakingFactory;                           // Staking factory to be used for the collateral staking pools
+    IStakingFactory public stakingFactory;                          // Staking factory to be used for the collateral staking pools
 
     uint256 private nextSettingId;
     mapping (uint256 => Setting) private settings;                  // List of historic settings indexed by ID
@@ -163,7 +164,7 @@ contract Agreement is ILockManager, IAgreement, IArbitrable, IACLOracle, AragonA
         bytes _content,
         IArbitrator _arbitrator,
         bool _setAppFeesCashier,
-        StakingFactory _stakingFactory
+        IStakingFactory _stakingFactory
     )
         external
     {
@@ -838,7 +839,7 @@ contract Agreement is ILockManager, IAgreement, IArbitrable, IACLOracle, AragonA
         }
 
         // We pull the required amount from the specified token staking pool and approve them to the cashier
-        Staking staking = stakingFactory.getOrCreateInstance(token);
+        IStaking staking = stakingFactory.getOrCreateInstance(token);
         _lockBalance(staking, _submitter, amount);
         _slashBalance(staking, _submitter, address(this), amount);
         _approveFor(token, address(aragonAppFeesCashier), amount);
@@ -1064,7 +1065,7 @@ contract Agreement is ILockManager, IAgreement, IArbitrable, IACLOracle, AragonA
     * @param _user Address of the user to lock tokens for
     * @param _amount Number of collateral tokens to be locked
     */
-    function _lockBalance(Staking _staking, address _user, uint256 _amount) internal {
+    function _lockBalance(IStaking _staking, address _user, uint256 _amount) internal {
         if (_amount == 0) {
             return;
         }
@@ -1078,7 +1079,7 @@ contract Agreement is ILockManager, IAgreement, IArbitrable, IACLOracle, AragonA
     * @param _user Address of the user to unlock tokens for
     * @param _amount Number of collateral tokens to be unlocked
     */
-    function _unlockBalance(Staking _staking, address _user, uint256 _amount) internal {
+    function _unlockBalance(IStaking _staking, address _user, uint256 _amount) internal {
         if (_amount == 0) {
             return;
         }
@@ -1093,7 +1094,7 @@ contract Agreement is ILockManager, IAgreement, IArbitrable, IACLOracle, AragonA
     * @param _challenger Address receiving the slashed tokens
     * @param _amount Number of collateral tokens to be slashed
     */
-    function _slashBalance(Staking _staking, address _user, address _challenger, uint256 _amount) internal {
+    function _slashBalance(IStaking _staking, address _user, address _challenger, uint256 _amount) internal {
         if (_amount == 0) {
             return;
         }
@@ -1109,7 +1110,7 @@ contract Agreement is ILockManager, IAgreement, IArbitrable, IACLOracle, AragonA
     * @param _challenger Address receiving the slashed tokens
     * @param _slashAmount Number of collateral tokens to be slashed
     */
-    function _unlockAndSlashBalance(Staking _staking, address _user, uint256 _unlockAmount, address _challenger, uint256 _slashAmount) internal {
+    function _unlockAndSlashBalance(IStaking _staking, address _user, uint256 _unlockAmount, address _challenger, uint256 _slashAmount) internal {
         _unlockBalance(_staking, _user, _unlockAmount);
         _slashBalance(_staking, _user, _challenger, _slashAmount);
     }
@@ -1192,7 +1193,7 @@ contract Agreement is ILockManager, IAgreement, IArbitrable, IACLOracle, AragonA
     {
         require(isContract(address(_collateralToken)), ERROR_TOKEN_NOT_CONTRACT);
 
-        Staking staking = stakingFactory.getOrCreateInstance(_collateralToken);
+        IStaking staking = stakingFactory.getOrCreateInstance(_collateralToken);
         uint256 id = _disputableInfo.nextCollateralRequirementsId++;
         CollateralRequirement storage collateralRequirement = _disputableInfo.collateralRequirements[id];
         collateralRequirement.token = _collateralToken;
