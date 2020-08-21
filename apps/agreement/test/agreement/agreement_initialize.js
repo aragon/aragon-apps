@@ -8,6 +8,7 @@ const { assertBn, assertEvent, assertRevert } = require('@aragon/contract-helper
 injectWeb3(web3)
 injectArtifacts(artifacts)
 
+// Note: we should add a test to check interfaces (IAragonApp, IArbitrable)
 contract('Agreement', ([_, EOA, owner]) => {
   let arbitrator, stakingFactory, agreement
 

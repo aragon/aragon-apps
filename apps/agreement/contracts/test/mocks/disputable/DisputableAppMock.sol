@@ -41,6 +41,7 @@ contract DisputableAppMock is IForwarderWithContext, DisputableAragonApp, Shared
     bool internal mockCallbacksRevert;
 
     uint256 private entriesLength;
+    // Note: should we expose a getter here and use it in tests?
     mapping (uint256 => Entry) private entries;
 
     /**

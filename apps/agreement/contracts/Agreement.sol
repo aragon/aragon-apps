@@ -29,6 +29,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
 
     /* Arbitrator outcomes constants */
     uint256 internal constant DISPUTES_POSSIBLE_OUTCOMES = 2;
+    // Note: Should this be defined in an interface related to Aragon Court?
     uint256 internal constant DISPUTES_RULING_SUBMITTER = 3;
     uint256 internal constant DISPUTES_RULING_CHALLENGER = 4;
 
@@ -87,6 +88,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     struct Setting {
         string title;
         bytes content;
+        // Note: very minor optimization is to move arbitrator and cashier to be first in the struct (it is already first on getSetting())
         IArbitrator arbitrator;
         IAragonAppFeesCashier aragonAppFeesCashier; // Fees cashier to deposit action fees (linked to the selected arbitrator)
     }
@@ -113,6 +115,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         address submitter;                  // Address that submitted the action
         bool closed;                        // Whether the action is closed (and cannot be challenged anymore)
         bytes context;                      // Link to a human-readable context for the given action
+        // Note: "current" can be misleading once the challenge ends
         uint256 currentChallengeId;         // Identification number of the action's currently open challenge, if any
     }
 
@@ -187,6 +190,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     * @param _content Link to a human-readable text that describes the new rules for the Agreement
     */
     function changeSetting(
+        // Note: can we align the order of the arguments with initialize()?
         IArbitrator _arbitrator,
         bool _setAppFeesCashier,
         string _title,
@@ -226,6 +230,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     */
     function activate(
         address _disputableAddress,
+        // Note: would it be possible to re-order these arguments to be the same as the struct?
         ERC20 _collateralToken,
         uint256 _actionAmount,
         uint256 _challengeAmount,
@@ -234,6 +239,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         external
         auth(MANAGE_DISPUTABLE_ROLE)
     {
+        // Note: we should check the disputable address is a contract
         DisputableInfo storage disputableInfo = disputableInfos[_disputableAddress];
         _ensureInactiveDisputable(disputableInfo);
 
@@ -276,6 +282,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     */
     function changeCollateralRequirement(
         DisputableAragonApp _disputable,
+        // Note: would it be possible to re-order these arguments to be the same as the struct?
         ERC20 _collateralToken,
         uint256 _actionAmount,
         uint256 _challengeAmount,
@@ -315,6 +322,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     * @param _submitter Address that submitted the action
     * @return Unique identification number for the created action on the Agreement
     */
+   // Note: (docs) we will want to be very explicit in terms of Disputables implementing `submitter` correctly
     function newAction(uint256 _disputableActionId, bytes _context, address _submitter) external returns (uint256) {
         uint256 currentSettingId = _getCurrentSettingId();
         uint256 lastSettingIdSigned = lastSettingSignedBy[_submitter];
@@ -342,6 +350,8 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         emit ActionSubmitted(id, msg.sender);
 
         // Pay action submission fees
+        // Note: should we move this to be closer to the collateral requirement lock?
+        // No or unlikely risk of re-entrancy, but can lead to gas savings on reverts and better event ordering?
         Setting storage setting = _getSetting(currentSettingId);
         _payAppFees(setting, disputable, _submitter, id);
 
@@ -391,6 +401,8 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
 
         uint256 challengeId = _createChallenge(_actionId, action, msg.sender, requirement, _settlementOffer, _finishedEvidence, _context);
         action.currentChallengeId = challengeId;
+        // Note: I think this is a bad idea (from my past self); you could force an oog here.
+        // We could recover by saving the callback on failure and allowing anyone to permissionlessly invoke it later
         // try/catch for:
         // disputable.onDisputableActionChallenged(action.disputableActionId, challengeId, msg.sender);
         address(disputable).call(abi.encodeWithSelector(
@@ -410,6 +422,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     * @param _actionId Identification number of the action to be settled
     */
     function settleAction(uint256 _actionId) external {
+        // Note: (for all users of getChallengedAction()) the errors emitted will be different based on whether the action had a previous challenge
         (Action storage action, Challenge storage challenge, uint256 challengeId) = _getChallengedAction(_actionId);
         address submitter = action.submitter;
 
@@ -448,6 +461,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     *      Can only be called once (if at all) per opened challenge.
     *      Initialization check is implicitly provided by `_getChallengedAction()` as disputable actions can only be created via `newAction()`.
     * @param _actionId Identification number of the action to be disputed
+    // Note: this may be confusing; perhaps we should flip the concept to "submitter would like to submit more?"
     * @param _submitterFinishedEvidence Whether the submitter was finished submitting evidence with their action context
     */
     function disputeAction(uint256 _actionId, bool _submitterFinishedEvidence) external {
@@ -462,6 +476,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         uint256 disputeId = _createDispute(action, challenge, arbitrator, metadata);
         _submitEvidence(arbitrator, disputeId, submitter, action.context, _submitterFinishedEvidence);
         _submitEvidence(arbitrator, disputeId, challenge.challenger, challenge.context, challenge.challengerFinishedEvidence);
+        // Note: should we check here to close the evidence period?
 
         challenge.state = ChallengeState.Disputed;
         challenge.submitterFinishedEvidence = _submitterFinishedEvidence;
@@ -525,6 +540,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     * @return Identification number of the current agreement setting
     */
     function getCurrentSettingId() external view returns (uint256) {
+        // Note: we could add an initialized check
         return _getCurrentSettingId();
     }
 
@@ -555,6 +571,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     * @return currentCollateralRequirementId Identification number of the current collateral requirement
     */
     function getDisputableInfo(address _disputable) external view returns (bool activated, uint256 currentCollateralRequirementId) {
+        // Note: we could add an initialized check
         DisputableInfo storage disputableInfo = disputableInfos[_disputable];
         activated = disputableInfo.activated;
         uint256 nextId = disputableInfo.nextCollateralRequirementsId;
@@ -577,6 +594,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         view
         returns (
             ERC20 collateralToken,
+            // Note: would it be possible to re-order these arguments to be the same as the struct and in other arguments?
             uint256 actionAmount,
             uint256 challengeAmount,
             uint64 challengeDuration
@@ -597,6 +615,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     * @return mustSign Whether the requested signer needs to sign the current agreement setting before submitting an action
     */
     function getSigner(address _signer) external view returns (uint256 lastSettingIdSigned, bool mustSign) {
+        // Note: we could add an initialized check
         (lastSettingIdSigned, mustSign) = _getSigner(_signer);
     }
 
@@ -636,6 +655,8 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         closed = action.closed;
         context = action.context;
         currentChallengeId = action.currentChallengeId;
+        // Note: if we have more stack space available, it may be useful to mention whether or not
+        // the current challenge is still active or not (either waiting or disputed)
     }
 
     /**
@@ -695,6 +716,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         external
         view
         returns (
+            // Note: would it be possible to re-order these as token, amount?
             uint256 challengerArbitratorFeesAmount,
             ERC20 challengerArbitratorFeesToken,
             uint256 submitterArbitratorFeesAmount,
@@ -860,6 +882,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     function _changeCollateralRequirement(
         DisputableAragonApp _disputable,
         DisputableInfo storage _disputableInfo,
+        // Note: would it be possible to re-order these arguments to be the same as the struct?
         ERC20 _collateralToken,
         uint256 _actionAmount,
         uint256 _challengeAmount,
@@ -918,6 +941,8 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     * @param _action Action instance being closed
     */
     function _closeAction(uint256 _actionId, Action storage _action) internal {
+        // Note: actions are automatically closed on being settled or rejected and do not call canClose();
+        // perhaps we should use a different concept for manually closing actions
         _action.closed = true;
         emit ActionClosed(_actionId);
     }
@@ -992,6 +1017,8 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         // To be safe, we first set the allowance to zero in case there is a remaining approval for the arbitrator.
         // This is not strictly necessary for ERC20s, but some tokens, e.g. MiniMe (ANT and ANJ),
         // revert on an approval if an outstanding allowance exists
+        // Note: this is awkward because we only cover this case here; we may instead want a generalized way for resetting allowances
+        // Note: we may want to check for the fee amount being zero to skip the approval
         _approveFor(feeToken, disputeFeeRecipient, 0);
         _approveFor(feeToken, disputeFeeRecipient, feeAmount);
         uint256 disputeId = _arbitrator.createDispute(DISPUTES_POSSIBLE_OUTCOMES, _metadata);
@@ -1042,6 +1069,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     * @param _finished Whether the submitter is now finished submitting evidence
     */
     function _submitEvidence(IArbitrator _arbitrator, uint256 _disputeId, address _submitter, bytes _evidence, bool _finished) internal {
+        // Note: should we always emit this event when the finished flag is true?
         if (_evidence.length > 0) {
             emit EvidenceSubmitted(_arbitrator, _disputeId, _submitter, _evidence, _finished);
         }
@@ -1178,6 +1206,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     * @param _slashAmount Amount of collateral tokens to be slashed
     */
     function _unlockAndSlashBalance(IStaking _staking, address _user, uint256 _unlockAmount, address _recipient, uint256 _slashAmount) internal {
+        // Note: this function doesn't seem that useful 🤷‍♂️
         _unlockBalance(_staking, _user, _unlockAmount);
         _slashBalance(_staking, _user, _recipient, _slashAmount);
     }
@@ -1213,6 +1242,8 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     * @param _amount Amount of `_arbitrationFeeToken` tokens to be approved
     */
     function _approveFor(ERC20 _token, address _to, uint256 _amount) internal {
+        // Note: we may want to expose a permissionless escape hatch for resetting this app's approvals in case weird things happen on the other side
+        // E.g. arbitrator or fees cashier
         require(_token.safeApprove(_to, _amount), ERROR_TOKEN_APPROVAL_FAILED);
     }
 
@@ -1231,6 +1262,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     * @return Identification number of the current agreement setting
     */
     function _getCurrentSettingId() internal view returns (uint256) {
+        // Note: technically this is not true if you have an uninitialized proxy and call the public getCurrentSettingId()
         return nextSettingId - 1; // an initial setting is created during initialization, thus length will be always greater than 0
     }
 
