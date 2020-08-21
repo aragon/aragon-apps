@@ -13,21 +13,22 @@
   "scripts": {
     "console": "buidler console",
     "compile": "buidler compile --force",
+    "compile:staking": "buidler compile --config buidler.config.staking.js",
     "devchain": "buidler node",
     "build": "cd app && yarn build",
     "lint": "solium --dir ./contracts",
-    "test": "buidler test",
-    "test:gas": "REPORT_GAS=true buidler test --network localhost",
+    "test": "yarn compile:staking && buidler test",
+    "test:gas": "REPORT_GAS=true yarn test --network localhost",
     "coverage": "buidler coverage --network coverage",
     "abi:extract": "buidler-extract --output abi/ --keys abi"
   },
   "dependencies": {
-    "@aragon/os": "5.0.0-beta.8"
+    "@aragon/os": "5.0.0-beta.8",
+    "@aragon/staking": "0.2.9"
   },
   "devDependencies": {
+    "@aragon/minime": "1.0.0",
     "@aragon/contract-helpers-test": "^0.1.0-rc.3",
-    "@aragon/minime": "^1.0.0",
-    "@aragon/staking": "^0.2.4",
     "@nomiclabs/buidler": "^1.4.3",
     "@nomiclabs/buidler-ganache": "^1.3.3",
     "@nomiclabs/buidler-truffle5": "^1.3.4",
