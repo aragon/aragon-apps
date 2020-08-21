@@ -1,16 +1,9 @@
-const { execSync } = require('child_process')
-const { task, usePlugin } = require('@nomiclabs/buidler/config')
-const { TASK_COMPILE } = require("@nomiclabs/buidler/builtin-tasks/task-names")
+const { usePlugin } = require('@nomiclabs/buidler/config')
 
 usePlugin("@nomiclabs/buidler-ganache")
 usePlugin('@nomiclabs/buidler-truffle5')
 usePlugin('buidler-gas-reporter')
 usePlugin('solidity-coverage')
-
-task(TASK_COMPILE).setAction(async (_, __, run) => {
-    execSync('buidler compile --config buidler.config.staking.js', { stdio: 'inherit' })
-    return run()
-  })
 
 module.exports = {
   networks: {
