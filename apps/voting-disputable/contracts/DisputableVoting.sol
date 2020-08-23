@@ -4,7 +4,6 @@
 
 pragma solidity 0.4.24;
 
-import "@aragon/os/contracts/apps/AragonApp.sol";
 import "@aragon/os/contracts/apps/disputable/DisputableAragonApp.sol";
 import "@aragon/os/contracts/forwarding/IForwarderWithContext.sol";
 import "@aragon/os/contracts/lib/math/SafeMath.sol";
@@ -31,8 +30,8 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     // bytes32 public constant MODIFY_EXECUTION_DELAY_ROLE = keccak256("MODIFY_EXECUTION_DELAY_ROLE");
     bytes32 public constant MODIFY_EXECUTION_DELAY_ROLE = 0x69a0bddd05e66b7ae81cce9994caef3b5c660de549fd2fd3597a9e2c3046e446;
 
-    // bytes32 public constant MODIFY_QUIET_ENDING_CONFIGURATION = keccak256("MODIFY_QUIET_ENDING_CONFIGURATION");
-    bytes32 public constant MODIFY_QUIET_ENDING_CONFIGURATION = 0xea5f8966ef2b8a76f5b366172243e44574d20863ab5b01eba9ee2713c3620c2f;
+    // bytes32 public constant MODIFY_QUIET_ENDING_ROLE = keccak256("MODIFY_QUIET_ENDING_ROLE");
+    bytes32 public constant MODIFY_QUIET_ENDING_ROLE = 0xd1e2974c80e3190749a0c11e5887a3d42877cf632fe25477926c2407f04a1b80;
 
     uint256 public constant PCT_BASE = 10 ** 18; // 0% = 0; 1% = 10^16; 100% = 10^18
     uint256 public constant MAX_VOTES_DELEGATION_SET_LENGTH = 70;
@@ -200,7 +199,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     */
     function changeQuietEndingPeriod(uint64 _quietEndingPeriod, uint64 _quietEndingExtension)
         external
-        authP(MODIFY_QUIET_ENDING_CONFIGURATION, arr(uint256(_quietEndingPeriod), uint256(_quietEndingExtension)))
+        authP(MODIFY_QUIET_ENDING_ROLE, arr(uint256(_quietEndingPeriod), uint256(_quietEndingExtension)))
     {
         Setting storage setting = _newCopiedSettings();
         _changeQuietEndingPeriod(setting, _quietEndingPeriod, _quietEndingExtension);
