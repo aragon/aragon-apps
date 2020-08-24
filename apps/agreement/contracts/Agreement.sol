@@ -360,9 +360,9 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
 
     /**
     * @notice Close action #`_actionId`
-    * @dev This function closes actions that are not:
-    *      - Currently challenged or disputed
-    *      - Settled or ruled in favour of the challenger (the action will have been closed automatically)
+    * @dev This function closes actions that:
+    *      - Are not currently challenged nor disputed, or
+    *      - Were previously disputed but ruled in favour of the submitter or voided
     *      Disputable apps may call this method directly at the end of an action, but is also accessible in a permission-less manner
     *      in case the app does not close its own actions automatically (e.g. disputable votes that don't pass).
     *      Can be called multiple times; it does nothing if the action is already closed.
@@ -407,7 +407,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
 
     /**
     * @notice Settle challenged action #`_actionId`, accepting the settlement offer
-    * @dev This can be accessed by both the submitter (at any time) or any account (after the challenge period has passed).
+    * @dev This can be accessed by both the submitter (at any time) or any account (after the settlement period has passed).
     *      Can only be called once (if at all) per opened challenge.
     *      Initialization check is implicitly provided by `_getChallengedAction()` as disputable actions can only be created via `newAction()`.
     * @param _actionId Identification number of the action to be settled
@@ -735,7 +735,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     }
 
     /**
-    * @dev Tell whether an action can be manually closed
+    * @dev Tell whether an action can be manually closed.
     *      An action can be closed if it is allowed to:
     *       - Proceed in the context of this Agreement (see `_canProceed()`), and
     *       - Be closed in the context of the originating Disputable app
@@ -1422,10 +1422,10 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
 
     /**
     * @dev Tell whether an action can proceed to another state.
-    * @dev An action can proceed if it is not:
-    *       - Closed
-    *       - Currently challenged or disputed
-    *       - Settled or ruled in favour of the challenger (the action will have been closed automatically)
+    * @dev An action can proceed if it is:
+    *       - Not closed
+    *       - Not currently challenged or disputed, and
+    *       - Not already settled or had a dispute rule in favour of the challenger (the action will have been closed automatically)
     * @param _action Action instance
     * @return True if the action can proceed, false otherwise
     */
