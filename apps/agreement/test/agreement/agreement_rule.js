@@ -269,15 +269,6 @@ contract('Agreement', ([_, submitter, challenger]) => {
                       assertAmountOfEvents(receipt, AGREEMENT_EVENTS.ACTION_ACCEPTED, { decodeForAbi: disputable.abi })
                       assertEvent(receipt, AGREEMENT_EVENTS.ACTION_ACCEPTED, { expectedArgs: { actionId, challengeId: currentChallengeId }, decodeForAbi: disputable.abi })
                     })
-
-                    it('ignores the disputable callback behavior', async () => {
-                      await disputable.mockDisputable({ callbacksRevert: true })
-
-                      const receipt = await disputable.executeRuling({ actionId, ruling })
-
-                      // disputable event shouldn't be emitted when disputable reverts
-                      assertAmountOfEvents(receipt, DISPUTABLE_EVENTS.ALLOWED, { expectedAmount: 0, decodeForAbi: disputable.disputableAbi })
-                    })
                   })
 
                   context('when the dispute was ruled in favor the challenger', () => {
@@ -334,15 +325,6 @@ contract('Agreement', ([_, submitter, challenger]) => {
                       assertAmountOfEvents(receipt, AGREEMENT_EVENTS.ACTION_REJECTED, { decodeForAbi: disputable.abi })
                       assertEvent(receipt, AGREEMENT_EVENTS.ACTION_REJECTED, { expectedArgs: { actionId, challengeId: currentChallengeId }, decodeForAbi: disputable.abi })
                     })
-
-                    it('ignores the disputable callback behavior', async () => {
-                      await disputable.mockDisputable({ callbacksRevert: true })
-
-                      const receipt = await disputable.executeRuling({ actionId, ruling })
-
-                      // disputable event shouldn't be emitted when disputable reverts
-                      assertAmountOfEvents(receipt, DISPUTABLE_EVENTS.REJECTED, { expectedAmount: 0, decodeForAbi: disputable.disputableAbi })
-                    })
                   })
 
                   context('when the dispute was refused', () => {
@@ -390,15 +372,6 @@ contract('Agreement', ([_, submitter, challenger]) => {
                       const currentSubmitterArbitratorTokenBalance = await challengerArbitratorFeesToken.balanceOf(submitter)
                       assertBn(currentChallengerArbitratorTokenBalance, previousChallengerArbitratorTokenBalance.add(halfFees), 'challenger balance does not match')
                       assertBn(currentSubmitterArbitratorTokenBalance, previousSubmitterArbitratorTokenBalance.add(halfFees), 'submitter balance does not match')
-                    })
-
-                    it('ignores the disputable callback behavior', async () => {
-                      await disputable.mockDisputable({ callbacksRevert: true })
-
-                      const receipt = await disputable.executeRuling({ actionId, ruling })
-
-                      // disputable event shouldn't be emitted when disputable reverts
-                      assertAmountOfEvents(receipt, DISPUTABLE_EVENTS.VOIDED, { expectedAmount: 0, decodeForAbi: disputable.disputableAbi })
                     })
                   })
                 })

@@ -156,15 +156,6 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                   assert.isFalse(canClaimSettlement, 'action settlement can be claimed')
                   assert.isFalse(canRuleDispute, 'action dispute can be ruled')
                 })
-
-                it('ignores the disputable callback behavior', async () => {
-                  await disputable.mockDisputable({ callbacksRevert: true })
-
-                  const receipt = await disputable.settle({ actionId, from })
-
-                  // disputable event shouldn't be emitted when disputable reverts
-                  assertAmountOfEvents(receipt, DISPUTABLE_EVENTS.REJECTED, { expectedAmount: 0, decodeForAbi: disputable.disputableAbi })
-                })
               }
 
               const itCanOnlyBeSettledByTheSubmitter = () => {

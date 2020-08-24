@@ -401,16 +401,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
 
         uint256 challengeId = _createChallenge(_actionId, action, msg.sender, requirement, _settlementOffer, _finishedEvidence, _context);
         action.currentChallengeId = challengeId;
-        // Note: I think this is a bad idea (from my past self); you could force an oog here.
-        // We could recover by saving the callback on failure and allowing anyone to permissionlessly invoke it later
-        // try/catch for:
-        // disputable.onDisputableActionChallenged(action.disputableActionId, challengeId, msg.sender);
-        address(disputable).call(abi.encodeWithSelector(
-            disputable.onDisputableActionChallenged.selector,
-            action.disputableActionId,
-            challengeId,
-            msg.sender
-        ));
+        disputable.onDisputableActionChallenged(action.disputableActionId, challengeId, msg.sender);
         emit ActionChallenged(_actionId, challengeId);
     }
 
@@ -448,9 +439,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         _transferTo(challenge.challengerArbitratorFees.token, challenger, challenge.challengerArbitratorFees.amount);
 
         challenge.state = ChallengeState.Settled;
-        // try/catch for:
-        // disputable.onDisputableActionRejected(action.disputableActionId);
-        address(disputable).call(abi.encodeWithSelector(disputable.onDisputableActionRejected.selector, action.disputableActionId));
+        disputable.onDisputableActionRejected(action.disputableActionId);
         emit ActionSettled(_actionId, challengeId);
         _closeAction(_actionId, action);
     }
@@ -1092,11 +1081,8 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         _slashBalance(requirement.staking, _action.submitter, challenger, requirement.actionAmount);
         _transferTo(requirement.token, challenger, requirement.challengeAmount);
         _transferTo(_challenge.challengerArbitratorFees.token, challenger, _challenge.challengerArbitratorFees.amount);
-        // try/catch for:
-        // disputable.onDisputableActionRejected(_action.disputableActionId);
-        address(disputable).call(abi.encodeWithSelector(disputable.onDisputableActionRejected.selector, _action.disputableActionId));
+        disputable.onDisputableActionRejected(_action.disputableActionId);
         emit ActionRejected(_actionId, _challengeId);
-
         _closeAction(_actionId, _action);
     }
 
@@ -1116,9 +1102,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         // Transfer challenge collateral and challenger arbitrator fees to the submitter
         _transferTo(requirement.token, submitter, requirement.challengeAmount);
         _transferTo(_challenge.challengerArbitratorFees.token, submitter, _challenge.challengerArbitratorFees.amount);
-        // try/catch for:
-        // disputable.onDisputableActionAllowed(_action.disputableActionId);
-        address(disputable).call(abi.encodeWithSelector(disputable.onDisputableActionAllowed.selector, _action.disputableActionId));
+        disputable.onDisputableActionAllowed(_action.disputableActionId);
         emit ActionAccepted(_actionId, _challengeId);
 
         // Note that the action still continues after this ruling and will be closed at a future date
@@ -1146,9 +1130,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         uint256 challengerPayBack = challengerArbitratorFeesAmount - submitterPayBack;
         _transferTo(challengerArbitratorFeesToken, _action.submitter, submitterPayBack);
         _transferTo(challengerArbitratorFeesToken, challenger, challengerPayBack);
-        // try/catch for:
-        // disputable.onDisputableActionVoided(_action.disputableActionId);
-        address(disputable).call(abi.encodeWithSelector(disputable.onDisputableActionVoided.selector, _action.disputableActionId));
+        disputable.onDisputableActionVoided(_action.disputableActionId);
         emit ActionVoided(_actionId, _challengeId);
 
         // Note that the action still continues after this ruling and will be closed at a future date
