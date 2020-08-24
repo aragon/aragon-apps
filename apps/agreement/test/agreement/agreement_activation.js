@@ -48,7 +48,7 @@ contract('Agreement', ([_, someone, owner]) => {
 
         it('reverts if the disputable is not a contract', async () => {
           const { collateralToken, actionCollateral, challengeCollateral, challengeDuration } = disputable
-          await assertRevert(disputable.agreement.activate(ZERO_ADDRESS, collateralToken.address, actionCollateral, challengeCollateral, challengeDuration, { from }), AGREEMENT_ERRORS.ERROR_DISPUTABLE_NOT_CONTRACT)
+          await assertRevert(disputable.agreement.activate(ZERO_ADDRESS, collateralToken.address, challengeDuration, actionCollateral, challengeCollateral, { from }), AGREEMENT_ERRORS.ERROR_DISPUTABLE_NOT_CONTRACT)
         })
       })
 

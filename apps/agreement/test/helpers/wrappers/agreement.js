@@ -200,7 +200,7 @@ class AgreementWrapper {
 
   async activate({ disputable, collateralToken, actionCollateral, challengeCollateral, challengeDuration, from = undefined }) {
     if (!from) from = await this._getSender()
-    return this.agreement.activate(disputable.address, collateralToken.address, actionCollateral, challengeCollateral, challengeDuration, { from })
+    return this.agreement.activate(disputable.address, collateralToken.address, challengeDuration, actionCollateral, challengeCollateral, { from })
   }
 
   async deactivate({ disputable, from = undefined }) {
@@ -217,13 +217,13 @@ class AgreementWrapper {
     const challengeCollateral = options.challengeCollateral || currentRequirements.challengeCollateral
     const challengeDuration = options.challengeDuration || currentRequirements.challengeDuration
 
-    return this.agreement.changeCollateralRequirement(options.disputable.address, collateralToken.address, actionCollateral, challengeCollateral, challengeDuration, { from })
+    return this.agreement.changeCollateralRequirement(options.disputable.address, collateralToken.address, challengeDuration, actionCollateral, challengeCollateral, { from })
   }
 
   async changeSetting({ title = 'title', content = '0x1234', arbitrator = undefined, setCashier = false, from = undefined }) {
     if (!from) from = await this._getSender()
     if (!arbitrator) arbitrator = this.arbitrator
-    return this.agreement.changeSetting(title, content, arbitrator.address, setCashier, { from })
+    return this.agreement.changeSetting(arbitrator.address, setCashier, title, content, { from })
   }
 
   async approveArbitratorFees({ amount = undefined, from = undefined, accumulate = false }) {

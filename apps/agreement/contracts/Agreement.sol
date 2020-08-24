@@ -86,11 +86,10 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     event CollateralRequirementChanged(address indexed disputable, uint256 collateralRequirementId);
 
     struct Setting {
-        string title;
-        bytes content;
-        // Note: very minor optimization is to move arbitrator and cashier to be first in the struct (it is already first on getSetting())
         IArbitrator arbitrator;
         IAragonAppFeesCashier aragonAppFeesCashier; // Fees cashier to deposit action fees (linked to the selected arbitrator)
+        string title;
+        bytes content;
     }
 
     struct CollateralRequirement {
@@ -155,17 +154,17 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
 
     /**
     * @notice Initialize Agreement for "`_title`" and content "`_content`", with arbitrator `_arbitrator` and staking factory `_factory`
-    * @param _title String indicating a short description
-    * @param _content Link to a human-readable text that describes the initial rules for the Agreement
     * @param _arbitrator Address of the IArbitrator that will be used to resolve disputes
     * @param _setAppFeesCashier Whether to integrate with the IArbitrator's fee cashier
+    * @param _title String indicating a short description
+    * @param _content Link to a human-readable text that describes the initial rules for the Agreement
     * @param _stakingFactory Staking factory for finding each collateral token's staking pool
     */
     function initialize(
-        string _title,
-        bytes _content,
         IArbitrator _arbitrator,
         bool _setAppFeesCashier,
+        string _title,
+        bytes _content,
         IStakingFactory _stakingFactory
     )
         external
@@ -178,27 +177,27 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         nextSettingId = 1;   // Agreement setting ID zero is considered the null agreement setting for further validations
         nextActionId = 1;    // Action ID zero is considered the null action for further validations
         nextChallengeId = 1; // Challenge ID zero is considered the null challenge for further validations
-        _newSetting(_title, _content, _arbitrator, _setAppFeesCashier);
+        _newSetting(_arbitrator, _setAppFeesCashier, _title, _content);
     }
 
     /**
     * @notice Update Agreement to title "`_title`" and content "`_content`", with arbitrator `_arbitrator`
     * @dev Initialization check is implicitly provided by the `auth()` modifier
-    * @param _title String indicating a short description
-    * @param _content Link to a human-readable text that describes the new rules for the Agreement
     * @param _arbitrator Address of the IArbitrator that will be used to resolve disputes
     * @param _setAppFeesCashier Whether to integrate with the IArbitrator's fee cashier
+    * @param _title String indicating a short description
+    * @param _content Link to a human-readable text that describes the new rules for the Agreement
     */
     function changeSetting(
-        string _title,
-        bytes _content,
         IArbitrator _arbitrator,
-        bool _setAppFeesCashier
+        bool _setAppFeesCashier,
+        string _title,
+        bytes _content
     )
         external
         auth(CHANGE_AGREEMENT_ROLE)
     {
-        _newSetting(_title, _content, _arbitrator, _setAppFeesCashier);
+        _newSetting(_arbitrator, _setAppFeesCashier, _title, _content);
     }
 
     /**
@@ -229,11 +228,10 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     */
     function activate(
         address _disputableAddress,
-        // Note: would it be possible to re-order these arguments to be the same as the struct?
         ERC20 _collateralToken,
+        uint64 _challengeDuration,
         uint256 _actionAmount,
-        uint256 _challengeAmount,
-        uint64 _challengeDuration
+        uint256 _challengeAmount
     )
         external
         auth(MANAGE_DISPUTABLE_ROLE)
@@ -253,7 +251,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
             uint256 nextId = disputableInfo.nextCollateralRequirementsId;
             disputableInfo.nextCollateralRequirementsId = nextId > 0 ? nextId : 1;
         }
-        _changeCollateralRequirement(disputable, disputableInfo, _collateralToken, _actionAmount, _challengeAmount, _challengeDuration);
+        _changeCollateralRequirement(disputable, disputableInfo, _collateralToken, _challengeDuration, _actionAmount, _challengeAmount);
 
         emit DisputableAppActivated(disputable);
     }
@@ -282,11 +280,10 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     */
     function changeCollateralRequirement(
         DisputableAragonApp _disputable,
-        // Note: would it be possible to re-order these arguments to be the same as the struct?
         ERC20 _collateralToken,
+        uint64 _challengeDuration,
         uint256 _actionAmount,
-        uint256 _challengeAmount,
-        uint64 _challengeDuration
+        uint256 _challengeAmount
     )
         external
         auth(MANAGE_DISPUTABLE_ROLE)
@@ -294,7 +291,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         DisputableInfo storage disputableInfo = disputableInfos[address(_disputable)];
         _ensureActiveDisputable(disputableInfo);
 
-        _changeCollateralRequirement(_disputable, disputableInfo, _collateralToken, _actionAmount, _challengeAmount, _challengeDuration);
+        _changeCollateralRequirement(_disputable, disputableInfo, _collateralToken, _challengeDuration, _actionAmount, _challengeAmount);
     }
 
     /**
@@ -614,10 +611,9 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         view
         returns (
             ERC20 collateralToken,
-            // Note: would it be possible to re-order these arguments to be the same as the struct and in other arguments?
+            uint64 challengeDuration,
             uint256 actionAmount,
-            uint256 challengeAmount,
-            uint64 challengeDuration
+            uint256 challengeAmount
         )
     {
         DisputableInfo storage disputableInfo = disputableInfos[_disputable];
@@ -743,11 +739,10 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         external
         view
         returns (
-            // Note: would it be possible to re-order these as token, amount?
-            uint256 challengerArbitratorFeesAmount,
-            ERC20 challengerArbitratorFeesToken,
+            ERC20 submitterArbitratorFeesToken,
             uint256 submitterArbitratorFeesAmount,
-            ERC20 submitterArbitratorFeesToken
+            ERC20 challengerArbitratorFeesToken,
+            uint256 challengerArbitratorFeesAmount
         )
     {
         Challenge storage challenge = _getChallenge(_challengeId);
@@ -876,12 +871,12 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
 
     /**
     * @dev Change agreement settings
-    * @param _title String indicating a short description
-    * @param _content Link to a human-readable text that describes the new rules for the Agreement
     * @param _arbitrator Address of the IArbitrator that will be used to resolve disputes
     * @param _setAppFeesCashier Whether to integrate with the IArbitrator's fee cashier
+    * @param _title String indicating a short description
+    * @param _content Link to a human-readable text that describes the new rules for the Agreement
     */
-    function _newSetting(string _title, bytes _content, IArbitrator _arbitrator, bool _setAppFeesCashier) internal {
+    function _newSetting(IArbitrator _arbitrator, bool _setAppFeesCashier, string _title, bytes _content) internal {
         require(isContract(address(_arbitrator)), ERROR_ARBITRATOR_NOT_CONTRACT);
 
         uint256 id = nextSettingId++;
@@ -909,11 +904,10 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     function _changeCollateralRequirement(
         DisputableAragonApp _disputable,
         DisputableInfo storage _disputableInfo,
-        // Note: would it be possible to re-order these arguments to be the same as the struct?
         ERC20 _collateralToken,
+        uint64 _challengeDuration,
         uint256 _actionAmount,
-        uint256 _challengeAmount,
-        uint64 _challengeDuration
+        uint256 _challengeAmount
     )
         internal
     {

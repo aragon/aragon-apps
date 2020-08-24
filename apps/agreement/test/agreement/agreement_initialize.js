@@ -26,20 +26,20 @@ contract('Agreement', ([_, EOA, owner]) => {
       const base = deployer.base
 
       assert(await base.isPetrified(), 'base agreement contract should be petrified')
-      await assertRevert(base.initialize(title, content, arbitrator.address, true, stakingFactory.address), ARAGON_OS_ERRORS.ERROR_ALREADY_INITIALIZED)
+      await assertRevert(base.initialize(arbitrator.address, true, title, content, stakingFactory.address), ARAGON_OS_ERRORS.ERROR_ALREADY_INITIALIZED)
     })
 
     context('when the initialization fails', () => {
       it('fails when using a non-contract arbitrator', async () => {
         const court = EOA
 
-        await assertRevert(agreement.initialize(title, content, court, true, stakingFactory.address), AGREEMENT_ERRORS.ERROR_ARBITRATOR_NOT_CONTRACT)
+        await assertRevert(agreement.initialize(court, true, title, content, stakingFactory.address), AGREEMENT_ERRORS.ERROR_ARBITRATOR_NOT_CONTRACT)
       })
 
       it('fails when using a non-contract staking factory', async () => {
         const factory = EOA
 
-        await assertRevert(agreement.initialize(title, content, arbitrator.address, true, factory), AGREEMENT_ERRORS.ERROR_STAKING_FACTORY_NOT_CONTRACT)
+        await assertRevert(agreement.initialize(arbitrator.address, true, title, content, factory), AGREEMENT_ERRORS.ERROR_STAKING_FACTORY_NOT_CONTRACT)
       })
     })
 
@@ -47,11 +47,11 @@ contract('Agreement', ([_, EOA, owner]) => {
       let receipt
 
       before('initialize agreement DAO', async () => {
-        receipt = await agreement.initialize(title, content, arbitrator.address, true, stakingFactory.address)
+        receipt = await agreement.initialize(arbitrator.address, true, title, content, stakingFactory.address)
       })
 
       it('cannot be initialized again', async () => {
-        await assertRevert(agreement.initialize(title, content, arbitrator.address, true, stakingFactory.address), ARAGON_OS_ERRORS.ERROR_ALREADY_INITIALIZED)
+        await assertRevert(agreement.initialize(arbitrator.address, true, title, content, stakingFactory.address), ARAGON_OS_ERRORS.ERROR_ALREADY_INITIALIZED)
       })
 
       it('initializes the first setting', async () => {
