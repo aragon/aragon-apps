@@ -8,7 +8,6 @@ const { assertBn, assertEvent, assertRevert } = require('@aragon/contract-helper
 injectWeb3(web3)
 injectArtifacts(artifacts)
 
-// Note: we should add a test to check interfaces (IAragonApp, IArbitrable)
 contract('Agreement', ([_, EOA, owner]) => {
   let arbitrator, stakingFactory, agreement
 
@@ -82,6 +81,16 @@ contract('Agreement', ([_, EOA, owner]) => {
         assertBn(await token.balanceOf(agreement.address), balance, 'agreement token balance does not match')
         assert.isFalse(await agreement.allowRecoverability(token.address), 'agreement allows recovering funds')
       })
+    })
+  })
+
+  describe('ERC165', () => {
+    it('supports IArbitrable interface', async () => {
+      assert.isTrue(await agreement.supportsInterface('0x88f3ee69'), 'agreement does not support IArbitrable')
+    })
+
+    it('supports IAragonApp interface', async () => {
+      assert.isTrue(await agreement.supportsInterface('0x54053e6c'), 'agreement does not support IAragonAPP')
     })
   })
 })
