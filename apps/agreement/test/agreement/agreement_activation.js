@@ -54,7 +54,7 @@ contract('Agreement', ([_, someone, owner]) => {
 
         context('when the disputable is activated', () => {
           it('reverts', async () => {
-            await assertRevert(disputable.activate({ from }), AGREEMENT_ERRORS.ERROR_DISPUTABLE_APP_ALREADY_EXISTS)
+            await assertRevert(disputable.activate({ from }), AGREEMENT_ERRORS.ERROR_DISPUTABLE_ALREADY_ACTIVE)
           })
         })
 
@@ -138,7 +138,7 @@ contract('Agreement', ([_, someone, owner]) => {
 
       context('when the disputable was not activated', () => {
         it('reverts', async () => {
-          await assertRevert(disputable.deactivate({ from }), AGREEMENT_ERRORS.ERROR_DISPUTABLE_APP_NOT_ACTIVE)
+          await assertRevert(disputable.deactivate({ from }), AGREEMENT_ERRORS.ERROR_DISPUTABLE_NOT_ACTIVE)
         })
       })
     })
