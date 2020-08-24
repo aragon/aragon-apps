@@ -1044,12 +1044,6 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         _depositFrom(feeToken, submitter, feeAmount);
 
         // Create dispute. The arbitrator should pull its arbitration fees (if any) from this Agreement on `createDispute()`.
-        // To be safe, we first set the allowance to zero in case there is a remaining approval for the arbitrator.
-        // This is not strictly necessary for ERC20s, but some tokens, e.g. MiniMe (ANT and ANJ),
-        // revert on an approval if an outstanding allowance exists
-        // Note: this is awkward because we only cover this case here; we may instead want a generalized way for resetting allowances
-        // Note: we may want to check for the fee amount being zero to skip the approval
-        _approveFor(feeToken, disputeFeeRecipient, 0);
         _approveFor(feeToken, disputeFeeRecipient, feeAmount);
         uint256 disputeId = _arbitrator.createDispute(DISPUTES_POSSIBLE_OUTCOMES, _metadata);
 
@@ -1241,9 +1235,13 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     * @param _amount Amount of `_arbitrationFeeToken` tokens to be approved
     */
     function _approveFor(ERC20 _token, address _to, uint256 _amount) internal {
-        // Note: we may want to expose a permissionless escape hatch for resetting this app's approvals in case weird things happen on the other side
-        // E.g. arbitrator or fees cashier
-        require(_token.safeApprove(_to, _amount), ERROR_TOKEN_APPROVAL_FAILED);
+        if (_amount > 0) {
+            // To be safe, we first set the allowance to zero in case there is a remaining approval for the arbitrator.
+            // This is not strictly necessary for ERC20s, but some tokens, e.g. MiniMe (ANT and ANJ),
+            // revert on an approval if an outstanding allowance exists
+            require(_token.safeApprove(_to, 0), ERROR_TOKEN_APPROVAL_FAILED);
+            require(_token.safeApprove(_to, _amount), ERROR_TOKEN_APPROVAL_FAILED);
+        }
     }
 
     /**
