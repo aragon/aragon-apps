@@ -336,7 +336,10 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         CollateralRequirement storage requirement = _getCollateralRequirement(disputableInfo, currentCollateralRequirementId);
         _lockBalance(requirement.staking, _submitter, requirement.actionAmount);
 
+        // Pay action submission fees
+        Setting storage setting = _getSetting(currentSettingId);
         DisputableAragonApp disputable = DisputableAragonApp(msg.sender);
+        _payAppFees(setting, disputable, _submitter, id);
 
         uint256 id = nextActionId++;
         Action storage action = actions[id];
@@ -348,13 +351,6 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         action.context = _context;
 
         emit ActionSubmitted(id, msg.sender);
-
-        // Pay action submission fees
-        // Note: should we move this to be closer to the collateral requirement lock?
-        // No or unlikely risk of re-entrancy, but can lead to gas savings on reverts and better event ordering?
-        Setting storage setting = _getSetting(currentSettingId);
-        _payAppFees(setting, disputable, _submitter, id);
-
         return id;
     }
 
