@@ -109,8 +109,8 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                         const { disputeId } = await disputable.getChallenge(challengeId)
                         const receipt = await disputable.submitEvidence({ actionId, evidence, from, finished })
 
-                        assertAmountOfEvents(receipt, 'EvidenceSubmitted', { decodeForAbi: disputable.abi })
-                        assertEvent(receipt, 'EvidenceSubmitted', { expectedArgs: { disputeId, submitter: from, evidence, finished }, decodeForAbi: disputable.abi })
+                        assertAmountOfEvents(receipt, 'EvidenceSubmitted')
+                        assertEvent(receipt, 'EvidenceSubmitted', { expectedArgs: { disputeId, submitter: from, evidence, finished } })
                       })
 
                       it('can be ruled', async () => {
@@ -124,6 +124,27 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                         assert.isFalse(canSettle, 'action can be settled')
                         assert.isFalse(canDispute, 'action can be disputed')
                         assert.isFalse(canClaimSettlement, 'action settlement can be claimed')
+                      })
+
+                      context('when the other party has not closed the evidence submission period yet', () => {
+                        it('does not close the evidence submission period', async () => {
+                          const receipt = await disputable.submitEvidence({ actionId, evidence, from, finished })
+
+                          assertAmountOfEvents(receipt, 'EvidencePeriodClosed', { decodeForAbi: disputable.arbitrator.abi, expectedAmount: 0 })
+                        })
+                      })
+
+                      context('when the other party has closed the evidence submission period', () => {
+                        beforeEach('close evidence submission period for other party', async () => {
+                          const sender = from === submitter ? challenger : submitter
+                          await disputable.submitEvidence({ actionId, evidence: '0x1234', from: sender, finished: true })
+                        })
+
+                        it(`${finished ? 'closes' : 'does not close'} the evidence submission period`, async () => {
+                          const receipt = await disputable.submitEvidence({ actionId, evidence, from, finished })
+
+                          assertAmountOfEvents(receipt, 'EvidencePeriodClosed', { decodeForAbi: disputable.arbitrator.abi, expectedAmount: finished ? 1 : 0 })
+                        })
                       })
                     }
 
