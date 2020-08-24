@@ -78,7 +78,7 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
                     const { challengeId } = await disputable.challenge({ actionId, challenger, settlementOffer, challengeContext, arbitratorFees, stake })
 
                     const currentActionState = await disputable.getAction(actionId)
-                    assertBn(currentActionState.currentChallengeId, challengeId, 'action challenge ID does not match')
+                    assertBn(currentActionState.lastChallengeId, challengeId, 'action challenge ID does not match')
 
                     assert.equal(currentActionState.closed, previousActionState.closed, 'action closed state does not match')
                     assert.equal(currentActionState.disputable, previousActionState.disputable, 'disputable does not match')
@@ -131,10 +131,10 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
 
                   it('emits an event', async () => {
                     const { receipt } = await disputable.challenge({ actionId, challenger, settlementOffer, challengeContext, arbitratorFees, stake })
-                    const { currentChallengeId } = await disputable.getAction(actionId)
+                    const { lastChallengeId } = await disputable.getAction(actionId)
 
                     assertAmountOfEvents(receipt, AGREEMENT_EVENTS.ACTION_CHALLENGED)
-                    assertEvent(receipt, AGREEMENT_EVENTS.ACTION_CHALLENGED, { expectedArgs: { actionId, challengeId: currentChallengeId } })
+                    assertEvent(receipt, AGREEMENT_EVENTS.ACTION_CHALLENGED, { expectedArgs: { actionId, challengeId: lastChallengeId } })
                   })
 
                   it('it can be answered only', async () => {

@@ -95,7 +95,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                       assert.equal(currentActionState.submitter, previousActionState.submitter, 'submitter does not match')
                       assert.equal(currentActionState.context, previousActionState.context, 'action context does not match')
                       assertBn(currentActionState.settingId, previousActionState.settingId, 'setting ID does not match')
-                      assertBn(currentActionState.currentChallengeId, previousActionState.currentChallengeId, 'challenge ID does not match')
+                      assertBn(currentActionState.lastChallengeId, previousActionState.lastChallengeId, 'challenge ID does not match')
                       assertBn(currentActionState.disputableActionId, previousActionState.disputableActionId, 'disputable action ID does not match')
                       assertBn(currentActionState.collateralRequirementId, previousActionState.collateralRequirementId, 'collateral ID does not match')
                     })
@@ -156,11 +156,11 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                     })
 
                     it('emits an event', async () => {
-                      const { currentChallengeId } = await disputable.getAction(actionId)
+                      const { lastChallengeId } = await disputable.getAction(actionId)
                       const receipt = await disputable.dispute({ actionId, from, arbitratorFees })
 
                       assertAmountOfEvents(receipt, AGREEMENT_EVENTS.ACTION_DISPUTED)
-                      assertEvent(receipt, AGREEMENT_EVENTS.ACTION_DISPUTED, { expectedArgs: { actionId, challengeId: currentChallengeId } })
+                      assertEvent(receipt, AGREEMENT_EVENTS.ACTION_DISPUTED, { expectedArgs: { actionId, challengeId: lastChallengeId } })
                     })
 
                     it('can be ruled', async () => {

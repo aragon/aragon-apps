@@ -41,8 +41,8 @@ class AgreementWrapper {
   }
 
   async getAction(actionId) {
-    const { disputable, disputableActionId, context, closed, submitter, settingId, collateralRequirementId, currentChallengeId } = await this.agreement.getAction(actionId)
-    return { disputable, disputableActionId, context, closed, submitter, settingId, collateralRequirementId, currentChallengeId }
+    const { disputable, disputableActionId, context, closed, submitter, settingId, collateralRequirementId, lastChallengeId } = await this.agreement.getAction(actionId)
+    return { disputable, disputableActionId, context, closed, submitter, settingId, collateralRequirementId, lastChallengeId }
   }
 
   async getChallenge(challengeId) {
@@ -168,8 +168,8 @@ class AgreementWrapper {
   }
 
   async submitEvidence({ actionId, from, evidence = '0x1234567890abcdef', finished = false }) {
-    const { currentChallengeId } = await this.getAction(actionId)
-    const { disputeId } = await this.getChallenge(currentChallengeId)
+    const { lastChallengeId } = await this.getAction(actionId)
+    const { disputeId } = await this.getChallenge(lastChallengeId)
     return this.agreement.submitEvidence(disputeId, evidence, finished, { from })
   }
 
@@ -178,8 +178,8 @@ class AgreementWrapper {
   }
 
   async executeRuling({ actionId, ruling, mockRuling = true }) {
-    const { currentChallengeId } = await this.getAction(actionId)
-    const { state, disputeId } = await this.getChallenge(currentChallengeId)
+    const { lastChallengeId } = await this.getAction(actionId)
+    const { state, disputeId } = await this.getChallenge(lastChallengeId)
 
     if (mockRuling) {
       const ArbitratorMock = this._getContract('ArbitratorMock')

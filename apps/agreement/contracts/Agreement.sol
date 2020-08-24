@@ -115,8 +115,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         address submitter;                  // Address that submitted the action
         bool closed;                        // Whether the action is closed (and cannot be challenged anymore)
         bytes context;                      // Link to a human-readable context for the given action
-        // Note: "current" can be misleading once the challenge ends
-        uint256 currentChallengeId;         // Identification number of the action's currently open challenge, if any
+        uint256 lastChallengeId;            // Identification number of the action's last opened challenge, if any
     }
 
     struct ArbitratorFees {
@@ -400,7 +399,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         require(_settlementOffer <= requirement.actionAmount, ERROR_INVALID_SETTLEMENT_OFFER);
 
         uint256 challengeId = _createChallenge(_actionId, action, msg.sender, requirement, _settlementOffer, _finishedEvidence, _context);
-        action.currentChallengeId = challengeId;
+        action.lastChallengeId = challengeId;
         disputable.onDisputableActionChallenged(action.disputableActionId, challengeId, msg.sender);
         emit ActionChallenged(_actionId, challengeId);
     }
@@ -461,7 +460,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         require(msg.sender == submitter, ERROR_SENDER_NOT_ALLOWED);
 
         IArbitrator arbitrator = _getArbitratorFor(action);
-        bytes memory metadata = abi.encodePacked(appId(), action.currentChallengeId);
+        bytes memory metadata = abi.encodePacked(appId(), action.lastChallengeId);
         uint256 disputeId = _createDispute(action, challenge, arbitrator, metadata);
         _submitEvidence(arbitrator, disputeId, submitter, action.context, _submitterFinishedEvidence);
         _submitEvidence(arbitrator, disputeId, challenge.challenger, challenge.context, challenge.challengerFinishedEvidence);
@@ -618,7 +617,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     * @return submitter Address that submitted the action
     * @return closed Whether the action is closed
     * @return context Link to a human-readable context for the action
-    * @return currentChallengeId Identification number of the action's last opened challenge, if any
+    * @return lastChallengeId Identification number of the action's last opened challenge, if any
     */
     function getAction(uint256 _actionId)
         external
@@ -631,7 +630,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
             address submitter,
             bool closed,
             bytes context,
-            uint256 currentChallengeId
+            uint256 lastChallengeId
         )
     {
         Action storage action = _getAction(_actionId);
@@ -643,7 +642,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         submitter = action.submitter;
         closed = action.closed;
         context = action.context;
-        currentChallengeId = action.currentChallengeId;
+        lastChallengeId = action.lastChallengeId;
         // Note: if we have more stack space available, it may be useful to mention whether or not
         // the current challenge is still active or not (either waiting or disputed)
     }
@@ -1360,7 +1359,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         returns (Action storage action, Challenge storage challenge, uint256 challengeId)
     {
         action = _getAction(_actionId);
-        challengeId = action.currentChallengeId;
+        challengeId = action.lastChallengeId;
         challenge = _getChallenge(challengeId);
     }
 
@@ -1431,7 +1430,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
             return false;
         }
 
-        uint256 challengeId = _action.currentChallengeId;
+        uint256 challengeId = _action.lastChallengeId;
 
         // If the action has not been challenged yet, return true
         if (!_existChallenge(challengeId)) {
