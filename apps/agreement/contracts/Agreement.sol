@@ -317,12 +317,14 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     *      Each disputable action ID must only be registered once; this is how the Agreement gets notified about each disputable action.
     *      Initialization check is implicitly provided by `_ensureActiveDisputable()` as Disputable apps can only be activated
     *      via `activate()` which already requires initialization.
+    *      IMPORTANT: Note the responsibility of the disputable app in terms of the `_submitter` parameter. It is extremely important this
+    *      argument is passed correctly. Users will have to trust any disputable apps they are interacting with, in case of a malicious
+    *      disputable app trying to abuse this argument, other stakers can be affected.
     * @param _disputableActionId Identification number of the action on the Disputable app
     * @param _context Link to a human-readable context for the given action
     * @param _submitter Address that submitted the action
     * @return Unique identification number for the created action on the Agreement
     */
-   // Note: (docs) we will want to be very explicit in terms of Disputables implementing `submitter` correctly
     function newAction(uint256 _disputableActionId, bytes _context, address _submitter) external returns (uint256) {
         DisputableInfo storage disputableInfo = disputableInfos[msg.sender];
         _ensureActiveDisputable(disputableInfo);
