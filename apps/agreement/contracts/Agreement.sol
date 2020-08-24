@@ -378,7 +378,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         require(_canClose(action), ERROR_CANNOT_CLOSE_ACTION);
         (, CollateralRequirement storage requirement) = _getDisputableInfoFor(action);
         _unlockBalance(requirement.staking, action.submitter, requirement.actionAmount);
-        _closeAction(_actionId, action);
+        _unsafeCloseAction(_actionId, action);
     }
 
     /**
@@ -441,7 +441,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         challenge.state = ChallengeState.Settled;
         disputable.onDisputableActionRejected(action.disputableActionId);
         emit ActionSettled(_actionId, challengeId);
-        _closeAction(_actionId, action);
+        _unsafeCloseAction(_actionId, action);
     }
 
     /**
@@ -966,12 +966,11 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
 
     /**
     * @dev Close an action
+    *      This function does not perform any checks about the action status, caller functions must ensure any required status before calling it.
     * @param _actionId Identification number of the action being closed
     * @param _action Action instance being closed
     */
-    function _closeAction(uint256 _actionId, Action storage _action) internal {
-        // Note: actions are automatically closed on being settled or rejected and do not call canClose();
-        // perhaps we should use a different concept for manually closing actions
+    function _unsafeCloseAction(uint256 _actionId, Action storage _action) internal {
         _action.closed = true;
         emit ActionClosed(_actionId);
     }
@@ -1093,7 +1092,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         _transferTo(_challenge.challengerArbitratorFees.token, challenger, _challenge.challengerArbitratorFees.amount);
         disputable.onDisputableActionRejected(_action.disputableActionId);
         emit ActionRejected(_actionId, _challengeId);
-        _closeAction(_actionId, _action);
+        _unsafeCloseAction(_actionId, _action);
     }
 
     /**
