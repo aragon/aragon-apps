@@ -429,7 +429,10 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         uint256 unlockedAmount = actionCollateral - slashedAmount;
 
         address challenger = challenge.challenger;
-        _unlockAndSlashBalance(requirement.staking, submitter, unlockedAmount, challenger, slashedAmount);
+        IStaking staking = requirement.staking;
+        _unlockBalance(staking, submitter, unlockedAmount);
+        _slashBalance(staking, submitter, challenger, slashedAmount);
+
         _transferTo(requirement.token, challenger, requirement.challengeAmount);
         _transferTo(challenge.challengerArbitratorFees.token, challenger, challenge.challengerArbitratorFees.amount);
 
@@ -1176,20 +1179,6 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         }
 
         _staking.slashAndUnstake(_user, _recipient, _amount);
-    }
-
-    /**
-    * @dev Unlock and slash some tokens in the staking pool from a user to a recipient
-    * @param _staking Staking pool for the ERC20 token to be unlocked and slashed
-    * @param _user Address of the user to be unlocked and slashed
-    * @param _unlockAmount Amount of collateral tokens to be unlocked
-    * @param _recipient Address receiving the slashed tokens
-    * @param _slashAmount Amount of collateral tokens to be slashed
-    */
-    function _unlockAndSlashBalance(IStaking _staking, address _user, uint256 _unlockAmount, address _recipient, uint256 _slashAmount) internal {
-        // Note: this function doesn't seem that useful 🤷‍♂️
-        _unlockBalance(_staking, _user, _unlockAmount);
-        _slashBalance(_staking, _user, _recipient, _slashAmount);
     }
 
     /**
