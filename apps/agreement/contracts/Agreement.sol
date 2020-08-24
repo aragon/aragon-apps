@@ -53,6 +53,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
 
     /* Disputable related errors */
     string internal constant ERROR_SENDER_CANNOT_CHALLENGE_ACTION = "AGR_SENDER_CANT_CHALLENGE_ACTION";
+    string internal constant ERROR_DISPUTABLE_NOT_CONTRACT = "AGR_DISPUTABLE_NOT_CONTRACT";
     string internal constant ERROR_DISPUTABLE_NOT_ACTIVE = "AGR_DISPUTABLE_NOT_ACTIVE";
     string internal constant ERROR_DISPUTABLE_ALREADY_ACTIVE = "AGR_DISPUTABLE_ALREADY_ACTIVE";
     string internal constant ERROR_COLLATERAL_REQUIREMENT_DOES_NOT_EXIST = "AGR_COL_REQ_DOES_NOT_EXIST";
@@ -238,7 +239,8 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         external
         auth(MANAGE_DISPUTABLE_ROLE)
     {
-        // Note: we should check the disputable address is a contract
+        require(isContract(_disputableAddress), ERROR_DISPUTABLE_NOT_CONTRACT);
+
         DisputableInfo storage disputableInfo = disputableInfos[_disputableAddress];
         _ensureInactiveDisputable(disputableInfo);
 
