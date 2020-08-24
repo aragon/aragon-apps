@@ -6,7 +6,7 @@ import "../../../arbitration/IAragonAppFeesCashier.sol";
 
 
 contract AragonAppFeesCashierMock is IAragonAppFeesCashier, IsContract {
-    string private constant ERROR_WRONG_TOKEN = "AAFC_WRONG_TOKEN";
+    string private constant ERROR_TOKEN_NOT_CONTRACT = "AAFC_TOKEN_NOT_CONTRACT";
     string private constant ERROR_APP_FEE_NOT_SET = "AAFC_APP_FEE_NOT_SET";
     string private constant ERROR_ETH_APP_FEE_NOT_ALLOWED = "AAFC_ETH_APP_FEE_NOT_ALLOWED";
     string private constant ERROR_FEE_TOKEN_DEPOSIT_FAILED = "AAFC_FEE_TOKEN_DEPOSIT_FAILED";
@@ -30,7 +30,7 @@ contract AragonAppFeesCashierMock is IAragonAppFeesCashier, IsContract {
     }
 
     /**
-    * @notice Set multiple app fees
+    * @notice Set fees for multiple apps
     * @param _appIds List of IDs of the apps
     * @param _tokens List of tokens for the fees
     * @param _amounts List of amount of the fee tokens
@@ -60,7 +60,7 @@ contract AragonAppFeesCashierMock is IAragonAppFeesCashier, IsContract {
     }
 
     /**
-    * @notice Unset fees for multiple apps
+    * @notice Pay fees for app with id `_appId`
     * @param _appId App id paying for
     */
     function payAppFees(bytes32 _appId, bytes) external payable {
@@ -87,7 +87,7 @@ contract AragonAppFeesCashierMock is IAragonAppFeesCashier, IsContract {
     * @dev Internal function to set app fees
     */
     function _setAppFee(bytes32 _appId, ERC20 _token, uint256 _amount) internal {
-        require(isContract(address(_token)), ERROR_WRONG_TOKEN);
+        require(isContract(address(_token)), ERROR_TOKEN_NOT_CONTRACT);
         AppFee storage appFee = appFees[_appId];
         appFee.set = true;
         appFee.token = _token;
