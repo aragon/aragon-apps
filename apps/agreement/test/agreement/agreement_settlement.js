@@ -77,6 +77,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
 
                   const currentActionState = await disputable.getAction(actionId)
                   assert.isTrue(currentActionState.closed, 'action is not closed')
+                  assert.isFalse(currentActionState.lastChallengeActive, 'action challenge should not be active')
 
                   assert.equal(currentActionState.disputable, previousActionState.disputable, 'disputable does not match')
                   assert.equal(currentActionState.submitter, previousActionState.submitter, 'submitter does not match')

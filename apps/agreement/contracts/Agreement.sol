@@ -630,7 +630,8 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
             address submitter,
             bool closed,
             bytes context,
-            uint256 lastChallengeId
+            uint256 lastChallengeId,
+            bool lastChallengeActive
         )
     {
         Action storage action = _getAction(_actionId);
@@ -643,8 +644,11 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         closed = action.closed;
         context = action.context;
         lastChallengeId = action.lastChallengeId;
-        // Note: if we have more stack space available, it may be useful to mention whether or not
-        // the current challenge is still active or not (either waiting or disputed)
+
+        if (lastChallengeId > 0) {
+            (, Challenge storage challenge, ) = _getChallengedAction(_actionId);
+            lastChallengeActive = _isWaitingChallengeAnswer(challenge) || _isDisputed(challenge);
+        }
     }
 
     /**

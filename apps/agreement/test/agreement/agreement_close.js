@@ -31,6 +31,7 @@ contract('Agreement', ([_, submitter]) => {
 
             const currentActionState = await disputable.getAction(actionId)
             assert.isTrue(currentActionState.closed, 'action is not closed')
+            assert.isFalse(currentActionState.lastChallengeActive, 'action challenge should not be active')
 
             assert.equal(currentActionState.disputable, previousActionState.disputable, 'disputable does not match')
             assert.equal(currentActionState.submitter, previousActionState.submitter, 'submitter does not match')
@@ -124,6 +125,7 @@ contract('Agreement', ([_, submitter]) => {
             assertBn(currentActionState.settingId, previousActionState.settingId, 'setting ID does not match')
             assertBn(currentActionState.disputableActionId, previousActionState.disputableActionId, 'disputable action ID does not match')
             assertBn(currentActionState.lastChallengeId, previousActionState.lastChallengeId, 'challenge ID does not match')
+            assertBn(currentActionState.lastChallengeActive, previousActionState.lastChallengeActive, 'challenge active state does not match')
             assertBn(currentActionState.collateralRequirementId, previousActionState.collateralRequirementId, 'collateral requirement ID does not match')
           })
 

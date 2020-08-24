@@ -98,6 +98,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                       assertBn(currentActionState.lastChallengeId, previousActionState.lastChallengeId, 'challenge ID does not match')
                       assertBn(currentActionState.disputableActionId, previousActionState.disputableActionId, 'disputable action ID does not match')
                       assertBn(currentActionState.collateralRequirementId, previousActionState.collateralRequirementId, 'collateral ID does not match')
+                      assert.isTrue(currentActionState.lastChallengeActive, 'action challenge should still be active')
                     })
 
                     it('creates a dispute', async () => {

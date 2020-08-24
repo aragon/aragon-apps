@@ -79,6 +79,7 @@ contract('Agreement', ([_, submitter, challenger, someone]) => {
 
                     const currentActionState = await disputable.getAction(actionId)
                     assertBn(currentActionState.lastChallengeId, challengeId, 'action challenge ID does not match')
+                    assert.isTrue(currentActionState.lastChallengeActive, 'action challenge should be active')
 
                     assert.equal(currentActionState.closed, previousActionState.closed, 'action closed state does not match')
                     assert.equal(currentActionState.disputable, previousActionState.disputable, 'disputable does not match')
