@@ -65,8 +65,6 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     string internal constant ERROR_CANNOT_DISPUTE_ACTION = "AGR_CANNOT_DISPUTE_ACTION";
     string internal constant ERROR_CANNOT_RULE_ACTION = "AGR_CANNOT_RULE_ACTION";
     string internal constant ERROR_CANNOT_SUBMIT_EVIDENCE = "AGR_CANNOT_SUBMIT_EVIDENCE";
-    string internal constant ERROR_SUBMITTER_FINISHED_EVIDENCE = "AGR_SUBMITTER_FINISHED_EVIDENCE";
-    string internal constant ERROR_CHALLENGER_FINISHED_EVIDENCE = "AGR_CHALLENGER_FINISHED_EVIDENCE";
 
     // This role will be checked against the Disputable app when users try to challenge actions.
     // It is expected to be configured per Disputable app. For reference, see `canPerformChallenge()`.
@@ -135,6 +133,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         ChallengeState state;                    // Current state of the challenge
         bool submitterFinishedEvidence;          // Whether the action submitter has finished submitting evidence for the raised dispute
         bool challengerFinishedEvidence;         // Whether the action challenger has finished submitting evidence for the raised dispute
+        bool evidencePeriodClosed;               // Whether the evidence period was closed for the raised dispute
         uint256 disputeId;                       // Identification number of the dispute on the arbitrator
         uint256 ruling;                          // Ruling given from the arbitrator for the dispute
     }
@@ -477,7 +476,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     /**
     * @notice Submit evidence for dispute #`_disputeId`
     * @dev Only callable by the action submitter or challenger.
-    *      Can be called multiple times until both sides have finished submitting evidence.
+    *      Can be called multiple times indefinitely.
     *      Initialization check is implicitly provided by `_getDisputedAction()` as disputable actions can only be created via `newAction()`.
     * @param _disputeId Identification number of the dispute on the arbitrator
     * @param _evidence Evidence data to be submitted
@@ -488,11 +487,29 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         require(_isDisputed(challenge), ERROR_CANNOT_SUBMIT_EVIDENCE);
 
         IArbitrator arbitrator = _getArbitratorFor(action);
-        bool submitterAndChallengerFinished = _updateEvidenceSubmissionStatus(action, challenge, msg.sender, _finished);
-        _submitEvidence(arbitrator, _disputeId, msg.sender, _evidence, _finished);
+        bool submitterFinishedEvidence = challenge.submitterFinishedEvidence;
+        bool challengerFinishedEvidence = challenge.challengerFinishedEvidence;
 
-        if (submitterAndChallengerFinished) {
-            arbitrator.closeEvidencePeriod(_disputeId);
+        if (msg.sender == action.submitter) {
+            // If the submitter already finished submitting evidence, the event is emitted as finished always
+            _submitEvidence(arbitrator, _disputeId, msg.sender, _evidence, submitterFinishedEvidence || _finished);
+            if (_finished) {
+                submitterFinishedEvidence = _finished;
+                challenge.submitterFinishedEvidence = _finished;
+            }
+        } else if (msg.sender == challenge.challenger) {
+            // If the challenger already finished submitting evidence, the event is emitted as finished always
+            _submitEvidence(arbitrator, _disputeId, msg.sender, _evidence, challengerFinishedEvidence || _finished);
+            if (_finished) {
+                challengerFinishedEvidence = _finished;
+                challenge.challengerFinishedEvidence = _finished;
+            }
+        } else {
+            revert(ERROR_SENDER_NOT_ALLOWED);
+        }
+
+        if (!challenge.evidencePeriodClosed && submitterFinishedEvidence && challengerFinishedEvidence) {
+            _closeEvidencePeriod(challenge, arbitrator, _disputeId);
         }
     }
 
@@ -663,6 +680,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     * @return state Current state of the challenge
     * @return submitterFinishedEvidence Whether the action submitter has finished submitting evidence for the associated dispute
     * @return challengerFinishedEvidence Whether the action challenger has finished submitting evidence for the associated dispute
+    * @return evidencePeriodClosed Whether the evidence period was closed for the raised dispute
     * @return disputeId Identification number of the associated dispute on the arbitrator
     * @return ruling Ruling given from the arbitrator for the dispute
     */
@@ -678,6 +696,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
             ChallengeState state,
             bool submitterFinishedEvidence,
             bool challengerFinishedEvidence,
+            bool evidencePeriodClosed,
             uint256 disputeId,
             uint256 ruling
         )
@@ -692,6 +711,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         state = challenge.state;
         submitterFinishedEvidence = challenge.submitterFinishedEvidence;
         challengerFinishedEvidence = challenge.challengerFinishedEvidence;
+        evidencePeriodClosed = challenge.evidencePeriodClosed;
         disputeId = challenge.disputeId;
         ruling = challenge.ruling;
     }
@@ -1020,37 +1040,14 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     }
 
     /**
-    * @dev Update evidence submission status for a disputed action
-    * @param _action Action instance whose dispute is being submitted evidence
-    * @param _challenge Currently open challenge instance for the action
-    * @param _submitter Address submitting the evidence
-    * @param _finished Whether the evidence submitter is finished submitting evidence
-    * @return Whether both parties have finished submitting evidence
+    * @dev Close evidence submission period for a dispute on an arbitrator
+    * @param _challenge Currently open challenge instance being disputed
+    * @param _arbitrator Arbitrator to submit evidence on
+    * @param _disputeId Identification number of the dispute on the arbitrator
     */
-    function _updateEvidenceSubmissionStatus(Action storage _action, Challenge storage _challenge, address _submitter, bool _finished)
-        internal
-        returns (bool)
-    {
-        bool submitterFinishedEvidence = _challenge.submitterFinishedEvidence;
-        bool challengerFinishedEvidence = _challenge.challengerFinishedEvidence;
-
-        if (_submitter == _action.submitter) {
-            require(!submitterFinishedEvidence, ERROR_SUBMITTER_FINISHED_EVIDENCE);
-            if (_finished) {
-                submitterFinishedEvidence = _finished;
-                _challenge.submitterFinishedEvidence = _finished;
-            }
-        } else if (_submitter == _challenge.challenger) {
-            require(!challengerFinishedEvidence, ERROR_CHALLENGER_FINISHED_EVIDENCE);
-            if (_finished) {
-                challengerFinishedEvidence = _finished;
-                _challenge.challengerFinishedEvidence = _finished;
-            }
-        } else {
-            revert(ERROR_SENDER_NOT_ALLOWED);
-        }
-
-        return submitterFinishedEvidence && challengerFinishedEvidence;
+    function _closeEvidencePeriod(Challenge storage _challenge, IArbitrator _arbitrator, uint256 _disputeId) internal {
+        _challenge.evidencePeriodClosed = true;
+        _arbitrator.closeEvidencePeriod(_disputeId);
     }
 
     /**
@@ -1062,7 +1059,6 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     * @param _finished Whether the submitter is now finished submitting evidence
     */
     function _submitEvidence(IArbitrator _arbitrator, uint256 _disputeId, address _submitter, bytes _evidence, bool _finished) internal {
-        // Note: should we always emit this event when the finished flag is true?
         if (_evidence.length > 0) {
             emit EvidenceSubmitted(_arbitrator, _disputeId, _submitter, _evidence, _finished);
         }
