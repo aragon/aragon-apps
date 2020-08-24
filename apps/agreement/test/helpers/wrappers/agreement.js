@@ -217,7 +217,7 @@ class AgreementWrapper {
   async changeSetting({ title = 'title', content = '0x1234', arbitrator = undefined, setCashier = false, from = undefined }) {
     if (!from) from = await this._getSender()
     if (!arbitrator) arbitrator = this.arbitrator
-    return this.agreement.changeSetting(arbitrator.address, setCashier, title, content, { from })
+    return this.agreement.changeSetting(title, content, arbitrator.address, setCashier, { from })
   }
 
   async approveArbitratorFees({ amount = undefined, from = undefined, accumulate = false }) {

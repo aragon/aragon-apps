@@ -178,28 +178,27 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         nextSettingId = 1;   // Agreement setting ID zero is considered the null agreement setting for further validations
         nextActionId = 1;    // Action ID zero is considered the null action for further validations
         nextChallengeId = 1; // Challenge ID zero is considered the null challenge for further validations
-        _newSetting(_arbitrator, _setAppFeesCashier, _title, _content);
+        _newSetting(_title, _content, _arbitrator, _setAppFeesCashier);
     }
 
     /**
     * @notice Update Agreement to title "`_title`" and content "`_content`", with arbitrator `_arbitrator`
     * @dev Initialization check is implicitly provided by the `auth()` modifier
-    * @param _arbitrator Address of the IArbitrator that will be used to resolve disputes
-    * @param _setAppFeesCashier Whether to integrate with the IArbitrator's fee cashier
     * @param _title String indicating a short description
     * @param _content Link to a human-readable text that describes the new rules for the Agreement
+    * @param _arbitrator Address of the IArbitrator that will be used to resolve disputes
+    * @param _setAppFeesCashier Whether to integrate with the IArbitrator's fee cashier
     */
     function changeSetting(
-        // Note: can we align the order of the arguments with initialize()?
-        IArbitrator _arbitrator,
-        bool _setAppFeesCashier,
         string _title,
-        bytes _content
+        bytes _content,
+        IArbitrator _arbitrator,
+        bool _setAppFeesCashier
     )
         external
         auth(CHANGE_AGREEMENT_ROLE)
     {
-        _newSetting(_arbitrator, _setAppFeesCashier, _title, _content);
+        _newSetting(_title, _content, _arbitrator, _setAppFeesCashier);
     }
 
     /**
@@ -843,12 +842,12 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
 
     /**
     * @dev Change agreement settings
-    * @param _arbitrator Address of the IArbitrator that will be used to resolve disputes
-    * @param _setAppFeesCashier Whether to integrate with the IArbitrator's fee cashier
     * @param _title String indicating a short description
     * @param _content Link to a human-readable text that describes the new rules for the Agreement
+    * @param _arbitrator Address of the IArbitrator that will be used to resolve disputes
+    * @param _setAppFeesCashier Whether to integrate with the IArbitrator's fee cashier
     */
-    function _newSetting(IArbitrator _arbitrator, bool _setAppFeesCashier, string _title, bytes _content) internal {
+    function _newSetting(string _title, bytes _content, IArbitrator _arbitrator, bool _setAppFeesCashier) internal {
         require(isContract(address(_arbitrator)), ERROR_ARBITRATOR_NOT_CONTRACT);
 
         uint256 id = nextSettingId++;
