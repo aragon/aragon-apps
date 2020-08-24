@@ -1,5 +1,4 @@
-const votingDeployer = require('../helpers/deployer')(web3, artifacts)
-const agreementDeployer = require('@aragon/apps-agreement/test/helpers/utils/deployer')(web3, artifacts)
+const deployer = require('../helpers/deployer')(web3, artifacts)
 const { VOTING_ERRORS } = require('../helpers/errors')
 const { VOTE_STATUS, VOTER_STATE, createVote, voteScript, getVoteState } = require('../helpers/voting')
 
@@ -9,7 +8,7 @@ const { ONE_DAY, pct16, bigExp, bn } = require('@aragon/contract-helpers-test')
 const { assertBn, assertRevert, assertEvent, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/asserts')
 
 contract('Voting disputable', ([_, owner, representative, voter10, voter20, voter29, voter40]) => {
-  let voting, token, agreement, voteId, actionId, collateralToken, executionTarget, script
+  let voting, token, agreement, voteId, actionId, executionTarget, script
 
   const MIN_QUORUM = pct16(10)
   const MIN_SUPPORT = pct16(50)
@@ -19,17 +18,13 @@ contract('Voting disputable', ([_, owner, representative, voter10, voter20, vote
   const QUIET_ENDING_EXTENSION = ONE_DAY
   const CONTEXT = utf8ToHex('some context')
 
-  before('deploy agreement and base voting', async () => {
-    agreement = await agreementDeployer.deployAndInitializeAgreementWrapper({ owner })
-    collateralToken = await agreementDeployer.deployCollateralToken()
-    votingDeployer.previousDeploy = agreementDeployer.previousDeploy
-
+  before('deploy and sign agreement', async () => {
+    agreement = await deployer.deployAgreement({ owner })
     await agreement.sign({ from: voter40 })
-    await votingDeployer.deployBase({ owner, agreement: true })
   })
 
   before('mint vote tokens', async () => {
-    token = await votingDeployer.deployToken({})
+    token = await deployer.deployToken({})
     await token.generateTokens(voter40, bigExp(40, 18))
     await token.generateTokens(voter29, bigExp(29, 18))
     await token.generateTokens(voter20, bigExp(20, 18))
@@ -37,12 +32,7 @@ contract('Voting disputable', ([_, owner, representative, voter10, voter20, vote
   })
 
   beforeEach('create voting app', async () => {
-    voting = await votingDeployer.deployAndInitialize({ owner, agreement: true, requiredSupport: MIN_SUPPORT, minimumAcceptanceQuorum: MIN_QUORUM, voteDuration: VOTING_DURATION, quietEndingPeriod: QUIET_ENDING_PERIOD, quietEndingExtension: QUIET_ENDING_EXTENSION, overruleWindow: OVERRULE_WINDOW })
-    await voting.mockSetTimestamp(await agreement.currentTimestamp())
-
-    const SET_AGREEMENT_ROLE = await voting.SET_AGREEMENT_ROLE()
-    await votingDeployer.acl.grantPermission(agreement.address, voting.address, SET_AGREEMENT_ROLE, { from: owner })
-    await agreement.activate({ disputable: voting, collateralToken, actionCollateral: 0, challengeCollateral: 0, challengeDuration: ONE_DAY, from: owner })
+    voting = await deployer.deployAndInitialize({ owner, requiredSupport: MIN_SUPPORT, minimumAcceptanceQuorum: MIN_QUORUM, voteDuration: VOTING_DURATION, quietEndingPeriod: QUIET_ENDING_PERIOD, quietEndingExtension: QUIET_ENDING_EXTENSION, overruleWindow: OVERRULE_WINDOW })
   })
 
   beforeEach('create script', async () => {

@@ -1,5 +1,5 @@
-const { bn, decodeEvents } = require('@aragon/contract-helpers-test')
 const { getArtifacts, getWeb3 } = require('@aragon/contract-helpers-test/src/config')
+const { ZERO_ADDRESS, bn, decodeEvents } = require('@aragon/contract-helpers-test')
 const { EMPTY_CALLS_SCRIPT, encodeCallScript } = require('@aragon/contract-helpers-test/src/aragon-os')
 
 const VOTER_STATE = {
@@ -47,6 +47,14 @@ const createVote = async ({ voting, script = undefined, voteContext = '0xabcdef'
   if (!script) script = EMPTY_CALLS_SCRIPT
 
   const artifacts = getArtifacts()
+  const agreementAddress = await voting.getAgreement()
+  if (agreementAddress !== ZERO_ADDRESS) {
+    const Agreement = artifacts.require('Agreement')
+    const agreement = await Agreement.at(agreementAddress)
+    let { mustSign } = await agreement.getSigner(from)
+    if (mustSign) await agreement.sign(await agreement.getCurrentSettingId(), { from })
+  }
+
   const receipt = await voting.newVote(script, voteContext, { from })
   const events = decodeEvents(receipt, artifacts.require('DisputableVoting').abi, 'StartVote')
   assert.equal(events.length, 1, 'number of StartVote emitted events does not match')

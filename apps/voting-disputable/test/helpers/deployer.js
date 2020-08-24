@@ -1,3 +1,4 @@
+const agreementDeployer = require('@aragon/apps-agreement/test/helpers/utils/deployer')(web3, artifacts)
 const { ANY_ENTITY, getInstalledApp } = require('@aragon/contract-helpers-test/src/aragon-os')
 const { ZERO_ADDRESS, NOW, ONE_DAY, pct16, getEventArgument } = require('@aragon/contract-helpers-test')
 
@@ -15,7 +16,15 @@ const DEFAULT_VOTING_INITIALIZATION_PARAMS = {
     symbol: 'AVT',
     decimals: 18,
     name: 'Aragon Voting Token'
-  }
+  },
+  collateralToken: {
+    symbol: 'DAI',
+    decimals: 18,
+    name: 'Sample DAI'
+  },
+  actionCollateral:    0,
+  challengeCollateral: 0,
+  challengeDuration:   ONE_DAY,
 }
 
 class VotingDeployer {
@@ -45,6 +54,10 @@ class VotingDeployer {
     return this.previousDeploy.voting
   }
 
+  get agreement() {
+    return this.previousDeploy.agreement
+  }
+
   get token() {
     return this.previousDeploy.token
   }
@@ -63,6 +76,16 @@ class VotingDeployer {
     const { requiredSupport, minimumAcceptanceQuorum, voteDuration, overruleWindow, executionDelay, quietEndingPeriod, quietEndingExtension } = defaultOptions
 
     await this.voting.initialize(token.address, requiredSupport, minimumAcceptanceQuorum, voteDuration, overruleWindow, quietEndingPeriod, quietEndingExtension, executionDelay)
+
+    if (options.agreement !== false) {
+      const owner = options.owner || await this._getSender()
+      let { collateralToken, actionCollateral, challengeCollateral, challengeDuration } = { ...DEFAULT_VOTING_INITIALIZATION_PARAMS, ...options }
+      if (!collateralToken.address) collateralToken = await agreementDeployer.deployCollateralToken(collateralToken)
+
+      await this.agreement.activate({ disputable: this.voting, collateralToken, actionCollateral, challengeCollateral, challengeDuration, from: owner })
+      this.previousDeploy = { ...this.previousDeploy, collateralToken }
+    }
+
     return this.voting
   }
 
@@ -75,21 +98,35 @@ class VotingDeployer {
     const receipt = await this.dao.newAppInstance(appId, this.base.address, '0x', false, { from: owner })
     const voting = await this.base.constructor.at(await getInstalledApp(receipt, appId))
 
-    const restrictedPermissions = ['SET_AGREEMENT_ROLE', 'MODIFY_SUPPORT_ROLE', 'MODIFY_QUORUM_ROLE', 'MODIFY_OVERRULE_WINDOW_ROLE', 'MODIFY_EXECUTION_DELAY_ROLE', 'MODIFY_QUIET_ENDING_CONFIGURATION']
+    const restrictedPermissions = ['MODIFY_SUPPORT_ROLE', 'MODIFY_QUORUM_ROLE', 'MODIFY_OVERRULE_WINDOW_ROLE', 'MODIFY_EXECUTION_DELAY_ROLE', 'MODIFY_QUIET_ENDING_CONFIGURATION']
     await this._createPermissions(voting, restrictedPermissions, owner)
 
     const openPermissions = ['CREATE_VOTES_ROLE', 'CHALLENGE_ROLE']
     await this._createPermissions(voting, openPermissions, ANY_ENTITY, owner)
+
+    if (!this.agreement) await this.deployAgreement(options)
+    await this._createPermissions(voting, ['SET_AGREEMENT_ROLE'], this.agreement.address, owner)
 
     if (currentTimestamp) await voting.mockSetTimestamp(currentTimestamp)
     this.previousDeploy = { ...this.previousDeploy, voting }
     return voting
   }
 
-  async deployBase(options = {}) {
-    const agreement = options.agreement || false
-    const contractName = `DisputableVoting${agreement ? 'Mock' : 'WithoutAgreementMock'}`
-    const Voting = this._getContract(contractName)
+  async deployAgreement(options = {}) {
+    const owner = options.owner || await this._getSender()
+    if (!this.dao) await this.deployDAO(owner)
+    if (!this.base) await this.deployBase(options)
+
+    const { currentTimestamp } = { ...DEFAULT_VOTING_INITIALIZATION_PARAMS, ...options }
+    agreementDeployer.previousDeploy = { ...agreementDeployer.previousDeploy, dao: this.dao, acl: this.acl, owner }
+    const agreement = await agreementDeployer.deployAndInitializeAgreementWrapper({ ...options, owner, currentTimestamp })
+
+    this.previousDeploy = { ...this.previousDeploy, agreement }
+    return agreement
+  }
+
+  async deployBase() {
+    const Voting = this._getContract('DisputableVotingMock')
     const base = await Voting.new()
     this.previousDeploy = { ...this.previousDeploy, base }
     return base
