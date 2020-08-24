@@ -334,7 +334,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
         })
       })
 
-      context('when the app was unregistered', () => {
+      context('when the app was deactivated', () => {
         it('reverts', async () => {
           await assertRevert(disputable.newAction({ submitter, actionContext, stake, sign }), DISPUTABLE_ERRORS.ERROR_AGREEMENT_STATE_INVALID)
         })

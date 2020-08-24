@@ -416,7 +416,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
         itCanDisputeActions()
       })
 
-      context('when the app was unregistered', () => {
+      context('when the app was deactivated', () => {
         beforeEach('mark app as unregistered', async () => {
           await disputable.deactivate()
         })
