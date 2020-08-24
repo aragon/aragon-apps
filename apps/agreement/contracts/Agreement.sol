@@ -65,6 +65,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     string internal constant ERROR_CANNOT_DISPUTE_ACTION = "AGR_CANNOT_DISPUTE_ACTION";
     string internal constant ERROR_CANNOT_RULE_ACTION = "AGR_CANNOT_RULE_ACTION";
     string internal constant ERROR_CANNOT_SUBMIT_EVIDENCE = "AGR_CANNOT_SUBMIT_EVIDENCE";
+    string internal constant ERROR_CANNOT_CLOSE_EVIDENCE_PERIOD = "AGR_CANNOT_CLOSE_EVIDENCE_PERIOD";
 
     // This role will be checked against the Disputable app when users try to challenge actions.
     // It is expected to be configured per Disputable app. For reference, see `canPerformChallenge()`.
@@ -464,7 +465,6 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         uint256 disputeId = _createDispute(action, challenge, arbitrator, metadata);
         _submitEvidence(arbitrator, disputeId, submitter, action.context, _submitterFinishedEvidence);
         _submitEvidence(arbitrator, disputeId, challenge.challenger, challenge.context, challenge.challengerFinishedEvidence);
-        // Note: should we check here to close the evidence period?
 
         challenge.state = ChallengeState.Disputed;
         challenge.submitterFinishedEvidence = _submitterFinishedEvidence;
@@ -508,7 +508,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
             revert(ERROR_SENDER_NOT_ALLOWED);
         }
 
-        if (!challenge.evidencePeriodClosed && submitterFinishedEvidence && challengerFinishedEvidence) {
+        if (submitterFinishedEvidence && challengerFinishedEvidence && !challenge.evidencePeriodClosed) {
             _closeEvidencePeriod(challenge, arbitrator, _disputeId);
         }
     }
@@ -537,6 +537,23 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         } else {
             _voidAction(actionId, action, challengeId, challenge);
         }
+    }
+
+    /**
+    * @notice Close evidence submission period for dispute #`_disputeId`
+    * @dev Could be called by anyone
+    *      Initialization check is implicitly provided by `_getDisputedAction()` as disputable actions can only be created via `newAction()`.
+    * @param _disputeId Identification number of the dispute on the arbitrator
+    */
+    function closeEvidencePeriod(uint256 _disputeId) external {
+        (, Action storage action, , Challenge storage challenge) = _getDisputedAction(_disputeId);
+        require(_isDisputed(challenge), ERROR_CANNOT_SUBMIT_EVIDENCE);
+
+        bool finishedSubmittingEvidence = challenge.submitterFinishedEvidence && challenge.challengerFinishedEvidence;
+        require(finishedSubmittingEvidence && !challenge.evidencePeriodClosed, ERROR_CANNOT_CLOSE_EVIDENCE_PERIOD);
+
+        IArbitrator arbitrator = _getArbitratorFor(action);
+        _closeEvidencePeriod(challenge, arbitrator, _disputeId);
     }
 
     // Getter fns

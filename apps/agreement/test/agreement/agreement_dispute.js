@@ -49,7 +49,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
             const challengeContext = '0x123456'
 
             beforeEach('challenge action', async () => {
-              ({ challengeId } = await disputable.challenge({ actionId, challenger, challengeContext }))
+              ({ challengeId } = await disputable.challenge({ actionId, challenger, challengeContext, finishedSubmittingEvidence: true }))
             })
 
             context('when the challenge was not answered', () => {
@@ -103,11 +103,12 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
 
                     it('creates a dispute', async () => {
                       const receipt = await disputable.dispute({ actionId, from, arbitratorFees })
-                      const { disputeId, ruling, submitterFinishedEvidence, challengerFinishedEvidence } = await disputable.getChallenge(challengeId)
+                      const { disputeId, ruling, submitterFinishedEvidence, challengerFinishedEvidence, evidencePeriodClosed } = await disputable.getChallenge(challengeId)
 
                       assertBn(ruling, RULINGS.MISSING, 'ruling does not match')
                       assert.isFalse(submitterFinishedEvidence, 'submitter finished evidence')
-                      assert.isFalse(challengerFinishedEvidence, 'challenger finished evidence')
+                      assert.isTrue(challengerFinishedEvidence, 'challenger did not finish evidence')
+                      assert.isFalse(evidencePeriodClosed, 'evidence period is closed')
 
                       const appId = '0xcafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234'
                       const paddedChallengeId = padLeft(challengeId, 64)
@@ -123,7 +124,17 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
 
                       assertAmountOfEvents(receipt, 'EvidenceSubmitted', { expectedAmount: 2, decodeForAbi: disputable.abi })
                       assertEvent(receipt, 'EvidenceSubmitted', { index: 0, expectedArgs: { arbitrator: disputable.arbitrator, disputeId, submitter: submitter, evidence: actionContext, finished: false }, decodeForAbi: disputable.abi })
-                      assertEvent(receipt, 'EvidenceSubmitted', { index: 1, expectedArgs: { arbitrator: disputable.arbitrator, disputeId, submitter: challenger, evidence: challengeContext, finished: false }, decodeForAbi: disputable.abi })
+                      assertEvent(receipt, 'EvidenceSubmitted', { index: 1, expectedArgs: { arbitrator: disputable.arbitrator, disputeId, submitter: challenger, evidence: challengeContext, finished: true }, decodeForAbi: disputable.abi })
+                    })
+
+                    it('allows closing the evidence submission period manually', async () => {
+                      await disputable.dispute({ actionId, from, arbitratorFees, finishedSubmittingEvidence: true })
+
+                      const receipt = await disputable.closeEvidencePeriod(actionId)
+                      assertAmountOfEvents(receipt, 'EvidencePeriodClosed', { decodeForAbi: disputable.arbitrator.abi })
+
+                      const { evidencePeriodClosed } = await disputable.getChallenge(challengeId)
+                      assert.isTrue(evidencePeriodClosed, 'challenge evidence period closed does not match')
                     })
 
                     it('does not affect the submitter staked balances', async () => {

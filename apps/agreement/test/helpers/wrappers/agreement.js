@@ -46,8 +46,8 @@ class AgreementWrapper {
   }
 
   async getChallenge(challengeId) {
-    const { actionId, context, endDate, challenger, settlementOffer, state, disputeId, ruling, submitterFinishedEvidence, challengerFinishedEvidence } = await this.agreement.getChallenge(challengeId)
-    return { actionId, context, endDate, challenger, settlementOffer, state, disputeId, ruling, submitterFinishedEvidence, challengerFinishedEvidence }
+    const { actionId, context, endDate, challenger, settlementOffer, state, disputeId, ruling, submitterFinishedEvidence, challengerFinishedEvidence, evidencePeriodClosed } = await this.agreement.getChallenge(challengeId)
+    return { actionId, context, endDate, challenger, settlementOffer, state, disputeId, ruling, submitterFinishedEvidence, challengerFinishedEvidence, evidencePeriodClosed }
   }
 
   async getChallengeArbitratorFees(challengeId) {
@@ -175,6 +175,12 @@ class AgreementWrapper {
 
   async finishEvidence({ actionId, from }) {
     return this.submitEvidence({ actionId, from, evidence: '0x', finished: true })
+  }
+
+  async closeEvidencePeriod(actionId) {
+    const { lastChallengeId } = await this.getAction(actionId)
+    const { disputeId } = await this.getChallenge(lastChallengeId)
+    return this.agreement.closeEvidencePeriod(disputeId)
   }
 
   async executeRuling({ actionId, ruling, mockRuling = true }) {

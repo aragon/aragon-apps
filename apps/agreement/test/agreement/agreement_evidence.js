@@ -128,6 +128,10 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                         assert.isFalse(canClaimSettlement, 'action settlement can be claimed')
                       })
 
+                      it('cannot close the evidence submission period manually', async () => {
+                        await assertRevert(disputable.closeEvidencePeriod(actionId), AGREEMENT_ERRORS.ERROR_CANNOT_CLOSE_EVIDENCE_PERIOD)
+                      })
+
                       context('when the other party has not closed the evidence submission period yet', () => {
                         it('does not close the evidence submission period', async () => {
                           const receipt = await disputable.submitEvidence({ actionId, evidence, from, finished })
@@ -145,6 +149,9 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                         it(`${hasFinished ? 'closes' : 'does not close'} the evidence submission period`, async () => {
                           const receipt = await disputable.submitEvidence({ actionId, evidence, from, finished })
 
+                          const { evidencePeriodClosed } = await disputable.getChallenge(challengeId)
+
+                          assert.equal(evidencePeriodClosed, computedFinishedStatus, 'challenge evidence period closed does not match')
                           assertAmountOfEvents(receipt, 'EvidencePeriodClosed', { decodeForAbi: disputable.arbitrator.abi, expectedAmount: hasFinished ? 1 : 0 })
                         })
                       })
