@@ -206,7 +206,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     * @dev The app fees cashier address is being cached in the contract to save gas.
     *      This can be called permission-lessly to allow any account to re-sync the cashier when changed by the arbitrator.
     */
-    function syncAppFeesCashier() external {
+    function syncAppFeesCashier() external isInitialized {
         Setting storage setting = _getSetting(_getCurrentSettingId());
         IAragonAppFeesCashier newAppFeesCashier = _getArbitratorFeesCashier(setting.arbitrator);
         IAragonAppFeesCashier currentAppFeesCashier = setting.aragonAppFeesCashier;
@@ -324,12 +324,12 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     */
    // Note: (docs) we will want to be very explicit in terms of Disputables implementing `submitter` correctly
     function newAction(uint256 _disputableActionId, bytes _context, address _submitter) external returns (uint256) {
+        DisputableInfo storage disputableInfo = disputableInfos[msg.sender];
+        _ensureActiveDisputable(disputableInfo);
+
         uint256 currentSettingId = _getCurrentSettingId();
         uint256 lastSettingIdSigned = lastSettingSignedBy[_submitter];
         require(lastSettingIdSigned >= currentSettingId, ERROR_SIGNER_MUST_SIGN);
-
-        DisputableInfo storage disputableInfo = disputableInfos[msg.sender];
-        _ensureActiveDisputable(disputableInfo);
 
         // An initial collateral requirement is created when disputable apps are activated, thus length is always greater than 0
         uint256 currentCollateralRequirementId = disputableInfo.nextCollateralRequirementsId - 1;
@@ -562,8 +562,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     * @dev Tell the identification number of the current agreement setting
     * @return Identification number of the current agreement setting
     */
-    function getCurrentSettingId() external view returns (uint256) {
-        // Note: we could add an initialized check
+    function getCurrentSettingId() external view isInitialized returns (uint256) {
         return _getCurrentSettingId();
     }
 
@@ -1259,8 +1258,9 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     * @return Identification number of the current agreement setting
     */
     function _getCurrentSettingId() internal view returns (uint256) {
-        // Note: technically this is not true if you have an uninitialized proxy and call the public getCurrentSettingId()
-        return nextSettingId - 1; // an initial setting is created during initialization, thus length will be always greater than 0
+        // An initial setting is created during initialization, thus length will be always greater than 0
+        // Note that all the places where this helper is being used, an initialization check is previously performed
+        return nextSettingId - 1;
     }
 
     /**
