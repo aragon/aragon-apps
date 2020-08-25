@@ -4,6 +4,7 @@
 
 pragma solidity 0.4.24;
 
+// Note: it's not necessary, but we could make the import to IAgreement explicit here
 import "@aragon/os/contracts/apps/disputable/DisputableAragonApp.sol";
 import "@aragon/os/contracts/forwarding/IForwarderWithContext.sol";
 import "@aragon/os/contracts/lib/math/SafeMath.sol";
@@ -18,6 +19,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     // bytes32 public constant CREATE_VOTES_ROLE = keccak256("CREATE_VOTES_ROLE");
     bytes32 public constant CREATE_VOTES_ROLE = 0xe7dcd7275292e064d090fbc5f3bd7995be23b502c1fed5cd94cfddbbdcd32bbc;
 
+    // Note: maybe we should just use CHANGE_* as a prefix?
     // bytes32 public constant MODIFY_SUPPORT_ROLE = keccak256("MODIFY_SUPPORT_ROLE");
     bytes32 public constant MODIFY_SUPPORT_ROLE = 0xda3972983e62bdf826c4b807c4c9c2b8a941e1f83dfa76d53d6aeac11e1be650;
 
@@ -61,6 +63,8 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     enum VoterState { Absent, Yea, Nay }
 
     enum VoteStatus {
+        // Note: may be able to find a better name than "active". This state just includes all votes
+        // that have not been challenged or executed (thus including votes that have ended).
         Active,                         // An ongoing vote
         Paused,                         // A vote that is paused due to it having an open challenge or dispute
         Cancelled,                      // A vote that has been explicitly cancelled due to a challenge or dispute
@@ -77,6 +81,8 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         // Must be <= supportRequiredPct to avoid votes being impossible to pass
         uint64 minAcceptQuorumPct;
 
+        // Note: we could re-work these concepts to be against the start of the vote rather than the end
+        //       E.g. overrule window is more like "allowed time for representatives to vote"
         // Duration before the end of a vote to stop allowing representatives to vote and for principals to override their representative's vote
         // Must be <= voteTime
         uint64 overruleWindow;
@@ -100,23 +106,31 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     struct Vote {
         uint256 yea;                                        // Voting power for
         uint256 nay;                                        // Voting power against
+        // Note: rename to totalPower?
         uint256 votingPower;                                // Total voting power (based on the snapshot block)
         uint256 settingId;                                  // Identification number of the setting applicable to the vote
         uint256 actionId;                                   // Identification number of the associated disputable action on the attached Agreement
+        // Note: we may want to re-order this state to be based on localized SSTOREs
+        //       start date and snapshot block never change, whereas pausedAt, pauseDuration and status may be changed together
         VoteStatus status;                                  // Status of the vote
         uint64 startDate;                                   // Datetime when the vote was created
         uint64 snapshotBlock;                               // Block number used to check voting power on attached token
         uint64 pausedAt;                                    // Datetime when the vote was paused
         uint64 pauseDuration;                               // Duration of the pause (only updated once resumed)
+        // Note: maybe rename to quietEndingExtensionDuration?
         uint64 quietEndingExtendedSeconds;                  // Total number of seconds a vote was extended due to quiet ending
+        // Note: I initially found this name a bit confusing, but it makes sense now
         VoterState quietEndingSnapshotSupport;              // Snapshot of the vote's support at the beginning of the first quiet ending period
+        // Note: let's prefer to store a hash here
         bytes executionScript;                              // EVM script attached to the vote
         mapping (address => VoteCast) castVotes;            // Mapping of voter address => more information about their cast vote
     }
 
+    // Note: may be good to double check if we'd like these to be updatable and push them to the settings
     uint64 public voteTime;                                 // "Base" duration of each vote -- vote lifespans may be adjusted by pause and extension durations
     MiniMeToken public token;                               // Token for determining voting power; we assume it's not malicious
 
+    // Note: make this public instead
     uint256 internal settingsLength;                        // Number of settings created
     mapping (uint256 => Setting) internal settings;         // List of settings indexed by ID (starting at 0)
 
@@ -131,16 +145,20 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     event ChangeOverruleWindow(uint64 overruleWindow);
     event ChangeQuietEndingConfiguration(uint64 quietEndingPeriod, uint64 quietEndingExtension);
 
+    // Note: may want to also emit the evm script
     event StartVote(uint256 indexed voteId, address indexed creator, bytes context);
     event PauseVote(uint256 indexed voteId, uint256 indexed challengeId);
     event ResumeVote(uint256 indexed voteId);
     event CancelVote(uint256 indexed voteId);
     event ExecuteVote(uint256 indexed voteId);
+    // Note: maybe we should stick with Vote* or *Vote? E.g. ExtendVote()?
     event VoteQuietEndingExtension(uint256 indexed voteId, bool passing);
 
+    // Note: should we remove stake?
     event CastVote(uint256 indexed voteId, address indexed voter, bool supports, uint256 stake);
     event ChangeRepresentative(address indexed voter, address indexed representative);
     event ProxyVoteFailure(uint256 indexed voteId, address indexed voter, address indexed representative);
+    // Note: maybe we can roll this into CastVote if we add the caster there?
     event ProxyVoteSuccess(uint256 indexed voteId, address indexed voter, address indexed representative, bool supports);
 
     /**
@@ -154,6 +172,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @param _quietEndingExtension Duration to extend a vote in case of non-quiet ending
     * @param _executionDelay Duration to wait before a passed vote can be executed
     */
+    // Note: propose changing _voteTime to be first if it doesn't change
     function initialize(
         MiniMeToken _token,
         uint64 _supportRequiredPct,
@@ -250,6 +269,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     */
     function vote(uint256 _voteId, bool _supports) external {
         Vote storage vote_ = _getVote(_voteId);
+        // Note: I think you can vote past the last quiet ending period (if no one else has already or if that last person did not again flip the vote)
         require(_canVote(vote_, msg.sender), ERROR_CANNOT_VOTE);
 
         _castVote(vote_, _voteId, _supports, msg.sender, address(0));
@@ -347,6 +367,8 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     */
     function canClose(uint256 _voteId) external view returns (bool) {
         Vote storage vote_ = _getVote(_voteId);
+        // Note: do we check for isExecuted() because the original call to close may fail (but not revert) for some reason?
+        // Note: wondering if we should expose a permissionless method to close any cancelled vote (and that way we can also set their status to be cancelled)?
         return (_isActive(vote_) || _isExecuted(vote_)) && _hasEnded(vote_);
     }
 
@@ -370,6 +392,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         returns (
             uint64 supportRequiredPct,
             uint64 minAcceptQuorumPct,
+            // Note: propse to move executionDelay to the end
             uint64 executionDelay,
             uint64 overruleWindow,
             uint64 quietEndingPeriod,
@@ -389,6 +412,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @dev Tell the identification number of the current setting
     * @return Identification number of the current setting
     */
+   // Note: this doesn't seem that useful if we make the settingsLength public (maybe just useful in the mock?)
     function getCurrentSettingId() external view isInitialized returns (uint256) {
         return _getCurrentSettingId();
     }
@@ -416,8 +440,10 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         external
         view
         returns (
+            // Note: we may re-order these if the storage struct changes
             uint256 yea,
             uint256 nay,
+            // Note: propose to rename this to totalPower
             uint256 votingPower,
             uint256 settingId,
             uint256 actionId,
@@ -490,6 +516,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         if (!_canRepresentativesVote(vote_)) {
             return false;
         }
+        // Note: should we also check that the length is <= MAX_VOTES_DELEGATION_SET_LENGTH? Perhaps better to keep this as a revert, similar to a missing vote
 
         for (uint256 i = 0; i < _voters.length; i++) {
             address voter = _voters[i];
@@ -519,6 +546,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @param _voteId Identification number of the vote being queried
     * @return True if the vote is open for voting
     */
+   // Note: maybe we should rename this to be more accurate (open for voting, or "can vote")?
     function isVoteOpen(uint256 _voteId) external view returns (bool) {
         return _isVoteOpenForVoting(_getVote(_voteId));
     }
@@ -530,6 +558,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @param _voteId Vote identifier
     * @return True if the vote is within its overrule window
     */
+   // Note: maybe better renamed as `canRepresentativesVote()`?
     function withinOverruleWindow(uint256 _voteId) external view returns (bool) {
         Vote storage vote_ = _getVote(_voteId);
         return _isVoteOpenForVoting(vote_) && _withinOverruleWindow(vote_);
@@ -604,6 +633,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @return New setting's instance
     * @return New setting's identification number
     */
+   // Note: this should probably be private if _newCopiedSettings() is private (or make that internal)
     function _newSetting() internal returns (Setting storage setting, uint256 settingId) {
         settingId = settingsLength++;
         setting = settings[settingId];
@@ -702,6 +732,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     /**
     * @dev Cast votes on behalf of delegated voters as a representative.
     */
+   // Note: might as well inline this now that there's only one user?
     function _voteOnBehalfOf(uint256 _voteId, bool _supports, address[] _voters) internal {
         Vote storage vote_ = _getVote(_voteId);
         // Note that the period for representatives to vote can never go into a quiet ending
@@ -783,6 +814,8 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         }
 
         // If the vote is still open, it cannot be executed
+        // Note: I think this does not correctly check for the quiet ending flip (and thereby extension)
+        //       If the vote was flipped but not extended through another vote, this will continually stay false, locking the vote from being executed
         if (!_hasEnded(_vote)) {
             return false;
         }
@@ -833,6 +866,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     function _isAccepted(Vote storage _vote, Setting storage _setting) internal view returns (bool) {
         uint256 yeas = _vote.yea;
         uint256 nays = _vote.nay;
+        // Note: minor storage optimization might be to pull the support and quorum variables out first
         return _isValuePct(yeas, yeas.add(nays), _setting.supportRequiredPct) &&
                _isValuePct(yeas, _vote.votingPower, _setting.minAcceptQuorumPct);
     }
@@ -852,6 +886,8 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @return True if the vote has ended
     */
     function _hasEnded(Vote storage _vote) internal view returns (bool) {
+        // Note: in these cases, we should prefer getTimestamp()
+        // Note: this lies if the vote is stuck in a flip; ideally we would also take into account the extra period for the flip
         return getTimestamp64() >= _finalVoteEndDate(_vote) && !_wasFlipped(_vote);
     }
 
@@ -876,12 +912,14 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         return wasAcceptedBeforeLastFlip != _isAccepted(_vote, setting);
     }
 
+   // Note: maybe we should rename these "within" functions as they are not really "within" (they only check a single bound, rather than two)
     /**
     * @dev Tell if a vote is within its overrule window
     *      This function doesn't ensure whether the vote is open or not
     * @param _vote Vote instance being queried
     * @return True if the vote is within its overrule window
     */
+   // Note: might as well pass the setting instance to this like the others?
     function _withinOverruleWindow(Vote storage _vote) internal view returns (bool) {
         Setting storage setting = settings[_vote.settingId];
         return getTimestamp64() >= _durationStartDate(_vote, setting.overruleWindow);
@@ -914,6 +952,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @param _vote Vote instance being queried
     * @return Datetime of the vote's original end date
     */
+   // Note: not opposed to 'original', but wondering if 'base' conveys the meaning better?
     function _originalVoteEndDate(Vote storage _vote) internal view returns (uint64) {
         return _vote.startDate.add(voteTime);
     }
@@ -1022,8 +1061,10 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @param _voter Address of principal voter
     * @param _caster Address of vote caster, if voting via representative
     */
+    // Note: not sure about pushing these to be private 🤷‍♂️
     function _castVote(Vote storage _vote, uint256 _voteId, bool _supports, address _voter, address _caster) private {
         Setting storage setting = settings[_vote.settingId];
+        // Note: if we move the quiet ending check at the end here, we could optimize this so it doesn't get calculated outside of the quiet ending period
         bool wasAccepted = _isAccepted(_vote, setting);
 
         uint256 yeas = _vote.yea;
@@ -1054,6 +1095,8 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         castVote.caster = _caster;
         emit CastVote(_voteId, _voter, _supports, voterStake);
 
+        // Note: could we move this to be at the start of `castVote` so it acts like a modifier /
+        // pre-condition, making sure we're calculating the quiet ending period correctly?
         if (_withinQuietEndingPeriod(_vote, setting)) {
             _ensureQuietEnding(_vote, setting, _voteId, wasAccepted);
         }
@@ -1073,6 +1116,8 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
             // this snapshot is never stored.
             _vote.quietEndingSnapshotSupport = _voterStateFor(_wasAccepted);
         } else {
+            // Note: not sure about the intention behind these comments--should we just explain that
+            // we only extend the vote once we have confirmed the flip at the end of the last extension period?
             // First, we make sure the extension is persisted, if are voting within the extension and it was not considered yet, we store it.
             // Note that we are trusting `_canVote()`, if we reached this point, it means the vote's flip was already confirmed.
             if (getTimestamp64() >= _finalVoteEndDate(_vote)) {
@@ -1095,7 +1140,9 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     /**
     * @dev Copy settings from one storage pointer to another
     */
+   // Note: should we inline?
     function _copySettings(Setting storage _from, Setting storage _to) private {
+        // Note: we may want to check if solidity is smart enough to not require us to first load into local vars to optimize sstores
         _to.supportRequiredPct = _from.supportRequiredPct;
         _to.minAcceptQuorumPct = _from.minAcceptQuorumPct;
         _to.executionDelay = _from.executionDelay;
@@ -1115,6 +1162,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     *      |                                           |                      |
     *  vote starts                            duration start date         vote ends
     */
+   // Note: based on our conversation about the windows (moving them to be based on the start rather than the end), hopefully we can simplify this calculation!
     function _durationStartDate(Vote storage _vote, uint64 _duration) private view returns (uint64) {
         uint64 pausedAt = _vote.pausedAt;
         uint64 originalDurationStartDate = _originalVoteEndDate(_vote).sub(_duration);
