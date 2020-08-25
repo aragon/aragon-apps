@@ -29,11 +29,10 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
 
     /* Arbitrator outcomes constants */
     uint256 internal constant DISPUTES_POSSIBLE_OUTCOMES = 2;
-    // Note that Aragon Court treats the possible outcomes as numbers. How to consider them should be defined client-side.
-    // For example, in case of a tie, the ruled outcome will be the lowest one, so the client is allowed to decide what to do in that case.
-    // On the other hand, outcomes [0, 1 and 2] have an already defined: "missing", "leaked", and "refused" respectively.
-    // Additionally, the concept of submitter/challenger doesn't exist in the Arbitrator, these are introduced in this Arbitrable
-    // implementation instead. Then, note that the lowest outcome will be always treated in favor of the submitter.
+    // Note that Aragon Court treats the possible outcomes as arbitrary numbers, leaving the Arbitrable (us) to define how to understand them.
+    // Some outcomes [0, 1, and 2] are reserved by Aragon Court: "missing", "leaked", and "refused", respectively.
+    // This Arbitrable introduces the concept of the submitter/challenger (a binary outcome) as 3/4.
+    // Note that Aragon Court emits the lowest outcome in the event of a tie, and so for us, we prefer the submitter.
     uint256 internal constant DISPUTES_RULING_SUBMITTER = 3;
     uint256 internal constant DISPUTES_RULING_CHALLENGER = 4;
 
@@ -118,7 +117,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         address submitter;                  // Address that submitted the action
         bool closed;                        // Whether the action is closed (and cannot be challenged anymore)
         bytes context;                      // Link to a human-readable context for the given action
-        uint256 lastChallengeId;            // Identification number of the action's last opened challenge, if any
+        uint256 lastChallengeId;            // Identification number of the action's most recent challenge, if any
     }
 
     struct ArbitratorFees {
@@ -318,9 +317,9 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     *      Each disputable action ID must only be registered once; this is how the Agreement gets notified about each disputable action.
     *      Initialization check is implicitly provided by `_ensureActiveDisputable()` as Disputable apps can only be activated
     *      via `activate()` which already requires initialization.
-    *      IMPORTANT: Note the responsibility of the disputable app in terms of the `_submitter` parameter. It is extremely important this
-    *      argument is passed correctly. Users will have to trust any disputable apps they are interacting with, in case of a malicious
-    *      disputable app trying to abuse this argument, other stakers can be affected.
+    *      IMPORTANT: Note the responsibility of the Disputable app in terms of providing the correct `_submitter` parameter.
+    *      Users are required to trust that all Disputable apps activated with this Agreement have implemented this correctly, as
+    *      otherwise funds could be maliciously locked from the incorrect account on new actions.
     * @param _disputableActionId Identification number of the action on the Disputable app
     * @param _context Link to a human-readable context for the given action
     * @param _submitter Address that submitted the action
@@ -412,7 +411,6 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     * @param _actionId Identification number of the action to be settled
     */
     function settleAction(uint256 _actionId) external {
-        // Note: (for all users of getChallengedAction()) the errors emitted will be different based on whether the action had a previous challenge
         (Action storage action, Challenge storage challenge, uint256 challengeId) = _getChallengedAction(_actionId);
         address submitter = action.submitter;
 
@@ -432,11 +430,13 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         uint256 slashedAmount = settlementOffer >= actionCollateral ? actionCollateral : settlementOffer;
         uint256 unlockedAmount = actionCollateral - slashedAmount;
 
+        // Unlock and slash action collateral for settlement offer
         address challenger = challenge.challenger;
         IStaking staking = requirement.staking;
         _unlockBalance(staking, submitter, unlockedAmount);
         _slashBalance(staking, submitter, challenger, slashedAmount);
 
+        // Transfer challenge collateral and challenger arbitrator fees back to the challenger
         _transferTo(requirement.token, challenger, requirement.challengeAmount);
         _transferTo(challenge.challengerArbitratorFees.token, challenger, challenge.challengerArbitratorFees.amount);
 
@@ -478,7 +478,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     /**
     * @notice Submit evidence for dispute #`_disputeId`
     * @dev Only callable by the action submitter or challenger.
-    *      Can be called multiple times indefinitely.
+    *      Can be called as many times as desired until the dispute is over.
     *      Initialization check is implicitly provided by `_getDisputedAction()` as disputable actions can only be created via `newAction()`.
     * @param _disputeId Identification number of the dispute on the arbitrator
     * @param _evidence Evidence data to be submitted
@@ -493,14 +493,14 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         bool challengerFinishedEvidence = challenge.challengerFinishedEvidence;
 
         if (msg.sender == action.submitter) {
-            // If the submitter already finished submitting evidence, the event is emitted as finished always
+            // If the submitter finished submitting evidence earlier, also emit this event as finished
             _submitEvidence(arbitrator, _disputeId, msg.sender, _evidence, submitterFinishedEvidence || _finished);
             if (_finished) {
                 submitterFinishedEvidence = _finished;
                 challenge.submitterFinishedEvidence = _finished;
             }
         } else if (msg.sender == challenge.challenger) {
-            // If the challenger already finished submitting evidence, the event is emitted as finished always
+            // If the challenger finished submitting evidence earlier, also emit this event as finished
             _submitEvidence(arbitrator, _disputeId, msg.sender, _evidence, challengerFinishedEvidence || _finished);
             if (_finished) {
                 challengerFinishedEvidence = _finished;
@@ -543,7 +543,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
 
     /**
     * @notice Close evidence submission period for dispute #`_disputeId`
-    * @dev Could be called by anyone
+    * @dev Callable by any account.
     *      Initialization check is implicitly provided by `_getDisputedAction()` as disputable actions can only be created via `newAction()`.
     * @param _disputeId Identification number of the dispute on the arbitrator
     */
@@ -650,7 +650,8 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     * @return submitter Address that submitted the action
     * @return closed Whether the action is closed
     * @return context Link to a human-readable context for the action
-    * @return lastChallengeId Identification number of the action's last opened challenge, if any
+    * @return lastChallengeId Identification number of the action's most recent challenge, if any
+    * @return lastChallengeActive Whether the action's most recent challenge is still ongoing
     */
     function getAction(uint256 _actionId)
         external
@@ -695,7 +696,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     * @return state Current state of the challenge
     * @return submitterFinishedEvidence Whether the action submitter has finished submitting evidence for the associated dispute
     * @return challengerFinishedEvidence Whether the action challenger has finished submitting evidence for the associated dispute
-    * @return evidencePeriodClosed Whether the evidence period was closed for the raised dispute
+    * @return evidencePeriodClosed Whether the evidence period has been closed for the associated dispute
     * @return disputeId Identification number of the associated dispute on the arbitrator
     * @return ruling Ruling given from the arbitrator for the dispute
     */
@@ -735,10 +736,10 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     * @dev Tell the arbitration fees paid for an action challenge
     *      Split from `getChallenge()` due to “stack too deep issues”
     * @param _challengeId Identification number of the challenge
-    * @return challengerArbitratorFeesAmount Amount of arbitration fees paid by the challenger (in advance)
-    * @return challengerArbitratorFeesToken ERC20 token used for the arbitration fees paid by the challenger (in advance)
-    * @return submitterArbitratorFeesAmount Amount of arbitration fees paid by the submitter (on dispute creation)
     * @return submitterArbitratorFeesToken ERC20 token used for the arbitration fees paid by the submitter (on dispute creation)
+    * @return submitterArbitratorFeesAmount Amount of arbitration fees paid by the submitter (on dispute creation)
+    * @return challengerArbitratorFeesToken ERC20 token used for the arbitration fees paid by the challenger (in advance)
+    * @return challengerArbitratorFeesAmount Amount of arbitration fees paid by the challenger (in advance)
     */
     function getChallengeArbitratorFees(uint256 _challengeId)
         external
@@ -752,10 +753,10 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     {
         Challenge storage challenge = _getChallenge(_challengeId);
 
-        challengerArbitratorFeesToken = challenge.challengerArbitratorFees.token;
-        challengerArbitratorFeesAmount = challenge.challengerArbitratorFees.amount;
         submitterArbitratorFeesToken = challenge.submitterArbitratorFees.token;
         submitterArbitratorFeesAmount = challenge.submitterArbitratorFees.amount;
+        challengerArbitratorFeesToken = challenge.challengerArbitratorFees.token;
+        challengerArbitratorFeesAmount = challenge.challengerArbitratorFees.amount;
     }
 
     /**
@@ -792,7 +793,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     }
 
     /**
-    * @dev Tell whether an action's current challenge settlement can be claimed
+    * @dev Tell whether an action can be settled by claiming its challenge settlement
     * @param _actionId Identification number of the action
     * @return True if the action settlement can be claimed, false otherwise
     */
@@ -963,7 +964,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
 
     /**
     * @dev Close an action
-    *      This function does not perform any checks about the action status, caller functions must ensure any required status before calling it.
+    *      This function does not perform any checks about the action status; callers must have already ensured the action can be closed.
     * @param _actionId Identification number of the action being closed
     * @param _action Action instance being closed
     */
@@ -1284,7 +1285,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     /**
     * @dev Tell the disputable-related information about an action
     * @param _action Action instance
-    * @return disputable Address of the Disputable app associated with the action
+    * @return disputable Address of the Disputable app associated to the action
     * @return requirement Collateral requirement instance applicable to the action
     */
     function _getDisputableInfoFor(Action storage _action)
@@ -1345,11 +1346,11 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     }
 
     /**
-    * @dev Fetch an action instance along with its current challenge by identification number
+    * @dev Fetch an action instance along with its most recent challenge by identification number
     * @param _actionId Identification number of the action
     * @return action Action instance associated to the given identification number
-    * @return challenge Current challenge instance for the action
-    * @return challengeId Identification number of the current challenge for the action
+    * @return challenge Most recent challenge instance associated to the action
+    * @return challengeId Identification number of the most recent challenge associated to the action
     */
     function _getChallengedAction(uint256 _actionId)
         internal
@@ -1362,12 +1363,12 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     }
 
     /**
-    * @dev Fetch an action instance along with its current challenge by dispute identification number
+    * @dev Fetch a dispute's associated action and challenge instance
     * @param _disputeId Identification number of the dispute on the arbitrator
-    * @return actionId Identification number of the action associated with the dispute
-    * @return action Action instance associated with the dispute
-    * @return challengeId Identification number of the challenge associated with the dispute
-    * @return challenge Current challenge instance associated with the dispute
+    * @return actionId Identification number of the action associated to the dispute
+    * @return action Action instance associated to the dispute
+    * @return challengeId Identification number of the challenge associated to the dispute
+    * @return challenge Current challenge instance associated to the dispute
     */
     function _getDisputedAction(uint256 _disputeId)
         internal
