@@ -72,7 +72,7 @@
     },
     {
       "name": "Modify quiet ending configuration",
-      "id": "MODIFY_QUIET_ENDING_CONFIGURATION",
+      "id": "MODIFY_QUIET_ENDING_ROLE",
       "params": [
         "New quiet ending period",
         "Current quiet ending period",
