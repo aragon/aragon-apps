@@ -282,7 +282,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         _closeDisputableAction(vote_.actionId);
 
         // Add attached Agreement to blacklist to disallow the stored EVMScript from directly calling
-        // the Agreement from this app's context (e.g. maliciously creating a new action)
+        // the Agreement from this app's context (e.g. maliciously closing a different action)
         address[] memory blacklist = new address[](1);
         blacklist[0] = address(_getAgreement());
         runScript(vote_.executionScript, new bytes(0), blacklist);
@@ -1125,7 +1125,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     /**
     * @dev Translate a voter's support into a voter state
     * @param _supports Whether voter supports the vote
-    @ return Voter state, as an enum
+    * @return Voter state, as an enum
     */
     function _voterStateFor(bool _supports) private pure returns (VoterState) {
         return _supports ? VoterState.Yea : VoterState.Nay;
