@@ -124,22 +124,24 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     mapping (uint256 => Vote) internal votes;               // List of votes indexed by ID (starting at 0)
     mapping (address => address) internal representatives;  // Mapping of voter => allowed representative
 
-    event StartVote(uint256 indexed voteId, address indexed creator, bytes context);
-    event CastVote(uint256 indexed voteId, address indexed voter, bool supports, uint256 stake);
-    event PauseVote(uint256 indexed voteId, uint256 indexed challengeId);
-    event ResumeVote(uint256 indexed voteId);
-    event CancelVote(uint256 indexed voteId);
-    event ProxyVoteFailure(uint256 indexed voteId, address indexed voter, address indexed representative);
-    event ProxyVoteSuccess(uint256 indexed voteId, address indexed voter, address indexed representative, bool supports);
-    event VoteQuietEndingExtension(uint256 indexed voteId, bool passing);
-    event ExecuteVote(uint256 indexed voteId);
     event NewSetting(uint256 settingId);
     event ChangeSupportRequired(uint64 supportRequiredPct);
     event ChangeMinQuorum(uint64 minAcceptQuorumPct);
+    event ChangeExecutionDelay(uint64 executionDelay);
     event ChangeOverruleWindow(uint64 overruleWindow);
     event ChangeQuietEndingPeriod(uint64 quietEndingPeriod, uint64 quietEndingExtension);
-    event ChangeExecutionDelay(uint64 executionDelay);
+
+    event StartVote(uint256 indexed voteId, address indexed creator, bytes context);
+    event PauseVote(uint256 indexed voteId, uint256 indexed challengeId);
+    event ResumeVote(uint256 indexed voteId);
+    event CancelVote(uint256 indexed voteId);
+    event ExecuteVote(uint256 indexed voteId);
+    event VoteQuietEndingExtension(uint256 indexed voteId, bool passing);
+
+    event CastVote(uint256 indexed voteId, address indexed voter, bool supports, uint256 stake);
     event ChangeRepresentative(address indexed voter, address indexed newRepresentative);
+    event ProxyVoteFailure(uint256 indexed voteId, address indexed voter, address indexed representative);
+    event ProxyVoteSuccess(uint256 indexed voteId, address indexed voter, address indexed representative, bool supports);
 
     /**
     * @notice Initialize Disputable Voting with `_token.symbol(): string` for governance, minimum support of `@formatPct(_supportRequiredPct)`%, minimum acceptance quorum of `@formatPct(_minAcceptQuorumPct)`%, a voting duration of `@transformTime(_voteTime)`, an overrule window of `@transformTime(_overruleWindow), and a execution delay of `@transformTime(_executionDelay)`
