@@ -232,29 +232,6 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     }
 
     /**
-    * @notice `_representative == 0x0 ? 'Set your voting representative to ' + _representative : 'Remove your representative'`
-    * @param _representative Address of the representative who is allowed to vote on behalf of the sender. Use the zero address for none.
-    */
-    function setRepresentative(address _representative) external isInitialized {
-        representatives[msg.sender] = _representative;
-        emit ChangeRepresentative(msg.sender, _representative);
-    }
-
-    // Forwarding external fns
-
-    /**
-    * @notice Create a vote to execute the desired action
-    * @dev IForwarderWithContext interface conformance.
-    *      This app (as a DisputableAragonApp) is required to be the initial step in the forwarding chain.
-    * @param _evmScript Action (encoded as an EVM script) that will be allowed to execute if the vote passes
-    * @param _context Additional context for the vote, also used as the disputable action's context on the attached Agreement
-    */
-    function forward(bytes _evmScript, bytes _context) external {
-        require(_canForward(msg.sender, _evmScript), ERROR_CANNOT_FORWARD);
-        _newVote(_evmScript, _context);
-    }
-
-    /**
     * @notice Create a new vote about "`_context`"
     * @param _executionScript Action (encoded as an EVM script) that will be allowed to execute if the vote passes
     * @param _context Additional context for the vote, also used as the disputable action's context on the attached Agreement
@@ -312,6 +289,29 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         emit ExecuteVote(_voteId);
     }
 
+    /**
+    * @notice `_representative == 0x0 ? 'Set your voting representative to ' + _representative : 'Remove your representative'`
+    * @param _representative Address of the representative who is allowed to vote on behalf of the sender. Use the zero address for none.
+    */
+    function setRepresentative(address _representative) external isInitialized {
+        representatives[msg.sender] = _representative;
+        emit ChangeRepresentative(msg.sender, _representative);
+    }
+
+    // Forwarding external fns
+
+    /**
+    * @notice Create a vote to execute the desired action
+    * @dev IForwarderWithContext interface conformance.
+    *      This app (as a DisputableAragonApp) is required to be the initial step in the forwarding chain.
+    * @param _evmScript Action (encoded as an EVM script) that will be allowed to execute if the vote passes
+    * @param _context Additional context for the vote, also used as the disputable action's context on the attached Agreement
+    */
+    function forward(bytes _evmScript, bytes _context) external {
+        require(_canForward(msg.sender, _evmScript), ERROR_CANNOT_FORWARD);
+        _newVote(_evmScript, _context);
+    }
+
     // Forwarding getter fns
 
     /**
@@ -353,52 +353,44 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     // Getter fns
 
     /**
-    * @dev Tell if a vote can be executed
-    *      Initialization check is implicitly provided by `_getVote()` as new votes can only be
-    *      created via `newVote()`, which requires initialization
-    * @param _voteId Identification number of the vote being queried
-    * @return True if the vote can be executed
+    * @dev Tell the information for a setting
+    *      Initialization check is implicitly provided by `_getSetting()` as new settings can only be
+    *      created via `change*()` functions which require initialization
+    * @param _settingId Identification number of the setting
+    * @return supportRequiredPct Required support % (yes power / voted power) for a vote to pass; expressed as a percentage of 10^18
+    * @return minAcceptQuorumPct Required quorum % (yes power / total power) for a vote to pass; expressed as a percentage of 10^18
+    * @return executionDelay Duration to wait before a passed vote can be executed
+    * @return overruleWindow Duration of overrule window
+    * @return quietEndingPeriod Duration to detect non-quiet endings
+    * @return quietEndingExtension Duration to extend a vote in case of non-quiet ending
     */
-    function canExecute(uint256 _voteId) external view returns (bool) {
-        return _canExecute(_getVote(_voteId));
+    function getSetting(uint256 _settingId)
+        external
+        view
+        returns (
+            uint64 supportRequiredPct,
+            uint64 minAcceptQuorumPct,
+            uint64 executionDelay,
+            uint64 overruleWindow,
+            uint64 quietEndingPeriod,
+            uint64 quietEndingExtension
+        )
+    {
+        Setting storage setting = _getSetting(_settingId);
+        supportRequiredPct = setting.supportRequiredPct;
+        minAcceptQuorumPct = setting.minAcceptQuorumPct;
+        executionDelay = setting.executionDelay;
+        overruleWindow = setting.overruleWindow;
+        quietEndingPeriod = setting.quietEndingPeriod;
+        quietEndingExtension = setting.quietEndingExtension;
     }
 
     /**
-    * @dev Tell if a voter can participate in a vote
-    *      Initialization check is implicitly provided by `_getVote()` as new votes can only be
-    *      created via `newVote()`, which requires initialization
-    * @param _voteId Identification number of the vote being queried
-    * @param _voter Address of the voter being queried
-    * @return True if the voter can participate in the vote
+    * @dev Tell the identification number of the current setting
+    * @return Identification number of the current setting
     */
-    function canVote(uint256 _voteId, address _voter) external view returns (bool) {
-        return _canVote(_getVote(_voteId), _voter);
-    }
-
-    /**
-    * @dev Tell if a representative can vote on behalf of delegated voters in a vote
-    *      Initialization check is implicitly provided by `_getVote()` as new votes can only be
-    *      created via `newVote()`, which requires initialization
-    * @param _voteId Identification number of the vote being queried
-    * @param _voters Addresses of the delegated voters being queried
-    * @param _representative Address of the representative being queried
-    * @return True if the representative can vote on behalf of the delegated voters in the vote
-    */
-    function canVoteOnBehalfOf(uint256 _voteId, address[] _voters, address _representative) external view returns (bool) {
-        Vote storage vote_ = _getVote(_voteId);
-
-        if (!_canDelegateVote(vote_)) {
-            return false;
-        }
-
-        for (uint256 i = 0; i < _voters.length; i++) {
-            address voter = _voters[i];
-            if (!_hasVotingPower(vote_, voter) || !_isRepresentativeOf(voter, _representative) || _hasCastVote(vote_, voter)) {
-                return false;
-            }
-        }
-
-        return true;
+    function getCurrentSettingId() external view isInitialized returns (uint256) {
+        return _getCurrentSettingId();
     }
 
     /**
@@ -472,44 +464,52 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     }
 
     /**
-    * @dev Tell the information for a setting
-    *      Initialization check is implicitly provided by `_getSetting()` as new settings can only be
-    *      created via `change*()` functions which require initialization
-    * @param _settingId Identification number of the setting
-    * @return supportRequiredPct Required support % (yes power / voted power) for a vote to pass; expressed as a percentage of 10^18
-    * @return minAcceptQuorumPct Required quorum % (yes power / total power) for a vote to pass; expressed as a percentage of 10^18
-    * @return executionDelay Duration to wait before a passed vote can be executed
-    * @return overruleWindow Duration of overrule window
-    * @return quietEndingPeriod Duration to detect non-quiet endings
-    * @return quietEndingExtension Duration to extend a vote in case of non-quiet ending
+    * @dev Tell if a voter can participate in a vote
+    *      Initialization check is implicitly provided by `_getVote()` as new votes can only be
+    *      created via `newVote()`, which requires initialization
+    * @param _voteId Identification number of the vote being queried
+    * @param _voter Address of the voter being queried
+    * @return True if the voter can participate in the vote
     */
-    function getSetting(uint256 _settingId)
-        external
-        view
-        returns (
-            uint64 supportRequiredPct,
-            uint64 minAcceptQuorumPct,
-            uint64 executionDelay,
-            uint64 overruleWindow,
-            uint64 quietEndingPeriod,
-            uint64 quietEndingExtension
-        )
-    {
-        Setting storage setting = _getSetting(_settingId);
-        supportRequiredPct = setting.supportRequiredPct;
-        minAcceptQuorumPct = setting.minAcceptQuorumPct;
-        executionDelay = setting.executionDelay;
-        overruleWindow = setting.overruleWindow;
-        quietEndingPeriod = setting.quietEndingPeriod;
-        quietEndingExtension = setting.quietEndingExtension;
+    function canVote(uint256 _voteId, address _voter) external view returns (bool) {
+        return _canVote(_getVote(_voteId), _voter);
     }
 
     /**
-    * @dev Tell the identification number of the current setting
-    * @return Identification number of the current setting
+    * @dev Tell if a representative can vote on behalf of delegated voters in a vote
+    *      Initialization check is implicitly provided by `_getVote()` as new votes can only be
+    *      created via `newVote()`, which requires initialization
+    * @param _voteId Identification number of the vote being queried
+    * @param _voters Addresses of the delegated voters being queried
+    * @param _representative Address of the representative being queried
+    * @return True if the representative can vote on behalf of the delegated voters in the vote
     */
-    function getCurrentSettingId() external view isInitialized returns (uint256) {
-        return _getCurrentSettingId();
+    function canVoteOnBehalfOf(uint256 _voteId, address[] _voters, address _representative) external view returns (bool) {
+        Vote storage vote_ = _getVote(_voteId);
+
+        if (!_canRepresentativesVote(vote_)) {
+            return false;
+        }
+
+        for (uint256 i = 0; i < _voters.length; i++) {
+            address voter = _voters[i];
+            if (!_hasVotingPower(vote_, voter) || !_isRepresentativeOf(voter, _representative) || _hasCastVote(vote_, voter)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+    * @dev Tell if a vote can be executed
+    *      Initialization check is implicitly provided by `_getVote()` as new votes can only be
+    *      created via `newVote()`, which requires initialization
+    * @param _voteId Identification number of the vote being queried
+    * @return True if the vote can be executed
+    */
+    function canExecute(uint256 _voteId) external view returns (bool) {
+        return _canExecute(_getVote(_voteId));
     }
 
     /**
@@ -524,16 +524,6 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     }
 
     /**
-    * @dev Tell if a representative currently represents another voter
-    * @param _voter Address of the delegated voter being queried
-    * @param _representative Address of the representative being queried
-    * @return True if the representative currently represents the voter
-    */
-    function isRepresentativeOf(address _voter, address _representative) external view isInitialized returns (bool) {
-        return _isRepresentativeOf(_voter, _representative);
-    }
-
-    /**
     * @dev Tell if a vote is within its overrule window
     *      Initialization check is implicitly provided by `_getVote()` as new votes can only be
     *      created via `newVote()`, which requires initialization
@@ -543,6 +533,16 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     function withinOverruleWindow(uint256 _voteId) external view returns (bool) {
         Vote storage vote_ = _getVote(_voteId);
         return _isVoteOpenForVoting(vote_) && _withinOverruleWindow(vote_);
+    }
+
+    /**
+    * @dev Tell if a representative currently represents another voter
+    * @param _voter Address of the delegated voter being queried
+    * @param _representative Address of the representative being queried
+    * @return True if the representative currently represents the voter
+    */
+    function isRepresentativeOf(address _voter, address _representative) external view isInitialized returns (bool) {
+        return _isRepresentativeOf(_voter, _representative);
     }
 
     // DisputableAragonApp callback implementations
@@ -598,6 +598,17 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     }
 
     // Internal fns
+
+    /**
+    * @dev Create a new empty setting instance
+    * @return New setting's instance
+    * @return New setting's identification number
+    */
+    function _newSetting() internal returns (Setting storage setting, uint256 settingId) {
+        settingId = settingsLength++;
+        setting = settings[settingId];
+        emit NewSetting(settingId);
+    }
 
     /**
     * @dev Change the required support
@@ -712,26 +723,52 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     }
 
     /**
-    * @dev Create a new empty setting instance
-    * @return New setting's instance
-    * @return New setting's identification number
+    * @dev Fetch a setting's instance by identification number
+    * @return Identification number of the current setting
     */
-    function _newSetting() internal returns (Setting storage setting, uint256 settingId) {
-        settingId = settingsLength++;
-        setting = settings[settingId];
-        emit NewSetting(settingId);
+    function _getSetting(uint256 _settingId) internal view returns (Setting storage) {
+        require(_settingId < settingsLength, ERROR_SETTING_DOES_NOT_EXIST);
+        return settings[_settingId];
     }
 
     /**
-    * @dev Tell if an address can forward actions
-    * @param _sender Address intending to forward an action
-    * @return True if the address can create votes
+    * @dev Tell the identification number of the current setting
+    * @return Identification number of the current setting
     */
-    function _canForward(address _sender, bytes) internal view returns (bool) {
-        IAgreement agreement = _getAgreement();
-        // To make sure the sender address is reachable by ACL oracles, we need to pass it as the first argument.
-        // Permissions set with ANY_ENTITY do not provide the original sender's address into the ACL Oracle's `grantee` argument.
-        return agreement != IAgreement(0) && canPerform(_sender, CREATE_VOTES_ROLE, arr(_sender));
+    function _getCurrentSettingId() internal view returns (uint256) {
+        // No need for SafeMath, note that a new setting is created during initialization
+        return settingsLength - 1;
+    }
+
+    /**
+    * @dev Fetch a vote instance by identification number
+    * @param _voteId Identification number of the vote
+    * @return Vote instance
+    */
+    function _getVote(uint256 _voteId) internal view returns (Vote storage) {
+        require(_voteId < votesLength, ERROR_NO_VOTE);
+        return votes[_voteId];
+    }
+
+    /**
+    * @dev Tell if a voter can participate in a vote.
+    *      Note that a voter cannot change their vote once cast, except for the principal voter
+    *      overruling their representative's vote during the overrule window.
+    * @param _vote Vote instance being queried
+    * @param _voter Address of the voter being queried
+    * @return True if the voter can participate a certain vote
+    */
+    function _canVote(Vote storage _vote, address _voter) internal view returns (bool) {
+        return _isVoteOpenForVoting(_vote) && _hasVotingPower(_vote, _voter) && _voteCaster(_vote, _voter) != _voter;
+    }
+
+    /**
+    * @dev Tell if a vote currently allows representatives to vote for delegated voters
+    * @param _vote Vote instance being queried
+    * @return True if the vote currently allows representatives to vote
+    */
+    function _canRepresentativesVote(Vote storage _vote) internal view returns (bool) {
+        return _isActive(_vote) && !_withinOverruleWindow(_vote);
     }
 
     /**
@@ -761,72 +798,12 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     }
 
     /**
-    * @dev Tell if a vote currently allows representatives to vote for delegated voters
-    * @param _vote Vote instance being queried
-    * @return True if the vote currently allows representatives to vote
-    */
-    function _canDelegateVote(Vote storage _vote) internal view returns (bool) {
-        return _isActive(_vote) && !_withinOverruleWindow(_vote);
-    }
-
-    /**
-    * @dev Tell if a voter can participate in a vote.
-    *      Note that a voter cannot change their vote once cast, except for the principal voter
-    *      overruling their representative's vote during the overrule window.
-    * @param _vote Vote instance being queried
-    * @param _voter Address of the voter being queried
-    * @return True if the voter can participate a certain vote
-    */
-    function _canVote(Vote storage _vote, address _voter) internal view returns (bool) {
-        return _isVoteOpenForVoting(_vote) && _hasVotingPower(_vote, _voter) && _voteCaster(_vote, _voter) != _voter;
-    }
-
-    /**
-    * @dev Tell if a voter has voting power for a vote
-    * @param _vote Vote instance being queried
-    * @param _voter Address of the voter being queried
-    * @return True if the voter has voting power for a certain vote
-    */
-    function _hasVotingPower(Vote storage _vote, address _voter) internal view returns (bool) {
-        return token.balanceOfAt(_voter, _vote.snapshotBlock) > 0;
-    }
-
-    /**
-    * @dev Tell if a voter has cast their choice in a vote (by themselves or via a representative)
-    * @param _vote Vote instance being queried
-    * @param _voter Address of the voter being queried
-    * @return True if the voter has cast their choice in the vote
-    */
-    function _hasCastVote(Vote storage _vote, address _voter) internal view returns (bool) {
-        return _voterState(_vote, _voter) != VoterState.Absent;
-    }
-
-    /**
-    * @dev Tell if a representative currently represents another voter
-    * @param _voter Address of the delegated voter being queried
-    * @param _representative Address of the representative being queried
-    * @return True if the representative currently represents the voter
-    */
-    function _isRepresentativeOf(address _voter, address _representative) internal view returns (bool) {
-        return representatives[_voter] == _representative;
-    }
-
-    /**
     * @dev Tell if a vote is active
     * @param _vote Vote instance being queried
     * @return True if the vote is active
     */
     function _isActive(Vote storage _vote) internal view returns (bool) {
         return _vote.status == VoteStatus.Active;
-    }
-
-    /**
-    * @dev Tell if a vote was executed
-    * @param _vote Vote instance being queried
-    * @return True if the vote was executed
-    */
-    function _isExecuted(Vote storage _vote) internal view returns (bool) {
-        return _vote.status == VoteStatus.Executed;
     }
 
     /**
@@ -839,12 +816,25 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     }
 
     /**
-    * @dev Tell if a vote has ended
+    * @dev Tell if a vote was executed
     * @param _vote Vote instance being queried
-    * @return True if the vote has ended
+    * @return True if the vote was executed
     */
-    function _hasEnded(Vote storage _vote) internal view returns (bool) {
-        return getTimestamp64() >= _finalVoteEndDate(_vote) && !_wasFlipped(_vote);
+    function _isExecuted(Vote storage _vote) internal view returns (bool) {
+        return _vote.status == VoteStatus.Executed;
+    }
+
+    /**
+    * @dev Tell if a vote is currently accepted
+    * @param _vote Vote instance being queried
+    * @param _setting Setting instance applicable to the vote
+    * @return True if the vote is accepted
+    */
+    function _isAccepted(Vote storage _vote, Setting storage _setting) internal view returns (bool) {
+        uint256 yeas = _vote.yea;
+        uint256 nays = _vote.nay;
+        return _isValuePct(yeas, yeas.add(nays), _setting.supportRequiredPct) &&
+               _isValuePct(yeas, _vote.votingPower, _setting.minAcceptQuorumPct);
     }
 
     /**
@@ -854,6 +844,36 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     */
     function _isVoteOpenForVoting(Vote storage _vote) internal view returns (bool) {
         return _isActive(_vote) && !_hasEnded(_vote);
+    }
+
+    /**
+    * @dev Tell if a vote has ended
+    * @param _vote Vote instance being queried
+    * @return True if the vote has ended
+    */
+    function _hasEnded(Vote storage _vote) internal view returns (bool) {
+        return getTimestamp64() >= _finalVoteEndDate(_vote) && !_wasFlipped(_vote);
+    }
+
+    /**
+    * @dev Tell if a vote was flipped in its most recent quiet ending period
+    *      This function assumes that it will only be called after the most recent quiet ending period has already ended
+    * @param _vote Vote instance being queried
+    * @return True if the vote was flipped
+    */
+    function _wasFlipped(Vote storage _vote) internal view returns (bool) {
+        // If there was no snapshot taken, it means no one voted during the quiet ending period. Thus, it cannot have been flipped.
+        VoterState snapshotSupport = _vote.quietEndingSnapshotSupport;
+        if (snapshotSupport == VoterState.Absent) {
+            return false;
+        }
+
+        // Otherwise, we calculate if the vote was flipped by comparing its current acceptance state to its last state at the start of the extension period
+        bool wasInitiallyAccepted = snapshotSupport == VoterState.Yea;
+        Setting storage setting = settings[_vote.settingId];
+        uint256 currentExtensions = _vote.quietEndingExtendedSeconds / setting.quietEndingExtension;
+        bool wasAcceptedBeforeLastFlip = wasInitiallyAccepted != (currentExtensions % 2 != 0);
+        return wasAcceptedBeforeLastFlip != _isAccepted(_vote, setting);
     }
 
     /**
@@ -911,24 +931,23 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     }
 
     /**
-    * @dev Tell if a vote was flipped in its most recent quiet ending period
-    *      This function assumes that it will only be called after the most recent quiet ending period has already ended
+    * @dev Tell if a voter has voting power for a vote
     * @param _vote Vote instance being queried
-    * @return True if the vote was flipped
+    * @param _voter Address of the voter being queried
+    * @return True if the voter has voting power for a certain vote
     */
-    function _wasFlipped(Vote storage _vote) internal view returns (bool) {
-        // If there was no snapshot taken, it means no one voted during the quiet ending period. Thus, it cannot have been flipped.
-        VoterState snapshotSupport = _vote.quietEndingSnapshotSupport;
-        if (snapshotSupport == VoterState.Absent) {
-            return false;
-        }
+    function _hasVotingPower(Vote storage _vote, address _voter) internal view returns (bool) {
+        return token.balanceOfAt(_voter, _vote.snapshotBlock) > 0;
+    }
 
-        // Otherwise, we calculate if the vote was flipped by comparing its current acceptance state to its last state at the start of the extension period
-        bool wasInitiallyAccepted = snapshotSupport == VoterState.Yea;
-        Setting storage setting = settings[_vote.settingId];
-        uint256 currentExtensions = _vote.quietEndingExtendedSeconds / setting.quietEndingExtension;
-        bool wasAcceptedBeforeLastFlip = wasInitiallyAccepted != (currentExtensions % 2 != 0);
-        return wasAcceptedBeforeLastFlip != _isAccepted(_vote, setting);
+    /**
+    * @dev Tell if a voter has cast their choice in a vote (by themselves or via a representative)
+    * @param _vote Vote instance being queried
+    * @param _voter Address of the voter being queried
+    * @return True if the voter has cast their choice in the vote
+    */
+    function _hasCastVote(Vote storage _vote, address _voter) internal view returns (bool) {
+        return _voterState(_vote, _voter) != VoterState.Absent;
     }
 
     /**
@@ -957,44 +976,25 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     }
 
     /**
-    * @dev Fetch a vote instance by identification number
-    * @param _voteId Identification number of the vote
-    * @return Vote instance
+    * @dev Tell if a representative currently represents another voter
+    * @param _voter Address of the delegated voter being queried
+    * @param _representative Address of the representative being queried
+    * @return True if the representative currently represents the voter
     */
-    function _getVote(uint256 _voteId) internal view returns (Vote storage) {
-        require(_voteId < votesLength, ERROR_NO_VOTE);
-        return votes[_voteId];
+    function _isRepresentativeOf(address _voter, address _representative) internal view returns (bool) {
+        return representatives[_voter] == _representative;
     }
 
     /**
-    * @dev Tell the identification number of the current setting
-    * @return Identification number of the current setting
+    * @dev Tell if an address can forward actions
+    * @param _sender Address intending to forward an action
+    * @return True if the address can create votes
     */
-    function _getCurrentSettingId() internal view returns (uint256) {
-        // No need for SafeMath, note that a new setting is created during initialization
-        return settingsLength - 1;
-    }
-
-    /**
-    * @dev Fetch a setting's instance by identification number
-    * @return Identification number of the current setting
-    */
-    function _getSetting(uint256 _settingId) internal view returns (Setting storage) {
-        require(_settingId < settingsLength, ERROR_SETTING_DOES_NOT_EXIST);
-        return settings[_settingId];
-    }
-
-    /**
-    * @dev Tell if a vote is currently accepted
-    * @param _vote Vote instance being queried
-    * @param _setting Setting instance applicable to the vote
-    * @return True if the vote is accepted
-    */
-    function _isAccepted(Vote storage _vote, Setting storage _setting) internal view returns (bool) {
-        uint256 yeas = _vote.yea;
-        uint256 nays = _vote.nay;
-        return _isValuePct(yeas, yeas.add(nays), _setting.supportRequiredPct) &&
-               _isValuePct(yeas, _vote.votingPower, _setting.minAcceptQuorumPct);
+    function _canForward(address _sender, bytes) internal view returns (bool) {
+        IAgreement agreement = _getAgreement();
+        // To make sure the sender address is reachable by ACL oracles, we need to pass it as the first argument.
+        // Permissions set with ANY_ENTITY do not provide the original sender's address into the ACL Oracle's `grantee` argument.
+        return agreement != IAgreement(0) && canPerform(_sender, CREATE_VOTES_ROLE, arr(_sender));
     }
 
     /**
