@@ -37,18 +37,18 @@ contract('Voting initialization', ([_, owner]) => {
         const requiredSupport = pct16(20)
         const minimumAcceptanceQuorum = pct16(50)
 
-        await assertRevert(voting.initialize(token.address, requiredSupport, minimumAcceptanceQuorum, VOTE_DURATION, OVERRULE_WINDOW, QUIET_ENDING_PERIOD, QUIET_ENDING_EXTENSION, EXECUTION_DELAY), VOTING_ERRORS.VOTING_CHANGE_QUORUM_PCTS)
+        await assertRevert(voting.initialize(token.address, requiredSupport, minimumAcceptanceQuorum, VOTE_DURATION, OVERRULE_WINDOW, QUIET_ENDING_PERIOD, QUIET_ENDING_EXTENSION, EXECUTION_DELAY), VOTING_ERRORS.VOTING_CHANGE_QUORUM_TOO_BIG)
       })
 
       it('fails if support is 100% or more', async () => {
-        await assertRevert(voting.initialize(token.address, pct16(101), MINIMUM_ACCEPTANCE_QUORUM, VOTE_DURATION, OVERRULE_WINDOW, QUIET_ENDING_PERIOD, QUIET_ENDING_EXTENSION, EXECUTION_DELAY), VOTING_ERRORS.VOTING_CHANGE_SUPP_TOO_BIG)
-        await assertRevert(voting.initialize(token.address, pct16(100), MINIMUM_ACCEPTANCE_QUORUM, VOTE_DURATION, OVERRULE_WINDOW, QUIET_ENDING_PERIOD, QUIET_ENDING_EXTENSION, EXECUTION_DELAY), VOTING_ERRORS.VOTING_CHANGE_SUPP_TOO_BIG)
+        await assertRevert(voting.initialize(token.address, pct16(101), MINIMUM_ACCEPTANCE_QUORUM, VOTE_DURATION, OVERRULE_WINDOW, QUIET_ENDING_PERIOD, QUIET_ENDING_EXTENSION, EXECUTION_DELAY), VOTING_ERRORS.VOTING_CHANGE_SUPPORT_TOO_BIG)
+        await assertRevert(voting.initialize(token.address, pct16(100), MINIMUM_ACCEPTANCE_QUORUM, VOTE_DURATION, OVERRULE_WINDOW, QUIET_ENDING_PERIOD, QUIET_ENDING_EXTENSION, EXECUTION_DELAY), VOTING_ERRORS.VOTING_CHANGE_SUPPORT_TOO_BIG)
       })
 
       it('fails if the quiet ending period is greater than the vote duration', async () => {
         const quietEndingPeriod = VOTE_DURATION + 1
 
-        await assertRevert(voting.initialize(token.address, REQUIRED_SUPPORT, MINIMUM_ACCEPTANCE_QUORUM, VOTE_DURATION, OVERRULE_WINDOW, quietEndingPeriod, QUIET_ENDING_EXTENSION, EXECUTION_DELAY), VOTING_ERRORS.VOTING_INVALID_QUIET_ENDING_PERIOD)
+        await assertRevert(voting.initialize(token.address, REQUIRED_SUPPORT, MINIMUM_ACCEPTANCE_QUORUM, VOTE_DURATION, OVERRULE_WINDOW, quietEndingPeriod, QUIET_ENDING_EXTENSION, EXECUTION_DELAY), VOTING_ERRORS.VOTING_INVALID_QUIET_END_PERIOD)
       })
     })
 

@@ -98,7 +98,7 @@ class VotingDeployer {
     const receipt = await this.dao.newAppInstance(appId, this.base.address, '0x', false, { from: owner })
     const voting = await this.base.constructor.at(await getInstalledApp(receipt, appId))
 
-    const restrictedPermissions = ['MODIFY_SUPPORT_ROLE', 'MODIFY_QUORUM_ROLE', 'MODIFY_OVERRULE_WINDOW_ROLE', 'MODIFY_EXECUTION_DELAY_ROLE', 'MODIFY_QUIET_ENDING_CONFIGURATION']
+    const restrictedPermissions = ['MODIFY_SUPPORT_ROLE', 'MODIFY_QUORUM_ROLE', 'MODIFY_OVERRULE_WINDOW_ROLE', 'MODIFY_EXECUTION_DELAY_ROLE', 'MODIFY_QUIET_ENDING_ROLE']
     await this._createPermissions(voting, restrictedPermissions, owner)
 
     const openPermissions = ['CREATE_VOTES_ROLE', 'CHALLENGE_ROLE']

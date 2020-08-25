@@ -35,7 +35,7 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
         const newSupport = MINIMUM_ACCEPTANCE_QUORUM.sub(bn(1))
 
         it('fails changing required support lower than minimum acceptance quorum', async () => {
-          await assertRevert(voting.changeSupportRequiredPct(newSupport, { from }), VOTING_ERRORS.VOTING_CHANGE_SUPPORT_PCTS)
+          await assertRevert(voting.changeSupportRequiredPct(newSupport, { from }), VOTING_ERRORS.VOTING_CHANGE_SUPPORT_TOO_SMALL)
         })
       })
 
@@ -81,7 +81,7 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
         const newSupport = pct16(100)
 
         it('reverts', async () => {
-          await assertRevert(voting.changeSupportRequiredPct(newSupport, { from }), VOTING_ERRORS.VOTING_CHANGE_SUPP_TOO_BIG)
+          await assertRevert(voting.changeSupportRequiredPct(newSupport, { from }), VOTING_ERRORS.VOTING_CHANGE_SUPPORT_TOO_BIG)
         })
       })
 
@@ -89,7 +89,7 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
         const newSupport = pct16(101)
 
         it('reverts', async () => {
-          await assertRevert(voting.changeSupportRequiredPct(newSupport, { from }), VOTING_ERRORS.VOTING_CHANGE_SUPP_TOO_BIG)
+          await assertRevert(voting.changeSupportRequiredPct(newSupport, { from }), VOTING_ERRORS.VOTING_CHANGE_SUPPORT_TOO_BIG)
         })
       })
     })
@@ -157,7 +157,7 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
         const newQuorum = REQUIRED_SUPPORT.add(bn(1))
 
         it('reverts', async () => {
-          await assertRevert(voting.changeMinAcceptQuorumPct(newQuorum, { from }), VOTING_ERRORS.VOTING_CHANGE_QUORUM_PCTS)
+          await assertRevert(voting.changeMinAcceptQuorumPct(newQuorum, { from }), VOTING_ERRORS.VOTING_CHANGE_QUORUM_TOO_BIG)
         })
       })
     })
@@ -289,7 +289,7 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
       context('when the new period is greater than the vote duration', () => {
         const newQuietEndingPeriod = VOTE_DURATION + 1
 
-        itReverts(newQuietEndingPeriod, newQuietEndingExtension, VOTING_ERRORS.VOTING_INVALID_QUIET_ENDING_PERIOD)
+        itReverts(newQuietEndingPeriod, newQuietEndingExtension, VOTING_ERRORS.VOTING_INVALID_QUIET_END_PERIOD)
       })
     })
 

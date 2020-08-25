@@ -203,7 +203,7 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
         context('when the voter can vote', () => {
           const itReverts = () => {
             it('reverts', async () => {
-              await assertRevert(voting.voteOnBehalfOf(voteId, true, [voter], { from }), VOTING_ERRORS.VOTING_CANNOT_DELEGATE_VOTE)
+              await assertRevert(voting.voteOnBehalfOf(voteId, true, [voter], { from }), VOTING_ERRORS.VOTING_PAST_REP_VOTING_WINDOW)
             })
           }
 
