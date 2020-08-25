@@ -40,23 +40,23 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     string private constant ERROR_NO_VOTE = "VOTING_NO_VOTE";
     string private constant ERROR_VOTE_TIME_ZERO = "VOTING_VOTE_TIME_ZERO";
     string private constant ERROR_TOKEN_NOT_CONTRACT = "VOTING_TOKEN_NOT_CONTRACT";
-    string private constant ERROR_CHANGE_QUORUM_PCTS = "VOTING_CHANGE_QUORUM_PCTS";
-    string private constant ERROR_CHANGE_SUPPORT_PCTS = "VOTING_CHANGE_SUPPORT_PCTS";
-    string private constant ERROR_CHANGE_SUPPORT_TOO_BIG = "VOTING_CHANGE_SUPP_TOO_BIG";
-    string private constant ERROR_INVALID_OVERRULE_WINDOW = "VOTING_INVALID_OVERRULE_WINDOW";
-    string private constant ERROR_INVALID_QUIET_ENDING_PERIOD = "VOTING_INVALID_QUIET_ENDING_PERI";
-    string private constant ERROR_DELEGATES_EXCEEDS_MAX_LEN = "VOTING_DELEGATES_EXCEEDS_MAX_LEN";
     string private constant ERROR_SETTING_DOES_NOT_EXIST = "VOTING_SETTING_DOES_NOT_EXIST";
+    string private constant ERROR_CHANGE_QUORUM_TOO_BIG = "VOTING_CHANGE_QUORUM_TOO_BIG";
+    string private constant ERROR_CHANGE_SUPPORT_TOO_SMALL = "VOTING_CHANGE_SUPPORT_TOO_SMALL";
+    string private constant ERROR_CHANGE_SUPPORT_TOO_BIG = "VOTING_CHANGE_SUPPORT_TOO_BIG";
+    string private constant ERROR_INVALID_OVERRULE_WINDOW = "VOTING_INVALID_OVERRULE_WINDOW";
+    string private constant ERROR_INVALID_QUIET_ENDING_PERIOD = "VOTING_INVALID_QUIET_END_PERIOD";
 
     // Workflow errors
-    string private constant ERROR_CANNOT_VOTE = "VOTING_CANNOT_VOTE";
-    string private constant ERROR_CANNOT_EXECUTE = "VOTING_CANNOT_EXECUTE";
     string private constant ERROR_CANNOT_FORWARD = "VOTING_CANNOT_FORWARD";
-    string private constant ERROR_CANNOT_PAUSE_VOTE = "VOTING_CANNOT_PAUSE_VOTE";
     string private constant ERROR_NO_VOTING_POWER = "VOTING_NO_VOTING_POWER";
-    string private constant ERROR_VOTE_NOT_PAUSED = "VOTING_VOTE_NOT_PAUSED";
+    string private constant ERROR_CANNOT_VOTE = "VOTING_CANNOT_VOTE";
     string private constant ERROR_NOT_REPRESENTATIVE = "VOTING_NOT_REPRESENTATIVE";
-    string private constant ERROR_CANNOT_DELEGATE_VOTE = "VOTING_CANNOT_DELEGATE_VOTE";
+    string private constant ERROR_PAST_REPRESENTATIVE_VOTING_WINDOW = "VOTING_PAST_REP_VOTING_WINDOW";
+    string private constant ERROR_DELEGATES_EXCEEDS_MAX_LEN = "VOTING_DELEGATES_EXCEEDS_MAX_LEN";
+    string private constant ERROR_CANNOT_PAUSE_VOTE = "VOTING_CANNOT_PAUSE_VOTE";
+    string private constant ERROR_VOTE_NOT_PAUSED = "VOTING_VOTE_NOT_PAUSED";
+    string private constant ERROR_CANNOT_EXECUTE = "VOTING_CANNOT_EXECUTE";
 
     enum VoterState { Absent, Yea, Nay }
 
@@ -584,7 +584,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @param _supportRequiredPct New required support
     */
     function _changeSupportRequiredPct(Setting storage _setting, uint64 _supportRequiredPct) internal {
-        require(_setting.minAcceptQuorumPct <= _supportRequiredPct, ERROR_CHANGE_SUPPORT_PCTS);
+        require(_setting.minAcceptQuorumPct <= _supportRequiredPct, ERROR_CHANGE_SUPPORT_TOO_SMALL);
         require(_supportRequiredPct < PCT_BASE, ERROR_CHANGE_SUPPORT_TOO_BIG);
 
         _setting.supportRequiredPct = _supportRequiredPct;
@@ -596,7 +596,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @param _minAcceptQuorumPct New acceptance quorum
     */
     function _changeMinAcceptQuorumPct(Setting storage _setting, uint64 _minAcceptQuorumPct) internal {
-        require(_minAcceptQuorumPct <= _setting.supportRequiredPct, ERROR_CHANGE_QUORUM_PCTS);
+        require(_minAcceptQuorumPct <= _setting.supportRequiredPct, ERROR_CHANGE_QUORUM_TOO_BIG);
 
         _setting.minAcceptQuorumPct = _minAcceptQuorumPct;
         emit ChangeMinQuorum(_minAcceptQuorumPct);
@@ -666,7 +666,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     */
     function _voteOnBehalfOf(uint256 _voteId, bool _supports, address[] _voters) internal {
         Vote storage vote_ = _getVote(_voteId);
-        require(_canDelegateVote(vote_), ERROR_CANNOT_DELEGATE_VOTE);
+        require(_canRepresentativesVote(vote_), ERROR_PAST_REPRESENTATIVE_VOTING_WINDOW);
 
         for (uint256 i = 0; i < _voters.length; i++) {
             address voter = _voters[i];
