@@ -139,7 +139,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     event VoteQuietEndingExtension(uint256 indexed voteId, bool passing);
 
     event CastVote(uint256 indexed voteId, address indexed voter, bool supports, uint256 stake);
-    event ChangeRepresentative(address indexed voter, address indexed newRepresentative);
+    event ChangeRepresentative(address indexed voter, address indexed representative);
     event ProxyVoteFailure(uint256 indexed voteId, address indexed voter, address indexed representative);
     event ProxyVoteSuccess(uint256 indexed voteId, address indexed voter, address indexed representative, bool supports);
 

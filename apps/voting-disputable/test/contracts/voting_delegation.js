@@ -39,7 +39,7 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
         const receipt = await voting.setRepresentative(representative, { from: voter })
 
         assertAmountOfEvents(receipt, 'ChangeRepresentative')
-        assertEvent(receipt, 'ChangeRepresentative', { expectedArgs: { voter, newRepresentative: representative } })
+        assertEvent(receipt, 'ChangeRepresentative', { expectedArgs: { voter, representative: representative } })
 
         assert.isTrue(await voting.isRepresentativeOf(voter, representative))
       })
@@ -54,7 +54,7 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
         const receipt = await voting.setRepresentative(ZERO_ADDRESS, { from: voter })
 
         assertAmountOfEvents(receipt, 'ChangeRepresentative')
-        assertEvent(receipt, 'ChangeRepresentative', { expectedArgs: { voter, newRepresentative: ZERO_ADDRESS } })
+        assertEvent(receipt, 'ChangeRepresentative', { expectedArgs: { voter, representative: ZERO_ADDRESS } })
 
         assert.isFalse(await voting.isRepresentativeOf(voter, representative))
       })
