@@ -207,8 +207,9 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     * @notice Sync app fees cashier address
     * @dev The app fees cashier address is being cached in the contract to save gas.
     *      This can be called permission-lessly to allow any account to re-sync the cashier when changed by the arbitrator.
+    *      Initialization check is implicitly provided by `_getSetting()`, as valid settings can only be created after initialization.
     */
-    function syncAppFeesCashier() external isInitialized {
+    function syncAppFeesCashier() external  {
         Setting storage setting = _getSetting(_getCurrentSettingId());
         IAragonAppFeesCashier newAppFeesCashier = _getArbitratorFeesCashier(setting.arbitrator);
         IAragonAppFeesCashier currentAppFeesCashier = setting.aragonAppFeesCashier;
@@ -300,9 +301,10 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     /**
     * @notice Sign the agreement up-to setting #`_settingId`
     * @dev Callable by any account; only accounts that have signed the latest version of the agreement can submit new disputable actions.
+    *      Initialization check is implicitly provided by `_settingId < nextSettingId`, as valid settings can only be created after initialization.
     * @param _settingId Last setting ID the user is agreeing with
     */
-    function sign(uint256 _settingId) external isInitialized {
+    function sign(uint256 _settingId) external {
         uint256 lastSettingIdSigned = lastSettingSignedBy[msg.sender];
         require(lastSettingIdSigned < _settingId, ERROR_SIGNER_ALREADY_SIGNED);
         require(_settingId < nextSettingId, ERROR_INVALID_SIGNING_SETTING);
@@ -1241,9 +1243,8 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     * @return Identification number of the current agreement setting
     */
     function _getCurrentSettingId() internal view returns (uint256) {
-        // An initial setting is created during initialization, thus length will be always greater than 0
-        // Note that all the places where this helper is being used, an initialization check is previously performed
-        return nextSettingId - 1;
+        // An initial setting is created during initialization, thus after initialization, length will be always greater than 0
+        return nextSettingId == 0 ? 0 : nextSettingId - 1;
     }
 
     /**
