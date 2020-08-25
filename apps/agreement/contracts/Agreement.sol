@@ -516,6 +516,23 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     }
 
     /**
+    * @notice Close evidence submission period for dispute #`_disputeId`
+    * @dev Callable by any account.
+    *      Initialization check is implicitly provided by `_getDisputedAction()` as disputable actions can only be created via `newAction()`.
+    * @param _disputeId Identification number of the dispute on the arbitrator
+    */
+    function closeEvidencePeriod(uint256 _disputeId) external {
+        (, Action storage action, , Challenge storage challenge) = _getDisputedAction(_disputeId);
+        require(_isDisputed(challenge), ERROR_CANNOT_SUBMIT_EVIDENCE);
+
+        bool finishedSubmittingEvidence = challenge.submitterFinishedEvidence && challenge.challengerFinishedEvidence;
+        require(finishedSubmittingEvidence && !challenge.evidencePeriodClosed, ERROR_CANNOT_CLOSE_EVIDENCE_PERIOD);
+
+        IArbitrator arbitrator = _getArbitratorFor(action);
+        _closeEvidencePeriod(challenge, arbitrator, _disputeId);
+    }
+
+    /**
     * @notice Rule the action associated to dispute #`_disputeId` with ruling `_ruling`
     * @dev Can only be called once per challenge by the associated abitrator.
     *      Initialization check is implicitly provided by `_getDisputedAction()` as disputable actions can only be created via `newAction()`.
@@ -539,23 +556,6 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         } else {
             _voidAction(actionId, action, challengeId, challenge);
         }
-    }
-
-    /**
-    * @notice Close evidence submission period for dispute #`_disputeId`
-    * @dev Callable by any account.
-    *      Initialization check is implicitly provided by `_getDisputedAction()` as disputable actions can only be created via `newAction()`.
-    * @param _disputeId Identification number of the dispute on the arbitrator
-    */
-    function closeEvidencePeriod(uint256 _disputeId) external {
-        (, Action storage action, , Challenge storage challenge) = _getDisputedAction(_disputeId);
-        require(_isDisputed(challenge), ERROR_CANNOT_SUBMIT_EVIDENCE);
-
-        bool finishedSubmittingEvidence = challenge.submitterFinishedEvidence && challenge.challengerFinishedEvidence;
-        require(finishedSubmittingEvidence && !challenge.evidencePeriodClosed, ERROR_CANNOT_CLOSE_EVIDENCE_PERIOD);
-
-        IArbitrator arbitrator = _getArbitratorFor(action);
-        _closeEvidencePeriod(challenge, arbitrator, _disputeId);
     }
 
     // Getter fns
@@ -1047,17 +1047,6 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     }
 
     /**
-    * @dev Close evidence submission period for a dispute on an arbitrator
-    * @param _challenge Currently open challenge instance being disputed
-    * @param _arbitrator Arbitrator to submit evidence on
-    * @param _disputeId Identification number of the dispute on the arbitrator
-    */
-    function _closeEvidencePeriod(Challenge storage _challenge, IArbitrator _arbitrator, uint256 _disputeId) internal {
-        _challenge.evidencePeriodClosed = true;
-        _arbitrator.closeEvidencePeriod(_disputeId);
-    }
-
-    /**
     * @dev Submit evidence for a dispute on an arbitrator
     * @param _arbitrator Arbitrator to submit evidence on
     * @param _disputeId Identification number of the dispute on the arbitrator
@@ -1069,6 +1058,17 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         if (_evidence.length > 0) {
             emit EvidenceSubmitted(_arbitrator, _disputeId, _submitter, _evidence, _finished);
         }
+    }
+
+    /**
+    * @dev Close evidence submission period for a dispute on an arbitrator
+    * @param _challenge Currently open challenge instance associated to the dispute
+    * @param _arbitrator Arbitrator to submit evidence on
+    * @param _disputeId Identification number of the dispute on the arbitrator
+    */
+    function _closeEvidencePeriod(Challenge storage _challenge, IArbitrator _arbitrator, uint256 _disputeId) internal {
+        _challenge.evidencePeriodClosed = true;
+        _arbitrator.closeEvidencePeriod(_disputeId);
     }
 
     /**
