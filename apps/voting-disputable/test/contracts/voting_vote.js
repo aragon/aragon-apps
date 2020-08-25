@@ -131,7 +131,7 @@ contract('Voting', ([_, owner, holder20, holder29, holder51, nonHolder, represen
           const previousNays = bigExp(20, 18)
 
           const itHandlesQuietEndingProperly = () => {
-            const itHandlesVoteDurationProperly = extendsWhenFlipped => {
+            const itHandlesVoteDurationProperly = (extendsWhenFlipped, secondsUntilInitialEndTime) => {
               const itCanVote = support => {
                 it('can vote', async () => {
                   await voting.vote(voteId, support, { from })
@@ -172,7 +172,7 @@ contract('Voting', ([_, owner, holder20, holder29, holder51, nonHolder, represen
                   it('extends the vote duration', async () => {
                     // vote and move after the vote's end date
                     await voting.vote(voteId, support, { from })
-                    await voting.mockIncreaseTime(QUIET_ENDING_PERIOD)
+                    await voting.mockIncreaseTime(secondsUntilInitialEndTime + 1)
 
                     assert.isTrue(await voting.canVote(voteId, holder51), 'voter cannot vote')
 
@@ -184,7 +184,7 @@ contract('Voting', ([_, owner, holder20, holder29, holder51, nonHolder, represen
                   it('stores the vote extension in the following vote', async () => {
                     // vote and move after the vote's end date
                     await voting.vote(voteId, support, { from })
-                    await voting.mockIncreaseTime(QUIET_ENDING_PERIOD)
+                    await voting.mockIncreaseTime(secondsUntilInitialEndTime + 1)
                     const { quietEndingExtendedSeconds: previousExtendedSeconds } = await getVoteState(voting, voteId)
 
                     await voting.vote(voteId, true, { from: holder51 })
@@ -206,32 +206,35 @@ contract('Voting', ([_, owner, holder20, holder29, holder51, nonHolder, represen
 
             context('when the vote is cast before the quiet ending period', () => {
               const extendsWhenFlipped = false
+              const secondsUntilInitialEndTime = QUIET_ENDING_PERIOD - 1
 
               beforeEach('move before the quiet ending period', async () => {
-                await voting.mockIncreaseTime(VOTE_DURATION - QUIET_ENDING_PERIOD - 1)
+                await voting.mockIncreaseTime(VOTE_DURATION - secondsUntilInitialEndTime)
               })
 
-              itHandlesVoteDurationProperly(extendsWhenFlipped)
+              itHandlesVoteDurationProperly(extendsWhenFlipped, secondsUntilInitialEndTime)
             })
 
             context('when the vote is cast at the beginning of the quiet ending period', () => {
               const extendsWhenFlipped = true
+              const secondsUntilInitialEndTime = QUIET_ENDING_PERIOD
 
               beforeEach('move at the beginning of the quiet ending period', async () => {
-                await voting.mockIncreaseTime(VOTE_DURATION - QUIET_ENDING_PERIOD)
+                await voting.mockIncreaseTime(VOTE_DURATION - secondsUntilInitialEndTime)
               })
 
-              itHandlesVoteDurationProperly(extendsWhenFlipped)
+              itHandlesVoteDurationProperly(extendsWhenFlipped, secondsUntilInitialEndTime)
             })
 
             context('when the vote is cast during the quiet ending period', () => {
               const extendsWhenFlipped = true
+              const secondsUntilInitialEndTime = QUIET_ENDING_PERIOD / 2
 
               beforeEach('move to the middle of the quiet ending period', async () => {
-                await voting.mockIncreaseTime(VOTE_DURATION - QUIET_ENDING_PERIOD / 2)
+                await voting.mockIncreaseTime(VOTE_DURATION - secondsUntilInitialEndTime)
               })
 
-              itHandlesVoteDurationProperly(extendsWhenFlipped)
+              itHandlesVoteDurationProperly(extendsWhenFlipped, secondsUntilInitialEndTime)
             })
 
             context('when the vote is cast at the end of the quiet ending period', () => {
