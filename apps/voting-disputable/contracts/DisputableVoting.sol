@@ -176,8 +176,8 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         _changeSupportRequiredPct(setting, _supportRequiredPct);
         _changeMinAcceptQuorumPct(setting, _minAcceptQuorumPct);
         _changeOverruleWindow(setting, _overruleWindow);
-        _changeExecutionDelay(setting, _executionDelay);
         _changeQuietEndingPeriod(setting, _quietEndingPeriod, _quietEndingExtension);
+        _changeExecutionDelay(setting, _executionDelay);
     }
 
     /**
@@ -672,12 +672,12 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         voteId = votesLength++;
 
         Vote storage vote_ = votes[voteId];
+        vote_.status = VoteStatus.Active;
         vote_.startDate = getTimestamp64();
         vote_.snapshotBlock = snapshotBlock;
-        vote_.settingId = _getCurrentSettingId();
         vote_.votingPower = votingPower;
+        vote_.settingId = _getCurrentSettingId();
         vote_.executionScript = _executionScript;
-        vote_.status = VoteStatus.Active;
 
         // Notify the attached Agreement about the new vote; this is mandatory in making the vote disputable
         // Note that we send `msg.sender` as the action's submitter--the attached Agreement may expect to be able to pull funds from this account
@@ -1097,9 +1097,9 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         _to.supportRequiredPct = _from.supportRequiredPct;
         _to.minAcceptQuorumPct = _from.minAcceptQuorumPct;
         _to.executionDelay = _from.executionDelay;
-        _to.overruleWindow = _from.overruleWindow;
         _to.quietEndingPeriod = _from.quietEndingPeriod;
         _to.quietEndingExtension = _from.quietEndingExtension;
+        _to.overruleWindow = _from.overruleWindow;
     }
 
     /**
