@@ -129,7 +129,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     event ChangeMinQuorum(uint64 minAcceptQuorumPct);
     event ChangeExecutionDelay(uint64 executionDelay);
     event ChangeOverruleWindow(uint64 overruleWindow);
-    event ChangeQuietEndingPeriod(uint64 quietEndingPeriod, uint64 quietEndingExtension);
+    event ChangeQuietEndingConfiguration(uint64 quietEndingPeriod, uint64 quietEndingExtension);
 
     event StartVote(uint256 indexed voteId, address indexed creator, bytes context);
     event PauseVote(uint256 indexed voteId, uint256 indexed challengeId);
@@ -178,7 +178,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         _changeSupportRequiredPct(setting, _supportRequiredPct);
         _changeMinAcceptQuorumPct(setting, _minAcceptQuorumPct);
         _changeOverruleWindow(setting, _overruleWindow);
-        _changeQuietEndingPeriod(setting, _quietEndingPeriod, _quietEndingExtension);
+        _changeQuietEndingConfiguration(setting, _quietEndingPeriod, _quietEndingExtension);
         _changeExecutionDelay(setting, _executionDelay);
     }
 
@@ -214,12 +214,12 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @param _quietEndingPeriod New quiet ending period
     * @param _quietEndingExtension New quiet ending extension
     */
-    function changeQuietEndingPeriod(uint64 _quietEndingPeriod, uint64 _quietEndingExtension)
+    function changeQuietEndingConfiguration(uint64 _quietEndingPeriod, uint64 _quietEndingExtension)
         external
         authP(MODIFY_QUIET_ENDING_ROLE, arr(uint256(_quietEndingPeriod), uint256(_quietEndingExtension)))
     {
         Setting storage setting = _newCopiedSettings();
-        _changeQuietEndingPeriod(setting, _quietEndingPeriod, _quietEndingExtension);
+        _changeQuietEndingConfiguration(setting, _quietEndingPeriod, _quietEndingExtension);
     }
 
     /**
@@ -653,12 +653,12 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @param _quietEndingPeriod New quiet ending period
     * @param _quietEndingExtension New quiet ending extension
     */
-    function _changeQuietEndingPeriod(Setting storage _setting, uint64 _quietEndingPeriod, uint64 _quietEndingExtension) internal {
+    function _changeQuietEndingConfiguration(Setting storage _setting, uint64 _quietEndingPeriod, uint64 _quietEndingExtension) internal {
         require(_quietEndingPeriod <= voteTime, ERROR_INVALID_QUIET_ENDING_PERIOD);
 
         _setting.quietEndingPeriod = _quietEndingPeriod;
         _setting.quietEndingExtension = _quietEndingExtension;
-        emit ChangeQuietEndingPeriod(_quietEndingPeriod, _quietEndingExtension);
+        emit ChangeQuietEndingConfiguration(_quietEndingPeriod, _quietEndingExtension);
     }
 
     /**
