@@ -225,7 +225,7 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
                 assertBn(representativeState.caster, ZERO_ADDRESS, 'representative should not have voted')
 
                 assertAmountOfEvents(receipt, 'CastVote')
-                assertEvent(receipt, 'CastVote', { expectedArgs: { voter, voteId, supports: false, stake: bigExp(51, 18) } })
+                assertEvent(receipt, 'CastVote', { expectedArgs: { voter, voteId, supports: false } })
               })
 
               it('emits an event', async () => {
@@ -302,7 +302,7 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
                     assertBn(representativeState.caster, ZERO_ADDRESS, 'representative should not have voted')
 
                     assertAmountOfEvents(receipt, 'CastVote')
-                    assertEvent(receipt, 'CastVote', { expectedArgs: { voter, voteId, supports: true, stake: bigExp(51, 18) } })
+                    assertEvent(receipt, 'CastVote', { expectedArgs: { voter, voteId, supports: true } })
                   })
                 }
 

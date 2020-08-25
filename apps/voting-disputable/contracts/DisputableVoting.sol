@@ -154,8 +154,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     // Note: maybe we should stick with Vote* or *Vote? E.g. ExtendVote()?
     event VoteQuietEndingExtension(uint256 indexed voteId, bool passing);
 
-    // Note: should we remove stake?
-    event CastVote(uint256 indexed voteId, address indexed voter, bool supports, uint256 stake);
+    event CastVote(uint256 indexed voteId, address indexed voter, bool supports);
     event ChangeRepresentative(address indexed voter, address indexed representative);
     event ProxyVoteFailure(uint256 indexed voteId, address indexed voter, address indexed representative);
     // Note: maybe we can roll this into CastVote if we add the caster there?
@@ -1111,7 +1110,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         _vote.nay = nays;
         castVote.state = _voterStateFor(_supports);
         castVote.caster = _caster;
-        emit CastVote(_voteId, _voter, _supports, voterStake);
+        emit CastVote(_voteId, _voter, _supports);
 
         // Note: could we move this to be at the start of `castVote` so it acts like a modifier /
         // pre-condition, making sure we're calculating the quiet ending period correctly?
