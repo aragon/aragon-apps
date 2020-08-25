@@ -452,7 +452,6 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     *      Can only be called once (if at all) per opened challenge.
     *      Initialization check is implicitly provided by `_getChallengedAction()` as disputable actions can only be created via `newAction()`.
     * @param _actionId Identification number of the action to be disputed
-    // Note: this may be confusing; perhaps we should flip the concept to "submitter would like to submit more?"
     * @param _submitterFinishedEvidence Whether the submitter was finished submitting evidence with their action context
     */
     function disputeAction(uint256 _actionId, bool _submitterFinishedEvidence) external {
@@ -486,6 +485,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     */
     function submitEvidence(uint256 _disputeId, bytes _evidence, bool _finished) external {
         (, Action storage action, , Challenge storage challenge) = _getDisputedAction(_disputeId);
+        // Note: should we also check that the evidence period hasn't already been closed?
         require(_isDisputed(challenge), ERROR_CANNOT_SUBMIT_EVIDENCE);
 
         IArbitrator arbitrator = _getArbitratorFor(action);
