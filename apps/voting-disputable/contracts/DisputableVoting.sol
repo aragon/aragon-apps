@@ -888,7 +888,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     function _hasEnded(Vote storage _vote) internal view returns (bool) {
         // Note: in these cases, we should prefer getTimestamp()
         // Note: this lies if the vote is stuck in a flip; ideally we would also take into account the extra period for the flip
-        return getTimestamp64() >= _finalVoteEndDate(_vote) && !_wasFlipped(_vote);
+        return getTimestamp() >= _finalVoteEndDate(_vote) && !_wasFlipped(_vote);
     }
 
     /**
@@ -922,7 +922,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
    // Note: might as well pass the setting instance to this like the others?
     function _withinOverruleWindow(Vote storage _vote) internal view returns (bool) {
         Setting storage setting = settings[_vote.settingId];
-        return getTimestamp64() >= _durationStartDate(_vote, setting.overruleWindow);
+        return getTimestamp() >= _durationStartDate(_vote, setting.overruleWindow);
     }
 
     /**
@@ -933,7 +933,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @return True if the vote is within its quiet ending period
     */
     function _withinQuietEndingPeriod(Vote storage _vote, Setting storage _setting) internal view returns (bool) {
-        return getTimestamp64() >= _durationStartDate(_vote, _setting.quietEndingPeriod);
+        return getTimestamp() >= _durationStartDate(_vote, _setting.quietEndingPeriod);
     }
 
     /**
@@ -943,7 +943,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @return True if the vote is within its execution delay window
     */
     function _withinExecutionDelayWindow(Vote storage _vote, Setting storage _setting) internal view returns (bool) {
-        return getTimestamp64() < _finalVoteEndDate(_vote).add(_setting.executionDelay);
+        return getTimestamp() < _finalVoteEndDate(_vote).add(_setting.executionDelay);
     }
 
     /**
@@ -1120,7 +1120,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
             // we only extend the vote once we have confirmed the flip at the end of the last extension period?
             // First, we make sure the extension is persisted, if are voting within the extension and it was not considered yet, we store it.
             // Note that we are trusting `_canVote()`, if we reached this point, it means the vote's flip was already confirmed.
-            if (getTimestamp64() >= _finalVoteEndDate(_vote)) {
+            if (getTimestamp() >= _finalVoteEndDate(_vote)) {
                 _vote.quietEndingExtendedSeconds = _vote.quietEndingExtendedSeconds.add(_setting.quietEndingExtension);
                 emit VoteQuietEndingExtension(_voteId, _wasAccepted);
             }
