@@ -10,7 +10,7 @@ contract('Voting', ([_, owner, holder20, holder29, holder51, nonHolder, represen
 
   const CONTEXT = '0xabcdef'
   const VOTE_DURATION = 5 * ONE_DAY
-  const OVERRULE_WINDOW = ONE_DAY
+  const DELEGATED_VOTING_PERIOD = ONE_DAY * 4
   const EXECUTION_DELAY = 0
   const QUIET_ENDING_PERIOD = 2 * ONE_DAY
   const QUIET_ENDING_EXTENSION = ONE_DAY
@@ -25,7 +25,7 @@ contract('Voting', ([_, owner, holder20, holder29, holder51, nonHolder, represen
   })
 
   beforeEach('deploy voting', async () => {
-    voting = await deployer.deployAndInitialize({ owner, minimumAcceptanceQuorum: MINIMUM_ACCEPTANCE_QUORUM, requiredSupport: REQUIRED_SUPPORT, voteDuration: VOTE_DURATION, overruleWindow: OVERRULE_WINDOW, quietEndingPeriod: QUIET_ENDING_PERIOD, quietEndingExtension: QUIET_ENDING_EXTENSION, executionDelay: EXECUTION_DELAY })
+    voting = await deployer.deployAndInitialize({ owner, minimumAcceptanceQuorum: MINIMUM_ACCEPTANCE_QUORUM, requiredSupport: REQUIRED_SUPPORT, voteDuration: VOTE_DURATION, delegatedVotingPeriod: DELEGATED_VOTING_PERIOD, quietEndingPeriod: QUIET_ENDING_PERIOD, quietEndingExtension: QUIET_ENDING_EXTENSION, executionDelay: EXECUTION_DELAY })
   })
 
   describe('vote', () => {

@@ -13,7 +13,7 @@ contract('Voting disputable', ([_, owner, representative, voter10, voter20, vote
   const MIN_QUORUM = pct16(10)
   const MIN_SUPPORT = pct16(50)
   const VOTING_DURATION = ONE_DAY * 5
-  const OVERRULE_WINDOW = ONE_DAY
+  const DELEGATED_VOTING_PERIOD = ONE_DAY * 4
   const QUIET_ENDING_PERIOD = ONE_DAY * 2
   const QUIET_ENDING_EXTENSION = ONE_DAY
   const CONTEXT = utf8ToHex('some context')
@@ -32,7 +32,7 @@ contract('Voting disputable', ([_, owner, representative, voter10, voter20, vote
   })
 
   beforeEach('create voting app', async () => {
-    voting = await deployer.deployAndInitialize({ owner, requiredSupport: MIN_SUPPORT, minimumAcceptanceQuorum: MIN_QUORUM, voteDuration: VOTING_DURATION, quietEndingPeriod: QUIET_ENDING_PERIOD, quietEndingExtension: QUIET_ENDING_EXTENSION, overruleWindow: OVERRULE_WINDOW })
+    voting = await deployer.deployAndInitialize({ owner, requiredSupport: MIN_SUPPORT, minimumAcceptanceQuorum: MIN_QUORUM, voteDuration: VOTING_DURATION, quietEndingPeriod: QUIET_ENDING_PERIOD, quietEndingExtension: QUIET_ENDING_EXTENSION, delegatedVotingPeriod: DELEGATED_VOTING_PERIOD })
   })
 
   beforeEach('create script', async () => {
@@ -214,8 +214,8 @@ contract('Voting disputable', ([_, owner, representative, voter10, voter20, vote
         assert.isFalse(isOpenAtAfterEndDate, 'vote is open after end date')
       })
 
-      it('does not affect the overrule window', async () => {
-        // the vote duration is 5 days and the overrule is 1 day, there still must be 4 days without overruling
+      it('does not affect the delegated voting period', async () => {
+        // the vote duration is 5 days and the delegated voting window is 4 days
         await voting.setRepresentative(representative, { from: voter40 })
         assert.isTrue(await voting.canVoteOnBehalfOf(voteId, [voter40], representative), 'should be able to vote')
 
@@ -223,13 +223,13 @@ contract('Voting disputable', ([_, owner, representative, voter10, voter20, vote
         await voting.mockIncreaseTime(ONE_DAY)
         assert.isTrue(await voting.canVoteOnBehalfOf(voteId, [voter40], representative), 'should be able to vote')
 
-        // move fwd right before the overrule window starts
+        // move fwd right before the end of delegated voting period
         await voting.mockIncreaseTime(ONE_DAY * 3 - 1)
         assert.isTrue(await voting.canVoteOnBehalfOf(voteId, [voter40], representative), 'should be able to vote')
 
-        // move fwd right when the overrule window starts
+        // move fwd right at the end of the delegated voting period
         await voting.mockIncreaseTime(1)
-        assert.isFalse(await voting.canVoteOnBehalfOf(voteId, [voter40], representative), 'should be able to vote')
+        assert.isFalse(await voting.canVoteOnBehalfOf(voteId, [voter40], representative), 'should not be able to vote')
       })
 
       it('does not affect the quiet ending period', async () => {

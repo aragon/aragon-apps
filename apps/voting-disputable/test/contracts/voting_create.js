@@ -11,7 +11,7 @@ contract('Voting', ([_, owner, holder1, holder2, holder20, holder29, holder51, a
 
   const CONTEXT = '0xabcdef'
   const VOTING_DURATION = 5 * ONE_DAY
-  const OVERRULE_WINDOW = ONE_DAY
+  const DELEGATED_VOTING_PERIOD = ONE_DAY * 4
   const QUIET_ENDING_PERIOD = ONE_DAY
   const QUIET_ENDING_EXTENSION = ONE_DAY / 2
   const REQUIRED_SUPPORT = pct16(50)
@@ -40,7 +40,7 @@ contract('Voting', ([_, owner, holder1, holder2, holder20, holder29, holder51, a
     context('when the app was initialized', () => {
       beforeEach('deploy and initialize voting', async () => {
         token = await deployer.deployToken({})
-        voting = await deployer.deployAndInitialize({ owner, requiredSupport: REQUIRED_SUPPORT, minimumAcceptanceQuorum: MINIMUM_ACCEPTANCE_QUORUM, voteDuration: VOTING_DURATION, quietEndingPeriod: QUIET_ENDING_PERIOD, quietEndingExtension: QUIET_ENDING_EXTENSION, overruleWindow: OVERRULE_WINDOW })
+        voting = await deployer.deployAndInitialize({ owner, requiredSupport: REQUIRED_SUPPORT, minimumAcceptanceQuorum: MINIMUM_ACCEPTANCE_QUORUM, voteDuration: VOTING_DURATION, quietEndingPeriod: QUIET_ENDING_PERIOD, quietEndingExtension: QUIET_ENDING_EXTENSION, delegatedVotingPeriod: DELEGATED_VOTING_PERIOD })
       })
 
       context('when there is some supply', () => {

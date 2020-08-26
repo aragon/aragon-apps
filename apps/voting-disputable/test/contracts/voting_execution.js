@@ -9,7 +9,7 @@ contract('Voting', ([_, owner, holder20, holder29, holder51]) => {
   let voting, voteId, executionTarget, script
 
   const VOTE_DURATION = 5 * ONE_DAY
-  const OVERRULE_WINDOW = ONE_DAY
+  const DELEGATED_VOTING_PERIOD = ONE_DAY * 4
   const REQUIRED_SUPPORT = pct16(50)
   const MINIMUM_ACCEPTANCE_QUORUM = pct16(20)
 
@@ -64,7 +64,7 @@ contract('Voting', ([_, owner, holder20, holder29, holder51]) => {
       const DELAYED_EXECUTION = 0
 
       beforeEach('deploy voting', async () => {
-        voting = await deployer.deployAndInitialize({ owner, supportRequired: REQUIRED_SUPPORT, minimumAcceptanceQuorum: MINIMUM_ACCEPTANCE_QUORUM, voteDuration: VOTE_DURATION, overruleWindow: OVERRULE_WINDOW, executionDelay: DELAYED_EXECUTION })
+        voting = await deployer.deployAndInitialize({ owner, supportRequired: REQUIRED_SUPPORT, minimumAcceptanceQuorum: MINIMUM_ACCEPTANCE_QUORUM, voteDuration: VOTE_DURATION, delegatedVotingPeriod: DELEGATED_VOTING_PERIOD, executionDelay: DELAYED_EXECUTION })
       })
 
       context('with an executable script', () => {
@@ -137,7 +137,7 @@ contract('Voting', ([_, owner, holder20, holder29, holder51]) => {
       const EXECUTION_DELAY = ONE_DAY
 
       beforeEach('deploy voting', async () => {
-        voting = await deployer.deployAndInitialize({ owner, supportRequired: REQUIRED_SUPPORT, minimumAcceptanceQuorum: MINIMUM_ACCEPTANCE_QUORUM, voteDuration: VOTE_DURATION, overruleWindow: OVERRULE_WINDOW, executionDelay: EXECUTION_DELAY })
+        voting = await deployer.deployAndInitialize({ owner, supportRequired: REQUIRED_SUPPORT, minimumAcceptanceQuorum: MINIMUM_ACCEPTANCE_QUORUM, voteDuration: VOTE_DURATION, delegatedVotingPeriod: DELEGATED_VOTING_PERIOD, executionDelay: EXECUTION_DELAY })
       })
 
       context('with an executable script', () => {

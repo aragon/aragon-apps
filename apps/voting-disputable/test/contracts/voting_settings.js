@@ -9,7 +9,7 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
   let voting
 
   const VOTE_DURATION = 5 * ONE_DAY
-  const OVERRULE_WINDOW = ONE_DAY
+  const DELEGATED_VOTING_PERIOD = ONE_DAY * 4
   const EXECUTION_DELAY = 0
   const QUIET_ENDING_PERIOD = ONE_DAY
   const QUIET_ENDING_EXTENSION = ONE_DAY / 2
@@ -24,7 +24,7 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
   })
 
   beforeEach('deploy voting', async () => {
-    voting = await deployer.deployAndInitialize({ owner, supportRequired: REQUIRED_SUPPORT, minimumAcceptanceQuorum: MINIMUM_ACCEPTANCE_QUORUM, voteDuration: VOTE_DURATION, overruleWindow: OVERRULE_WINDOW, quietEndingPeriod: QUIET_ENDING_PERIOD, quietEndingExtension: QUIET_ENDING_EXTENSION, executionDelay: EXECUTION_DELAY })
+    voting = await deployer.deployAndInitialize({ owner, supportRequired: REQUIRED_SUPPORT, minimumAcceptanceQuorum: MINIMUM_ACCEPTANCE_QUORUM, voteDuration: VOTE_DURATION, delegatedVotingPeriod: DELEGATED_VOTING_PERIOD, quietEndingPeriod: QUIET_ENDING_PERIOD, quietEndingExtension: QUIET_ENDING_EXTENSION, executionDelay: EXECUTION_DELAY })
   })
 
   describe('changeSupportRequiredPct', () => {
@@ -171,64 +171,64 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
     })
   })
 
-  describe('changeOverruleWindow', () => {
+  describe('changeDelegatedVotingPeriod', () => {
     context('when the sender is allowed', () => {
       const from = owner
 
-      const itChangesTheOverruleWindow = newWindow => {
-        it('changes the overrule window', async () => {
-          await voting.changeOverruleWindow(newWindow, { from })
+      const itChangesTheDelegatedVotingPeriod = newDelegatedVotingPeriod => {
+        it('changes the delegated voting period', async () => {
+          await voting.changeDelegatedVotingPeriod(newDelegatedVotingPeriod, { from })
 
           const currentSettingId = await voting.getCurrentSettingId()
-          const { overruleWindow } = await voting.getSetting(currentSettingId)
-          assertBn(overruleWindow, newWindow, 'overrule window does not match')
+          const { delegatedVotingPeriod } = await voting.getSetting(currentSettingId)
+          assertBn(delegatedVotingPeriod, newDelegatedVotingPeriod, 'delegated voting period does not match')
         })
 
         it('emits an event', async () => {
-          const receipt = await voting.changeOverruleWindow(newWindow, { from })
+          const receipt = await voting.changeDelegatedVotingPeriod(newDelegatedVotingPeriod, { from })
 
           assertAmountOfEvents(receipt, 'NewSetting')
-          assertAmountOfEvents(receipt, 'ChangeOverruleWindow')
-          assertEvent(receipt, 'ChangeOverruleWindow', { expectedArgs: { overruleWindow: newWindow } })
+          assertAmountOfEvents(receipt, 'ChangeDelegatedVotingPeriod')
+          assertEvent(receipt, 'ChangeDelegatedVotingPeriod', { expectedArgs: { delegatedVotingPeriod: newDelegatedVotingPeriod } })
         })
 
         it('does not affect previous created votes', async () => {
           const { voteId } = await createVote({ voting, from: holder51 })
 
-          await voting.changeOverruleWindow(newWindow, { from })
+          await voting.changeDelegatedVotingPeriod(newDelegatedVotingPeriod, { from })
 
-          const { overruleWindow } = await getVoteSetting(voting, voteId)
-          assertBn(overruleWindow, OVERRULE_WINDOW, 'overrule window does not match')
+          const { delegatedVotingPeriod } = await getVoteSetting(voting, voteId)
+          assertBn(delegatedVotingPeriod, DELEGATED_VOTING_PERIOD, 'delegated voting period does not match')
         })
       }
 
       context('when the new window is lower than the vote duration', () => {
-        const newWindow = VOTE_DURATION - 1
+        const newDelegatedVotingPeriod = VOTE_DURATION - 1
 
-        itChangesTheOverruleWindow(newWindow)
+        itChangesTheDelegatedVotingPeriod(newDelegatedVotingPeriod)
       })
 
       context('when the new window is equal to the vote duration', () => {
-        const newWindow = VOTE_DURATION
+        const newDelegatedVotingPeriod = VOTE_DURATION
 
-        itChangesTheOverruleWindow(newWindow)
+        itChangesTheDelegatedVotingPeriod(newDelegatedVotingPeriod)
       })
 
       context('when the new window is greater than the vote duration', () => {
-        const newWindow = VOTE_DURATION + 1
+        const newDelegatedVotingPeriod = VOTE_DURATION + 1
 
         it('reverts', async () => {
-          await assertRevert(voting.changeOverruleWindow(newWindow, { from }), VOTING_ERRORS.VOTING_INVALID_OVERRULE_WINDOW)
+          await assertRevert(voting.changeDelegatedVotingPeriod(newDelegatedVotingPeriod, { from }), VOTING_ERRORS.VOTING_INVALID_DELEGATED_VOT_PER)
         })
       })
     })
 
     context('when the sender is not allowed', () => {
       const from = anyone
-      const newWindow = ONE_DAY * 2
+      const newDelegatedVotingPeriod = ONE_DAY * 2
 
       it('reverts', async () => {
-        await assertRevert(voting.changeOverruleWindow(newWindow, { from }), ARAGON_OS_ERRORS.APP_AUTH_FAILED)
+        await assertRevert(voting.changeDelegatedVotingPeriod(newDelegatedVotingPeriod, { from }), ARAGON_OS_ERRORS.APP_AUTH_FAILED)
       })
     })
   })
@@ -240,7 +240,7 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
       const from = owner
 
       const itChangesTheQuietEndingConfiguration = (newPeriod, newExtension) => {
-        it('changes the overrule window', async () => {
+        it('changes the delegated voting period', async () => {
           await voting.changeQuietEndingConfiguration(newPeriod, newExtension, { from })
 
           const currentSettingId = await voting.getCurrentSettingId()
@@ -308,7 +308,7 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
     context('when the sender is allowed', () => {
       const from = owner
 
-      it('changes the overrule window', async () => {
+      it('changes the delegated voting period', async () => {
         await voting.changeExecutionDelay(newDelay, { from })
 
         const currentSettingId = await voting.getCurrentSettingId()

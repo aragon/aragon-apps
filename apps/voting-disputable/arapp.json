@@ -55,8 +55,8 @@
       ]
     },
     {
-      "name": "Modify overrule window",
-      "id": "CHANGE_OVERRULE_WINDOW_ROLE",
+      "name": "Modify delegated voting period",
+      "id": "CHANGE_DELEGATED_VOTING_PERIOD_ROLE",
       "params": [
         "New window",
         "Current window"

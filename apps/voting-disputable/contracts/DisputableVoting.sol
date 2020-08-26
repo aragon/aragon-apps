@@ -24,8 +24,8 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     // bytes32 public constant CHANGE_QUORUM_ROLE = keccak256("CHANGE_QUORUM_ROLE");
     bytes32 public constant CHANGE_QUORUM_ROLE = 0xa3f675280fb3c54662067f92659ca1ee3ef7c1a7f2a6ff03a5c4228aa26b6a82;
 
-    // bytes32 public constant CHANGE_OVERRULE_WINDOW_ROLE = keccak256("CHANGE_OVERRULE_WINDOW_ROLE");
-    bytes32 public constant CHANGE_OVERRULE_WINDOW_ROLE = 0xb196d4854c77162a5bc7c78fb8c05b40fc357185dc589dda91e7e64bcc738cc3;
+    // bytes32 public constant CHANGE_DELEGATED_VOTING_PERIOD_ROLE = keccak256("CHANGE_DELEGATED_VOTING_PERIOD_ROLE");
+    bytes32 public constant CHANGE_DELEGATED_VOTING_PERIOD_ROLE = 0x59ba415d96e104e6483d76b79d9cd09941d04e229adcd62d7dc672c93975a19d;
 
     // bytes32 public constant CHANGE_EXECUTION_DELAY_ROLE = keccak256("CHANGE_EXECUTION_DELAY_ROLE");
     bytes32 public constant CHANGE_EXECUTION_DELAY_ROLE = 0x5e3a3edc315e366a0cc5c94ca94a8f9bbc2f1feebb2ef7704bfefcff0cdc4ee7;
@@ -44,7 +44,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     string private constant ERROR_CHANGE_QUORUM_TOO_BIG = "VOTING_CHANGE_QUORUM_TOO_BIG";
     string private constant ERROR_CHANGE_SUPPORT_TOO_SMALL = "VOTING_CHANGE_SUPPORT_TOO_SMALL";
     string private constant ERROR_CHANGE_SUPPORT_TOO_BIG = "VOTING_CHANGE_SUPPORT_TOO_BIG";
-    string private constant ERROR_INVALID_OVERRULE_WINDOW = "VOTING_INVALID_OVERRULE_WINDOW";
+    string private constant ERROR_INVALID_DELEGATED_VOTING_PERIOD = "VOTING_INVALID_DELEGATED_VOT_PER";
     string private constant ERROR_INVALID_QUIET_ENDING_PERIOD = "VOTING_INVALID_QUIET_END_PERIOD";
     string private constant ERROR_INVALID_EXECUTION_SCRIPT = "VOTING_INVALID_EXECUTION_SCRIPT";
 
@@ -78,11 +78,9 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         // Must be <= supportRequiredPct to avoid votes being impossible to pass
         uint64 minAcceptQuorumPct;
 
-        // Note: we could re-work these concepts to be against the start of the vote rather than the end
-        //       E.g. overrule window is more like "allowed time for representatives to vote"
-        // Duration before the end of a vote to stop allowing representatives to vote and for principals to override their representative's vote
+        // Duration since the start of a vote where representatives are allowed to vote on behalf of their principals
         // Must be <= voteTime
-        uint64 overruleWindow;
+        uint64 delegatedVotingPeriod;
 
         // Duration before the end of a vote to detect non-quiet endings
         // Must be <= voteTime
@@ -131,7 +129,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     event NewSetting(uint256 settingId);
     event ChangeSupportRequired(uint64 supportRequiredPct);
     event ChangeMinQuorum(uint64 minAcceptQuorumPct);
-    event ChangeOverruleWindow(uint64 overruleWindow);
+    event ChangeDelegatedVotingPeriod(uint64 delegatedVotingPeriod);
     event ChangeQuietEndingConfiguration(uint64 quietEndingPeriod, uint64 quietEndingExtension);
     event ChangeExecutionDelay(uint64 executionDelay);
 
@@ -147,12 +145,12 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     event ProxyVoteFailure(uint256 indexed voteId, address indexed voter, address indexed representative);
 
     /**
-    * @notice Initialize Disputable Voting with `_token.symbol(): string` for governance, minimum support of `@formatPct(_supportRequiredPct)`%, minimum acceptance quorum of `@formatPct(_minAcceptQuorumPct)`%, a voting duration of `@transformTime(_voteTime)`, an overrule window of `@transformTime(_overruleWindow), and a execution delay of `@transformTime(_executionDelay)`
+    * @notice Initialize Disputable Voting with `_token.symbol(): string` for governance, minimum support of `@formatPct(_supportRequiredPct)`%, minimum acceptance quorum of `@formatPct(_minAcceptQuorumPct)`%, a voting duration of `@transformTime(_voteTime)`, an delegated voting period of `@transformTime(_delegatedVotingPeriod), and a execution delay of `@transformTime(_executionDelay)`
     * @param _token MiniMeToken Address that will be used as governance token
     * @param _supportRequiredPct Required support % (yes power / voted power) for a vote to pass; expressed as a percentage of 10^18
     * @param _minAcceptQuorumPct Required quorum % (yes power / total power) for a vote to pass; expressed as a percentage of 10^18
     * @param _voteTime Base duration a vote will be open for voting
-    * @param _overruleWindow Duration of overrule window
+    * @param _delegatedVotingPeriod Duration of the delagate voting period
     * @param _quietEndingPeriod Duration to detect non-quiet endings
     * @param _quietEndingExtension Duration to extend a vote in case of non-quiet ending
     * @param _executionDelay Duration to wait before a passed vote can be executed
@@ -163,7 +161,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         uint64 _supportRequiredPct,
         uint64 _minAcceptQuorumPct,
         uint64 _voteTime,
-        uint64 _overruleWindow,
+        uint64 _delegatedVotingPeriod,
         uint64 _quietEndingPeriod,
         uint64 _quietEndingExtension,
         uint64 _executionDelay
@@ -181,7 +179,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         (Setting storage setting, ) = _newSetting();
         _changeSupportRequiredPct(setting, _supportRequiredPct);
         _changeMinAcceptQuorumPct(setting, _minAcceptQuorumPct);
-        _changeOverruleWindow(setting, _overruleWindow);
+        _changeDelegatedVotingPeriod(setting, _delegatedVotingPeriod);
         _changeQuietEndingConfiguration(setting, _quietEndingPeriod, _quietEndingExtension);
         _changeExecutionDelay(setting, _executionDelay);
     }
@@ -205,12 +203,12 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     }
 
     /**
-    * @notice Change overrule window to `@transformTime(_overruleWindow)`
-    * @param _overruleWindow New overrule window
+    * @notice Change delegated voting period to `@transformTime(_delegatedVotingPeriod)`
+    * @param _delegatedVotingPeriod New delegated voting period
     */
-    function changeOverruleWindow(uint64 _overruleWindow) external authP(CHANGE_OVERRULE_WINDOW_ROLE, arr(uint256(_overruleWindow))) {
+    function changeDelegatedVotingPeriod(uint64 _delegatedVotingPeriod) external authP(CHANGE_DELEGATED_VOTING_PERIOD_ROLE, arr(uint256(_delegatedVotingPeriod))) {
         Setting storage setting = _newCopiedSettings();
-        _changeOverruleWindow(setting, _overruleWindow);
+        _changeDelegatedVotingPeriod(setting, _delegatedVotingPeriod);
     }
 
     /**
@@ -381,7 +379,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @param _settingId Identification number of the setting
     * @return supportRequiredPct Required support % (yes power / voted power) for a vote to pass; expressed as a percentage of 10^18
     * @return minAcceptQuorumPct Required quorum % (yes power / total power) for a vote to pass; expressed as a percentage of 10^18
-    * @return overruleWindow Duration of overrule window
+    * @return delegatedVotingPeriod Duration of the delegated voting period
     * @return quietEndingPeriod Duration to detect non-quiet endings
     * @return quietEndingExtension Duration to extend a vote in case of non-quiet ending
     * @return executionDelay Duration to wait before a passed vote can be executed
@@ -392,7 +390,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         returns (
             uint64 supportRequiredPct,
             uint64 minAcceptQuorumPct,
-            uint64 overruleWindow,
+            uint64 delegatedVotingPeriod,
             uint64 quietEndingPeriod,
             uint64 quietEndingExtension,
             uint64 executionDelay
@@ -401,7 +399,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         Setting storage setting = _getSetting(_settingId);
         supportRequiredPct = setting.supportRequiredPct;
         minAcceptQuorumPct = setting.minAcceptQuorumPct;
-        overruleWindow = setting.overruleWindow;
+        delegatedVotingPeriod = setting.delegatedVotingPeriod;
         quietEndingPeriod = setting.quietEndingPeriod;
         quietEndingExtension = setting.quietEndingExtension;
         executionDelay = setting.executionDelay;
@@ -540,16 +538,15 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     }
 
     /**
-    * @dev Tell if a vote is within its overrule window
+    * @dev Tell if a vote currently allows representatives to vote for delegated voters
     *      Initialization check is implicitly provided by `_getVote()` as new votes can only be
     *      created via `newVote()`, which requires initialization
     * @param _voteId Vote identifier
-    * @return True if the vote is within its overrule window
+    * @return True if the vote currently allows representatives to vote
     */
-    function withinOverruleWindow(uint256 _voteId) external view returns (bool) {
+    function canRepresentativesVote(uint256 _voteId) external view returns (bool) {
         Vote storage vote_ = _getVote(_voteId);
-        Setting storage setting = settings[vote_.settingId];
-        return _isVoteOpenForVoting(vote_, setting) && _hasStartedOverruleWindow(vote_, setting);
+        return _canRepresentativesVote(vote_);
     }
 
     /**
@@ -653,15 +650,15 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     }
 
     /**
-    * @dev Change the overrule window
+    * @dev Change the delegated voting period
     * @param _setting Setting instance to update
-    * @param _overruleWindow New overrule window
+    * @param _delegatedVotingPeriod New delegated voting period
     */
-    function _changeOverruleWindow(Setting storage _setting, uint64 _overruleWindow) internal {
-        require(_overruleWindow <= voteTime, ERROR_INVALID_OVERRULE_WINDOW);
+    function _changeDelegatedVotingPeriod(Setting storage _setting, uint64 _delegatedVotingPeriod) internal {
+        require(_delegatedVotingPeriod <= voteTime, ERROR_INVALID_DELEGATED_VOTING_PERIOD);
 
-        _setting.overruleWindow = _overruleWindow;
-        emit ChangeOverruleWindow(_overruleWindow);
+        _setting.delegatedVotingPeriod = _delegatedVotingPeriod;
+        emit ChangeDelegatedVotingPeriod(_delegatedVotingPeriod);
     }
 
     /**
@@ -697,7 +694,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         Setting storage from = _getSetting(settingId - 1);
         to.supportRequiredPct = from.supportRequiredPct;
         to.minAcceptQuorumPct = from.minAcceptQuorumPct;
-        to.overruleWindow = from.overruleWindow;
+        to.delegatedVotingPeriod = from.delegatedVotingPeriod;
         to.quietEndingPeriod = from.quietEndingPeriod;
         to.quietEndingExtension = from.quietEndingExtension;
         to.executionDelay = from.executionDelay;
@@ -754,8 +751,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         VoterState previousVoterState = castVote.state;
 
         // If voter had previously voted, reset their vote
-        // Note that votes can only be changed once by the principal voter overruling their representative's
-        // vote during the overrule window
+        // Note that votes can only be changed once by the principal voter overruling their representative's vote
         if (previousVoterState == VoterState.Yea) {
             yeas = yeas.sub(voterStake);
         } else if (previousVoterState == VoterState.Nay) {
@@ -836,8 +832,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
 
     /**
     * @dev Tell if a voter can participate in a vote.
-    *      Note that a voter cannot change their vote once cast, except for the principal voter
-    *      overruling their representative's vote during the overrule window.
+    *      Note that a voter cannot change their vote once cast, except for the principal voter overruling their representative's vote.
     * @param _vote Vote instance being queried
     * @param _voter Address of the voter being queried
     * @return True if the voter can participate a certain vote
@@ -853,7 +848,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @return True if the vote currently allows representatives to vote
     */
     function _canRepresentativesVote(Vote storage _vote) internal view returns (bool) {
-        return _isNormal(_vote) && !_hasStartedOverruleWindow(_vote, settings[_vote.settingId]);
+        return _isNormal(_vote) && !_hasFinishedDelegatedVotingPeriod(_vote, settings[_vote.settingId]);
     }
 
     /**
@@ -966,14 +961,22 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     }
 
     /**
-    * @dev Tell if a vote's overrule window has started or not
+    * @dev Tell if a vote's delegated voting period has finished or not
     *      This function doesn't ensure whether the vote is open or not
     * @param _vote Vote instance being queried
     * @param _setting Setting instance applicable to the vote
-    * @return True if the vote's overrule window has started
+    * @return True if the vote's delegated voting period has finished
     */
-    function _hasStartedOverruleWindow(Vote storage _vote, Setting storage _setting) internal view returns (bool) {
-        return getTimestamp() >= _durationStartDate(_vote, _setting.overruleWindow);
+    function _hasFinishedDelegatedVotingPeriod(Vote storage _vote, Setting storage _setting) internal view returns (bool) {
+        uint64 pausedAt = _vote.pausedAt;
+        uint64 baseDelegatedVotingPeriodEndDate = _vote.startDate.add(_setting.delegatedVotingPeriod);
+
+        // If the vote was paused before the deleted voting period ends, we need to extend it
+        uint64 actualDeletedVotingEndDate = pausedAt != 0 && pausedAt < baseDelegatedVotingPeriodEndDate
+            ? baseDelegatedVotingPeriodEndDate.add(_vote.pauseDuration)
+            : baseDelegatedVotingPeriodEndDate;
+
+        return getTimestamp() >= actualDeletedVotingEndDate;
     }
 
     /**
