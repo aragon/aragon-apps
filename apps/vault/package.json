@@ -20,7 +20,6 @@
     "console": "buidler console",
     "compile": "buidler compile --force",
     "devchain": "buidler node",
-    "build": "cd app && yarn build",
     "lint": "solium --dir ./contracts",
     "test": "buidler test",
     "test:gas": "REPORT_GAS=true buidler test --network localhost",
