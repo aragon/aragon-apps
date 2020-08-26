@@ -274,7 +274,23 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     */
     function voteOnBehalfOf(uint256 _voteId, bool _supports, address[] _voters) external {
         require(_voters.length <= MAX_VOTES_DELEGATION_SET_LENGTH, ERROR_DELEGATES_EXCEEDS_MAX_LEN);
-        _voteOnBehalfOf(_voteId, _supports, _voters);
+
+        Vote storage vote_ = _getVote(_voteId);
+        // Note that the period for representatives to vote can never go into a quiet ending
+        // extension, and so we don't need to check other timing-based pre-conditions
+        require(_canRepresentativesVote(vote_), ERROR_PAST_REPRESENTATIVE_VOTING_WINDOW);
+
+        for (uint256 i = 0; i < _voters.length; i++) {
+            address voter = _voters[i];
+            require(_hasVotingPower(vote_, voter), ERROR_CANNOT_VOTE);
+            require(_isRepresentativeOf(voter, msg.sender), ERROR_NOT_REPRESENTATIVE);
+
+            if (!_hasCastVote(vote_, voter)) {
+                _castVote(vote_, _voteId, _supports, voter, msg.sender);
+            } else {
+                emit ProxyVoteFailure(_voteId, voter, msg.sender);
+            }
+        }
     }
 
     /**
@@ -732,29 +748,6 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         vote_.actionId = _registerDisputableAction(voteId, _context, msg.sender);
 
         emit StartVote(voteId, msg.sender, _context, _executionScript);
-    }
-
-    /**
-    * @dev Cast votes on behalf of delegated voters as a representative.
-    */
-   // Note: might as well inline this now that there's only one user?
-    function _voteOnBehalfOf(uint256 _voteId, bool _supports, address[] _voters) internal {
-        Vote storage vote_ = _getVote(_voteId);
-        // Note that the period for representatives to vote can never go into a quiet ending
-        // extension, and so we don't need to check other timing-based pre-conditions
-        require(_canRepresentativesVote(vote_), ERROR_PAST_REPRESENTATIVE_VOTING_WINDOW);
-
-        for (uint256 i = 0; i < _voters.length; i++) {
-            address voter = _voters[i];
-            require(_hasVotingPower(vote_, voter), ERROR_CANNOT_VOTE);
-            require(_isRepresentativeOf(voter, msg.sender), ERROR_NOT_REPRESENTATIVE);
-
-            if (!_hasCastVote(vote_, voter)) {
-                _castVote(vote_, _voteId, _supports, voter, msg.sender);
-            } else {
-                emit ProxyVoteFailure(_voteId, voter, msg.sender);
-            }
-        }
     }
 
     /**
