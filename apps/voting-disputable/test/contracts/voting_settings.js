@@ -218,7 +218,7 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
         const newDelegatedVotingPeriod = VOTE_DURATION + 1
 
         it('reverts', async () => {
-          await assertRevert(voting.changeDelegatedVotingPeriod(newDelegatedVotingPeriod, { from }), VOTING_ERRORS.VOTING_INVALID_DELEGATED_VOT_PER)
+          await assertRevert(voting.changeDelegatedVotingPeriod(newDelegatedVotingPeriod, { from }), VOTING_ERRORS.VOTING_INVALID_DLGT_VOTE_PERIOD)
         })
       })
     })
