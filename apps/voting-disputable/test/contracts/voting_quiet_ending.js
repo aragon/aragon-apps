@@ -92,7 +92,7 @@ contract('Voting', ([_, owner, holder10, holder20, holder30, holder40, holder50]
           assert.isTrue(await voting.canVote(voteId, holder50), 'voter cannot vote')
 
           const receipt = await voting.vote(voteId, true, { from: holder50 })
-          assertEvent(receipt, 'CastVote', { expectedArgs: { voter: holder50, voteId, supports: true } })
+          assertEvent(receipt, 'CastVote', { expectedArgs: { voteId, voter: holder50, caster: holder50, supports: true } })
         })
 
         it('does not allow executing the vote', async () => {

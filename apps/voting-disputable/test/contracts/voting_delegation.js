@@ -225,14 +225,14 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
                 assertBn(representativeState.caster, ZERO_ADDRESS, 'representative should not have voted')
 
                 assertAmountOfEvents(receipt, 'CastVote')
-                assertEvent(receipt, 'CastVote', { expectedArgs: { voter, voteId, supports: false } })
+                assertEvent(receipt, 'CastVote', { expectedArgs: { voteId, voter, caster: representative, supports: false } })
               })
 
               it('emits an event', async () => {
                 const receipt = await voting.voteOnBehalfOf(voteId, false, [voter], { from: representative })
 
-                assertAmountOfEvents(receipt, 'ProxyVoteSuccess')
-                assertEvent(receipt, 'ProxyVoteSuccess', { expectedArgs: { voter, representative, voteId, supports: false } })
+                assertAmountOfEvents(receipt, 'CastVote')
+                assertEvent(receipt, 'CastVote', { expectedArgs: { voter, caster: representative, voteId, supports: false } })
               })
 
               it('cannot be changed by the representative', async () => {
@@ -302,7 +302,7 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
                     assertBn(representativeState.caster, ZERO_ADDRESS, 'representative should not have voted')
 
                     assertAmountOfEvents(receipt, 'CastVote')
-                    assertEvent(receipt, 'CastVote', { expectedArgs: { voter, voteId, supports: true } })
+                    assertEvent(receipt, 'CastVote', { expectedArgs: { voteId, voter, caster: voter, supports: true } })
                   })
                 }
 
@@ -559,9 +559,9 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
           assertAmountOfEvents(receipt, 'ProxyVoteFailure', { expectedAmount: 1 })
           assertEvent(receipt, 'ProxyVoteFailure', { expectedArgs: { voter: previousVoter, representative, voteId }, index: 0 })
 
-          assertAmountOfEvents(receipt, 'ProxyVoteSuccess', { expectedAmount: 2 })
-          assertEvent(receipt, 'ProxyVoteSuccess', { expectedArgs: { voter, representative, voteId, supports: false }, index: 0 })
-          assertEvent(receipt, 'ProxyVoteSuccess', { expectedArgs: { voter: anotherVoter, representative, voteId, supports: false }, index: 1 })
+          assertAmountOfEvents(receipt, 'CastVote', { expectedAmount: 2 })
+          assertEvent(receipt, 'CastVote', { expectedArgs: { voter, caster: representative, voteId, supports: false }, index: 0 })
+          assertEvent(receipt, 'CastVote', { expectedArgs: { voter: anotherVoter, caster: representative, voteId, supports: false }, index: 1 })
 
           const { yeas, nays } = await getVoteState(voting, voteId)
           assertBn(yeas, bigExp(1, 18), 'yeas should be 1')
@@ -686,7 +686,6 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
       const receipt = await voting.voteOnBehalfOf(voteId, true, voters, { from: representative })
 
       assertAmountOfEvents(receipt, 'CastVote', { expectedAmount: MAX_DELEGATES_PER_TX })
-      assertAmountOfEvents(receipt, 'ProxyVoteSuccess', { expectedAmount: MAX_DELEGATES_PER_TX })
       assert.isAtMost(receipt.receipt.cumulativeGasUsed, 6.8e6)
 
       const { yeas, nays } = await getVoteState(voting, voteId)

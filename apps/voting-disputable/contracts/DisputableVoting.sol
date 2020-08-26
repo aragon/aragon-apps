@@ -154,11 +154,9 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     // Note: maybe we should stick with Vote* or *Vote? E.g. ExtendVote()?
     event VoteQuietEndingExtension(uint256 indexed voteId, bool passing);
 
-    event CastVote(uint256 indexed voteId, address indexed voter, bool supports);
+    event CastVote(uint256 indexed voteId, address indexed voter, bool supports, address caster);
     event ChangeRepresentative(address indexed voter, address indexed representative);
     event ProxyVoteFailure(uint256 indexed voteId, address indexed voter, address indexed representative);
-    // Note: maybe we can roll this into CastVote if we add the caster there?
-    event ProxyVoteSuccess(uint256 indexed voteId, address indexed voter, address indexed representative, bool supports);
 
     /**
     * @notice Initialize Disputable Voting with `_token.symbol(): string` for governance, minimum support of `@formatPct(_supportRequiredPct)`%, minimum acceptance quorum of `@formatPct(_minAcceptQuorumPct)`%, a voting duration of `@transformTime(_voteTime)`, an overrule window of `@transformTime(_overruleWindow), and a execution delay of `@transformTime(_executionDelay)`
@@ -743,7 +741,6 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
 
             if (!_hasCastVote(vote_, voter)) {
                 _castVote(vote_, _voteId, _supports, voter, msg.sender);
-                emit ProxyVoteSuccess(_voteId, voter, msg.sender, _supports);
             } else {
                 emit ProxyVoteFailure(_voteId, voter, msg.sender);
             }
@@ -1110,7 +1107,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         _vote.nay = nays;
         castVote.state = _voterStateFor(_supports);
         castVote.caster = _caster;
-        emit CastVote(_voteId, _voter, _supports);
+        emit CastVote(_voteId, _voter, _supports, _caster == address(0) ? _voter : _caster);
 
         // Note: could we move this to be at the start of `castVote` so it acts like a modifier /
         // pre-condition, making sure we're calculating the quiet ending period correctly?
