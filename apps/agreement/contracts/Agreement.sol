@@ -566,7 +566,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     * @dev Tell the identification number of the current agreement setting
     * @return Identification number of the current agreement setting
     */
-    function getCurrentSettingId() external view isInitialized returns (uint256) {
+    function getCurrentSettingId() external view returns (uint256) {
         return _getCurrentSettingId();
     }
 
@@ -596,7 +596,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     * @return activated Whether the Disputable app is active
     * @return currentCollateralRequirementId Identification number of the current collateral requirement
     */
-    function getDisputableInfo(address _disputable) external view isInitialized returns (bool activated, uint256 currentCollateralRequirementId) {
+    function getDisputableInfo(address _disputable) external view returns (bool activated, uint256 currentCollateralRequirementId) {
         DisputableInfo storage disputableInfo = disputableInfos[_disputable];
         activated = disputableInfo.activated;
         uint256 nextId = disputableInfo.nextCollateralRequirementsId;
@@ -638,7 +638,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     * @return lastSettingIdSigned Identification number of the last agreement setting signed by the signer
     * @return mustSign Whether the requested signer needs to sign the current agreement setting before submitting an action
     */
-    function getSigner(address _signer) external view isInitialized returns (uint256 lastSettingIdSigned, bool mustSign) {
+    function getSigner(address _signer) external view returns (uint256 lastSettingIdSigned, bool mustSign) {
         (lastSettingIdSigned, mustSign) = _getSigner(_signer);
     }
 
