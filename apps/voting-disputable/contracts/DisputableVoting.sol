@@ -62,7 +62,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     enum VoterState { Absent, Yea, Nay }
 
     enum VoteStatus {
-        Normal,                         // An ongoing vote
+        Normal,                         // A vote in a "normal" state of operation (not one of the below)--note that this state is not related to the vote being open
         Paused,                         // A vote that is paused due to it having an open challenge or dispute
         Cancelled,                      // A vote that has been explicitly cancelled due to a challenge or dispute
         Executed                        // A vote that has been executed
@@ -78,18 +78,19 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         // Must be <= supportRequiredPct to avoid votes being impossible to pass
         uint64 minAcceptQuorumPct;
 
-        // Duration since the start of a vote where representatives are allowed to vote on behalf of their principals
-        // Must be <= voteTime
+        // Duration from the start of a vote that representatives are allowed to vote on behalf of principals
+        // Must be <= voteTime; duration is bound as [)
         uint64 delegatedVotingPeriod;
 
         // Duration before the end of a vote to detect non-quiet endings
-        // Must be <= voteTime
+        // Must be <= voteTime; duration is bound as [)
         uint64 quietEndingPeriod;
 
         // Duration to extend a vote in case of non-quiet ending
         uint64 quietEndingExtension;
 
         // Duration to wait before a passed vote can be executed
+        // Duration is bound as [)
         uint64 executionDelay;
     }
 
@@ -109,7 +110,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         VoteStatus status;                                  // Status of the vote
         uint64 pausedAt;                                    // Datetime when the vote was paused
         uint64 pauseDuration;                               // Duration of the pause (only updated once resumed)
-        uint64 quietEndingExtensionDuration;                // Total number of seconds a vote was extended due to quiet ending
+        uint64 quietEndingExtensionDuration;                // Duration a vote was extended due to non-quiet endings
         VoterState quietEndingSnapshotSupport;              // Snapshot of the vote's support at the beginning of the first quiet ending period
         bytes32 executionScriptHash;                        // Hash of the EVM script attached to the vote
         mapping (address => VoteCast) castVotes;            // Mapping of voter address => more information about their cast vote
@@ -145,12 +146,12 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     event ProxyVoteFailure(uint256 indexed voteId, address indexed voter, address indexed representative);
 
     /**
-    * @notice Initialize Disputable Voting with `_token.symbol(): string` for governance, minimum support of `@formatPct(_supportRequiredPct)`%, minimum acceptance quorum of `@formatPct(_minAcceptQuorumPct)`%, a voting duration of `@transformTime(_voteTime)`, an delegated voting period of `@transformTime(_delegatedVotingPeriod), and a execution delay of `@transformTime(_executionDelay)`
+    * @notice Initialize Disputable Voting with `_token.symbol(): string` for governance, minimum support of `@formatPct(_supportRequiredPct)`%, minimum acceptance quorum of `@formatPct(_minAcceptQuorumPct)`%, a voting duration of `@transformTime(_voteTime)`, a delegated voting period of `@transformTime(_delegatedVotingPeriod), and a execution delay of `@transformTime(_executionDelay)`
     * @param _token MiniMeToken Address that will be used as governance token
     * @param _supportRequiredPct Required support % (yes power / voted power) for a vote to pass; expressed as a percentage of 10^18
     * @param _minAcceptQuorumPct Required quorum % (yes power / total power) for a vote to pass; expressed as a percentage of 10^18
     * @param _voteTime Base duration a vote will be open for voting
-    * @param _delegatedVotingPeriod Duration of the delagate voting period
+    * @param _delegatedVotingPeriod Duration from the start of a vote that representatives are allowed to vote on behalf of principals
     * @param _quietEndingPeriod Duration to detect non-quiet endings
     * @param _quietEndingExtension Duration to extend a vote in case of non-quiet ending
     * @param _executionDelay Duration to wait before a passed vote can be executed
@@ -420,7 +421,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @return status Status of the vote
     * @return pausedAt Datetime when the vote was paused
     * @return pauseDuration Duration of the pause (only updated once resumed)
-    * @return quietEndingExtensionDuration Total number of seconds a vote was extended due to quiet ending
+    * @return quietEndingExtensionDuration Duration a vote was extended due to non-quiet endings
     * @return quietEndingSnapshotSupport Snapshot of the vote's support at the beginning of the first quiet ending period
     * @return executionScriptHash Hash of the EVM script attached to the vote
     */
@@ -751,7 +752,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         VoterState previousVoterState = castVote.state;
 
         // If voter had previously voted, reset their vote
-        // Note that votes can only be changed once by the principal voter overruling their representative's vote
+        // Note that votes can only be changed once by the principal voter to overrule their representative's vote
         if (previousVoterState == VoterState.Yea) {
             yeas = yeas.sub(voterStake);
         } else if (previousVoterState == VoterState.Nay) {
@@ -791,8 +792,8 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
             // this snapshot is never stored.
             _vote.quietEndingSnapshotSupport = _voterStateFor(_wasAccepted);
         } else {
-            // We only store the quiet ending extension if it wasn't confirmed yet. Note that we are trusting `_canVote()` for that.
-            // If we reached this point, it means the vote's flip was confirmed but the last computed end date is in the past.
+            // We are calculating quiet ending extensions via "rolling snapshots", and so we only update the vote's cached duration once
+            // the last period is over and we've confirmed the flip.
             if (getTimestamp() >= _lastComputedVoteEndDate(_vote)) {
                 _vote.quietEndingExtensionDuration = _vote.quietEndingExtensionDuration.add(_setting.quietEndingExtension);
                 emit QuietEndingExtendVote(_voteId, _wasAccepted);
@@ -830,7 +831,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
 
     /**
     * @dev Tell if a voter can participate in a vote.
-    *      Note that a voter cannot change their vote once cast, except for the principal voter overruling their representative's vote.
+    *      Note that a voter cannot change their vote once cast, except by the principal voter to overrule their representative's vote.
     * @param _vote Vote instance being queried
     * @param _voter Address of the voter being queried
     * @return True if the voter can participate a certain vote
@@ -860,13 +861,14 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
             return false;
         }
 
-        // If the vote is still open, it cannot be executed
         Setting storage setting = settings[_vote.settingId];
+
+        // If the vote is still open, it cannot be executed
         if (!_hasEnded(_vote, setting)) {
             return false;
         }
 
-        // If the vote is execution delay has not finished yet, it cannot be executed
+        // If the vote's execution delay has not finished yet, it cannot be executed
         if (_hasNotFinishedExecutionDelay(_vote, setting)) {
             return false;
         }
@@ -876,7 +878,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     }
 
     /**
-    * @dev Tell if a vote is normal
+    * @dev Tell if a vote is in a "normal" non-exceptional state
     * @param _vote Vote instance being queried
     * @return True if the vote is normal
     */
@@ -959,8 +961,8 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     }
 
     /**
-    * @dev Tell if a vote's delegated voting period has finished or not
-    *      This function doesn't ensure whether the vote is open or not
+    * @dev Tell if a vote's delegated voting period has finished
+    *      This function doesn't ensure that the vote is still open
     * @param _vote Vote instance being queried
     * @param _setting Setting instance applicable to the vote
     * @return True if the vote's delegated voting period has finished
@@ -968,7 +970,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     function _hasFinishedDelegatedVotingPeriod(Vote storage _vote, Setting storage _setting) internal view returns (bool) {
         uint64 baseDelegatedVotingPeriodEndDate = _vote.startDate.add(_setting.delegatedVotingPeriod);
 
-        // If the vote was paused before the deleted voting period ends, we need to extend it
+        // If the vote was paused before the delegated voting period ended, we need to extend it
         uint64 pausedAt = _vote.pausedAt;
         uint64 actualDeletedVotingEndDate = pausedAt != 0 && pausedAt < baseDelegatedVotingPeriodEndDate
             ? baseDelegatedVotingPeriodEndDate.add(_vote.pauseDuration)
@@ -978,8 +980,8 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     }
 
     /**
-    * @dev Tell if a vote's quiet ending period has started or not
-    *      This function doesn't ensure whether the vote is open or not
+    * @dev Tell if a vote's quiet ending period has started
+    *      This function doesn't ensure that the vote is still open
     * @param _vote Vote instance being queried
     * @param _setting Setting instance applicable to the vote
     * @return True if the vote's quiet ending period has started
@@ -988,7 +990,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         uint64 voteBaseEndDate = _baseVoteEndDate(_vote);
         uint64 baseQuietEndingPeriodStartDate = voteBaseEndDate.sub(_setting.quietEndingPeriod);
 
-        // If the vote was paused before the quiet ending period starts, we need to delay it
+        // If the vote was paused before the quiet ending period started, we need to delay it
         uint64 pausedAt = _vote.pausedAt;
         uint64 actualQuietEndingPeriodStartDate = pausedAt != 0 && pausedAt < baseQuietEndingPeriodStartDate
             ? baseQuietEndingPeriodStartDate.add(_vote.pauseDuration)
@@ -1020,10 +1022,12 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
 
     /**
     * @dev Tell the last computed end date of a vote.
-    *      It considers extensions from pauses and the already-cached quiet ending mechanism.
+    *      It considers extensions from pauses and the quiet ending mechanism.
+    *      We call this the "last computed end date" because we use the currently cached quiet ending extension, which may be off-by-one from reality
+    *      because it is only updated on the first vote in a new extension (which may never happen).
     *      The pause duration will only be included after the vote has "resumed" from its pause, as we do not know how long the pause will be in advance.
     * @param _vote Vote instance being queried
-    * @return Datetime of the vote's last-computed end date
+    * @return Datetime of the vote's last computed end date
     */
     function _lastComputedVoteEndDate(Vote storage _vote) internal view returns (uint64) {
         uint64 endDateAfterPause = _baseVoteEndDate(_vote).add(_vote.pauseDuration);
@@ -1032,7 +1036,8 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
 
     /**
     * @dev Calculate the current end date of a vote.
-    *      It considers extensions from pauses and the quiet ending mechanism, including the current quiet ending extension if it was not computed yet.
+    *      It considers extensions from pauses and the quiet ending mechanism.
+    *      We call this the "current end date" because it takes into account a posssibly "missing" quiet ending extension that was not cached with the vote.
     *      The pause duration will only be included after the vote has "resumed" from its pause, as we do not know how long the pause will be in advance.
     * @param _vote Vote instance being queried
     * @param _setting Setting instance applicable to the vote
@@ -1041,13 +1046,12 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     function _currentVoteEndDate(Vote storage _vote, Setting storage _setting) internal view returns (uint64) {
         uint64 lastComputedEndDate = _lastComputedVoteEndDate(_vote);
 
-        // If the last extension is ahead of time, then we know we have already updated the quiet ending extended seconds
-        // Otherwise, if it was not flipped then we don't have to continue extending it
+        // The last computed end date is correct if we have not passed it yet or if no flip was detected in the last extension
         if (getTimestamp() < lastComputedEndDate || !_wasFlipped(_vote)) {
             return lastComputedEndDate;
         }
 
-        // Finally, since the last computed end date was reached and the vote was flipped, we must extend it
+        // Otherwise, since the last computed end date was reached and included a flip, we need to extend the end date by one more period
         return lastComputedEndDate.add(_setting.quietEndingExtension);
     }
 

@@ -89,7 +89,7 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
         context('when the voter can vote', () => {
           context('when at the beginning of the delegated voting period', () => {
             context('when the voter has not voted yet', () => {
-              context('when the representative did not proxied a vote', () => {
+              context('when the representative did not proxy a vote', () => {
                 context('when the number of requested voters is valid', () => {
                   itReturnsTrue(voter, representative)
                 })
@@ -137,7 +137,7 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
             })
 
             context('when the voter has not voted yet', () => {
-              context('when the representative did not proxied a vote', () => {
+              context('when the representative did not proxy a vote', () => {
                 context('when the number of requested voters is valid', () => {
                   itReturnsTrue(voter, representative)
                 })
@@ -185,7 +185,7 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
             })
 
             context('when the voter has not voted yet', () => {
-              context('when the representative did not proxied a vote', () => {
+              context('when the representative did not proxy a vote', () => {
                 context('when the number of requested voters is valid', () => {
                   itReturnsTrue(voter, representative)
                 })
