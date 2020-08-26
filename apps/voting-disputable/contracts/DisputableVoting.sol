@@ -1012,8 +1012,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @param _vote Vote instance being queried
     * @return Datetime of the vote's original end date
     */
-   // Note: not opposed to 'original', but wondering if 'base' conveys the meaning better?
-    function _originalVoteEndDate(Vote storage _vote) internal view returns (uint64) {
+    function _baseVoteEndDate(Vote storage _vote) internal view returns (uint64) {
         return _vote.startDate.add(voteTime);
     }
 
@@ -1025,7 +1024,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @return Datetime of the vote's last-computed end date
     */
     function _lastComputedVoteEndDate(Vote storage _vote) internal view returns (uint64) {
-        uint64 endDateAfterPause = _originalVoteEndDate(_vote).add(_vote.pauseDuration);
+        uint64 endDateAfterPause = _baseVoteEndDate(_vote).add(_vote.pauseDuration);
         return endDateAfterPause.add(_vote.quietEndingExtensionDuration);
     }
 
@@ -1064,7 +1063,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     // Note: based on our conversation about the windows (moving them to be based on the start rather than the end), hopefully we can simplify this calculation!
     function _durationStartDate(Vote storage _vote, uint64 _duration) internal view returns (uint64) {
         uint64 pausedAt = _vote.pausedAt;
-        uint64 originalDurationStartDate = _originalVoteEndDate(_vote).sub(_duration);
+        uint64 originalDurationStartDate = _baseVoteEndDate(_vote).sub(_duration);
         bool pausedBeforeDurationStarts = pausedAt != 0 && pausedAt < originalDurationStartDate;
         return pausedBeforeDurationStarts ? originalDurationStartDate.add(_vote.pauseDuration) : originalDurationStartDate;
     }
