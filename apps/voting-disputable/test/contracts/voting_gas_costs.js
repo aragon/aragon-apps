@@ -43,7 +43,7 @@ contract('Voting', ([_, owner, voter]) => {
     })
 
     context('challenge', () => {
-      itCostsAtMost(353e3, async () => (await agreement.challenge({ actionId })).receipt)
+      itCostsAtMost(372e3, async () => (await agreement.challenge({ actionId })).receipt)
     })
   })
 })
