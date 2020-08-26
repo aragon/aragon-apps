@@ -39,7 +39,7 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
         })
       })
 
-      context('when the new value greater than zero', () => {
+      context('when the new value is greater than zero', () => {
         const newVoteTime = ONE_DAY
 
         it('changes the vote time', async () => {
@@ -58,7 +58,7 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
           assertEvent(receipt, 'ChangeVoteTime', { expectedArgs: { voteTime: newVoteTime } })
         })
 
-        it('does not affect vote times', async () => {
+        it('does not affect vote times in old votes', async () => {
           const { voteId, script } = await createVote({ voting, from: holder51 })
           await voting.changeVoteTime(newVoteTime, { from })
 
