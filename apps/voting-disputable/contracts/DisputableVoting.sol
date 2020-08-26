@@ -626,6 +626,22 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     }
 
     /**
+    * @dev Create a copy of the current settings as a new setting instance
+    * @return New setting's instance
+    */
+    function _newCopiedSettings() internal returns (Setting storage) {
+        (Setting storage to, uint256 settingId) = _newSetting();
+        Setting storage from = _getSetting(settingId - 1);
+        to.supportRequiredPct = from.supportRequiredPct;
+        to.minAcceptQuorumPct = from.minAcceptQuorumPct;
+        to.delegatedVotingPeriod = from.delegatedVotingPeriod;
+        to.quietEndingPeriod = from.quietEndingPeriod;
+        to.quietEndingExtension = from.quietEndingExtension;
+        to.executionDelay = from.executionDelay;
+        return to;
+    }
+
+    /**
     * @dev Change the required support
     * @param _setting Setting instance to update
     * @param _supportRequiredPct New required support; expressed as a percentage of 10^18
@@ -684,22 +700,6 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     function _changeExecutionDelay(Setting storage _setting, uint64 _executionDelay) internal {
         _setting.executionDelay = _executionDelay;
         emit ChangeExecutionDelay(_executionDelay);
-    }
-
-    /**
-    * @dev Create a copy of the current settings as a new setting instance
-    * @return New setting's instance
-    */
-    function _newCopiedSettings() internal returns (Setting storage) {
-        (Setting storage to, uint256 settingId) = _newSetting();
-        Setting storage from = _getSetting(settingId - 1);
-        to.supportRequiredPct = from.supportRequiredPct;
-        to.minAcceptQuorumPct = from.minAcceptQuorumPct;
-        to.delegatedVotingPeriod = from.delegatedVotingPeriod;
-        to.quietEndingPeriod = from.quietEndingPeriod;
-        to.quietEndingExtension = from.quietEndingExtension;
-        to.executionDelay = from.executionDelay;
-        return to;
     }
 
     /**
@@ -940,27 +940,6 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     }
 
     /**
-    * @dev Tell if a vote was flipped in its most recent quiet ending period
-    *      This function assumes that it will only be called after the most recent quiet ending period has already ended
-    * @param _vote Vote instance being queried
-    * @return True if the vote was flipped
-    */
-    function _wasFlipped(Vote storage _vote) internal view returns (bool) {
-        // If there was no snapshot taken, it means no one voted during the quiet ending period. Thus, it cannot have been flipped.
-        VoterState snapshotSupport = _vote.quietEndingSnapshotSupport;
-        if (snapshotSupport == VoterState.Absent) {
-            return false;
-        }
-
-        // Otherwise, we calculate if the vote was flipped by comparing its current acceptance state to its last state at the start of the extension period
-        bool wasInitiallyAccepted = snapshotSupport == VoterState.Yea;
-        Setting storage setting = settings[_vote.settingId];
-        uint256 currentExtensions = _vote.quietEndingExtensionDuration / setting.quietEndingExtension;
-        bool wasAcceptedBeforeLastFlip = wasInitiallyAccepted != (currentExtensions % 2 != 0);
-        return wasAcceptedBeforeLastFlip != _isAccepted(_vote, setting);
-    }
-
-    /**
     * @dev Tell if a vote's delegated voting period has finished
     *      This function doesn't ensure that the vote is still open
     * @param _vote Vote instance being queried
@@ -1053,6 +1032,27 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
 
         // Otherwise, since the last computed end date was reached and included a flip, we need to extend the end date by one more period
         return lastComputedEndDate.add(_setting.quietEndingExtension);
+    }
+
+    /**
+    * @dev Tell if a vote was flipped in its most recent quiet ending period
+    *      This function assumes that it will only be called after the most recent quiet ending period has already ended
+    * @param _vote Vote instance being queried
+    * @return True if the vote was flipped
+    */
+    function _wasFlipped(Vote storage _vote) internal view returns (bool) {
+        // If there was no snapshot taken, it means no one voted during the quiet ending period. Thus, it cannot have been flipped.
+        VoterState snapshotSupport = _vote.quietEndingSnapshotSupport;
+        if (snapshotSupport == VoterState.Absent) {
+            return false;
+        }
+
+        // Otherwise, we calculate if the vote was flipped by comparing its current acceptance state to its last state at the start of the extension period
+        bool wasInitiallyAccepted = snapshotSupport == VoterState.Yea;
+        Setting storage setting = settings[_vote.settingId];
+        uint256 currentExtensions = _vote.quietEndingExtensionDuration / setting.quietEndingExtension;
+        bool wasAcceptedBeforeLastFlip = wasInitiallyAccepted != (currentExtensions % 2 != 0);
+        return wasAcceptedBeforeLastFlip != _isAccepted(_vote, setting);
     }
 
     /**
