@@ -30,6 +30,7 @@
     "test:token-manager:app": "npm test --prefix apps/token-manager/app",
     "test:vault": "lerna run --scope=@aragon/apps-vault --stream test",
     "test:voting": "lerna run --scope=@aragon/apps-voting --stream test",
+    "test:voting-disputable": "lerna run --scope=@aragon/apps-voting-disputable --stream test",
     "coverage": "npm run coverage:all",
     "coverage:all": "lerna run --scope=@aragon/apps-* --stream coverage",
     "coverage:agent": "lerna run --scope=@aragon/apps-agent --stream coverage",
@@ -37,7 +38,8 @@
     "coverage:finance": "lerna run --scope=@aragon/apps-finance --stream coverage",
     "coverage:token-manager": "lerna run --scope=@aragon/apps-token-manager --stream coverage",
     "coverage:vault": "lerna run --scope=@aragon/apps-vault --stream coverage",
-    "coverage:voting": "lerna run --scope=@aragon/apps-voting --stream coverage"
+    "coverage:voting": "lerna run --scope=@aragon/apps-voting --stream coverage",
+    "coverage:voting-disputable": "lerna run --scope=@aragon/apps-voting-disputable --stream coverage"
   },
   "workspaces": {
     "packages": [

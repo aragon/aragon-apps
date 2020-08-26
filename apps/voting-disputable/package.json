@@ -1,0 +1,44 @@
+{
+  "name": "@aragon/apps-voting-disputable",
+  "version": "0.1.0",
+  "author": "Aragon Association <legal@aragon.org>",
+  "license": "(GPL-3.0-or-later OR AGPL-3.0-or-later)",
+  "files": [
+    "/abi",
+    "/arapp.json",
+    "/artifacts",
+    "/contracts",
+    "/test"
+  ],
+  "scripts": {
+    "console": "buidler console",
+    "compile": "buidler compile --force",
+    "compile:staking": "buidler compile --config buidler.config.staking.js",
+    "devchain": "buidler node",
+    "build": "cd app && yarn build",
+    "lint": "solium --dir ./contracts",
+    "test": "yarn compile:staking && buidler test",
+    "test:gas": "REPORT_GAS=true buidler test --network localhost",
+    "coverage": "buidler coverage --network coverage",
+    "abi:extract": "buidler-extract --output abi/ --keys abi"
+  },
+  "dependencies": {
+    "@aragon/minime": "1.0.0",
+    "@aragon/os": "5.0.0-beta.8",
+    "@aragon/staking": "0.2.9"
+  },
+  "devDependencies": {
+    "@aragon/apps-agreement": "^0.1.0-beta.0",
+    "@aragon/contract-helpers-test": "^0.1.0",
+    "@nomiclabs/buidler": "^1.4.3",
+    "@nomiclabs/buidler-ganache": "^1.3.3",
+    "@nomiclabs/buidler-truffle5": "^1.3.4",
+    "@nomiclabs/buidler-web3": "^1.3.4",
+    "buidler-gas-reporter": "^0.1.3",
+    "chai": "^4.2.0",
+    "solidity-coverage": "^0.7.9",
+    "solium": "^1.2.5",
+    "buidler-extract": "^1.0.0",
+    "web3": "^1.2.11"
+  }
+}
