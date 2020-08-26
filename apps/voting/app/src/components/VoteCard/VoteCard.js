@@ -2,33 +2,12 @@ import React, { useState, useCallback, useMemo } from 'react'
 import { Card, GU, Timer, textStyle, useTheme } from '@aragon/ui'
 import { noop } from '../../utils'
 import { VOTE_YEA, VOTE_NAY } from '../../vote-types'
-import {
-  VOTE_STATUS_ACTIVE,
-  VOTE_STATUS_PAUSED,
-  VOTE_STATUS_CANCELLED,
-  VOTE_STATUS_CLOSED,
-  DISPUTABLE_VOTE_STATUSES,
-} from '../../disputable-vote-statuses'
-import DisputableStatusLabel from '../DisputableStatusLabel'
-import LocalLabelAppBadge from '../LocalIdentityBadge/LocalLabelAppBadge'
+import LocalLabelAppBadge from '..//LocalIdentityBadge/LocalLabelAppBadge'
 import VoteOptions from './VoteOptions'
 import VotedIndicator from './VotedIndicator'
 import VoteStatus from '../VoteStatus'
 import VoteDescription from '../VoteDescription'
 import You from '../You'
-//TODO: remove once we have real data
-import { getDisputableVoteById } from '../../agreementsMockData'
-
-function getCardBorderColor(status, theme) {
-  const borderColor = {
-    [VOTE_STATUS_ACTIVE]: theme.surface,
-    [VOTE_STATUS_CANCELLED]: theme.disabledContent,
-    [VOTE_STATUS_CLOSED]: theme.disabledContent,
-    [VOTE_STATUS_PAUSED]: theme.warning,
-  }
-
-  return borderColor[status]
-}
 
 function VoteCard({ vote, onOpen }) {
   const theme = useTheme()
@@ -39,10 +18,6 @@ function VoteCard({ vote, onOpen }) {
     numData,
     voteId,
   } = vote
-
-  //TODO: Remove this once we have real data
-  vote.disputable = getDisputableVoteById(voteId)
-
   const { votingPower, yea, nay } = numData
   const { open, metadata, description, endDate } = data
   const options = useMemo(
@@ -81,10 +56,6 @@ function VoteCard({ vote, onOpen }) {
   // “highlighted” means either focused or hovered
   const [highlighted, setHighlighted] = useState(false)
 
-  const disputableStatus = DISPUTABLE_VOTE_STATUSES.get(vote.disputable.status)
-
-  const border = getCardBorderColor(disputableStatus, theme)
-
   return (
     <Card
       onClick={handleOpen}
@@ -98,7 +69,6 @@ function VoteCard({ vote, onOpen }) {
         grid-template-rows: auto 1fr auto auto;
         grid-gap: ${1 * GU}px;
         padding: ${3 * GU}px;
-        ${border && `border: solid ${border} 1px;`}
       `}
     >
       <div
@@ -140,14 +110,10 @@ function VoteCard({ vote, onOpen }) {
           margin-top: ${2 * GU}px;
         `}
       >
-        {disputableStatus === VOTE_STATUS_ACTIVE ? (
-          open ? (
-            <Timer end={endDate} maxUnits={4} />
-          ) : (
-            <VoteStatus vote={vote} />
-          )
+        {open ? (
+          <Timer end={endDate} maxUnits={4} />
         ) : (
-          <DisputableStatusLabel status={disputableStatus} />
+          <VoteStatus vote={vote} />
         )}
       </div>
     </Card>
