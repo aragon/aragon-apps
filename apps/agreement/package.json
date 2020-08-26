@@ -27,8 +27,8 @@
     "@aragon/staking": "0.2.9"
   },
   "devDependencies": {
+    "@aragon/contract-helpers-test": "^0.1.0",
     "@aragon/minime": "1.0.0",
-    "@aragon/contract-helpers-test": "^0.1.0-rc.3",
     "@nomiclabs/buidler": "^1.4.3",
     "@nomiclabs/buidler-ganache": "^1.3.3",
     "@nomiclabs/buidler-truffle5": "^1.3.4",
