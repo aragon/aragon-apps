@@ -1,6 +1,18 @@
 {
   "name": "@aragon/apps-agent",
   "version": "2.1.0",
+  "author": "Aragon Association <legal@aragon.org>",
+  "license": "(GPL-3.0-or-later OR AGPL-3.0-or-later)",
+  "contributors": [
+    "Jorge Izquierdo <jorge@aragon.one>"
+  ],
+  "files": [
+    "/abi",
+    "/arapp.json",
+    "/artifacts",
+    "/contracts",
+    "/test"
+  ],
   "scripts": {
     "console": "buidler console",
     "compile": "buidler compile --force",
@@ -12,26 +24,12 @@
     "coverage": "buidler coverage --network coverage",
     "abi:extract": "buidler-extract --output abi/ --keys abi"
   },
-  "files": [
-    "/abi",
-    "/arapp.json",
-    "/artifacts",
-    "/contracts",
-    "/test"
-  ],
-  "keywords": [],
-  "author": "Aragon Association <legal@aragon.org>",
-  "contributors": [
-    "Jorge Izquierdo <jorge@aragon.one>"
-  ],
-  "license": "(GPL-3.0-or-later OR AGPL-3.0-or-later)",
-  "description": "",
   "dependencies": {
     "@aragon/apps-vault": "4.1.0",
     "@aragon/os": "4.4.0"
   },
   "devDependencies": {
-    "@aragon/contract-helpers-test": "0.1.0-rc.3",
+    "@aragon/contract-helpers-test": "0.1.0",
     "@nomiclabs/buidler": "^1.4.3",
     "@nomiclabs/buidler-ganache": "^1.3.3",
     "@nomiclabs/buidler-truffle5": "^1.3.4",
