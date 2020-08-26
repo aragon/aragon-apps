@@ -51,7 +51,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
 
     // Workflow errors
     string private constant ERROR_CANNOT_FORWARD = "VOTING_CANNOT_FORWARD";
-    string private constant ERROR_NO_VOTING_POWER = "VOTING_NO_VOTING_POWER";
+    string private constant ERROR_NO_TOTAL_VOTING_POWER = "VOTING_NO_TOTAL_VOTING_POWER";
     string private constant ERROR_CANNOT_VOTE = "VOTING_CANNOT_VOTE";
     string private constant ERROR_NOT_REPRESENTATIVE = "VOTING_NOT_REPRESENTATIVE";
     string private constant ERROR_PAST_REPRESENTATIVE_VOTING_WINDOW = "VOTING_PAST_REP_VOTING_WINDOW";
@@ -106,8 +106,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     struct Vote {
         uint256 yea;                                        // Voting power for
         uint256 nay;                                        // Voting power against
-        // Note: rename to totalPower?
-        uint256 votingPower;                                // Total voting power (based on the snapshot block)
+        uint256 totalPower;                                 // Total voting power (based on the snapshot block)
         uint256 settingId;                                  // Identification number of the setting applicable to the vote
         uint256 actionId;                                   // Identification number of the associated disputable action on the attached Agreement
         uint64 startDate;                                   // Datetime when the vote was created
@@ -420,7 +419,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @param _voteId Identification number of the vote
     * @return yea Voting power for
     * @return nay Voting power against
-    * @return votingPower Total voting power available (based on the snapshot block)
+    * @return totalPower Total voting power available (based on the snapshot block)
     * @return settingId Identification number of the setting applicable to the vote
     * @return actionId Identification number of the associated disputable action on the attached Agreement
     * @return startDate Datetime when the vote was created
@@ -436,11 +435,9 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         external
         view
         returns (
-            // Note: we may re-order these if the storage struct changes
             uint256 yea,
             uint256 nay,
-            // Note: propose to rename this to totalPower
-            uint256 votingPower,
+            uint256 totalPower,
             uint256 settingId,
             uint256 actionId,
             uint64 startDate,
@@ -457,7 +454,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
 
         yea = vote_.yea;
         nay = vote_.nay;
-        votingPower = vote_.votingPower;
+        totalPower = vote_.totalPower;
         settingId = vote_.settingId;
         actionId = vote_.actionId;
         startDate = vote_.startDate;
@@ -719,8 +716,8 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     */
     function _newVote(bytes _executionScript, bytes _context) internal returns (uint256 voteId) {
         uint64 snapshotBlock = getBlockNumber64() - 1; // avoid double voting in this very block
-        uint256 votingPower = token.totalSupplyAt(snapshotBlock);
-        require(votingPower > 0, ERROR_NO_VOTING_POWER);
+        uint256 totalPower = token.totalSupplyAt(snapshotBlock);
+        require(totalPower > 0, ERROR_NO_TOTAL_VOTING_POWER);
 
         voteId = votesLength++;
 
@@ -728,7 +725,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         vote_.status = VoteStatus.Active;
         vote_.startDate = getTimestamp64();
         vote_.snapshotBlock = snapshotBlock;
-        vote_.votingPower = votingPower;
+        vote_.totalPower = totalPower;
         vote_.settingId = _getCurrentSettingId();
         vote_.executionScriptHash = keccak256(_executionScript);
 
@@ -927,7 +924,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         uint64 supportRequiredPct = _setting.supportRequiredPct;
         uint64 minimumAcceptanceQuorumPct = _setting.minAcceptQuorumPct;
         return _isValuePct(yeas, yeas.add(nays), supportRequiredPct) &&
-               _isValuePct(yeas, _vote.votingPower, minimumAcceptanceQuorumPct);
+               _isValuePct(yeas, _vote.totalPower, minimumAcceptanceQuorumPct);
     }
 
     /**

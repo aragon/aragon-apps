@@ -77,7 +77,7 @@ contract('Voting', ([_, owner, holder1, holder2, holder20, holder29, holder51, a
 
           it('has correct state', async () => {
             const currentSettingId = await voting.getCurrentSettingId()
-            const { isOpen, isExecuted, snapshotBlock, settingId, yeas, nays, votingPower, pausedAt, pauseDuration, quietEndingExtensionDuration, executionScriptHash } = await getVoteState(voting, voteId)
+            const { isOpen, isExecuted, snapshotBlock, settingId, yeas, nays, totalPower, pausedAt, pauseDuration, quietEndingExtensionDuration, executionScriptHash } = await getVoteState(voting, voteId)
 
             assert.isTrue(isOpen, 'vote should be open')
             assert.isFalse(isExecuted, 'vote should not be executed')
@@ -85,7 +85,7 @@ contract('Voting', ([_, owner, holder1, holder2, holder20, holder29, holder51, a
             assertBn(settingId, currentSettingId, 'required support should be app required support')
             assertBn(yeas, 0, 'initial yea should be 0')
             assertBn(nays, 0, 'initial nay should be 0')
-            assertBn(votingPower, bigExp(100, 18), 'voting power should be 100')
+            assertBn(totalPower, bigExp(100, 18), 'total voting power should be 100')
             assertBn(pausedAt, 0, 'paused at does not match')
             assertBn(pauseDuration, 0, 'pause duration does not match')
             assertBn(quietEndingExtensionDuration, 0, 'quiet ending extended seconds does not match')
@@ -166,12 +166,12 @@ contract('Voting', ([_, owner, holder1, holder2, holder20, holder29, holder51, a
             ({ voteId } = await createVote({ voting, script: false }))
             await token.generateTokens(holder2, 1)
 
-            const { snapshotBlock, votingPower } = await getVoteState(voting, voteId)
+            const { snapshotBlock, totalPower } = await getVoteState(voting, voteId)
 
             // Generating tokens advanced the block by one
             assertBn(snapshotBlock, await web3.eth.getBlockNumber() - 2, 'snapshot block should be correct')
-            assertBn(votingPower, await token.totalSupplyAt(snapshotBlock), 'voting power should match snapshot supply')
-            assertBn(votingPower, 2, 'voting power should be correct')
+            assertBn(totalPower, await token.totalSupplyAt(snapshotBlock), 'total voting power should match snapshot supply')
+            assertBn(totalPower, 2, 'total voting power should be correct')
           })
 
           it('uses the correct snapshot value if tokens are minted in the same block', async () => {
@@ -181,18 +181,18 @@ contract('Voting', ([_, owner, holder1, holder2, holder20, holder29, holder51, a
             const receipt = await voting.newTokenAndVote(holder2, 1, CONTEXT)
             voteId = getEventArgument(receipt, 'StartVote', 'voteId')
 
-            const { snapshotBlock, votingPower } = await getVoteState(voting, voteId)
+            const { snapshotBlock, totalPower } = await getVoteState(voting, voteId)
 
             assertBn(snapshotBlock, await web3.eth.getBlockNumber() - 1, 'snapshot block should be correct')
-            assertBn(votingPower, await token.totalSupplyAt(snapshotBlock), 'voting power should match snapshot supply')
-            assertBn(votingPower, 2, 'voting power should be correct')
+            assertBn(totalPower, await token.totalSupplyAt(snapshotBlock), 'total voting power should match snapshot supply')
+            assertBn(totalPower, 2, 'total voting power should be correct')
           })
         })
       })
 
       context('when there is no supply', () => {
         it('reverts', async () => {
-          await assertRevert(createVote({ voting, script: false }), VOTING_ERRORS.VOTING_NO_VOTING_POWER)
+          await assertRevert(createVote({ voting, script: false }), VOTING_ERRORS.VOTING_NO_TOTAL_VOTING_POWER)
         })
       })
     })
