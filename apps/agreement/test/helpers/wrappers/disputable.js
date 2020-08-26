@@ -68,7 +68,7 @@ class DisputableWrapper extends AgreementWrapper {
 
   async activate(options = {}) {
     const { disputable, collateralToken, actionCollateral, challengeCollateral, challengeDuration } = this
-    return super.activate({ disputable, collateralToken, actionCollateral, challengeCollateral, challengeDuration, ...options })
+    return super.activate({ disputable, collateralToken, challengeDuration, actionCollateral, challengeCollateral, ...options })
   }
 
   async deactivate(options = {}) {

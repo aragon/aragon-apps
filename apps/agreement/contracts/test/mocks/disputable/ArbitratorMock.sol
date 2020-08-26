@@ -9,9 +9,11 @@ import "../../../arbitration/IAragonAppFeesCashier.sol";
 
 contract ArbitratorMock is IArbitrator {
     string internal constant ERROR_DISPUTE_NOT_RULED_YET = "ARBITRATOR_DISPUTE_NOT_RULED_YET";
+    string internal constant ERROR_DISPUTE_EVIDENCE_PERIOD_ALREADY_CLOSED = "ARBITRATOR_DISPUTE_EVIDENCE_PERIOD_ALREADY_CLOSED";
 
     struct Dispute {
         IArbitrable arbitrable;
+        bool evidencePeriodClosed;
         uint256 ruling;
     }
 
@@ -46,6 +48,10 @@ contract ArbitratorMock is IArbitrator {
     }
 
     function closeEvidencePeriod(uint256 _disputeId) external {
+        Dispute storage dispute = disputes[_disputeId];
+        require(!dispute.evidencePeriodClosed, ERROR_DISPUTE_EVIDENCE_PERIOD_ALREADY_CLOSED);
+
+        dispute.evidencePeriodClosed = true;
         emit EvidencePeriodClosed(_disputeId);
     }
 

@@ -140,12 +140,13 @@ contract('Agreement', ([_, submitter, challenger]) => {
 
                           const currentActionState = await disputable.getAction(actionId)
                           assert.isTrue(currentActionState.closed, 'action is not closed')
+                          assert.isFalse(currentActionState.lastChallengeActive, 'action challenge should not be active')
 
                           assert.equal(currentActionState.disputable, previousActionState.disputable, 'disputable does not match')
                           assert.equal(currentActionState.submitter, previousActionState.submitter, 'submitter does not match')
                           assert.equal(currentActionState.context, previousActionState.context, 'action context does not match')
                           assertBn(currentActionState.settingId, previousActionState.settingId, 'setting ID does not match')
-                          assertBn(currentActionState.currentChallengeId, previousActionState.currentChallengeId, 'challenge ID does not match')
+                          assertBn(currentActionState.lastChallengeId, previousActionState.lastChallengeId, 'challenge ID does not match')
                           assertBn(currentActionState.disputableActionId, previousActionState.disputableActionId, 'disputable action ID does not match')
                           assertBn(currentActionState.collateralRequirementId, previousActionState.collateralRequirementId, 'collateral requirement ID does not match')
                         })
@@ -180,12 +181,13 @@ contract('Agreement', ([_, submitter, challenger]) => {
 
                           const currentActionState = await disputable.getAction(actionId)
                           assert.isFalse(currentActionState.closed, 'action is not closed')
+                          assert.isFalse(currentActionState.lastChallengeActive, 'action challenge should not be active')
 
                           assert.equal(currentActionState.disputable, previousActionState.disputable, 'disputable does not match')
                           assert.equal(currentActionState.submitter, previousActionState.submitter, 'submitter does not match')
                           assert.equal(currentActionState.context, previousActionState.context, 'action context does not match')
                           assertBn(currentActionState.settingId, previousActionState.settingId, 'setting ID does not match')
-                          assertBn(currentActionState.currentChallengeId, previousActionState.currentChallengeId, 'challenge ID does not match')
+                          assertBn(currentActionState.lastChallengeId, previousActionState.lastChallengeId, 'challenge ID does not match')
                           assertBn(currentActionState.disputableActionId, previousActionState.disputableActionId, 'disputable action ID does not match')
                           assertBn(currentActionState.collateralRequirementId, previousActionState.collateralRequirementId, 'collateral requirement ID does not match')
                         })
@@ -263,20 +265,11 @@ contract('Agreement', ([_, submitter, challenger]) => {
                     })
 
                     it('emits an event', async () => {
-                      const { currentChallengeId } = await disputable.getAction(actionId)
+                      const { lastChallengeId } = await disputable.getAction(actionId)
                       const receipt = await disputable.executeRuling({ actionId, ruling })
 
                       assertAmountOfEvents(receipt, AGREEMENT_EVENTS.ACTION_ACCEPTED, { decodeForAbi: disputable.abi })
-                      assertEvent(receipt, AGREEMENT_EVENTS.ACTION_ACCEPTED, { expectedArgs: { actionId, challengeId: currentChallengeId }, decodeForAbi: disputable.abi })
-                    })
-
-                    it('ignores the disputable callback behavior', async () => {
-                      await disputable.mockDisputable({ callbacksRevert: true })
-
-                      const receipt = await disputable.executeRuling({ actionId, ruling })
-
-                      // disputable event shouldn't be emitted when disputable reverts
-                      assertAmountOfEvents(receipt, DISPUTABLE_EVENTS.ALLOWED, { expectedAmount: 0, decodeForAbi: disputable.disputableAbi })
+                      assertEvent(receipt, AGREEMENT_EVENTS.ACTION_ACCEPTED, { expectedArgs: { actionId, challengeId: lastChallengeId }, decodeForAbi: disputable.abi })
                     })
                   })
 
@@ -328,20 +321,11 @@ contract('Agreement', ([_, submitter, challenger]) => {
                     })
 
                     it('emits an event', async () => {
-                      const { currentChallengeId } = await disputable.getAction(actionId)
+                      const { lastChallengeId } = await disputable.getAction(actionId)
                       const receipt = await disputable.executeRuling({ actionId, ruling })
 
                       assertAmountOfEvents(receipt, AGREEMENT_EVENTS.ACTION_REJECTED, { decodeForAbi: disputable.abi })
-                      assertEvent(receipt, AGREEMENT_EVENTS.ACTION_REJECTED, { expectedArgs: { actionId, challengeId: currentChallengeId }, decodeForAbi: disputable.abi })
-                    })
-
-                    it('ignores the disputable callback behavior', async () => {
-                      await disputable.mockDisputable({ callbacksRevert: true })
-
-                      const receipt = await disputable.executeRuling({ actionId, ruling })
-
-                      // disputable event shouldn't be emitted when disputable reverts
-                      assertAmountOfEvents(receipt, DISPUTABLE_EVENTS.REJECTED, { expectedAmount: 0, decodeForAbi: disputable.disputableAbi })
+                      assertEvent(receipt, AGREEMENT_EVENTS.ACTION_REJECTED, { expectedArgs: { actionId, challengeId: lastChallengeId }, decodeForAbi: disputable.abi })
                     })
                   })
 
@@ -370,11 +354,11 @@ contract('Agreement', ([_, submitter, challenger]) => {
                     })
 
                     it('emits an event', async () => {
-                      const { currentChallengeId } = await disputable.getAction(actionId)
+                      const { lastChallengeId } = await disputable.getAction(actionId)
                       const receipt = await disputable.executeRuling({ actionId, ruling })
 
                       assertAmountOfEvents(receipt, AGREEMENT_EVENTS.ACTION_VOIDED, { decodeForAbi: disputable.abi })
-                      assertEvent(receipt, AGREEMENT_EVENTS.ACTION_VOIDED, { expectedArgs: { actionId, challengeId: currentChallengeId }, decodeForAbi: disputable.abi })
+                      assertEvent(receipt, AGREEMENT_EVENTS.ACTION_VOIDED, { expectedArgs: { actionId, challengeId: lastChallengeId }, decodeForAbi: disputable.abi })
                     })
 
                     it('splits the challenger arbitrator fees between the challenger and the submitter', async () => {
@@ -390,15 +374,6 @@ contract('Agreement', ([_, submitter, challenger]) => {
                       const currentSubmitterArbitratorTokenBalance = await challengerArbitratorFeesToken.balanceOf(submitter)
                       assertBn(currentChallengerArbitratorTokenBalance, previousChallengerArbitratorTokenBalance.add(halfFees), 'challenger balance does not match')
                       assertBn(currentSubmitterArbitratorTokenBalance, previousSubmitterArbitratorTokenBalance.add(halfFees), 'submitter balance does not match')
-                    })
-
-                    it('ignores the disputable callback behavior', async () => {
-                      await disputable.mockDisputable({ callbacksRevert: true })
-
-                      const receipt = await disputable.executeRuling({ actionId, ruling })
-
-                      // disputable event shouldn't be emitted when disputable reverts
-                      assertAmountOfEvents(receipt, DISPUTABLE_EVENTS.VOIDED, { expectedAmount: 0, decodeForAbi: disputable.disputableAbi })
                     })
                   })
                 })
@@ -420,7 +395,7 @@ contract('Agreement', ([_, submitter, challenger]) => {
         itCanRuleActions()
       })
 
-      context('when the app was unregistered', () => {
+      context('when the app was deactivated', () => {
         beforeEach('mark app as unregistered', async () => {
           await disputable.deactivate()
         })

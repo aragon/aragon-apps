@@ -8,6 +8,9 @@ const { assertBn, assertEvent, assertRevert } = require('@aragon/contract-helper
 injectWeb3(web3)
 injectArtifacts(artifacts)
 
+const ARBITRABLE_INTERFACE = '0x88f3ee69'
+const ARAGON_APP_INTERFACE = '0x54053e6c'
+
 contract('Agreement', ([_, EOA, owner]) => {
   let arbitrator, stakingFactory, agreement
 
@@ -25,20 +28,20 @@ contract('Agreement', ([_, EOA, owner]) => {
       const base = deployer.base
 
       assert(await base.isPetrified(), 'base agreement contract should be petrified')
-      await assertRevert(base.initialize(title, content, arbitrator.address, true, stakingFactory.address), ARAGON_OS_ERRORS.ERROR_ALREADY_INITIALIZED)
+      await assertRevert(base.initialize(arbitrator.address, true, title, content, stakingFactory.address), ARAGON_OS_ERRORS.ERROR_ALREADY_INITIALIZED)
     })
 
     context('when the initialization fails', () => {
       it('fails when using a non-contract arbitrator', async () => {
         const court = EOA
 
-        await assertRevert(agreement.initialize(title, content, court, true, stakingFactory.address), AGREEMENT_ERRORS.ERROR_ARBITRATOR_NOT_CONTRACT)
+        await assertRevert(agreement.initialize(court, true, title, content, stakingFactory.address), AGREEMENT_ERRORS.ERROR_ARBITRATOR_NOT_CONTRACT)
       })
 
       it('fails when using a non-contract staking factory', async () => {
         const factory = EOA
 
-        await assertRevert(agreement.initialize(title, content, arbitrator.address, true, factory), AGREEMENT_ERRORS.ERROR_STAKING_FACTORY_NOT_CONTRACT)
+        await assertRevert(agreement.initialize(arbitrator.address, true, title, content, factory), AGREEMENT_ERRORS.ERROR_STAKING_FACTORY_NOT_CONTRACT)
       })
     })
 
@@ -46,11 +49,11 @@ contract('Agreement', ([_, EOA, owner]) => {
       let receipt
 
       before('initialize agreement DAO', async () => {
-        receipt = await agreement.initialize(title, content, arbitrator.address, true, stakingFactory.address)
+        receipt = await agreement.initialize(arbitrator.address, true, title, content, stakingFactory.address)
       })
 
       it('cannot be initialized again', async () => {
-        await assertRevert(agreement.initialize(title, content, arbitrator.address, true, stakingFactory.address), ARAGON_OS_ERRORS.ERROR_ALREADY_INITIALIZED)
+        await assertRevert(agreement.initialize(arbitrator.address, true, title, content, stakingFactory.address), ARAGON_OS_ERRORS.ERROR_ALREADY_INITIALIZED)
       })
 
       it('initializes the first setting', async () => {
@@ -81,6 +84,16 @@ contract('Agreement', ([_, EOA, owner]) => {
         assertBn(await token.balanceOf(agreement.address), balance, 'agreement token balance does not match')
         assert.isFalse(await agreement.allowRecoverability(token.address), 'agreement allows recovering funds')
       })
+    })
+  })
+
+  describe('ERC165', () => {
+    it('supports IArbitrable interface', async () => {
+      assert.isTrue(await agreement.supportsInterface(ARBITRABLE_INTERFACE), 'agreement does not support IArbitrable')
+    })
+
+    it('supports IAragonApp interface', async () => {
+      assert.isTrue(await agreement.supportsInterface(ARAGON_APP_INTERFACE), 'agreement does not support IAragonApp')
     })
   })
 })
