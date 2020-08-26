@@ -29,10 +29,10 @@ contract('Voting', ([_, owner, holder20, holder29, holder51, nonHolder, represen
   })
 
   describe('vote', () => {
-    let voteId
+    let voteId, script
 
     beforeEach('create vote', async () => {
-      ({ voteId } = await createVote({ voting, voteContext: CONTEXT, from: holder51 }))
+      ({ voteId, script } = await createVote({ voting, voteContext: CONTEXT, from: holder51 }))
     })
 
     context('when the sender has some balance', () => {
@@ -288,7 +288,7 @@ contract('Voting', ([_, owner, holder20, holder29, holder51, nonHolder, represen
 
         context('when the vote was executed', () => {
           beforeEach('execute vote', async () => {
-            await voting.executeVote(voteId)
+            await voting.executeVote(voteId, script)
           })
 
           it('reverts', async () => {

@@ -48,6 +48,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     string private constant ERROR_CHANGE_SUPPORT_TOO_BIG = "VOTING_CHANGE_SUPPORT_TOO_BIG";
     string private constant ERROR_INVALID_OVERRULE_WINDOW = "VOTING_INVALID_OVERRULE_WINDOW";
     string private constant ERROR_INVALID_QUIET_ENDING_PERIOD = "VOTING_INVALID_QUIET_END_PERIOD";
+    string private constant ERROR_INVALID_EXECUTION_SCRIPT = "VOTING_INVALID_EXECUTION_SCRIPT";
 
     // Workflow errors
     string private constant ERROR_CANNOT_FORWARD = "VOTING_CANNOT_FORWARD";
@@ -121,8 +122,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         uint64 quietEndingExtendedSeconds;                  // Total number of seconds a vote was extended due to quiet ending
         // Note: I initially found this name a bit confusing, but it makes sense now
         VoterState quietEndingSnapshotSupport;              // Snapshot of the vote's support at the beginning of the first quiet ending period
-        // Note: let's prefer to store a hash here
-        bytes executionScript;                              // EVM script attached to the vote
+        bytes32 executionScriptHash;                        // Hash of the EVM script attached to the vote
         mapping (address => VoteCast) castVotes;            // Mapping of voter address => more information about their cast vote
     }
 
@@ -145,8 +145,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     event ChangeOverruleWindow(uint64 overruleWindow);
     event ChangeQuietEndingConfiguration(uint64 quietEndingPeriod, uint64 quietEndingExtension);
 
-    // Note: may want to also emit the evm script
-    event StartVote(uint256 indexed voteId, address indexed creator, bytes context);
+    event StartVote(uint256 indexed voteId, address indexed creator, bytes context, bytes executionScript);
     event PauseVote(uint256 indexed voteId, uint256 indexed challengeId);
     event ResumeVote(uint256 indexed voteId);
     event CancelVote(uint256 indexed voteId);
@@ -289,10 +288,12 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @dev Initialization check is implicitly provided by `_getVote()` as new votes can only be
     *      created via `newVote()`, which requires initialization
     * @param _voteId Identification number of the vote
+    * @param _executionScript Action (encoded as an EVM script) to be executed, must match the one used when the vote was created
     */
-    function executeVote(uint256 _voteId) external {
+    function executeVote(uint256 _voteId, bytes _executionScript) external {
         Vote storage vote_ = _getVote(_voteId);
         require(_canExecute(vote_), ERROR_CANNOT_EXECUTE);
+        require(vote_.executionScriptHash == keccak256(_executionScript), ERROR_INVALID_EXECUTION_SCRIPT);
 
         vote_.status = VoteStatus.Executed;
         _closeDisputableAction(vote_.actionId);
@@ -301,7 +302,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         // the Agreement from this app's context (e.g. maliciously closing a different action)
         address[] memory blacklist = new address[](1);
         blacklist[0] = address(_getAgreement());
-        runScript(vote_.executionScript, new bytes(0), blacklist);
+        runScript(_executionScript, new bytes(0), blacklist);
         emit ExecuteVote(_voteId);
     }
 
@@ -429,7 +430,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @return pauseDuration Duration of the pause (only updated once resumed)
     * @return quietEndingExtendedSeconds Total number of seconds a vote was extended due to quiet ending
     * @return quietEndingSnapshotSupport Snapshot of the vote's support at the beginning of the first quiet ending period
-    * @return executionScript EVM script attached to the vote
+    * @return executionScriptHash Hash of the EVM script attached to the vote
     */
     function getVote(uint256 _voteId)
         external
@@ -449,7 +450,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
             uint64 pauseDuration,
             uint64 quietEndingExtendedSeconds,
             VoterState quietEndingSnapshotSupport,
-            bytes executionScript
+            bytes32 executionScriptHash
         )
     {
         Vote storage vote_ = _getVote(_voteId);
@@ -466,7 +467,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         pauseDuration = vote_.pauseDuration;
         quietEndingExtendedSeconds = vote_.quietEndingExtendedSeconds;
         quietEndingSnapshotSupport = vote_.quietEndingSnapshotSupport;
-        executionScript = vote_.executionScript;
+        executionScriptHash = vote_.executionScriptHash;
     }
 
     /**
@@ -715,13 +716,13 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         vote_.snapshotBlock = snapshotBlock;
         vote_.votingPower = votingPower;
         vote_.settingId = _getCurrentSettingId();
-        vote_.executionScript = _executionScript;
+        vote_.executionScriptHash = keccak256(_executionScript);
 
         // Notify the attached Agreement about the new vote; this is mandatory in making the vote disputable
         // Note that we send `msg.sender` as the action's submitter--the attached Agreement may expect to be able to pull funds from this account
         vote_.actionId = _registerDisputableAction(voteId, _context, msg.sender);
 
-        emit StartVote(voteId, msg.sender, _context);
+        emit StartVote(voteId, msg.sender, _context, _executionScript);
     }
 
     /**

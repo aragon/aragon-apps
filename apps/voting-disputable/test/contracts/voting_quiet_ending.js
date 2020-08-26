@@ -97,7 +97,7 @@ contract('Voting', ([_, owner, holder10, holder20, holder30, holder40, holder50]
 
         it('does not allow executing the vote', async () => {
           assert.isFalse(await voting.canExecute(voteId), 'vote can be executed')
-          await assertRevert(voting.executeVote(voteId), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
+          await assertRevert(voting.executeVote(voteId, script), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
         })
 
         it('does not allow closing the vote', async () => {
@@ -131,7 +131,7 @@ contract('Voting', ([_, owner, holder10, holder20, holder30, holder40, holder50]
             it('allows executing the vote after the extension', async () => {
               assert.isTrue(await voting.canExecute(voteId), 'vote cannot be executed')
 
-              await voting.executeVote(voteId)
+              await voting.executeVote(voteId, script)
               assertBn(await executionTarget.counter(), 1, 'vote was not executed')
             })
 
@@ -145,13 +145,13 @@ contract('Voting', ([_, owner, holder10, holder20, holder30, holder40, holder50]
 
               assert.isTrue(await voting.canExecute(voteId), 'vote cannot be executed')
 
-              await voting.executeVote(voteId)
+              await voting.executeVote(voteId, script)
               assertBn(await executionTarget.counter(), 1, 'vote was not executed')
             })
           } else {
             it('does not allow executing the vote after the extension', async () => {
               assert.isFalse(await voting.canExecute(voteId), 'vote can be executed')
-              await assertRevert(voting.executeVote(voteId), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
+              await assertRevert(voting.executeVote(voteId, script), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
             })
 
             it('allows closing the vote', async () => {

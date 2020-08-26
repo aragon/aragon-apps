@@ -2,6 +2,7 @@ const deployer = require('../helpers/deployer')(web3, artifacts)
 const { ARAGON_OS_ERRORS, VOTING_ERRORS } = require('../helpers/errors')
 const { createVote, voteScript, getVoteState } = require('../helpers/voting')
 
+const { EMPTY_CALLS_SCRIPT } = require('@aragon/contract-helpers-test/src/aragon-os')
 const { ONE_DAY, bigExp, pct16, getEventArgument } = require('@aragon/contract-helpers-test')
 const { assertBn, assertRevert, assertEvent, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/asserts')
 
@@ -66,17 +67,17 @@ contract('Voting', ([_, owner, holder1, holder2, holder20, holder29, holder51, a
             const receipt = await voting.forward(script, CONTEXT, { from: holder51 })
 
             assertAmountOfEvents(receipt, 'StartVote')
-            assertEvent(receipt, 'StartVote', { expectedArgs: { voteId: 1, creator: holder51, context: CONTEXT } })
+            assertEvent(receipt, 'StartVote', { expectedArgs: { voteId: 1, creator: holder51, context: CONTEXT, executionScript: script } })
           })
 
           it('emits an event', async () => {
             assertAmountOfEvents(receipt, 'StartVote')
-            assertEvent(receipt, 'StartVote', { expectedArgs: { voteId, creator: holder51, context: CONTEXT } })
+            assertEvent(receipt, 'StartVote', { expectedArgs: { voteId, creator: holder51, context: CONTEXT, executionScript: script } })
           })
 
           it('has correct state', async () => {
             const currentSettingId = await voting.getCurrentSettingId()
-            const { isOpen, isExecuted, snapshotBlock, settingId, yeas, nays, votingPower, pausedAt, pauseDuration, quietEndingExtendedSeconds, executionScript } = await getVoteState(voting, voteId)
+            const { isOpen, isExecuted, snapshotBlock, settingId, yeas, nays, votingPower, pausedAt, pauseDuration, quietEndingExtendedSeconds, executionScriptHash } = await getVoteState(voting, voteId)
 
             assert.isTrue(isOpen, 'vote should be open')
             assert.isFalse(isExecuted, 'vote should not be executed')
@@ -88,7 +89,7 @@ contract('Voting', ([_, owner, holder1, holder2, holder20, holder29, holder51, a
             assertBn(pausedAt, 0, 'paused at does not match')
             assertBn(pauseDuration, 0, 'pause duration does not match')
             assertBn(quietEndingExtendedSeconds, 0, 'quiet ending extended seconds does not match')
-            assert.equal(executionScript, script, 'script should be correct')
+            assert.equal(executionScriptHash, web3.utils.sha3(script), 'script should be correct')
           })
 
           it('fails getting a vote out of bounds', async () => {
@@ -109,7 +110,7 @@ contract('Voting', ([_, owner, holder1, holder2, holder20, holder29, holder51, a
 
             await voting.vote(voteId, true, { from: holder1 })
             await voting.mockIncreaseTime(VOTING_DURATION)
-            await voting.executeVote(voteId)
+            await voting.executeVote(voteId, EMPTY_CALLS_SCRIPT)
 
             const { isOpen, isExecuted } = await getVoteState(voting, voteId)
 

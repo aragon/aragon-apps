@@ -59,7 +59,7 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
         })
 
         it('does not affect vote required support', async () => {
-          const { voteId } = await createVote({ voting, from: holder51 })
+          const { voteId, script } = await createVote({ voting, from: holder51 })
           await voting.changeSupportRequiredPct(pct16(70), { from })
 
           // With previous required support at 50%, vote should be approved
@@ -73,7 +73,7 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
 
           const { supportRequiredPct } = await getVoteSetting(voting, voteId)
           assertBn(supportRequiredPct, REQUIRED_SUPPORT, 'required support in vote should stay equal')
-          await voting.executeVote(voteId) // exec doesn't fail
+          await voting.executeVote(voteId, script) // exec doesn't fail
         })
       })
 
@@ -125,7 +125,7 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
         })
 
         it('does not affect the vote min quorum', async () => {
-          const { voteId } = await createVote({ voting, from: holder51 })
+          const { voteId, script } = await createVote({ voting, from: holder51 })
           await voting.changeMinAcceptQuorumPct(pct16(50), { from })
 
           // With previous min acceptance quorum at 20%, vote should be approved
@@ -137,7 +137,7 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
 
           const { minAcceptQuorumPct } = await getVoteSetting(voting, voteId)
           assertBn(minAcceptQuorumPct, MINIMUM_ACCEPTANCE_QUORUM, 'acceptance quorum in vote should stay equal')
-          await voting.executeVote(voteId) // exec doesn't fail
+          await voting.executeVote(voteId, script) // exec doesn't fail
         })
       }
 

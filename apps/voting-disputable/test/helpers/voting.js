@@ -16,10 +16,10 @@ const VOTE_STATUS = {
 }
 
 const getVoteState = async (voting, id) => {
-  const { yea, nay, votingPower, settingId, actionId, status, startDate, snapshotBlock, pausedAt, pauseDuration, quietEndingExtendedSeconds, quietEndingSnapshotSupport, executionScript } = await voting.getVote(id)
+  const { yea, nay, votingPower, settingId, actionId, status, startDate, snapshotBlock, pausedAt, pauseDuration, quietEndingExtendedSeconds, quietEndingSnapshotSupport, executionScriptHash } = await voting.getVote(id)
   const isOpen = await voting.isVoteOpen(id)
   const isExecuted = status.eq(bn(VOTE_STATUS.EXECUTED))
-  return { isOpen, isExecuted, startDate, snapshotBlock, settingId, status, actionId, yeas: yea, nays: nay, votingPower, pausedAt, pauseDuration, quietEndingExtendedSeconds, quietEndingSnapshotSupport, executionScript }
+  return { isOpen, isExecuted, startDate, snapshotBlock, settingId, status, actionId, yeas: yea, nays: nay, votingPower, pausedAt, pauseDuration, quietEndingExtendedSeconds, quietEndingSnapshotSupport, executionScriptHash }
 }
 
 const getVoteSetting = async (voting, id) => {
@@ -59,7 +59,7 @@ const createVote = async ({ voting, script = undefined, voteContext = '0xabcdef'
   const events = decodeEvents(receipt, artifacts.require('DisputableVoting').abi, 'StartVote')
   assert.equal(events.length, 1, 'number of StartVote emitted events does not match')
   const { voteId } = events[0].args
-  return { voteId, receipt }
+  return { voteId, script, receipt }
 }
 
 module.exports = {

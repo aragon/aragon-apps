@@ -77,7 +77,7 @@ contract('Voting disputable', ([_, owner, representative, voter10, voter20, vote
     beforeEach('vote', async () => {
       await voting.vote(voteId, true, { from: voter40 })
       await voting.mockIncreaseTime(VOTING_DURATION)
-      await voting.executeVote(voteId)
+      await voting.executeVote(voteId, script)
     })
 
     it('changes the disputable state to closed', async () => {
@@ -133,12 +133,12 @@ contract('Voting disputable', ([_, owner, representative, voter10, voter20, vote
 
     it('does not allow to execute the vote', async () => {
       assert.isFalse(await voting.canExecute(voteId), 'voting can be executed')
-      await assertRevert(voting.executeVote(voteId), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
+      await assertRevert(voting.executeVote(voteId, script), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
 
       await voting.mockIncreaseTime(VOTING_DURATION)
 
       assert.isFalse(await voting.canExecute(voteId), 'voting can be executed')
-      await assertRevert(voting.executeVote(voteId), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
+      await assertRevert(voting.executeVote(voteId, script), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
     })
 
     it('marks the vote as closed', async () => {
@@ -181,7 +181,7 @@ contract('Voting disputable', ([_, owner, representative, voter10, voter20, vote
         await voting.mockIncreaseTime(VOTING_DURATION)
 
         assert.isTrue(await voting.canExecute(voteId), 'voting cannot be executed')
-        await voting.executeVote(voteId)
+        await voting.executeVote(voteId, script)
         assertBn(await executionTarget.counter(), 1, 'vote was not executed')
 
         const { closed } = await agreement.getAction(actionId)
@@ -317,12 +317,12 @@ contract('Voting disputable', ([_, owner, representative, voter10, voter20, vote
 
       it('does not allow to execute the vote', async () => {
         assert.isFalse(await voting.canExecute(voteId), 'voting can be executed')
-        await assertRevert(voting.executeVote(voteId), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
+        await assertRevert(voting.executeVote(voteId, script), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
 
         await voting.mockIncreaseTime(VOTING_DURATION)
 
         assert.isFalse(await voting.canExecute(voteId), 'voting can be executed')
-        await assertRevert(voting.executeVote(voteId), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
+        await assertRevert(voting.executeVote(voteId, script), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
       })
 
       it('marks the vote as closed', async () => {

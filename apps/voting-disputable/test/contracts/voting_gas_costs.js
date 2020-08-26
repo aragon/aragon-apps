@@ -35,7 +35,7 @@ contract('Voting', ([_, owner, voter]) => {
     }
 
     context('newVote', () => {
-      itCostsAtMost(337e3, async () => receipt)
+      itCostsAtMost(317e3, async () => receipt)
     })
 
     context('vote', () => {
