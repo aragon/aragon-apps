@@ -19,21 +19,20 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     // bytes32 public constant CREATE_VOTES_ROLE = keccak256("CREATE_VOTES_ROLE");
     bytes32 public constant CREATE_VOTES_ROLE = 0xe7dcd7275292e064d090fbc5f3bd7995be23b502c1fed5cd94cfddbbdcd32bbc;
 
-    // Note: maybe we should just use CHANGE_* as a prefix?
-    // bytes32 public constant MODIFY_SUPPORT_ROLE = keccak256("MODIFY_SUPPORT_ROLE");
-    bytes32 public constant MODIFY_SUPPORT_ROLE = 0xda3972983e62bdf826c4b807c4c9c2b8a941e1f83dfa76d53d6aeac11e1be650;
+    // bytes32 public constant CHANGE_SUPPORT_ROLE = keccak256("CHANGE_SUPPORT_ROLE");
+    bytes32 public constant CHANGE_SUPPORT_ROLE = 0xf3a5f71f3cb50dae9454dd13cdf0fd1b559f7e20d63c08902592486e6d460c90;
 
-    // bytes32 public constant MODIFY_QUORUM_ROLE = keccak256("MODIFY_QUORUM_ROLE");
-    bytes32 public constant MODIFY_QUORUM_ROLE = 0xad15e7261800b4bb73f1b69d3864565ffb1fd00cb93cf14fe48da8f1f2149f39;
+    // bytes32 public constant CHANGE_QUORUM_ROLE = keccak256("CHANGE_QUORUM_ROLE");
+    bytes32 public constant CHANGE_QUORUM_ROLE = 0xa3f675280fb3c54662067f92659ca1ee3ef7c1a7f2a6ff03a5c4228aa26b6a82;
 
-    // bytes32 public constant MODIFY_OVERRULE_WINDOW_ROLE = keccak256("MODIFY_OVERRULE_WINDOW_ROLE");
-    bytes32 public constant MODIFY_OVERRULE_WINDOW_ROLE = 0x703200758fea823fd0c9d36774ba318b14f6c50c4ef6dff34f394e8f2c7d2d99;
+    // bytes32 public constant CHANGE_OVERRULE_WINDOW_ROLE = keccak256("CHANGE_OVERRULE_WINDOW_ROLE");
+    bytes32 public constant CHANGE_OVERRULE_WINDOW_ROLE = 0xb196d4854c77162a5bc7c78fb8c05b40fc357185dc589dda91e7e64bcc738cc3;
 
-    // bytes32 public constant MODIFY_EXECUTION_DELAY_ROLE = keccak256("MODIFY_EXECUTION_DELAY_ROLE");
-    bytes32 public constant MODIFY_EXECUTION_DELAY_ROLE = 0x69a0bddd05e66b7ae81cce9994caef3b5c660de549fd2fd3597a9e2c3046e446;
+    // bytes32 public constant CHANGE_EXECUTION_DELAY_ROLE = keccak256("CHANGE_EXECUTION_DELAY_ROLE");
+    bytes32 public constant CHANGE_EXECUTION_DELAY_ROLE = 0x5e3a3edc315e366a0cc5c94ca94a8f9bbc2f1feebb2ef7704bfefcff0cdc4ee7;
 
-    // bytes32 public constant MODIFY_QUIET_ENDING_ROLE = keccak256("MODIFY_QUIET_ENDING_ROLE");
-    bytes32 public constant MODIFY_QUIET_ENDING_ROLE = 0xd1e2974c80e3190749a0c11e5887a3d42877cf632fe25477926c2407f04a1b80;
+    // bytes32 public constant CHANGE_QUIET_ENDING_ROLE = keccak256("CHANGE_QUIET_ENDING_ROLE");
+    bytes32 public constant CHANGE_QUIET_ENDING_ROLE = 0x4f885d966bcd49734218a6e280d58c840b86e8cc13610b21ebd46f0b1da362c2;
 
     uint256 public constant PCT_BASE = 10 ** 18; // 0% = 0; 1% = 10^16; 100% = 10^18
     uint256 public constant MAX_VOTES_DELEGATION_SET_LENGTH = 70;
@@ -196,7 +195,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @notice Change required support to `@formatPct(_supportRequiredPct)`%
     * @param _supportRequiredPct New required support; expressed as a percentage of 10^18
     */
-    function changeSupportRequiredPct(uint64 _supportRequiredPct) external authP(MODIFY_SUPPORT_ROLE, arr(uint256(_supportRequiredPct))) {
+    function changeSupportRequiredPct(uint64 _supportRequiredPct) external authP(CHANGE_SUPPORT_ROLE, arr(uint256(_supportRequiredPct))) {
         Setting storage setting = _newCopiedSettings();
         _changeSupportRequiredPct(setting, _supportRequiredPct);
     }
@@ -205,7 +204,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @notice Change minimum acceptance quorum to `@formatPct(_minAcceptQuorumPct)`%
     * @param _minAcceptQuorumPct New minimum acceptance quorum; expressed as a percentage of 10^18
     */
-    function changeMinAcceptQuorumPct(uint64 _minAcceptQuorumPct) external authP(MODIFY_QUORUM_ROLE, arr(uint256(_minAcceptQuorumPct))) {
+    function changeMinAcceptQuorumPct(uint64 _minAcceptQuorumPct) external authP(CHANGE_QUORUM_ROLE, arr(uint256(_minAcceptQuorumPct))) {
         Setting storage setting = _newCopiedSettings();
         _changeMinAcceptQuorumPct(setting, _minAcceptQuorumPct);
     }
@@ -214,7 +213,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @notice Change overrule window to `@transformTime(_overruleWindow)`
     * @param _overruleWindow New overrule window
     */
-    function changeOverruleWindow(uint64 _overruleWindow) external authP(MODIFY_OVERRULE_WINDOW_ROLE, arr(uint256(_overruleWindow))) {
+    function changeOverruleWindow(uint64 _overruleWindow) external authP(CHANGE_OVERRULE_WINDOW_ROLE, arr(uint256(_overruleWindow))) {
         Setting storage setting = _newCopiedSettings();
         _changeOverruleWindow(setting, _overruleWindow);
     }
@@ -226,7 +225,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     */
     function changeQuietEndingConfiguration(uint64 _quietEndingPeriod, uint64 _quietEndingExtension)
         external
-        authP(MODIFY_QUIET_ENDING_ROLE, arr(uint256(_quietEndingPeriod), uint256(_quietEndingExtension)))
+        authP(CHANGE_QUIET_ENDING_ROLE, arr(uint256(_quietEndingPeriod), uint256(_quietEndingExtension)))
     {
         Setting storage setting = _newCopiedSettings();
         _changeQuietEndingConfiguration(setting, _quietEndingPeriod, _quietEndingExtension);
@@ -236,7 +235,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @notice Change execution delay to `@transformTime(_executionDelay)`
     * @param _executionDelay New execution delay
     */
-    function changeExecutionDelay(uint64 _executionDelay) external authP(MODIFY_EXECUTION_DELAY_ROLE, arr(uint256(_executionDelay))) {
+    function changeExecutionDelay(uint64 _executionDelay) external authP(CHANGE_EXECUTION_DELAY_ROLE, arr(uint256(_executionDelay))) {
         Setting storage setting = _newCopiedSettings();
         _changeExecutionDelay(setting, _executionDelay);
     }

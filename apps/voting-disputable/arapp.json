@@ -40,7 +40,7 @@
     },
     {
       "name": "Modify support",
-      "id": "MODIFY_SUPPORT_ROLE",
+      "id": "CHANGE_SUPPORT_ROLE",
       "params": [
         "New support",
         "Current support"
@@ -48,7 +48,7 @@
     },
     {
       "name": "Modify quorum",
-      "id": "MODIFY_QUORUM_ROLE",
+      "id": "CHANGE_QUORUM_ROLE",
       "params": [
         "New quorum",
         "Current quorum"
@@ -56,7 +56,7 @@
     },
     {
       "name": "Modify overrule window",
-      "id": "MODIFY_OVERRULE_WINDOW_ROLE",
+      "id": "CHANGE_OVERRULE_WINDOW_ROLE",
       "params": [
         "New window",
         "Current window"
@@ -64,7 +64,7 @@
     },
     {
       "name": "Modify execution delay",
-      "id": "MODIFY_EXECUTION_DELAY_ROLE",
+      "id": "CHANGE_EXECUTION_DELAY_ROLE",
       "params": [
         "New execution delay",
         "Current execution delay"
@@ -72,7 +72,7 @@
     },
     {
       "name": "Modify quiet ending configuration",
-      "id": "MODIFY_QUIET_ENDING_ROLE",
+      "id": "CHANGE_QUIET_ENDING_ROLE",
       "params": [
         "New quiet ending period",
         "Current quiet ending period",
