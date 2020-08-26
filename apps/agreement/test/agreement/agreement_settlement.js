@@ -322,8 +322,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
       })
     })
 
-    // TODO: Skipping this test for now, Truffle is failing due to a weird error
-    context.skip('when the given action does not exist', () => {
+    context('when the given action does not exist', () => {
       it('reverts', async () => {
         await assertRevert(disputable.settle({ actionId: 0 }), AGREEMENT_ERRORS.ERROR_ACTION_DOES_NOT_EXIST)
       })
