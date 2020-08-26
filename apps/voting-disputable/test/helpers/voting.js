@@ -24,8 +24,8 @@ const getVoteState = async (voting, id) => {
 
 const getVoteSetting = async (voting, id) => {
   const { settingId } = await voting.getVote(id)
-  const { supportRequiredPct, minAcceptQuorumPct, executionDelay, delegatedVotingPeriod, quietEndingPeriod, quietEndingExtension } = await voting.getSetting(settingId)
-  return { supportRequiredPct, minAcceptQuorumPct, executionDelay, delegatedVotingPeriod, quietEndingPeriod, quietEndingExtension }
+  const { voteTime, supportRequiredPct, minAcceptQuorumPct, executionDelay, delegatedVotingPeriod, quietEndingPeriod, quietEndingExtension } = await voting.getSetting(settingId)
+  return { voteTime, supportRequiredPct, minAcceptQuorumPct, executionDelay, delegatedVotingPeriod, quietEndingPeriod, quietEndingExtension }
 }
 
 const voteScript = async (actions = 1) => {

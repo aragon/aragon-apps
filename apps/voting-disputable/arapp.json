@@ -39,35 +39,31 @@
       "params": []
     },
     {
+      "name": "Modify vote time",
+      "id": "CHANGE_VOTE_TIME_ROLE",
+      "params": [
+        "New vote time"
+      ]
+    },
+    {
       "name": "Modify support",
       "id": "CHANGE_SUPPORT_ROLE",
       "params": [
-        "New support",
-        "Current support"
+        "New required support"
       ]
     },
     {
       "name": "Modify quorum",
       "id": "CHANGE_QUORUM_ROLE",
       "params": [
-        "New quorum",
-        "Current quorum"
+        "New minimum acceptance quorum"
       ]
     },
     {
       "name": "Modify delegated voting period",
       "id": "CHANGE_DELEGATED_VOTING_PERIOD_ROLE",
       "params": [
-        "New window",
-        "Current window"
-      ]
-    },
-    {
-      "name": "Modify execution delay",
-      "id": "CHANGE_EXECUTION_DELAY_ROLE",
-      "params": [
-        "New execution delay",
-        "Current execution delay"
+        "New delegated voting period"
       ]
     },
     {
@@ -75,9 +71,14 @@
       "id": "CHANGE_QUIET_ENDING_ROLE",
       "params": [
         "New quiet ending period",
-        "Current quiet ending period",
-        "New quiet ending extension",
-        "Current quiet ending extension"
+        "New quiet ending extension"
+      ]
+    },
+    {
+      "name": "Modify execution delay",
+      "id": "CHANGE_EXECUTION_DELAY_ROLE",
+      "params": [
+        "New execution delay"
       ]
     }
   ]

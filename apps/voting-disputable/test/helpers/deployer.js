@@ -75,7 +75,7 @@ class VotingDeployer {
     const defaultOptions = { ...DEFAULT_VOTING_INITIALIZATION_PARAMS, ...options }
     const { requiredSupport, minimumAcceptanceQuorum, voteDuration, delegatedVotingPeriod, executionDelay, quietEndingPeriod, quietEndingExtension } = defaultOptions
 
-    await this.voting.initialize(token.address, requiredSupport, minimumAcceptanceQuorum, voteDuration, delegatedVotingPeriod, quietEndingPeriod, quietEndingExtension, executionDelay)
+    await this.voting.initialize(token.address, voteDuration, requiredSupport, minimumAcceptanceQuorum, delegatedVotingPeriod, quietEndingPeriod, quietEndingExtension, executionDelay)
 
     if (options.agreement !== false) {
       const owner = options.owner || await this._getSender()
@@ -98,7 +98,7 @@ class VotingDeployer {
     const receipt = await this.dao.newAppInstance(appId, this.base.address, '0x', false, { from: owner })
     const voting = await this.base.constructor.at(await getInstalledApp(receipt, appId))
 
-    const restrictedPermissions = ['CHANGE_SUPPORT_ROLE', 'CHANGE_QUORUM_ROLE', 'CHANGE_DELEGATED_VOTING_PERIOD_ROLE', 'CHANGE_EXECUTION_DELAY_ROLE', 'CHANGE_QUIET_ENDING_ROLE']
+    const restrictedPermissions = ['CHANGE_VOTE_TIME_ROLE', 'CHANGE_SUPPORT_ROLE', 'CHANGE_QUORUM_ROLE', 'CHANGE_DELEGATED_VOTING_PERIOD_ROLE', 'CHANGE_EXECUTION_DELAY_ROLE', 'CHANGE_QUIET_ENDING_ROLE']
     await this._createPermissions(voting, restrictedPermissions, owner)
 
     const openPermissions = ['CREATE_VOTES_ROLE', 'CHALLENGE_ROLE']

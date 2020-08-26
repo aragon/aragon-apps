@@ -27,6 +27,64 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
     voting = await deployer.deployAndInitialize({ owner, supportRequired: REQUIRED_SUPPORT, minimumAcceptanceQuorum: MINIMUM_ACCEPTANCE_QUORUM, voteDuration: VOTE_DURATION, delegatedVotingPeriod: DELEGATED_VOTING_PERIOD, quietEndingPeriod: QUIET_ENDING_PERIOD, quietEndingExtension: QUIET_ENDING_EXTENSION, executionDelay: EXECUTION_DELAY })
   })
 
+  describe('changeVoteTime', () => {
+    context('when the sender is allowed', () => {
+      const from = owner
+
+      context('when the new value is zero', () => {
+        const newVoteTime = 0
+
+        it('fails changing required support lower than minimum acceptance quorum', async () => {
+          await assertRevert(voting.changeVoteTime(newVoteTime, { from }), VOTING_ERRORS.VOTING_VOTE_TIME_ZERO)
+        })
+      })
+
+      context('when the new value greater than zero', () => {
+        const newVoteTime = ONE_DAY
+
+        it('changes the vote time', async () => {
+          await voting.changeVoteTime(newVoteTime, { from })
+
+          const currentSettingId = await voting.getCurrentSettingId()
+          const { voteTime } = await voting.getSetting(currentSettingId)
+          assertBn(voteTime, newVoteTime, 'should have changed vote time')
+        })
+
+        it('emits an event', async () => {
+          const receipt = await voting.changeVoteTime(newVoteTime, { from })
+
+          assertAmountOfEvents(receipt, 'NewSetting')
+          assertAmountOfEvents(receipt, 'ChangeVoteTime')
+          assertEvent(receipt, 'ChangeVoteTime', { expectedArgs: { voteTime: newVoteTime } })
+        })
+
+        it('does not affect vote times', async () => {
+          const { voteId, script } = await createVote({ voting, from: holder51 })
+          await voting.changeVoteTime(newVoteTime, { from })
+
+          await voting.mockIncreaseTime(newVoteTime * 2)
+          await voting.vote(voteId, true, { from: holder51 })
+          await voting.vote(voteId, false, { from: holder20 })
+          await voting.vote(voteId, false, { from: holder29 })
+
+          const { voteTime } = await getVoteSetting(voting, voteId)
+          assertBn(voteTime, VOTE_DURATION, 'vote time should stay equal')
+
+          await voting.mockIncreaseTime(VOTE_DURATION)
+          await voting.executeVote(voteId, script) // exec doesn't fail
+        })
+      })
+    })
+
+    context('when the sender is not allowed', () => {
+      const from = anyone
+
+      it('reverts', async () => {
+        await assertRevert(voting.changeVoteTime(ONE_DAY, { from }), ARAGON_OS_ERRORS.APP_AUTH_FAILED)
+      })
+    })
+  })
+
   describe('changeSupportRequiredPct', () => {
     context('when the sender is allowed', () => {
       const from = owner

@@ -196,8 +196,7 @@ contract('Voting disputable', ([_, owner, representative, voter10, voter20, vote
       })
 
       it('does not affect the voting period', async () => {
-        const voteTime = await voting.voteTime()
-        const beforeVoteEndDate = currentTimestamp.add(voteTime).sub(bn(1))
+        const beforeVoteEndDate = currentTimestamp.add(bn(VOTING_DURATION)).sub(bn(1))
         await voting.mockSetTimestamp(beforeVoteEndDate)
 
         const { isOpen: isOpenBeforeEndDate } = await getVoteState(voting, voteId)
@@ -326,8 +325,7 @@ contract('Voting disputable', ([_, owner, representative, voter10, voter20, vote
       })
 
       it('marks the vote as closed', async () => {
-        const voteTime = await voting.voteTime()
-        const beforeVoteEndDate = currentTimestamp.add(voteTime).sub(bn(1))
+        const beforeVoteEndDate = currentTimestamp.add(bn(VOTING_DURATION)).sub(bn(1))
         await voting.mockSetTimestamp(beforeVoteEndDate)
 
         const { isOpen: isOpenBeforeEndDate } = await getVoteState(voting, voteId)

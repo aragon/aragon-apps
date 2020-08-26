@@ -18,6 +18,9 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     // bytes32 public constant CREATE_VOTES_ROLE = keccak256("CREATE_VOTES_ROLE");
     bytes32 public constant CREATE_VOTES_ROLE = 0xe7dcd7275292e064d090fbc5f3bd7995be23b502c1fed5cd94cfddbbdcd32bbc;
 
+    // bytes32 public constant CHANGE_VOTE_TIME_ROLE = keccak256("CHANGE_VOTE_TIME_ROLE");
+    bytes32 public constant CHANGE_VOTE_TIME_ROLE = 0xbc5d8ebc0830a2fed8649987b8263de1397b7fa892f3b87dc2d8cad35c691f86;
+
     // bytes32 public constant CHANGE_SUPPORT_ROLE = keccak256("CHANGE_SUPPORT_ROLE");
     bytes32 public constant CHANGE_SUPPORT_ROLE = 0xf3a5f71f3cb50dae9454dd13cdf0fd1b559f7e20d63c08902592486e6d460c90;
 
@@ -69,6 +72,9 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     }
 
     struct Setting {
+        // "Base" duration of each vote -- vote lifespans may be adjusted by pause and extension durations
+        uint64 voteTime;
+
         // Required voter support % (yes power / voted power) for a vote to pass
         // Expressed as a percentage of 10^18; eg. 10^16 = 1%, 10^18 = 100%
         uint64 supportRequiredPct;
@@ -120,8 +126,6 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         mapping (address => VoteCast) castVotes;            // Mapping of voter address => more information about their cast vote
     }
 
-    // Note: may be good to double check if we'd like these to be updatable and push them to the settings
-    uint64 public voteTime;                                 // "Base" duration of each vote -- vote lifespans may be adjusted by pause and extension durations
     MiniMeToken public token;                               // Token for determining voting power; we assume it's not malicious
 
     uint256 public settingsLength;                          // Number of settings created
@@ -132,6 +136,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     mapping (address => address) internal representatives;  // Mapping of voter => allowed representative
 
     event NewSetting(uint256 settingId);
+    event ChangeVoteTime(uint64 voteTime);
     event ChangeSupportRequired(uint64 supportRequiredPct);
     event ChangeMinQuorum(uint64 minAcceptQuorumPct);
     event ChangeDelegatedVotingPeriod(uint64 delegatedVotingPeriod);
@@ -150,22 +155,21 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     event ProxyVoteFailure(uint256 indexed voteId, address indexed voter, address indexed representative);
 
     /**
-    * @notice Initialize Disputable Voting with `_token.symbol(): string` for governance, minimum support of `@formatPct(_supportRequiredPct)`%, minimum acceptance quorum of `@formatPct(_minAcceptQuorumPct)`%, a voting duration of `@transformTime(_voteTime)`, a delegated voting period of `@transformTime(_delegatedVotingPeriod), and a execution delay of `@transformTime(_executionDelay)`
+    * @notice Initialize Disputable Voting with `_token.symbol(): string` for governance, a voting duration of `@transformTime(_voteTime)`, minimum support of `@formatPct(_supportRequiredPct)`%, minimum acceptance quorum of `@formatPct(_minAcceptQuorumPct)`%, a delegated voting period of `@transformTime(_delegatedVotingPeriod), and a execution delay of `@transformTime(_executionDelay)`
     * @param _token MiniMeToken Address that will be used as governance token
+    * @param _voteTime Base duration a vote will be open for voting
     * @param _supportRequiredPct Required support % (yes power / voted power) for a vote to pass; expressed as a percentage of 10^18
     * @param _minAcceptQuorumPct Required quorum % (yes power / total power) for a vote to pass; expressed as a percentage of 10^18
-    * @param _voteTime Base duration a vote will be open for voting
     * @param _delegatedVotingPeriod Duration from the start of a vote that representatives are allowed to vote on behalf of principals
     * @param _quietEndingPeriod Duration to detect non-quiet endings
     * @param _quietEndingExtension Duration to extend a vote in case of non-quiet ending
     * @param _executionDelay Duration to wait before a passed vote can be executed
     */
-    // Note: propose changing _voteTime to be first if it doesn't change
     function initialize(
         MiniMeToken _token,
+        uint64 _voteTime,
         uint64 _supportRequiredPct,
         uint64 _minAcceptQuorumPct,
-        uint64 _voteTime,
         uint64 _delegatedVotingPeriod,
         uint64 _quietEndingPeriod,
         uint64 _quietEndingExtension,
@@ -176,17 +180,24 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         initialized();
 
         require(isContract(_token), ERROR_TOKEN_NOT_CONTRACT);
-        require(_voteTime > 0, ERROR_VOTE_TIME_ZERO);
-
         token = _token;
-        voteTime = _voteTime;
 
         (Setting storage setting, ) = _newSetting();
+        _changeVoteTime(setting, _voteTime);
         _changeSupportRequiredPct(setting, _supportRequiredPct);
         _changeMinAcceptQuorumPct(setting, _minAcceptQuorumPct);
         _changeDelegatedVotingPeriod(setting, _delegatedVotingPeriod);
         _changeQuietEndingConfiguration(setting, _quietEndingPeriod, _quietEndingExtension);
         _changeExecutionDelay(setting, _executionDelay);
+    }
+
+    /**
+    * @notice Change vote time to `@transformTime(_voteTime)`
+    * @param _voteTime New vote time
+    */
+    function changeVoteTime(uint64 _voteTime) external authP(CHANGE_VOTE_TIME_ROLE, arr(uint256(_voteTime))) {
+        Setting storage setting = _newCopiedSettings();
+        _changeVoteTime(setting, _voteTime);
     }
 
     /**
@@ -382,6 +393,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     *      Initialization check is implicitly provided by `_getSetting()` as new settings can only be
     *      created via `change*()` functions which require initialization
     * @param _settingId Identification number of the setting
+    * @return voteTime Base vote duration
     * @return supportRequiredPct Required support % (yes power / voted power) for a vote to pass; expressed as a percentage of 10^18
     * @return minAcceptQuorumPct Required quorum % (yes power / total power) for a vote to pass; expressed as a percentage of 10^18
     * @return delegatedVotingPeriod Duration of the delegated voting period
@@ -393,6 +405,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         external
         view
         returns (
+            uint64 voteTime,
             uint64 supportRequiredPct,
             uint64 minAcceptQuorumPct,
             uint64 delegatedVotingPeriod,
@@ -402,6 +415,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         )
     {
         Setting storage setting = _getSetting(_settingId);
+        voteTime = setting.voteTime;
         supportRequiredPct = setting.supportRequiredPct;
         minAcceptQuorumPct = setting.minAcceptQuorumPct;
         delegatedVotingPeriod = setting.delegatedVotingPeriod;
@@ -637,6 +651,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     function _newCopiedSettings() internal returns (Setting storage) {
         (Setting storage to, uint256 settingId) = _newSetting();
         Setting storage from = _getSetting(settingId - 1);
+        to.voteTime = from.voteTime;
         to.supportRequiredPct = from.supportRequiredPct;
         to.minAcceptQuorumPct = from.minAcceptQuorumPct;
         to.delegatedVotingPeriod = from.delegatedVotingPeriod;
@@ -644,6 +659,18 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         to.quietEndingExtension = from.quietEndingExtension;
         to.executionDelay = from.executionDelay;
         return to;
+    }
+
+    /**
+    * @dev Change vote time
+    * @param _setting Setting instance to update
+    * @param _voteTime New vote time
+    */
+    function _changeVoteTime(Setting storage _setting, uint64 _voteTime) internal {
+        require(_voteTime > 0, ERROR_VOTE_TIME_ZERO);
+
+        _setting.voteTime = _voteTime;
+        emit ChangeVoteTime(_voteTime);
     }
 
     /**
@@ -677,7 +704,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @param _delegatedVotingPeriod New delegated voting period
     */
     function _changeDelegatedVotingPeriod(Setting storage _setting, uint64 _delegatedVotingPeriod) internal {
-        require(_delegatedVotingPeriod <= voteTime, ERROR_INVALID_DELEGATED_VOTING_PERIOD);
+        require(_delegatedVotingPeriod <= _setting.voteTime, ERROR_INVALID_DELEGATED_VOTING_PERIOD);
 
         _setting.delegatedVotingPeriod = _delegatedVotingPeriod;
         emit ChangeDelegatedVotingPeriod(_delegatedVotingPeriod);
@@ -690,7 +717,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @param _quietEndingExtension New quiet ending extension
     */
     function _changeQuietEndingConfiguration(Setting storage _setting, uint64 _quietEndingPeriod, uint64 _quietEndingExtension) internal {
-        require(_quietEndingPeriod <= voteTime, ERROR_INVALID_QUIET_ENDING_PERIOD);
+        require(_quietEndingPeriod <= _setting.voteTime, ERROR_INVALID_QUIET_ENDING_PERIOD);
 
         _setting.quietEndingPeriod = _quietEndingPeriod;
         _setting.quietEndingExtension = _quietEndingExtension;
@@ -799,7 +826,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         } else {
             // We are calculating quiet ending extensions via "rolling snapshots", and so we only update the vote's cached duration once
             // the last period is over and we've confirmed the flip.
-            if (getTimestamp() >= _lastComputedVoteEndDate(_vote)) {
+            if (getTimestamp() >= _lastComputedVoteEndDate(_vote, _setting)) {
                 _vote.quietEndingExtensionDuration = _vote.quietEndingExtensionDuration.add(_setting.quietEndingExtension);
                 emit QuietEndingExtendVote(_voteId, _wasAccepted);
             }
@@ -972,7 +999,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @return True if the vote's quiet ending period has started
     */
     function _hasStartedQuietEndingPeriod(Vote storage _vote, Setting storage _setting) internal view returns (bool) {
-        uint64 voteBaseEndDate = _baseVoteEndDate(_vote);
+        uint64 voteBaseEndDate = _baseVoteEndDate(_vote, _setting);
         uint64 baseQuietEndingPeriodStartDate = voteBaseEndDate.sub(_setting.quietEndingPeriod);
 
         // If the vote was paused before the quiet ending period started, we need to delay it
@@ -1001,10 +1028,11 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @dev Calculate the original end date of a vote
     *      It does not consider extensions from pauses or the quiet ending mechanism
     * @param _vote Vote instance being queried
+    * @param _setting Setting instance applicable to the vote
     * @return Datetime of the vote's original end date
     */
-    function _baseVoteEndDate(Vote storage _vote) internal view returns (uint64) {
-        return _vote.startDate.add(voteTime);
+    function _baseVoteEndDate(Vote storage _vote, Setting storage _setting) internal view returns (uint64) {
+        return _vote.startDate.add(_setting.voteTime);
     }
 
     /**
@@ -1014,10 +1042,11 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     *      because it is only updated on the first vote in a new extension (which may never happen).
     *      The pause duration will only be included after the vote has "resumed" from its pause, as we do not know how long the pause will be in advance.
     * @param _vote Vote instance being queried
+    * @param _setting Setting instance applicable to the vote
     * @return Datetime of the vote's last computed end date
     */
-    function _lastComputedVoteEndDate(Vote storage _vote) internal view returns (uint64) {
-        uint64 endDateAfterPause = _baseVoteEndDate(_vote).add(_vote.pauseDuration);
+    function _lastComputedVoteEndDate(Vote storage _vote, Setting storage _setting) internal view returns (uint64) {
+        uint64 endDateAfterPause = _baseVoteEndDate(_vote, _setting).add(_vote.pauseDuration);
         return endDateAfterPause.add(_vote.quietEndingExtensionDuration);
     }
 
@@ -1031,7 +1060,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @return Datetime of the vote's current end date
     */
     function _currentVoteEndDate(Vote storage _vote, Setting storage _setting) internal view returns (uint64) {
-        uint64 lastComputedEndDate = _lastComputedVoteEndDate(_vote);
+        uint64 lastComputedEndDate = _lastComputedVoteEndDate(_vote, _setting);
 
         // The last computed end date is correct if we have not passed it yet or if no flip was detected in the last extension
         if (getTimestamp() < lastComputedEndDate || !_wasFlipped(_vote)) {
