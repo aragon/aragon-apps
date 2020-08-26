@@ -329,7 +329,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
           })
 
           it('reverts', async () => {
-            await assertRevert(disputable.newAction({ submitter, actionContext, stake, sign }), AGREEMENT_ERRORS.ERROR_DISPUTABLE_APP_NOT_ACTIVE)
+            await assertRevert(disputable.newAction({ submitter, actionContext, stake, sign }), AGREEMENT_ERRORS.ERROR_DISPUTABLE_NOT_ACTIVE)
           })
         })
       })
