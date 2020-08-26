@@ -416,11 +416,11 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
                           await voting.voteOnBehalfOf(voteId, support, [voter], { from })
                           await voting.mockIncreaseTime(QUIET_ENDING_PERIOD / 2)
 
-                          const { quietEndingExtendedSeconds: previousExtendedSeconds } = await getVoteState(voting, voteId)
+                          const { quietEndingExtensionDuration: previousExtendedSeconds } = await getVoteState(voting, voteId)
 
                           await voting.vote(voteId, true, { from: thirdVoter })
 
-                          const { quietEndingExtendedSeconds: currentExtendedSeconds } = await getVoteState(voting, voteId)
+                          const { quietEndingExtensionDuration: currentExtendedSeconds } = await getVoteState(voting, voteId)
                           assertBn(currentExtendedSeconds, previousExtendedSeconds.add(bn(QUIET_ENDING_EXTENSION)), 'vote extended seconds do not match')
                         })
                       } else {

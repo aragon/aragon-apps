@@ -116,11 +116,11 @@ contract('Voting', ([_, owner, holder20, holder29, holder51, nonHolder, represen
             })
 
             it('stores the vote extension in the following vote', async () => {
-              const { quietEndingExtendedSeconds: previousExtendedSeconds } = await getVoteState(voting, voteId)
+              const { quietEndingExtensionDuration: previousExtendedSeconds } = await getVoteState(voting, voteId)
 
               await voting.vote(voteId, true, { from: holder51 })
 
-              const { quietEndingExtendedSeconds: currentExtendedSeconds } = await getVoteState(voting, voteId)
+              const { quietEndingExtensionDuration: currentExtendedSeconds } = await getVoteState(voting, voteId)
               assertBn(currentExtendedSeconds, previousExtendedSeconds.add(bn(QUIET_ENDING_EXTENSION)), 'vote extended seconds do not match')
             })
           })
@@ -185,11 +185,11 @@ contract('Voting', ([_, owner, holder20, holder29, holder51, nonHolder, represen
                     // vote and move after the vote's end date
                     await voting.vote(voteId, support, { from })
                     await voting.mockIncreaseTime(secondsUntilInitialEndTime + 1)
-                    const { quietEndingExtendedSeconds: previousExtendedSeconds } = await getVoteState(voting, voteId)
+                    const { quietEndingExtensionDuration: previousExtendedSeconds } = await getVoteState(voting, voteId)
 
                     await voting.vote(voteId, true, { from: holder51 })
 
-                    const { quietEndingExtendedSeconds: currentExtendedSeconds } = await getVoteState(voting, voteId)
+                    const { quietEndingExtensionDuration: currentExtendedSeconds } = await getVoteState(voting, voteId)
                     assertBn(currentExtendedSeconds, previousExtendedSeconds.add(bn(QUIET_ENDING_EXTENSION)), 'vote extended seconds do not match')
                   })
                 } else {

@@ -77,7 +77,7 @@ contract('Voting', ([_, owner, holder1, holder2, holder20, holder29, holder51, a
 
           it('has correct state', async () => {
             const currentSettingId = await voting.getCurrentSettingId()
-            const { isOpen, isExecuted, snapshotBlock, settingId, yeas, nays, votingPower, pausedAt, pauseDuration, quietEndingExtendedSeconds, executionScriptHash } = await getVoteState(voting, voteId)
+            const { isOpen, isExecuted, snapshotBlock, settingId, yeas, nays, votingPower, pausedAt, pauseDuration, quietEndingExtensionDuration, executionScriptHash } = await getVoteState(voting, voteId)
 
             assert.isTrue(isOpen, 'vote should be open')
             assert.isFalse(isExecuted, 'vote should not be executed')
@@ -88,7 +88,7 @@ contract('Voting', ([_, owner, holder1, holder2, holder20, holder29, holder51, a
             assertBn(votingPower, bigExp(100, 18), 'voting power should be 100')
             assertBn(pausedAt, 0, 'paused at does not match')
             assertBn(pauseDuration, 0, 'pause duration does not match')
-            assertBn(quietEndingExtendedSeconds, 0, 'quiet ending extended seconds does not match')
+            assertBn(quietEndingExtensionDuration, 0, 'quiet ending extended seconds does not match')
             assert.equal(executionScriptHash, web3.utils.sha3(script), 'script should be correct')
           })
 

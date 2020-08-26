@@ -59,8 +59,8 @@ contract('Voting', ([_, owner, holder10, holder20, holder30, holder40, holder50]
       })
 
       it('does not store a vote extension', async () => {
-        const { quietEndingExtendedSeconds } = await getVoteState(voting, voteId)
-        assertBn(quietEndingExtendedSeconds, 0, 'vote extended seconds do not match')
+        const { quietEndingExtensionDuration } = await getVoteState(voting, voteId)
+        assertBn(quietEndingExtensionDuration, 0, 'vote extended seconds do not match')
       })
 
       it('the vote is no longer open', async () => {
@@ -118,8 +118,8 @@ contract('Voting', ([_, owner, holder10, holder20, holder30, holder40, holder50]
           })
 
           it('does not store the quiet ending extended seconds', async () => {
-            const { quietEndingExtendedSeconds } = await getVoteState(voting, voteId)
-            assertBn(quietEndingExtendedSeconds, 0, 'vote extended seconds do not match')
+            const { quietEndingExtensionDuration } = await getVoteState(voting, voteId)
+            assertBn(quietEndingExtensionDuration, 0, 'vote extended seconds do not match')
           })
 
           it('does not allow other voters to vote', async () => {
@@ -176,8 +176,8 @@ contract('Voting', ([_, owner, holder10, holder20, holder30, holder40, holder50]
           it('stores the vote extension', async () => {
             await voting.vote(voteId, true, { from: holder50 })
 
-            const { quietEndingExtendedSeconds } = await getVoteState(voting, voteId)
-            assertBn(quietEndingExtendedSeconds, QUIET_ENDING_EXTENSION, 'vote extended seconds do not match')
+            const { quietEndingExtensionDuration } = await getVoteState(voting, voteId)
+            assertBn(quietEndingExtensionDuration, QUIET_ENDING_EXTENSION, 'vote extended seconds do not match')
           })
 
           context('when the vote is flipped again', () => {

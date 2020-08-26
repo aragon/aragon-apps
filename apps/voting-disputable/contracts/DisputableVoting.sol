@@ -116,9 +116,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         VoteStatus status;                                  // Status of the vote
         uint64 pausedAt;                                    // Datetime when the vote was paused
         uint64 pauseDuration;                               // Duration of the pause (only updated once resumed)
-        // Note: maybe rename to quietEndingExtensionDuration?
-        uint64 quietEndingExtendedSeconds;                  // Total number of seconds a vote was extended due to quiet ending
-        // Note: I initially found this name a bit confusing, but it makes sense now
+        uint64 quietEndingExtensionDuration;                // Total number of seconds a vote was extended due to quiet ending
         VoterState quietEndingSnapshotSupport;              // Snapshot of the vote's support at the beginning of the first quiet ending period
         bytes32 executionScriptHash;                        // Hash of the EVM script attached to the vote
         mapping (address => VoteCast) castVotes;            // Mapping of voter address => more information about their cast vote
@@ -426,7 +424,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @return status Status of the vote
     * @return pausedAt Datetime when the vote was paused
     * @return pauseDuration Duration of the pause (only updated once resumed)
-    * @return quietEndingExtendedSeconds Total number of seconds a vote was extended due to quiet ending
+    * @return quietEndingExtensionDuration Total number of seconds a vote was extended due to quiet ending
     * @return quietEndingSnapshotSupport Snapshot of the vote's support at the beginning of the first quiet ending period
     * @return executionScriptHash Hash of the EVM script attached to the vote
     */
@@ -446,7 +444,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
             VoteStatus status,
             uint64 pausedAt,
             uint64 pauseDuration,
-            uint64 quietEndingExtendedSeconds,
+            uint64 quietEndingExtensionDuration,
             VoterState quietEndingSnapshotSupport,
             bytes32 executionScriptHash
         )
@@ -463,7 +461,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         status = vote_.status;
         pausedAt = vote_.pausedAt;
         pauseDuration = vote_.pauseDuration;
-        quietEndingExtendedSeconds = vote_.quietEndingExtendedSeconds;
+        quietEndingExtensionDuration = vote_.quietEndingExtensionDuration;
         quietEndingSnapshotSupport = vote_.quietEndingSnapshotSupport;
         executionScriptHash = vote_.executionScriptHash;
     }
@@ -837,7 +835,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
             // First, we make sure the extension is persisted, if are voting within the extension and it was not considered yet, we store it.
             // Note that we are trusting `_canVote()`, if we reached this point, it means the vote's flip was already confirmed.
             if (getTimestamp() >= _lastComputedVoteEndDate(_vote)) {
-                _vote.quietEndingExtendedSeconds = _vote.quietEndingExtendedSeconds.add(_setting.quietEndingExtension);
+                _vote.quietEndingExtensionDuration = _vote.quietEndingExtensionDuration.add(_setting.quietEndingExtension);
                 emit VoteQuietEndingExtension(_voteId, _wasAccepted);
             }
         }
@@ -996,7 +994,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         // Otherwise, we calculate if the vote was flipped by comparing its current acceptance state to its last state at the start of the extension period
         bool wasInitiallyAccepted = snapshotSupport == VoterState.Yea;
         Setting storage setting = settings[_vote.settingId];
-        uint256 currentExtensions = _vote.quietEndingExtendedSeconds / setting.quietEndingExtension;
+        uint256 currentExtensions = _vote.quietEndingExtensionDuration / setting.quietEndingExtension;
         bool wasAcceptedBeforeLastFlip = wasInitiallyAccepted != (currentExtensions % 2 != 0);
         return wasAcceptedBeforeLastFlip != _isAccepted(_vote, setting);
     }
@@ -1056,7 +1054,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     */
     function _lastComputedVoteEndDate(Vote storage _vote) internal view returns (uint64) {
         uint64 endDateAfterPause = _originalVoteEndDate(_vote).add(_vote.pauseDuration);
-        return endDateAfterPause.add(_vote.quietEndingExtendedSeconds);
+        return endDateAfterPause.add(_vote.quietEndingExtensionDuration);
     }
 
     /**
