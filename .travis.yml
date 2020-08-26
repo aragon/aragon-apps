@@ -39,7 +39,7 @@ jobs:
       name: "Voting Disputable"
 
     - stage: coverage
-      script: echo "Skipping Agreements coverage since buidler plugin cannot be overriden for custom compilation yet" # yarn coverage:agreement
+      script: echo "Skipping Agreement coverage since buidler plugin cannot be overriden for custom compilation yet" # yarn coverage:agreement
       name: "Agreement"
     - script: yarn coverage:agent
       name: "Agent"
@@ -51,7 +51,7 @@ jobs:
       name: "Vault"
     - script: yarn coverage:voting
       name: "Voting"
-    - script: yarn coverage:voting-disputable
+    - script: echo "Skipping Disputablevoting coverage since buidler plugin cannot be overriden for custom compilation yet" # script: yarn coverage:voting-disputable
       name: "Voting Disputable"
 after_success:
   - ./node_modules/.bin/lcov-result-merger 'apps/*/coverage/lcov.info' | ./node_modules/.bin/coveralls
