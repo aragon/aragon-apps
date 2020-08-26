@@ -1,16 +1,13 @@
 pragma solidity 0.4.24;
 
-import "@aragon/os/contracts/lib/math/SafeMath64.sol";
 import "@aragon/os/contracts/apps/disputable/DisputableAragonApp.sol";
 import "@aragon/os/contracts/forwarding/IForwarderWithContext.sol";
+import "@aragon/os/contracts/lib/math/SafeMath64.sol";
 import "@aragon/contract-helpers-test/contracts/0.4/aragonOS/SharedTimeHelpersMock.sol";
 
 
 contract DisputableAppMock is IForwarderWithContext, DisputableAragonApp, SharedTimeHelpersMock {
     using SafeMath64 for uint64;
-
-    bytes4 public constant ERC165_INTERFACE = ERC165_INTERFACE_ID;
-    bytes4 public constant DISPUTABLE_INTERFACE = DISPUTABLE_INTERFACE_ID;
 
     uint64 internal constant MAX_UINT64 = uint64(-1);
 
@@ -84,7 +81,7 @@ contract DisputableAppMock is IForwarderWithContext, DisputableAragonApp, Shared
     }
 
     /**
-    * @dev Tell whether a disputable action can be challenged or not
+    * @dev Tell whether a disputable action can be challenged
     * @return True if the queried disputable action can be challenged, false otherwise
     */
     function canChallenge(uint256 /* _id */) external view returns (bool) {
@@ -92,7 +89,7 @@ contract DisputableAppMock is IForwarderWithContext, DisputableAragonApp, Shared
     }
 
     /**
-    * @dev Tell whether a disputable action can be closed by the agreement or not
+    * @dev Tell whether a disputable action can be closed by the agreement
     * @return True if the queried disputable action can be closed, false otherwise
     */
     function canClose(uint256 /* _id */) external view returns (bool) {
@@ -100,7 +97,7 @@ contract DisputableAppMock is IForwarderWithContext, DisputableAragonApp, Shared
     }
 
     /**
-    * @notice Tells whether `_sender` can forward actions or not
+    * @notice Tells whether `_sender` can forward actions
     * @dev IForwarder interface conformance
     * @param _sender Address of the account intending to forward an action
     * @return True if the given address can submit actions, false otherwise
@@ -146,7 +143,7 @@ contract DisputableAppMock is IForwarderWithContext, DisputableAragonApp, Shared
     }
 
     /**
-    * @dev Tells whether an address can forward actions or not
+    * @dev Tells whether an address can forward actions
     * @param _sender Address of the account intending to forward an action
     * @return True if the given address can submit actions, false otherwise
     */
