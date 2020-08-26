@@ -50,7 +50,8 @@ module.exports = {
     version: '0.4.24',
     optimizer: {
       enabled: true,
-      runs: 100,
+      // Any more and the contract goes over the size limit
+      runs: 1000,
     },
   },
   // The gas reporter plugin do not properly handle the buidlerevm
