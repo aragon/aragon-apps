@@ -9,23 +9,23 @@ const VOTER_STATE = {
 }
 
 const VOTE_STATUS = {
-  ACTIVE: 0,
+  NORMAL: 0,
   PAUSED: 1,
   CANCELLED: 2,
   EXECUTED: 3,
 }
 
 const getVoteState = async (voting, id) => {
-  const { yea, nay, votingPower, settingId, actionId, status, startDate, snapshotBlock, pausedAt, pauseDuration, quietEndingExtendedSeconds, quietEndingSnapshotSupport, executionScript } = await voting.getVote(id)
-  const isOpen = await voting.isVoteOpen(id)
+  const { yea, nay, totalPower, settingId, actionId, status, startDate, snapshotBlock, pausedAt, pauseDuration, quietEndingExtensionDuration, quietEndingSnapshotSupport, executionScriptHash } = await voting.getVote(id)
+  const isOpen = await voting.isVoteOpenForVoting(id)
   const isExecuted = status.eq(bn(VOTE_STATUS.EXECUTED))
-  return { isOpen, isExecuted, startDate, snapshotBlock, settingId, status, actionId, yeas: yea, nays: nay, votingPower, pausedAt, pauseDuration, quietEndingExtendedSeconds, quietEndingSnapshotSupport, executionScript }
+  return { isOpen, isExecuted, startDate, snapshotBlock, settingId, status, actionId, yeas: yea, nays: nay, totalPower, pausedAt, pauseDuration, quietEndingExtensionDuration, quietEndingSnapshotSupport, executionScriptHash }
 }
 
 const getVoteSetting = async (voting, id) => {
   const { settingId } = await voting.getVote(id)
-  const { supportRequiredPct, minAcceptQuorumPct, executionDelay, overruleWindow, quietEndingPeriod, quietEndingExtension } = await voting.getSetting(settingId)
-  return { supportRequiredPct, minAcceptQuorumPct, executionDelay, overruleWindow, quietEndingPeriod, quietEndingExtension }
+  const { voteTime, supportRequiredPct, minAcceptQuorumPct, executionDelay, delegatedVotingPeriod, quietEndingPeriod, quietEndingExtension } = await voting.getSetting(settingId)
+  return { voteTime, supportRequiredPct, minAcceptQuorumPct, executionDelay, delegatedVotingPeriod, quietEndingPeriod, quietEndingExtension }
 }
 
 const voteScript = async (actions = 1) => {
@@ -59,7 +59,7 @@ const createVote = async ({ voting, script = undefined, voteContext = '0xabcdef'
   const events = decodeEvents(receipt, artifacts.require('DisputableVoting').abi, 'StartVote')
   assert.equal(events.length, 1, 'number of StartVote emitted events does not match')
   const { voteId } = events[0].args
-  return { voteId, receipt }
+  return { voteId, script, receipt }
 }
 
 module.exports = {

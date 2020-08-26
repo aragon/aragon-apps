@@ -8,7 +8,7 @@ contract('Voting initialization', ([_, owner]) => {
   let voting, token
 
   const VOTE_DURATION = 5 * ONE_DAY
-  const OVERRULE_WINDOW = ONE_DAY
+  const DELEGATED_VOTING_PERIOD = ONE_DAY * 4
   const EXECUTION_DELAY = ONE_DAY
   const QUIET_ENDING_PERIOD = ONE_DAY
   const QUIET_ENDING_EXTENSION = ONE_DAY / 2
@@ -25,7 +25,7 @@ contract('Voting initialization', ([_, owner]) => {
       const votingBase = deployer.base
 
       assert.isTrue(await votingBase.isPetrified(), 'voting base is not petrified')
-      await assertRevert(votingBase.initialize(token.address, REQUIRED_SUPPORT, MINIMUM_ACCEPTANCE_QUORUM, VOTE_DURATION, OVERRULE_WINDOW, QUIET_ENDING_PERIOD, QUIET_ENDING_EXTENSION, EXECUTION_DELAY), ARAGON_OS_ERRORS.INIT_ALREADY_INITIALIZED)
+      await assertRevert(votingBase.initialize(token.address, VOTE_DURATION, REQUIRED_SUPPORT, MINIMUM_ACCEPTANCE_QUORUM, DELEGATED_VOTING_PERIOD, QUIET_ENDING_PERIOD, QUIET_ENDING_EXTENSION, EXECUTION_DELAY), ARAGON_OS_ERRORS.INIT_ALREADY_INITIALIZED)
     })
 
     context('when the app was not initialized', () => {
@@ -37,39 +37,39 @@ contract('Voting initialization', ([_, owner]) => {
         const requiredSupport = pct16(20)
         const minimumAcceptanceQuorum = pct16(50)
 
-        await assertRevert(voting.initialize(token.address, requiredSupport, minimumAcceptanceQuorum, VOTE_DURATION, OVERRULE_WINDOW, QUIET_ENDING_PERIOD, QUIET_ENDING_EXTENSION, EXECUTION_DELAY), VOTING_ERRORS.VOTING_CHANGE_QUORUM_TOO_BIG)
+        await assertRevert(voting.initialize(token.address, VOTE_DURATION, requiredSupport, minimumAcceptanceQuorum, DELEGATED_VOTING_PERIOD, QUIET_ENDING_PERIOD, QUIET_ENDING_EXTENSION, EXECUTION_DELAY), VOTING_ERRORS.VOTING_CHANGE_QUORUM_TOO_BIG)
       })
 
       it('fails if support is 100% or more', async () => {
-        await assertRevert(voting.initialize(token.address, pct16(101), MINIMUM_ACCEPTANCE_QUORUM, VOTE_DURATION, OVERRULE_WINDOW, QUIET_ENDING_PERIOD, QUIET_ENDING_EXTENSION, EXECUTION_DELAY), VOTING_ERRORS.VOTING_CHANGE_SUPPORT_TOO_BIG)
-        await assertRevert(voting.initialize(token.address, pct16(100), MINIMUM_ACCEPTANCE_QUORUM, VOTE_DURATION, OVERRULE_WINDOW, QUIET_ENDING_PERIOD, QUIET_ENDING_EXTENSION, EXECUTION_DELAY), VOTING_ERRORS.VOTING_CHANGE_SUPPORT_TOO_BIG)
+        await assertRevert(voting.initialize(token.address, VOTE_DURATION, pct16(101), MINIMUM_ACCEPTANCE_QUORUM, DELEGATED_VOTING_PERIOD, QUIET_ENDING_PERIOD, QUIET_ENDING_EXTENSION, EXECUTION_DELAY), VOTING_ERRORS.VOTING_CHANGE_SUPPORT_TOO_BIG)
+        await assertRevert(voting.initialize(token.address, VOTE_DURATION, pct16(100), MINIMUM_ACCEPTANCE_QUORUM, DELEGATED_VOTING_PERIOD, QUIET_ENDING_PERIOD, QUIET_ENDING_EXTENSION, EXECUTION_DELAY), VOTING_ERRORS.VOTING_CHANGE_SUPPORT_TOO_BIG)
       })
 
       it('fails if the quiet ending period is greater than the vote duration', async () => {
         const quietEndingPeriod = VOTE_DURATION + 1
 
-        await assertRevert(voting.initialize(token.address, REQUIRED_SUPPORT, MINIMUM_ACCEPTANCE_QUORUM, VOTE_DURATION, OVERRULE_WINDOW, quietEndingPeriod, QUIET_ENDING_EXTENSION, EXECUTION_DELAY), VOTING_ERRORS.VOTING_INVALID_QUIET_END_PERIOD)
+        await assertRevert(voting.initialize(token.address, VOTE_DURATION, REQUIRED_SUPPORT, MINIMUM_ACCEPTANCE_QUORUM, DELEGATED_VOTING_PERIOD, quietEndingPeriod, QUIET_ENDING_EXTENSION, EXECUTION_DELAY), VOTING_ERRORS.VOTING_INVALID_QUIET_END_PERIOD)
       })
     })
 
     context('when the app is already initialized', () => {
       before('initialize app', async () => {
-        await voting.initialize(token.address, REQUIRED_SUPPORT, MINIMUM_ACCEPTANCE_QUORUM, VOTE_DURATION, OVERRULE_WINDOW, QUIET_ENDING_PERIOD, QUIET_ENDING_EXTENSION, EXECUTION_DELAY)
+        await voting.initialize(token.address, VOTE_DURATION, REQUIRED_SUPPORT, MINIMUM_ACCEPTANCE_QUORUM, DELEGATED_VOTING_PERIOD, QUIET_ENDING_PERIOD, QUIET_ENDING_EXTENSION, EXECUTION_DELAY)
       })
 
       it('cannot be re-initialized', async () => {
-        await assertRevert(voting.initialize(token.address, REQUIRED_SUPPORT, MINIMUM_ACCEPTANCE_QUORUM, VOTE_DURATION, OVERRULE_WINDOW, QUIET_ENDING_PERIOD, QUIET_ENDING_EXTENSION, EXECUTION_DELAY), ARAGON_OS_ERRORS.INIT_ALREADY_INITIALIZED)
+        await assertRevert(voting.initialize(token.address, VOTE_DURATION, REQUIRED_SUPPORT, MINIMUM_ACCEPTANCE_QUORUM, DELEGATED_VOTING_PERIOD, QUIET_ENDING_PERIOD, QUIET_ENDING_EXTENSION, EXECUTION_DELAY), ARAGON_OS_ERRORS.INIT_ALREADY_INITIALIZED)
       })
 
       it('is initialized correctly', async () => {
         assert.isTrue(await voting.hasInitialized(), 'voting is not initialized')
 
         assertBn(await voting.token(), token.address, 'token address does not match')
-        assertBn(await voting.voteTime(), VOTE_DURATION, 'vote duration does not match')
 
         const currentSettingId = await voting.getCurrentSettingId()
-        const { supportRequiredPct, minAcceptQuorumPct, executionDelay, overruleWindow, quietEndingPeriod, quietEndingExtension } = await voting.getSetting(currentSettingId)
-        assertBn(overruleWindow, OVERRULE_WINDOW, 'overrule window does not match')
+        const { voteTime, supportRequiredPct, minAcceptQuorumPct, executionDelay, delegatedVotingPeriod, quietEndingPeriod, quietEndingExtension } = await voting.getSetting(currentSettingId)
+        assertBn(voteTime, VOTE_DURATION, 'vote duration does not match')
+        assertBn(delegatedVotingPeriod, DELEGATED_VOTING_PERIOD, 'delegated voting period does not match')
         assertBn(executionDelay, EXECUTION_DELAY, 'execution delay does not match')
         assertBn(quietEndingPeriod, QUIET_ENDING_PERIOD, 'quiet ending period does not match')
         assertBn(quietEndingExtension, QUIET_ENDING_EXTENSION, 'quiet ending extension does not match')

@@ -39,45 +39,46 @@
       "params": []
     },
     {
-      "name": "Modify support",
-      "id": "MODIFY_SUPPORT_ROLE",
+      "name": "Modify vote time",
+      "id": "CHANGE_VOTE_TIME_ROLE",
       "params": [
-        "New support",
-        "Current support"
+        "New vote time"
+      ]
+    },
+    {
+      "name": "Modify support",
+      "id": "CHANGE_SUPPORT_ROLE",
+      "params": [
+        "New required support"
       ]
     },
     {
       "name": "Modify quorum",
-      "id": "MODIFY_QUORUM_ROLE",
+      "id": "CHANGE_QUORUM_ROLE",
       "params": [
-        "New quorum",
-        "Current quorum"
+        "New minimum acceptance quorum"
       ]
     },
     {
-      "name": "Modify overrule window",
-      "id": "MODIFY_OVERRULE_WINDOW_ROLE",
+      "name": "Modify delegated voting period",
+      "id": "CHANGE_DELEGATED_VOTING_PERIOD_ROLE",
       "params": [
-        "New window",
-        "Current window"
-      ]
-    },
-    {
-      "name": "Modify execution delay",
-      "id": "MODIFY_EXECUTION_DELAY_ROLE",
-      "params": [
-        "New execution delay",
-        "Current execution delay"
+        "New delegated voting period"
       ]
     },
     {
       "name": "Modify quiet ending configuration",
-      "id": "MODIFY_QUIET_ENDING_ROLE",
+      "id": "CHANGE_QUIET_ENDING_ROLE",
       "params": [
         "New quiet ending period",
-        "Current quiet ending period",
-        "New quiet ending extension",
-        "Current quiet ending extension"
+        "New quiet ending extension"
+      ]
+    },
+    {
+      "name": "Modify execution delay",
+      "id": "CHANGE_EXECUTION_DELAY_ROLE",
+      "params": [
+        "New execution delay"
       ]
     }
   ]

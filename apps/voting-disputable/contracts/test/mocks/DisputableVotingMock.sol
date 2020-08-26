@@ -18,6 +18,11 @@ contract DisputableVotingMock is DisputableVoting, TimeHelpersMock {
         return _newVote(noScript, _context);
     }
 
+    // _getCurrentSettingId public wrapper
+    function getCurrentSettingId() external view isInitialized returns (uint256) {
+        return _getCurrentSettingId();
+    }
+
     // _isValuePct public wrapper
     function isValuePct(uint256 _value, uint256 _total, uint256 _pct) external pure returns (bool) {
         return _isValuePct(_value, _total, _pct);

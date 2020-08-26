@@ -18,20 +18,23 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     // bytes32 public constant CREATE_VOTES_ROLE = keccak256("CREATE_VOTES_ROLE");
     bytes32 public constant CREATE_VOTES_ROLE = 0xe7dcd7275292e064d090fbc5f3bd7995be23b502c1fed5cd94cfddbbdcd32bbc;
 
-    // bytes32 public constant MODIFY_SUPPORT_ROLE = keccak256("MODIFY_SUPPORT_ROLE");
-    bytes32 public constant MODIFY_SUPPORT_ROLE = 0xda3972983e62bdf826c4b807c4c9c2b8a941e1f83dfa76d53d6aeac11e1be650;
+    // bytes32 public constant CHANGE_VOTE_TIME_ROLE = keccak256("CHANGE_VOTE_TIME_ROLE");
+    bytes32 public constant CHANGE_VOTE_TIME_ROLE = 0xbc5d8ebc0830a2fed8649987b8263de1397b7fa892f3b87dc2d8cad35c691f86;
 
-    // bytes32 public constant MODIFY_QUORUM_ROLE = keccak256("MODIFY_QUORUM_ROLE");
-    bytes32 public constant MODIFY_QUORUM_ROLE = 0xad15e7261800b4bb73f1b69d3864565ffb1fd00cb93cf14fe48da8f1f2149f39;
+    // bytes32 public constant CHANGE_SUPPORT_ROLE = keccak256("CHANGE_SUPPORT_ROLE");
+    bytes32 public constant CHANGE_SUPPORT_ROLE = 0xf3a5f71f3cb50dae9454dd13cdf0fd1b559f7e20d63c08902592486e6d460c90;
 
-    // bytes32 public constant MODIFY_OVERRULE_WINDOW_ROLE = keccak256("MODIFY_OVERRULE_WINDOW_ROLE");
-    bytes32 public constant MODIFY_OVERRULE_WINDOW_ROLE = 0x703200758fea823fd0c9d36774ba318b14f6c50c4ef6dff34f394e8f2c7d2d99;
+    // bytes32 public constant CHANGE_QUORUM_ROLE = keccak256("CHANGE_QUORUM_ROLE");
+    bytes32 public constant CHANGE_QUORUM_ROLE = 0xa3f675280fb3c54662067f92659ca1ee3ef7c1a7f2a6ff03a5c4228aa26b6a82;
 
-    // bytes32 public constant MODIFY_EXECUTION_DELAY_ROLE = keccak256("MODIFY_EXECUTION_DELAY_ROLE");
-    bytes32 public constant MODIFY_EXECUTION_DELAY_ROLE = 0x69a0bddd05e66b7ae81cce9994caef3b5c660de549fd2fd3597a9e2c3046e446;
+    // bytes32 public constant CHANGE_DELEGATED_VOTING_PERIOD_ROLE = keccak256("CHANGE_DELEGATED_VOTING_PERIOD_ROLE");
+    bytes32 public constant CHANGE_DELEGATED_VOTING_PERIOD_ROLE = 0x59ba415d96e104e6483d76b79d9cd09941d04e229adcd62d7dc672c93975a19d;
 
-    // bytes32 public constant MODIFY_QUIET_ENDING_ROLE = keccak256("MODIFY_QUIET_ENDING_ROLE");
-    bytes32 public constant MODIFY_QUIET_ENDING_ROLE = 0xd1e2974c80e3190749a0c11e5887a3d42877cf632fe25477926c2407f04a1b80;
+    // bytes32 public constant CHANGE_EXECUTION_DELAY_ROLE = keccak256("CHANGE_EXECUTION_DELAY_ROLE");
+    bytes32 public constant CHANGE_EXECUTION_DELAY_ROLE = 0x5e3a3edc315e366a0cc5c94ca94a8f9bbc2f1feebb2ef7704bfefcff0cdc4ee7;
+
+    // bytes32 public constant CHANGE_QUIET_ENDING_ROLE = keccak256("CHANGE_QUIET_ENDING_ROLE");
+    bytes32 public constant CHANGE_QUIET_ENDING_ROLE = 0x4f885d966bcd49734218a6e280d58c840b86e8cc13610b21ebd46f0b1da362c2;
 
     uint256 public constant PCT_BASE = 10 ** 18; // 0% = 0; 1% = 10^16; 100% = 10^18
     uint256 public constant MAX_VOTES_DELEGATION_SET_LENGTH = 70;
@@ -44,12 +47,13 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     string private constant ERROR_CHANGE_QUORUM_TOO_BIG = "VOTING_CHANGE_QUORUM_TOO_BIG";
     string private constant ERROR_CHANGE_SUPPORT_TOO_SMALL = "VOTING_CHANGE_SUPPORT_TOO_SMALL";
     string private constant ERROR_CHANGE_SUPPORT_TOO_BIG = "VOTING_CHANGE_SUPPORT_TOO_BIG";
-    string private constant ERROR_INVALID_OVERRULE_WINDOW = "VOTING_INVALID_OVERRULE_WINDOW";
+    string private constant ERROR_INVALID_DELEGATED_VOTING_PERIOD = "VOTING_INVALID_DLGT_VOTE_PERIOD";
     string private constant ERROR_INVALID_QUIET_ENDING_PERIOD = "VOTING_INVALID_QUIET_END_PERIOD";
+    string private constant ERROR_INVALID_EXECUTION_SCRIPT = "VOTING_INVALID_EXECUTION_SCRIPT";
 
     // Workflow errors
     string private constant ERROR_CANNOT_FORWARD = "VOTING_CANNOT_FORWARD";
-    string private constant ERROR_NO_VOTING_POWER = "VOTING_NO_VOTING_POWER";
+    string private constant ERROR_NO_TOTAL_VOTING_POWER = "VOTING_NO_TOTAL_VOTING_POWER";
     string private constant ERROR_CANNOT_VOTE = "VOTING_CANNOT_VOTE";
     string private constant ERROR_NOT_REPRESENTATIVE = "VOTING_NOT_REPRESENTATIVE";
     string private constant ERROR_PAST_REPRESENTATIVE_VOTING_WINDOW = "VOTING_PAST_REP_VOTING_WINDOW";
@@ -61,13 +65,16 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     enum VoterState { Absent, Yea, Nay }
 
     enum VoteStatus {
-        Active,                         // An ongoing vote
+        Normal,                         // A vote in a "normal" state of operation (not one of the below)--note that this state is not related to the vote being open
         Paused,                         // A vote that is paused due to it having an open challenge or dispute
         Cancelled,                      // A vote that has been explicitly cancelled due to a challenge or dispute
         Executed                        // A vote that has been executed
     }
 
     struct Setting {
+        // "Base" duration of each vote -- vote lifespans may be adjusted by pause and extension durations
+        uint64 voteTime;
+
         // Required voter support % (yes power / voted power) for a vote to pass
         // Expressed as a percentage of 10^18; eg. 10^16 = 1%, 10^18 = 100%
         uint64 supportRequiredPct;
@@ -77,18 +84,19 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         // Must be <= supportRequiredPct to avoid votes being impossible to pass
         uint64 minAcceptQuorumPct;
 
-        // Duration before the end of a vote to stop allowing representatives to vote and for principals to override their representative's vote
-        // Must be <= voteTime
-        uint64 overruleWindow;
+        // Duration from the start of a vote that representatives are allowed to vote on behalf of principals
+        // Must be <= voteTime; duration is bound as [)
+        uint64 delegatedVotingPeriod;
 
         // Duration before the end of a vote to detect non-quiet endings
-        // Must be <= voteTime
+        // Must be <= voteTime; duration is bound as [)
         uint64 quietEndingPeriod;
 
         // Duration to extend a vote in case of non-quiet ending
         uint64 quietEndingExtension;
 
         // Duration to wait before a passed vote can be executed
+        // Duration is bound as [)
         uint64 executionDelay;
     }
 
@@ -100,24 +108,27 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     struct Vote {
         uint256 yea;                                        // Voting power for
         uint256 nay;                                        // Voting power against
-        uint256 votingPower;                                // Total voting power (based on the snapshot block)
-        uint256 settingId;                                  // Identification number of the setting applicable to the vote
-        uint256 actionId;                                   // Identification number of the associated disputable action on the attached Agreement
-        VoteStatus status;                                  // Status of the vote
+        uint256 totalPower;                                 // Total voting power (based on the snapshot block)
+
         uint64 startDate;                                   // Datetime when the vote was created
         uint64 snapshotBlock;                               // Block number used to check voting power on attached token
+        VoteStatus status;                                  // Status of the vote
+
+        uint256 settingId;                                  // Identification number of the setting applicable to the vote
+        uint256 actionId;                                   // Identification number of the associated disputable action on the attached Agreement
+
         uint64 pausedAt;                                    // Datetime when the vote was paused
         uint64 pauseDuration;                               // Duration of the pause (only updated once resumed)
-        uint64 quietEndingExtendedSeconds;                  // Total number of seconds a vote was extended due to quiet ending
+        uint64 quietEndingExtensionDuration;                // Duration a vote was extended due to non-quiet endings
         VoterState quietEndingSnapshotSupport;              // Snapshot of the vote's support at the beginning of the first quiet ending period
-        bytes executionScript;                              // EVM script attached to the vote
+
+        bytes32 executionScriptHash;                        // Hash of the EVM script attached to the vote
         mapping (address => VoteCast) castVotes;            // Mapping of voter address => more information about their cast vote
     }
 
-    uint64 public voteTime;                                 // "Base" duration of each vote -- vote lifespans may be adjusted by pause and extension durations
     MiniMeToken public token;                               // Token for determining voting power; we assume it's not malicious
 
-    uint256 internal settingsLength;                        // Number of settings created
+    uint256 public settingsLength;                          // Number of settings created
     mapping (uint256 => Setting) internal settings;         // List of settings indexed by ID (starting at 0)
 
     uint256 public votesLength;                             // Number of votes created
@@ -125,41 +136,41 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     mapping (address => address) internal representatives;  // Mapping of voter => allowed representative
 
     event NewSetting(uint256 settingId);
+    event ChangeVoteTime(uint64 voteTime);
     event ChangeSupportRequired(uint64 supportRequiredPct);
     event ChangeMinQuorum(uint64 minAcceptQuorumPct);
+    event ChangeDelegatedVotingPeriod(uint64 delegatedVotingPeriod);
+    event ChangeQuietEndingConfiguration(uint64 quietEndingPeriod, uint64 quietEndingExtension);
     event ChangeExecutionDelay(uint64 executionDelay);
-    event ChangeOverruleWindow(uint64 overruleWindow);
-    event ChangeQuietEndingPeriod(uint64 quietEndingPeriod, uint64 quietEndingExtension);
 
-    event StartVote(uint256 indexed voteId, address indexed creator, bytes context);
+    event StartVote(uint256 indexed voteId, address indexed creator, bytes context, bytes executionScript);
     event PauseVote(uint256 indexed voteId, uint256 indexed challengeId);
     event ResumeVote(uint256 indexed voteId);
     event CancelVote(uint256 indexed voteId);
     event ExecuteVote(uint256 indexed voteId);
-    event VoteQuietEndingExtension(uint256 indexed voteId, bool passing);
+    event QuietEndingExtendVote(uint256 indexed voteId, bool passing);
 
-    event CastVote(uint256 indexed voteId, address indexed voter, bool supports, uint256 stake);
-    event ChangeRepresentative(address indexed voter, address indexed newRepresentative);
+    event CastVote(uint256 indexed voteId, address indexed voter, bool supports, address caster);
+    event ChangeRepresentative(address indexed voter, address indexed representative);
     event ProxyVoteFailure(uint256 indexed voteId, address indexed voter, address indexed representative);
-    event ProxyVoteSuccess(uint256 indexed voteId, address indexed voter, address indexed representative, bool supports);
 
     /**
-    * @notice Initialize Disputable Voting with `_token.symbol(): string` for governance, minimum support of `@formatPct(_supportRequiredPct)`%, minimum acceptance quorum of `@formatPct(_minAcceptQuorumPct)`%, a voting duration of `@transformTime(_voteTime)`, an overrule window of `@transformTime(_overruleWindow), and a execution delay of `@transformTime(_executionDelay)`
+    * @notice Initialize Disputable Voting with `_token.symbol(): string` for governance, a voting duration of `@transformTime(_voteTime)`, minimum support of `@formatPct(_supportRequiredPct)`%, minimum acceptance quorum of `@formatPct(_minAcceptQuorumPct)`%, a delegated voting period of `@transformTime(_delegatedVotingPeriod), and a execution delay of `@transformTime(_executionDelay)`
     * @param _token MiniMeToken Address that will be used as governance token
+    * @param _voteTime Base duration a vote will be open for voting
     * @param _supportRequiredPct Required support % (yes power / voted power) for a vote to pass; expressed as a percentage of 10^18
     * @param _minAcceptQuorumPct Required quorum % (yes power / total power) for a vote to pass; expressed as a percentage of 10^18
-    * @param _voteTime Base duration a vote will be open for voting
-    * @param _overruleWindow Duration of overrule window
+    * @param _delegatedVotingPeriod Duration from the start of a vote that representatives are allowed to vote on behalf of principals
     * @param _quietEndingPeriod Duration to detect non-quiet endings
     * @param _quietEndingExtension Duration to extend a vote in case of non-quiet ending
     * @param _executionDelay Duration to wait before a passed vote can be executed
     */
     function initialize(
         MiniMeToken _token,
+        uint64 _voteTime,
         uint64 _supportRequiredPct,
         uint64 _minAcceptQuorumPct,
-        uint64 _voteTime,
-        uint64 _overruleWindow,
+        uint64 _delegatedVotingPeriod,
         uint64 _quietEndingPeriod,
         uint64 _quietEndingExtension,
         uint64 _executionDelay
@@ -169,24 +180,31 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         initialized();
 
         require(isContract(_token), ERROR_TOKEN_NOT_CONTRACT);
-        require(_voteTime > 0, ERROR_VOTE_TIME_ZERO);
-
         token = _token;
-        voteTime = _voteTime;
 
         (Setting storage setting, ) = _newSetting();
+        _changeVoteTime(setting, _voteTime);
         _changeSupportRequiredPct(setting, _supportRequiredPct);
         _changeMinAcceptQuorumPct(setting, _minAcceptQuorumPct);
-        _changeOverruleWindow(setting, _overruleWindow);
-        _changeQuietEndingPeriod(setting, _quietEndingPeriod, _quietEndingExtension);
+        _changeDelegatedVotingPeriod(setting, _delegatedVotingPeriod);
+        _changeQuietEndingConfiguration(setting, _quietEndingPeriod, _quietEndingExtension);
         _changeExecutionDelay(setting, _executionDelay);
+    }
+
+    /**
+    * @notice Change vote time to `@transformTime(_voteTime)`
+    * @param _voteTime New vote time
+    */
+    function changeVoteTime(uint64 _voteTime) external authP(CHANGE_VOTE_TIME_ROLE, arr(uint256(_voteTime))) {
+        Setting storage setting = _newCopiedSettings();
+        _changeVoteTime(setting, _voteTime);
     }
 
     /**
     * @notice Change required support to `@formatPct(_supportRequiredPct)`%
     * @param _supportRequiredPct New required support; expressed as a percentage of 10^18
     */
-    function changeSupportRequiredPct(uint64 _supportRequiredPct) external authP(MODIFY_SUPPORT_ROLE, arr(uint256(_supportRequiredPct))) {
+    function changeSupportRequiredPct(uint64 _supportRequiredPct) external authP(CHANGE_SUPPORT_ROLE, arr(uint256(_supportRequiredPct))) {
         Setting storage setting = _newCopiedSettings();
         _changeSupportRequiredPct(setting, _supportRequiredPct);
     }
@@ -195,18 +213,18 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @notice Change minimum acceptance quorum to `@formatPct(_minAcceptQuorumPct)`%
     * @param _minAcceptQuorumPct New minimum acceptance quorum; expressed as a percentage of 10^18
     */
-    function changeMinAcceptQuorumPct(uint64 _minAcceptQuorumPct) external authP(MODIFY_QUORUM_ROLE, arr(uint256(_minAcceptQuorumPct))) {
+    function changeMinAcceptQuorumPct(uint64 _minAcceptQuorumPct) external authP(CHANGE_QUORUM_ROLE, arr(uint256(_minAcceptQuorumPct))) {
         Setting storage setting = _newCopiedSettings();
         _changeMinAcceptQuorumPct(setting, _minAcceptQuorumPct);
     }
 
     /**
-    * @notice Change overrule window to `@transformTime(_overruleWindow)`
-    * @param _overruleWindow New overrule window
+    * @notice Change delegated voting period to `@transformTime(_delegatedVotingPeriod)`
+    * @param _delegatedVotingPeriod New delegated voting period
     */
-    function changeOverruleWindow(uint64 _overruleWindow) external authP(MODIFY_OVERRULE_WINDOW_ROLE, arr(uint256(_overruleWindow))) {
+    function changeDelegatedVotingPeriod(uint64 _delegatedVotingPeriod) external authP(CHANGE_DELEGATED_VOTING_PERIOD_ROLE, arr(uint256(_delegatedVotingPeriod))) {
         Setting storage setting = _newCopiedSettings();
-        _changeOverruleWindow(setting, _overruleWindow);
+        _changeDelegatedVotingPeriod(setting, _delegatedVotingPeriod);
     }
 
     /**
@@ -214,19 +232,19 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @param _quietEndingPeriod New quiet ending period
     * @param _quietEndingExtension New quiet ending extension
     */
-    function changeQuietEndingPeriod(uint64 _quietEndingPeriod, uint64 _quietEndingExtension)
+    function changeQuietEndingConfiguration(uint64 _quietEndingPeriod, uint64 _quietEndingExtension)
         external
-        authP(MODIFY_QUIET_ENDING_ROLE, arr(uint256(_quietEndingPeriod), uint256(_quietEndingExtension)))
+        authP(CHANGE_QUIET_ENDING_ROLE, arr(uint256(_quietEndingPeriod), uint256(_quietEndingExtension)))
     {
         Setting storage setting = _newCopiedSettings();
-        _changeQuietEndingPeriod(setting, _quietEndingPeriod, _quietEndingExtension);
+        _changeQuietEndingConfiguration(setting, _quietEndingPeriod, _quietEndingExtension);
     }
 
     /**
     * @notice Change execution delay to `@transformTime(_executionDelay)`
     * @param _executionDelay New execution delay
     */
-    function changeExecutionDelay(uint64 _executionDelay) external authP(MODIFY_EXECUTION_DELAY_ROLE, arr(uint256(_executionDelay))) {
+    function changeExecutionDelay(uint64 _executionDelay) external authP(CHANGE_EXECUTION_DELAY_ROLE, arr(uint256(_executionDelay))) {
         Setting storage setting = _newCopiedSettings();
         _changeExecutionDelay(setting, _executionDelay);
     }
@@ -265,7 +283,23 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     */
     function voteOnBehalfOf(uint256 _voteId, bool _supports, address[] _voters) external {
         require(_voters.length <= MAX_VOTES_DELEGATION_SET_LENGTH, ERROR_DELEGATES_EXCEEDS_MAX_LEN);
-        _voteOnBehalfOf(_voteId, _supports, _voters);
+
+        Vote storage vote_ = _getVote(_voteId);
+        // Note that the period for representatives to vote can never go into a quiet ending
+        // extension, and so we don't need to check other timing-based pre-conditions
+        require(_canRepresentativesVote(vote_), ERROR_PAST_REPRESENTATIVE_VOTING_WINDOW);
+
+        for (uint256 i = 0; i < _voters.length; i++) {
+            address voter = _voters[i];
+            require(_hasVotingPower(vote_, voter), ERROR_CANNOT_VOTE);
+            require(_isRepresentativeOf(voter, msg.sender), ERROR_NOT_REPRESENTATIVE);
+
+            if (!_hasCastVote(vote_, voter)) {
+                _castVote(vote_, _voteId, _supports, voter, msg.sender);
+            } else {
+                emit ProxyVoteFailure(_voteId, voter, msg.sender);
+            }
+        }
     }
 
     /**
@@ -273,10 +307,12 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @dev Initialization check is implicitly provided by `_getVote()` as new votes can only be
     *      created via `newVote()`, which requires initialization
     * @param _voteId Identification number of the vote
+    * @param _executionScript Action (encoded as an EVM script) to be executed, must match the one used when the vote was created
     */
-    function executeVote(uint256 _voteId) external {
+    function executeVote(uint256 _voteId, bytes _executionScript) external {
         Vote storage vote_ = _getVote(_voteId);
         require(_canExecute(vote_), ERROR_CANNOT_EXECUTE);
+        require(vote_.executionScriptHash == keccak256(_executionScript), ERROR_INVALID_EXECUTION_SCRIPT);
 
         vote_.status = VoteStatus.Executed;
         _closeDisputableAction(vote_.actionId);
@@ -285,7 +321,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         // the Agreement from this app's context (e.g. maliciously closing a different action)
         address[] memory blacklist = new address[](1);
         blacklist[0] = address(_getAgreement());
-        runScript(vote_.executionScript, new bytes(0), blacklist);
+        runScript(_executionScript, new bytes(0), blacklist);
         emit ExecuteVote(_voteId);
     }
 
@@ -336,7 +372,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     function canChallenge(uint256 _voteId) external view returns (bool) {
         Vote storage vote_ = _getVote(_voteId);
         // Votes can only be challenged once
-        return _isVoteOpenForVoting(vote_) && vote_.pausedAt == 0;
+        return vote_.pausedAt == 0 && _isVoteOpenForVoting(vote_, settings[vote_.settingId]);
     }
 
     /**
@@ -347,7 +383,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     */
     function canClose(uint256 _voteId) external view returns (bool) {
         Vote storage vote_ = _getVote(_voteId);
-        return (_isActive(vote_) || _isExecuted(vote_)) && _hasEnded(vote_);
+        return (_isNormal(vote_) || _isExecuted(vote_)) && _hasEnded(vote_, settings[vote_.settingId]);
     }
 
     // Getter fns
@@ -357,40 +393,35 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     *      Initialization check is implicitly provided by `_getSetting()` as new settings can only be
     *      created via `change*()` functions which require initialization
     * @param _settingId Identification number of the setting
+    * @return voteTime Base vote duration
     * @return supportRequiredPct Required support % (yes power / voted power) for a vote to pass; expressed as a percentage of 10^18
     * @return minAcceptQuorumPct Required quorum % (yes power / total power) for a vote to pass; expressed as a percentage of 10^18
-    * @return executionDelay Duration to wait before a passed vote can be executed
-    * @return overruleWindow Duration of overrule window
+    * @return delegatedVotingPeriod Duration of the delegated voting period
     * @return quietEndingPeriod Duration to detect non-quiet endings
     * @return quietEndingExtension Duration to extend a vote in case of non-quiet ending
+    * @return executionDelay Duration to wait before a passed vote can be executed
     */
     function getSetting(uint256 _settingId)
         external
         view
         returns (
+            uint64 voteTime,
             uint64 supportRequiredPct,
             uint64 minAcceptQuorumPct,
-            uint64 executionDelay,
-            uint64 overruleWindow,
+            uint64 delegatedVotingPeriod,
             uint64 quietEndingPeriod,
-            uint64 quietEndingExtension
+            uint64 quietEndingExtension,
+            uint64 executionDelay
         )
     {
         Setting storage setting = _getSetting(_settingId);
+        voteTime = setting.voteTime;
         supportRequiredPct = setting.supportRequiredPct;
         minAcceptQuorumPct = setting.minAcceptQuorumPct;
-        executionDelay = setting.executionDelay;
-        overruleWindow = setting.overruleWindow;
+        delegatedVotingPeriod = setting.delegatedVotingPeriod;
         quietEndingPeriod = setting.quietEndingPeriod;
         quietEndingExtension = setting.quietEndingExtension;
-    }
-
-    /**
-    * @dev Tell the identification number of the current setting
-    * @return Identification number of the current setting
-    */
-    function getCurrentSettingId() external view isInitialized returns (uint256) {
-        return _getCurrentSettingId();
+        executionDelay = setting.executionDelay;
     }
 
     /**
@@ -400,17 +431,17 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @param _voteId Identification number of the vote
     * @return yea Voting power for
     * @return nay Voting power against
-    * @return votingPower Total voting power available (based on the snapshot block)
-    * @return settingId Identification number of the setting applicable to the vote
-    * @return actionId Identification number of the associated disputable action on the attached Agreement
-    * @return status Status of the vote
+    * @return totalPower Total voting power available (based on the snapshot block)
     * @return startDate Datetime when the vote was created
     * @return snapshotBlock Block number used to check voting power on attached token
+    * @return status Status of the vote
+    * @return settingId Identification number of the setting applicable to the vote
+    * @return actionId Identification number of the associated disputable action on the attached Agreement
     * @return pausedAt Datetime when the vote was paused
     * @return pauseDuration Duration of the pause (only updated once resumed)
-    * @return quietEndingExtendedSeconds Total number of seconds a vote was extended due to quiet ending
+    * @return quietEndingExtensionDuration Duration a vote was extended due to non-quiet endings
     * @return quietEndingSnapshotSupport Snapshot of the vote's support at the beginning of the first quiet ending period
-    * @return executionScript EVM script attached to the vote
+    * @return executionScriptHash Hash of the EVM script attached to the vote
     */
     function getVote(uint256 _voteId)
         external
@@ -418,34 +449,34 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         returns (
             uint256 yea,
             uint256 nay,
-            uint256 votingPower,
-            uint256 settingId,
-            uint256 actionId,
-            VoteStatus status,
+            uint256 totalPower,
             uint64 startDate,
             uint64 snapshotBlock,
+            VoteStatus status,
+            uint256 settingId,
+            uint256 actionId,
             uint64 pausedAt,
             uint64 pauseDuration,
-            uint64 quietEndingExtendedSeconds,
+            uint64 quietEndingExtensionDuration,
             VoterState quietEndingSnapshotSupport,
-            bytes executionScript
+            bytes32 executionScriptHash
         )
     {
         Vote storage vote_ = _getVote(_voteId);
 
         yea = vote_.yea;
         nay = vote_.nay;
-        votingPower = vote_.votingPower;
-        settingId = vote_.settingId;
-        actionId = vote_.actionId;
-        status = vote_.status;
+        totalPower = vote_.totalPower;
         startDate = vote_.startDate;
         snapshotBlock = vote_.snapshotBlock;
+        status = vote_.status;
+        settingId = vote_.settingId;
+        actionId = vote_.actionId;
         pausedAt = vote_.pausedAt;
         pauseDuration = vote_.pauseDuration;
-        quietEndingExtendedSeconds = vote_.quietEndingExtendedSeconds;
+        quietEndingExtensionDuration = vote_.quietEndingExtensionDuration;
         quietEndingSnapshotSupport = vote_.quietEndingSnapshotSupport;
-        executionScript = vote_.executionScript;
+        executionScriptHash = vote_.executionScriptHash;
     }
 
     /**
@@ -485,8 +516,9 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @return True if the representative can vote on behalf of the delegated voters in the vote
     */
     function canVoteOnBehalfOf(uint256 _voteId, address[] _voters, address _representative) external view returns (bool) {
-        Vote storage vote_ = _getVote(_voteId);
+        require(_voters.length <= MAX_VOTES_DELEGATION_SET_LENGTH, ERROR_DELEGATES_EXCEEDS_MAX_LEN);
 
+        Vote storage vote_ = _getVote(_voteId);
         if (!_canRepresentativesVote(vote_)) {
             return false;
         }
@@ -519,20 +551,22 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @param _voteId Identification number of the vote being queried
     * @return True if the vote is open for voting
     */
-    function isVoteOpen(uint256 _voteId) external view returns (bool) {
-        return _isVoteOpenForVoting(_getVote(_voteId));
+    function isVoteOpenForVoting(uint256 _voteId) external view returns (bool) {
+        Vote storage vote_ = _getVote(_voteId);
+        Setting storage setting = settings[vote_.settingId];
+        return _isVoteOpenForVoting(vote_, setting);
     }
 
     /**
-    * @dev Tell if a vote is within its overrule window
+    * @dev Tell if a vote currently allows representatives to vote for delegated voters
     *      Initialization check is implicitly provided by `_getVote()` as new votes can only be
     *      created via `newVote()`, which requires initialization
     * @param _voteId Vote identifier
-    * @return True if the vote is within its overrule window
+    * @return True if the vote currently allows representatives to vote
     */
-    function withinOverruleWindow(uint256 _voteId) external view returns (bool) {
+    function canRepresentativesVote(uint256 _voteId) external view returns (bool) {
         Vote storage vote_ = _getVote(_voteId);
-        return _isVoteOpenForVoting(vote_) && _withinOverruleWindow(vote_);
+        return _canRepresentativesVote(vote_);
     }
 
     /**
@@ -554,7 +588,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     */
     function _onDisputableActionChallenged(uint256 _voteId, uint256 _challengeId, address /* _challenger */) internal {
         Vote storage vote_ = _getVote(_voteId);
-        require(_isActive(vote_), ERROR_CANNOT_PAUSE_VOTE);
+        require(_isNormal(vote_), ERROR_CANNOT_PAUSE_VOTE);
 
         vote_.status = VoteStatus.Paused;
         vote_.pausedAt = getTimestamp64();
@@ -569,7 +603,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         Vote storage vote_ = _getVote(_voteId);
         require(_isPaused(vote_), ERROR_VOTE_NOT_PAUSED);
 
-        vote_.status = VoteStatus.Active;
+        vote_.status = VoteStatus.Normal;
         vote_.pauseDuration = getTimestamp64().sub(vote_.pausedAt);
         emit ResumeVote(_voteId);
     }
@@ -611,6 +645,35 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     }
 
     /**
+    * @dev Create a copy of the current settings as a new setting instance
+    * @return New setting's instance
+    */
+    function _newCopiedSettings() internal returns (Setting storage) {
+        (Setting storage to, uint256 settingId) = _newSetting();
+        Setting storage from = _getSetting(settingId - 1);
+        to.voteTime = from.voteTime;
+        to.supportRequiredPct = from.supportRequiredPct;
+        to.minAcceptQuorumPct = from.minAcceptQuorumPct;
+        to.delegatedVotingPeriod = from.delegatedVotingPeriod;
+        to.quietEndingPeriod = from.quietEndingPeriod;
+        to.quietEndingExtension = from.quietEndingExtension;
+        to.executionDelay = from.executionDelay;
+        return to;
+    }
+
+    /**
+    * @dev Change vote time
+    * @param _setting Setting instance to update
+    * @param _voteTime New vote time
+    */
+    function _changeVoteTime(Setting storage _setting, uint64 _voteTime) internal {
+        require(_voteTime > 0, ERROR_VOTE_TIME_ZERO);
+
+        _setting.voteTime = _voteTime;
+        emit ChangeVoteTime(_voteTime);
+    }
+
+    /**
     * @dev Change the required support
     * @param _setting Setting instance to update
     * @param _supportRequiredPct New required support; expressed as a percentage of 10^18
@@ -636,15 +699,15 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     }
 
     /**
-    * @dev Change the overrule window
+    * @dev Change the delegated voting period
     * @param _setting Setting instance to update
-    * @param _overruleWindow New overrule window
+    * @param _delegatedVotingPeriod New delegated voting period
     */
-    function _changeOverruleWindow(Setting storage _setting, uint64 _overruleWindow) internal {
-        require(_overruleWindow <= voteTime, ERROR_INVALID_OVERRULE_WINDOW);
+    function _changeDelegatedVotingPeriod(Setting storage _setting, uint64 _delegatedVotingPeriod) internal {
+        require(_delegatedVotingPeriod <= _setting.voteTime, ERROR_INVALID_DELEGATED_VOTING_PERIOD);
 
-        _setting.overruleWindow = _overruleWindow;
-        emit ChangeOverruleWindow(_overruleWindow);
+        _setting.delegatedVotingPeriod = _delegatedVotingPeriod;
+        emit ChangeDelegatedVotingPeriod(_delegatedVotingPeriod);
     }
 
     /**
@@ -653,12 +716,12 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @param _quietEndingPeriod New quiet ending period
     * @param _quietEndingExtension New quiet ending extension
     */
-    function _changeQuietEndingPeriod(Setting storage _setting, uint64 _quietEndingPeriod, uint64 _quietEndingExtension) internal {
-        require(_quietEndingPeriod <= voteTime, ERROR_INVALID_QUIET_ENDING_PERIOD);
+    function _changeQuietEndingConfiguration(Setting storage _setting, uint64 _quietEndingPeriod, uint64 _quietEndingExtension) internal {
+        require(_quietEndingPeriod <= _setting.voteTime, ERROR_INVALID_QUIET_ENDING_PERIOD);
 
         _setting.quietEndingPeriod = _quietEndingPeriod;
         _setting.quietEndingExtension = _quietEndingExtension;
-        emit ChangeQuietEndingPeriod(_quietEndingPeriod, _quietEndingExtension);
+        emit ChangeQuietEndingConfiguration(_quietEndingPeriod, _quietEndingExtension);
     }
 
     /**
@@ -679,45 +742,89 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     */
     function _newVote(bytes _executionScript, bytes _context) internal returns (uint256 voteId) {
         uint64 snapshotBlock = getBlockNumber64() - 1; // avoid double voting in this very block
-        uint256 votingPower = token.totalSupplyAt(snapshotBlock);
-        require(votingPower > 0, ERROR_NO_VOTING_POWER);
+        uint256 totalPower = token.totalSupplyAt(snapshotBlock);
+        require(totalPower > 0, ERROR_NO_TOTAL_VOTING_POWER);
 
         voteId = votesLength++;
 
         Vote storage vote_ = votes[voteId];
-        vote_.status = VoteStatus.Active;
+        vote_.totalPower = totalPower;
         vote_.startDate = getTimestamp64();
         vote_.snapshotBlock = snapshotBlock;
-        vote_.votingPower = votingPower;
+        vote_.status = VoteStatus.Normal;
         vote_.settingId = _getCurrentSettingId();
-        vote_.executionScript = _executionScript;
+        vote_.executionScriptHash = keccak256(_executionScript);
 
         // Notify the attached Agreement about the new vote; this is mandatory in making the vote disputable
         // Note that we send `msg.sender` as the action's submitter--the attached Agreement may expect to be able to pull funds from this account
         vote_.actionId = _registerDisputableAction(voteId, _context, msg.sender);
 
-        emit StartVote(voteId, msg.sender, _context);
+        emit StartVote(voteId, msg.sender, _context, _executionScript);
     }
 
     /**
-    * @dev Cast votes on behalf of delegated voters as a representative.
+    * @dev Cast a vote
+    *      Assumes all eligibility checks have passed for the given vote and voter
+    * @param _vote Vote instance
+    * @param _voteId Identification number of vote
+    * @param _supports Whether principal voter supports the vote
+    * @param _voter Address of principal voter
+    * @param _caster Address of vote caster, if voting via representative
     */
-    function _voteOnBehalfOf(uint256 _voteId, bool _supports, address[] _voters) internal {
-        Vote storage vote_ = _getVote(_voteId);
-        // Note that the period for representatives to vote can never go into a quiet ending
-        // extension, and so we don't need to check other timing-based pre-conditions
-        require(_canRepresentativesVote(vote_), ERROR_PAST_REPRESENTATIVE_VOTING_WINDOW);
+    function _castVote(Vote storage _vote, uint256 _voteId, bool _supports, address _voter, address _caster) internal {
+        Setting storage setting = settings[_vote.settingId];
+        if (_hasStartedQuietEndingPeriod(_vote, setting)) {
+            _ensureQuietEnding(_vote, setting, _voteId);
+        }
 
-        for (uint256 i = 0; i < _voters.length; i++) {
-            address voter = _voters[i];
-            require(_hasVotingPower(vote_, voter), ERROR_CANNOT_VOTE);
-            require(_isRepresentativeOf(voter, msg.sender), ERROR_NOT_REPRESENTATIVE);
+        uint256 yeas = _vote.yea;
+        uint256 nays = _vote.nay;
+        uint256 voterStake = token.balanceOfAt(_voter, _vote.snapshotBlock);
 
-            if (!_hasCastVote(vote_, voter)) {
-                _castVote(vote_, _voteId, _supports, voter, msg.sender);
-                emit ProxyVoteSuccess(_voteId, voter, msg.sender, _supports);
-            } else {
-                emit ProxyVoteFailure(_voteId, voter, msg.sender);
+        VoteCast storage castVote = _vote.castVotes[_voter];
+        VoterState previousVoterState = castVote.state;
+
+        // If voter had previously voted, reset their vote
+        // Note that votes can only be changed once by the principal voter to overrule their representative's vote
+        if (previousVoterState == VoterState.Yea) {
+            yeas = yeas.sub(voterStake);
+        } else if (previousVoterState == VoterState.Nay) {
+            nays = nays.sub(voterStake);
+        }
+
+        if (_supports) {
+            yeas = yeas.add(voterStake);
+        } else {
+            nays = nays.add(voterStake);
+        }
+
+        _vote.yea = yeas;
+        _vote.nay = nays;
+        castVote.state = _voterStateFor(_supports);
+        castVote.caster = _caster;
+        emit CastVote(_voteId, _voter, _supports, _caster == address(0) ? _voter : _caster);
+    }
+
+    /**
+    * @dev Ensure we keep track of the information related for detecting a quiet ending
+    * @param _vote Vote instance
+    * @param _setting Setting instance applicable to the vote
+    * @param _voteId Identification number of the vote
+    */
+    function _ensureQuietEnding(Vote storage _vote, Setting storage _setting, uint256 _voteId) internal {
+        bool isAccepted = _isAccepted(_vote, _setting);
+
+        if (_vote.quietEndingSnapshotSupport == VoterState.Absent) {
+            // If we do not have a snapshot of the support yet, simply store the given value.
+            // Note that if there are no votes during the quiet ending period, it is obviously impossible for the vote to be flipped and
+            // this snapshot is never stored.
+            _vote.quietEndingSnapshotSupport = _voterStateFor(isAccepted);
+        } else {
+            // We are calculating quiet ending extensions via "rolling snapshots", and so we only update the vote's cached duration once
+            // the last period is over and we've confirmed the flip.
+            if (getTimestamp() >= _lastComputedVoteEndDate(_vote, _setting)) {
+                _vote.quietEndingExtensionDuration = _vote.quietEndingExtensionDuration.add(_setting.quietEndingExtension);
+                emit QuietEndingExtendVote(_voteId, isAccepted);
             }
         }
     }
@@ -752,14 +859,14 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
 
     /**
     * @dev Tell if a voter can participate in a vote.
-    *      Note that a voter cannot change their vote once cast, except for the principal voter
-    *      overruling their representative's vote during the overrule window.
+    *      Note that a voter cannot change their vote once cast, except by the principal voter to overrule their representative's vote.
     * @param _vote Vote instance being queried
     * @param _voter Address of the voter being queried
     * @return True if the voter can participate a certain vote
     */
     function _canVote(Vote storage _vote, address _voter) internal view returns (bool) {
-        return _isVoteOpenForVoting(_vote) && _hasVotingPower(_vote, _voter) && _voteCaster(_vote, _voter) != _voter;
+        Setting storage setting = settings[_vote.settingId];
+        return _isVoteOpenForVoting(_vote, setting) && _hasVotingPower(_vote, _voter) && _voteCaster(_vote, _voter) != _voter;
     }
 
     /**
@@ -768,7 +875,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @return True if the vote currently allows representatives to vote
     */
     function _canRepresentativesVote(Vote storage _vote) internal view returns (bool) {
-        return _isActive(_vote) && !_withinOverruleWindow(_vote);
+        return _isNormal(_vote) && !_hasFinishedDelegatedVotingPeriod(_vote, settings[_vote.settingId]);
     }
 
     /**
@@ -778,18 +885,19 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     */
     function _canExecute(Vote storage _vote) internal view returns (bool) {
         // If the vote is executed, paused, or cancelled, it cannot be executed
-        if (!_isActive(_vote)) {
+        if (!_isNormal(_vote)) {
             return false;
         }
+
+        Setting storage setting = settings[_vote.settingId];
 
         // If the vote is still open, it cannot be executed
-        if (!_hasEnded(_vote)) {
+        if (!_hasEnded(_vote, setting)) {
             return false;
         }
 
-        // If the vote is within its execution delay window, it cannot be executed
-        Setting storage setting = settings[_vote.settingId];
-        if (_withinExecutionDelayWindow(_vote, setting)) {
+        // If the vote's execution delay has not finished yet, it cannot be executed
+        if (!_hasFinishedExecutionDelay(_vote, setting)) {
             return false;
         }
 
@@ -798,12 +906,12 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     }
 
     /**
-    * @dev Tell if a vote is active
+    * @dev Tell if a vote is in a "normal" non-exceptional state
     * @param _vote Vote instance being queried
-    * @return True if the vote is active
+    * @return True if the vote is normal
     */
-    function _isActive(Vote storage _vote) internal view returns (bool) {
-        return _vote.status == VoteStatus.Active;
+    function _isNormal(Vote storage _vote) internal view returns (bool) {
+        return _vote.status == VoteStatus.Normal;
     }
 
     /**
@@ -833,26 +941,129 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     function _isAccepted(Vote storage _vote, Setting storage _setting) internal view returns (bool) {
         uint256 yeas = _vote.yea;
         uint256 nays = _vote.nay;
-        return _isValuePct(yeas, yeas.add(nays), _setting.supportRequiredPct) &&
-               _isValuePct(yeas, _vote.votingPower, _setting.minAcceptQuorumPct);
+        uint64 supportRequiredPct = _setting.supportRequiredPct;
+        uint64 minimumAcceptanceQuorumPct = _setting.minAcceptQuorumPct;
+        return _isValuePct(yeas, yeas.add(nays), supportRequiredPct) &&
+               _isValuePct(yeas, _vote.totalPower, minimumAcceptanceQuorumPct);
     }
 
     /**
     * @dev Tell if a vote is open for voting
     * @param _vote Vote instance being queried
+    * @param _setting Setting instance applicable to the vote
     * @return True if the vote is open for voting
     */
-    function _isVoteOpenForVoting(Vote storage _vote) internal view returns (bool) {
-        return _isActive(_vote) && !_hasEnded(_vote);
+    function _isVoteOpenForVoting(Vote storage _vote, Setting storage _setting) internal view returns (bool) {
+        return _isNormal(_vote) && !_hasEnded(_vote, _setting);
     }
 
     /**
     * @dev Tell if a vote has ended
     * @param _vote Vote instance being queried
+    * @param _setting Setting instance applicable to the vote
     * @return True if the vote has ended
     */
-    function _hasEnded(Vote storage _vote) internal view returns (bool) {
-        return getTimestamp64() >= _finalVoteEndDate(_vote) && !_wasFlipped(_vote);
+    function _hasEnded(Vote storage _vote, Setting storage _setting) internal view returns (bool) {
+        return getTimestamp() >= _currentVoteEndDate(_vote, _setting);
+    }
+
+    /**
+    * @dev Tell if a vote's delegated voting period has finished
+    *      This function doesn't ensure that the vote is still open
+    * @param _vote Vote instance being queried
+    * @param _setting Setting instance applicable to the vote
+    * @return True if the vote's delegated voting period has finished
+    */
+    function _hasFinishedDelegatedVotingPeriod(Vote storage _vote, Setting storage _setting) internal view returns (bool) {
+        uint64 baseDelegatedVotingPeriodEndDate = _vote.startDate.add(_setting.delegatedVotingPeriod);
+
+        // If the vote was paused before the delegated voting period ended, we need to extend it
+        uint64 pausedAt = _vote.pausedAt;
+        uint64 pauseDuration = _vote.pauseDuration;
+        uint64 actualDeletedVotingEndDate = pausedAt != 0 && pausedAt < baseDelegatedVotingPeriodEndDate
+            ? baseDelegatedVotingPeriodEndDate.add(pauseDuration)
+            : baseDelegatedVotingPeriodEndDate;
+
+        return getTimestamp() >= actualDeletedVotingEndDate;
+    }
+
+    /**
+    * @dev Tell if a vote's quiet ending period has started
+    *      This function doesn't ensure that the vote is still open
+    * @param _vote Vote instance being queried
+    * @param _setting Setting instance applicable to the vote
+    * @return True if the vote's quiet ending period has started
+    */
+    function _hasStartedQuietEndingPeriod(Vote storage _vote, Setting storage _setting) internal view returns (bool) {
+        uint64 voteBaseEndDate = _baseVoteEndDate(_vote, _setting);
+        uint64 baseQuietEndingPeriodStartDate = voteBaseEndDate.sub(_setting.quietEndingPeriod);
+
+        // If the vote was paused before the quiet ending period started, we need to delay it
+        uint64 pausedAt = _vote.pausedAt;
+        uint64 pauseDuration = _vote.pauseDuration;
+        uint64 actualQuietEndingPeriodStartDate = pausedAt != 0 && pausedAt < baseQuietEndingPeriodStartDate
+            ? baseQuietEndingPeriodStartDate.add(pauseDuration)
+            : baseQuietEndingPeriodStartDate;
+
+        return getTimestamp() >= actualQuietEndingPeriodStartDate;
+    }
+
+    /**
+    * @dev Tell if a vote's execution delay has finished
+    * @param _vote Vote instance being queried
+    * @param _setting Setting instance applicable to the vote
+    * @return True if the vote's execution delay has finished
+    */
+    function _hasFinishedExecutionDelay(Vote storage _vote, Setting storage _setting) internal view returns (bool) {
+        uint64 endDate = _currentVoteEndDate(_vote, _setting);
+        return getTimestamp() >= endDate.add(_setting.executionDelay);
+    }
+
+    /**
+    * @dev Calculate the original end date of a vote
+    *      It does not consider extensions from pauses or the quiet ending mechanism
+    * @param _vote Vote instance being queried
+    * @param _setting Setting instance applicable to the vote
+    * @return Datetime of the vote's original end date
+    */
+    function _baseVoteEndDate(Vote storage _vote, Setting storage _setting) internal view returns (uint64) {
+        return _vote.startDate.add(_setting.voteTime);
+    }
+
+    /**
+    * @dev Tell the last computed end date of a vote.
+    *      It considers extensions from pauses and the quiet ending mechanism.
+    *      We call this the "last computed end date" because we use the currently cached quiet ending extension, which may be off-by-one from reality
+    *      because it is only updated on the first vote in a new extension (which may never happen).
+    *      The pause duration will only be included after the vote has "resumed" from its pause, as we do not know how long the pause will be in advance.
+    * @param _vote Vote instance being queried
+    * @param _setting Setting instance applicable to the vote
+    * @return Datetime of the vote's last computed end date
+    */
+    function _lastComputedVoteEndDate(Vote storage _vote, Setting storage _setting) internal view returns (uint64) {
+        uint64 endDateAfterPause = _baseVoteEndDate(_vote, _setting).add(_vote.pauseDuration);
+        return endDateAfterPause.add(_vote.quietEndingExtensionDuration);
+    }
+
+    /**
+    * @dev Calculate the current end date of a vote.
+    *      It considers extensions from pauses and the quiet ending mechanism.
+    *      We call this the "current end date" because it takes into account a posssibly "missing" quiet ending extension that was not cached with the vote.
+    *      The pause duration will only be included after the vote has "resumed" from its pause, as we do not know how long the pause will be in advance.
+    * @param _vote Vote instance being queried
+    * @param _setting Setting instance applicable to the vote
+    * @return Datetime of the vote's current end date
+    */
+    function _currentVoteEndDate(Vote storage _vote, Setting storage _setting) internal view returns (uint64) {
+        uint64 lastComputedEndDate = _lastComputedVoteEndDate(_vote, _setting);
+
+        // The last computed end date is correct if we have not passed it yet or if no flip was detected in the last extension
+        if (getTimestamp() < lastComputedEndDate || !_wasFlipped(_vote)) {
+            return lastComputedEndDate;
+        }
+
+        // Otherwise, since the last computed end date was reached and included a flip, we need to extend the end date by one more period
+        return lastComputedEndDate.add(_setting.quietEndingExtension);
     }
 
     /**
@@ -871,63 +1082,9 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         // Otherwise, we calculate if the vote was flipped by comparing its current acceptance state to its last state at the start of the extension period
         bool wasInitiallyAccepted = snapshotSupport == VoterState.Yea;
         Setting storage setting = settings[_vote.settingId];
-        uint256 currentExtensions = _vote.quietEndingExtendedSeconds / setting.quietEndingExtension;
+        uint256 currentExtensions = _vote.quietEndingExtensionDuration / setting.quietEndingExtension;
         bool wasAcceptedBeforeLastFlip = wasInitiallyAccepted != (currentExtensions % 2 != 0);
         return wasAcceptedBeforeLastFlip != _isAccepted(_vote, setting);
-    }
-
-    /**
-    * @dev Tell if a vote is within its overrule window
-    *      This function doesn't ensure whether the vote is open or not
-    * @param _vote Vote instance being queried
-    * @return True if the vote is within its overrule window
-    */
-    function _withinOverruleWindow(Vote storage _vote) internal view returns (bool) {
-        Setting storage setting = settings[_vote.settingId];
-        return getTimestamp64() >= _durationStartDate(_vote, setting.overruleWindow);
-    }
-
-    /**
-    * @dev Tell if a vote is within its quiet ending period
-    *      This function doesn't ensure whether the vote is open or not
-    * @param _vote Vote instance being queried
-    * @param _setting Setting instance applicable to the vote
-    * @return True if the vote is within its quiet ending period
-    */
-    function _withinQuietEndingPeriod(Vote storage _vote, Setting storage _setting) internal view returns (bool) {
-        return getTimestamp64() >= _durationStartDate(_vote, _setting.quietEndingPeriod);
-    }
-
-    /**
-    * @dev Tell if a vote is within its execution delay window
-    * @param _vote Vote instance being queried
-    * @param _setting Setting instance applicable to the vote
-    * @return True if the vote is within its execution delay window
-    */
-    function _withinExecutionDelayWindow(Vote storage _vote, Setting storage _setting) internal view returns (bool) {
-        return getTimestamp64() < _finalVoteEndDate(_vote).add(_setting.executionDelay);
-    }
-
-    /**
-    * @dev Calculate the original end date of a vote
-    *      It does not consider extensions from pauses or the quiet ending mechanism
-    * @param _vote Vote instance being queried
-    * @return Datetime of the vote's original end date
-    */
-    function _originalVoteEndDate(Vote storage _vote) internal view returns (uint64) {
-        return _vote.startDate.add(voteTime);
-    }
-
-    /**
-    * @dev Calculate the end date of a vote.
-    *      It considers extensions from pauses and the quiet ending mechanism.
-    *      The pause duration will only be included after the vote has "resumed" from its pause, as we do not know how long the pause will be in advance.
-    * @param _vote Vote instance being queried
-    * @return Datetime of the vote's end date
-    */
-    function _finalVoteEndDate(Vote storage _vote) internal view returns (uint64) {
-        uint64 endDateAfterPause = _originalVoteEndDate(_vote).add(_vote.pauseDuration);
-        return endDateAfterPause.add(_vote.quietEndingExtendedSeconds);
     }
 
     /**
@@ -1014,120 +1171,11 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     }
 
     /**
-    * @dev Cast a vote
-    *      Assumes all eligibility checks have passed for the given vote and voter
-    * @param _vote Vote instance
-    * @param _voteId Identification number of vote
-    * @param _supports Whether principal voter supports the vote
-    * @param _voter Address of principal voter
-    * @param _caster Address of vote caster, if voting via representative
-    */
-    function _castVote(Vote storage _vote, uint256 _voteId, bool _supports, address _voter, address _caster) private {
-        Setting storage setting = settings[_vote.settingId];
-        bool wasAccepted = _isAccepted(_vote, setting);
-
-        uint256 yeas = _vote.yea;
-        uint256 nays = _vote.nay;
-        uint256 voterStake = token.balanceOfAt(_voter, _vote.snapshotBlock);
-
-        VoteCast storage castVote = _vote.castVotes[_voter];
-        VoterState previousVoterState = castVote.state;
-
-        // If voter had previously voted, reset their vote
-        // Note that votes can only be changed once by the principal voter overruling their representative's
-        // vote during the overrule window
-        if (previousVoterState == VoterState.Yea) {
-            yeas = yeas.sub(voterStake);
-        } else if (previousVoterState == VoterState.Nay) {
-            nays = nays.sub(voterStake);
-        }
-
-        if (_supports) {
-            yeas = yeas.add(voterStake);
-        } else {
-            nays = nays.add(voterStake);
-        }
-
-        _vote.yea = yeas;
-        _vote.nay = nays;
-        castVote.state = _voterStateFor(_supports);
-        castVote.caster = _caster;
-        emit CastVote(_voteId, _voter, _supports, voterStake);
-
-        if (_withinQuietEndingPeriod(_vote, setting)) {
-            _ensureQuietEnding(_vote, setting, _voteId, wasAccepted);
-        }
-    }
-
-    /**
-    * @dev Ensure we keep track of the information related for detecting a quiet ending
-    * @param _vote Vote instance
-    * @param _setting Setting instance applicable to the vote
-    * @param _voteId Identification number of the vote
-    * @param _wasAccepted Whether the vote is currently accepted
-    */
-    function _ensureQuietEnding(Vote storage _vote, Setting storage _setting, uint256 _voteId, bool _wasAccepted) private {
-        if (_vote.quietEndingSnapshotSupport == VoterState.Absent) {
-            // If we do not have a snapshot of the support yet, simply store the given value.
-            // Note that if there are no votes during the quiet ending period, it is obviously impossible for the vote to be flipped and
-            // this snapshot is never stored.
-            _vote.quietEndingSnapshotSupport = _voterStateFor(_wasAccepted);
-        } else {
-            // First, we make sure the extension is persisted, if are voting within the extension and it was not considered yet, we store it.
-            // Note that we are trusting `_canVote()`, if we reached this point, it means the vote's flip was already confirmed.
-            if (getTimestamp64() >= _finalVoteEndDate(_vote)) {
-                _vote.quietEndingExtendedSeconds = _vote.quietEndingExtendedSeconds.add(_setting.quietEndingExtension);
-                emit VoteQuietEndingExtension(_voteId, _wasAccepted);
-            }
-        }
-    }
-
-    /**
-    * @dev Create a copy of the current settings as a new setting instance
-    * @return New setting's instance
-    */
-    function _newCopiedSettings() private returns (Setting storage) {
-        (Setting storage setting, uint256 settingId) = _newSetting();
-        _copySettings(_getSetting(settingId - 1), setting);
-        return setting;
-    }
-
-    /**
-    * @dev Copy settings from one storage pointer to another
-    */
-    function _copySettings(Setting storage _from, Setting storage _to) private {
-        _to.supportRequiredPct = _from.supportRequiredPct;
-        _to.minAcceptQuorumPct = _from.minAcceptQuorumPct;
-        _to.executionDelay = _from.executionDelay;
-        _to.quietEndingPeriod = _from.quietEndingPeriod;
-        _to.quietEndingExtension = _from.quietEndingExtension;
-        _to.overruleWindow = _from.overruleWindow;
-    }
-
-    /**
-    * @dev Compute the start date of time duration from the original vote's end date.
-    *      It considers the pause duration only if the vote has resumed from being paused,
-    *      and if the pause occurred before the start date of the time duration being queried.
-    *
-    *                                                  [   queried duration   ]
-    *      [   vote active    ][   vote paused    ][   .   vote active        ]
-    *      ^                                           ^                      ^
-    *      |                                           |                      |
-    *  vote starts                            duration start date         vote ends
-    */
-    function _durationStartDate(Vote storage _vote, uint64 _duration) private view returns (uint64) {
-        uint64 pausedAt = _vote.pausedAt;
-        uint64 originalDurationStartDate = _originalVoteEndDate(_vote).sub(_duration);
-        bool pausedBeforeDurationStarts = pausedAt != 0 && pausedAt < originalDurationStartDate;
-        return pausedBeforeDurationStarts ? originalDurationStartDate.add(_vote.pauseDuration) : originalDurationStartDate;
-    }
-
-    /**
     * @dev Translate a voter's support into a voter state
     * @param _supports Whether voter supports the vote
     * @return Voter state, as an enum
     */
-    function _voterStateFor(bool _supports) private pure returns (VoterState) {
+    function _voterStateFor(bool _supports) internal pure returns (VoterState) {
         return _supports ? VoterState.Yea : VoterState.Nay;
     }
 }
