@@ -414,15 +414,6 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     }
 
     /**
-    * @dev Tell the identification number of the current setting
-    * @return Identification number of the current setting
-    */
-   // Note: this doesn't seem that useful if we make the settingsLength public (maybe just useful in the mock?)
-    function getCurrentSettingId() external view isInitialized returns (uint256) {
-        return _getCurrentSettingId();
-    }
-
-    /**
     * @dev Tell the information for a vote
     *      Initialization check is implicitly provided by `_getVote()` as new votes can only be
     *      created via `newVote()`, which requires initialization
@@ -637,7 +628,6 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @return New setting's instance
     * @return New setting's identification number
     */
-   // Note: this should probably be private if _newCopiedSettings() is private (or make that internal)
     function _newSetting() internal returns (Setting storage setting, uint256 settingId) {
         settingId = settingsLength++;
         setting = settings[settingId];
