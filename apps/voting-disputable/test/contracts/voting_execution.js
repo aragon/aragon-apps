@@ -9,7 +9,7 @@ contract('Voting', ([_, owner, holder20, holder29, holder51]) => {
   let voting, voteId, executionTarget, script
 
   const VOTE_DURATION = 5 * ONE_DAY
-  const OVERRULE_WINDOW = ONE_DAY
+  const DELEGATED_VOTING_PERIOD = ONE_DAY * 4
   const REQUIRED_SUPPORT = pct16(50)
   const MINIMUM_ACCEPTANCE_QUORUM = pct16(20)
 
@@ -35,14 +35,14 @@ contract('Voting', ([_, owner, holder20, holder29, holder51]) => {
       })
 
       it('cannot be immediately executed', async () => {
-        await assertRevert(voting.executeVote(voteId), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
+        await assertRevert(voting.executeVote(voteId, script), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
       })
 
       it('cannot execute vote if the minimum acceptance quorum is not met', async () => {
         await voting.vote(voteId, true, { from: holder20 })
         await voting.mockIncreaseTime(VOTE_DURATION)
 
-        await assertRevert(voting.executeVote(voteId), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
+        await assertRevert(voting.executeVote(voteId, script), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
       })
 
       it('cannot execute vote if the required support is not met', async () => {
@@ -50,7 +50,7 @@ contract('Voting', ([_, owner, holder20, holder29, holder51]) => {
         await voting.vote(voteId, false, { from: holder20 })
         await voting.mockIncreaseTime(VOTE_DURATION)
 
-        await assertRevert(voting.executeVote(voteId), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
+        await assertRevert(voting.executeVote(voteId, script), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
       })
     })
 
@@ -64,7 +64,7 @@ contract('Voting', ([_, owner, holder20, holder29, holder51]) => {
       const DELAYED_EXECUTION = 0
 
       beforeEach('deploy voting', async () => {
-        voting = await deployer.deployAndInitialize({ owner, supportRequired: REQUIRED_SUPPORT, minimumAcceptanceQuorum: MINIMUM_ACCEPTANCE_QUORUM, voteDuration: VOTE_DURATION, overruleWindow: OVERRULE_WINDOW, executionDelay: DELAYED_EXECUTION })
+        voting = await deployer.deployAndInitialize({ owner, supportRequired: REQUIRED_SUPPORT, minimumAcceptanceQuorum: MINIMUM_ACCEPTANCE_QUORUM, voteDuration: VOTE_DURATION, delegatedVotingPeriod: DELEGATED_VOTING_PERIOD, executionDelay: DELAYED_EXECUTION })
       })
 
       context('with an executable script', () => {
@@ -73,7 +73,7 @@ contract('Voting', ([_, owner, holder20, holder29, holder51]) => {
             await voting.vote(voteId, true, { from: holder51 })
             await voting.mockIncreaseTime(VOTE_DURATION)
 
-            await voting.executeVote(voteId)
+            await voting.executeVote(voteId, script)
 
             assertBn(await executionTarget.counter(), expectedExecutions, 'execution times do not match')
           })
@@ -82,9 +82,16 @@ contract('Voting', ([_, owner, holder20, holder29, holder51]) => {
             await voting.vote(voteId, true, { from: holder51 })
             await voting.mockIncreaseTime(VOTE_DURATION)
 
-            await voting.executeVote(voteId)
+            await voting.executeVote(voteId, script)
 
-            await assertRevert(voting.executeVote(voteId), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
+            await assertRevert(voting.executeVote(voteId, script), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
+          })
+
+          it('cannot be executed with a wrong script', async () => {
+            await voting.vote(voteId, true, { from: holder51 })
+            await voting.mockIncreaseTime(VOTE_DURATION)
+
+            await assertRevert(voting.executeVote(voteId, `${script}ab`), VOTING_ERRORS.VOTING_INVALID_EXECUTION_SCRIPT)
           })
         }
 
@@ -105,7 +112,7 @@ contract('Voting', ([_, owner, holder20, holder29, holder51]) => {
         it('cannot be executed', async () => {
           ({ voteId } = await createVote({ voting, script, from: holder51 }))
 
-          await assertRevert(voting.executeVote(voteId), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
+          await assertRevert(voting.executeVote(voteId, script), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
         })
       })
 
@@ -121,7 +128,7 @@ contract('Voting', ([_, owner, holder20, holder29, holder51]) => {
           await voting.vote(voteId, true, { from: holder51 })
           await voting.mockIncreaseTime(VOTE_DURATION)
 
-          await assertRevert(voting.executeVote(voteId), ARAGON_OS_ERRORS.EVMCALLS_INVALID_LENGTH)
+          await assertRevert(voting.executeVote(voteId, script), ARAGON_OS_ERRORS.EVMCALLS_INVALID_LENGTH)
         })
       })
     })
@@ -130,7 +137,7 @@ contract('Voting', ([_, owner, holder20, holder29, holder51]) => {
       const EXECUTION_DELAY = ONE_DAY
 
       beforeEach('deploy voting', async () => {
-        voting = await deployer.deployAndInitialize({ owner, supportRequired: REQUIRED_SUPPORT, minimumAcceptanceQuorum: MINIMUM_ACCEPTANCE_QUORUM, voteDuration: VOTE_DURATION, overruleWindow: OVERRULE_WINDOW, executionDelay: EXECUTION_DELAY })
+        voting = await deployer.deployAndInitialize({ owner, supportRequired: REQUIRED_SUPPORT, minimumAcceptanceQuorum: MINIMUM_ACCEPTANCE_QUORUM, voteDuration: VOTE_DURATION, delegatedVotingPeriod: DELEGATED_VOTING_PERIOD, executionDelay: EXECUTION_DELAY })
       })
 
       context('with an executable script', () => {
@@ -139,14 +146,14 @@ contract('Voting', ([_, owner, holder20, holder29, holder51]) => {
             await voting.vote(voteId, true, { from: holder51 })
             await voting.mockIncreaseTime(VOTE_DURATION)
 
-            await assertRevert(voting.executeVote(voteId), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
+            await assertRevert(voting.executeVote(voteId, script), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
           })
 
           it('can be executed if quorum and support are met after the delayed execution', async () => {
             await voting.vote(voteId, true, { from: holder51 })
             await voting.mockIncreaseTime(VOTE_DURATION + EXECUTION_DELAY)
 
-            await voting.executeVote(voteId)
+            await voting.executeVote(voteId, script)
 
             assertBn(await executionTarget.counter(), expectedExecutions, 'execution times do not match')
           })
@@ -155,9 +162,16 @@ contract('Voting', ([_, owner, holder20, holder29, holder51]) => {
             await voting.vote(voteId, true, { from: holder51 })
             await voting.mockIncreaseTime(VOTE_DURATION + EXECUTION_DELAY)
 
-            await voting.executeVote(voteId)
+            await voting.executeVote(voteId, script)
 
-            await assertRevert(voting.executeVote(voteId), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
+            await assertRevert(voting.executeVote(voteId, script), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
+          })
+
+          it('cannot be executed with a wrong script', async () => {
+            await voting.vote(voteId, true, { from: holder51 })
+            await voting.mockIncreaseTime(VOTE_DURATION + EXECUTION_DELAY)
+
+            await assertRevert(voting.executeVote(voteId, `${script}ab`), VOTING_ERRORS.VOTING_INVALID_EXECUTION_SCRIPT)
           })
         }
 

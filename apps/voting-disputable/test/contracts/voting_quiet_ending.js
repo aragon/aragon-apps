@@ -1,11 +1,12 @@
 const deployer = require('../helpers/deployer')(web3, artifacts)
-const { VOTER_STATE, createVote, getVoteState } = require('../helpers/voting')
+const { VOTING_ERRORS } = require('../helpers/errors')
+const { VOTER_STATE, createVote, voteScript, getVoteState } = require('../helpers/voting')
 
 const { NOW, ONE_DAY, pct16, bigExp } = require('@aragon/contract-helpers-test')
-const { assertBn, assertEvent, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/asserts')
+const { assertRevert, assertBn, assertEvent, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/asserts')
 
 contract('Voting', ([_, owner, holder10, holder20, holder30, holder40, holder50]) => {
-  let voting, token
+  let voting, agreement, token
 
   const VOTE_DURATION = 5 * ONE_DAY
   const QUIET_ENDING_PERIOD = 2 * ONE_DAY
@@ -24,13 +25,18 @@ contract('Voting', ([_, owner, holder10, holder20, holder30, holder40, holder50]
 
   beforeEach('deploy voting', async () => {
     voting = await deployer.deployAndInitialize({ owner, currentTimestamp: NOW, minimumAcceptanceQuorum: MINIMUM_ACCEPTANCE_QUORUM, requiredSupport: REQUIRED_SUPPORT, voteDuration: VOTE_DURATION, quietEndingPeriod: QUIET_ENDING_PERIOD, quietEndingExtension: QUIET_ENDING_EXTENSION })
+    agreement = deployer.agreement
   })
 
   describe('quiet ending', () => {
-    let voteId
+    let voteId, executionTarget, script
+
+    beforeEach('create script', async () => {
+      ({ executionTarget, script } = await voteScript())
+    })
 
     beforeEach('create vote', async () => {
-      ({ voteId } = await createVote({ voting, from: holder40 }))
+      ({ voteId } = await createVote({ voting, script, from: holder40 }))
     })
 
     const itDoesNotStoreTheSnapshot = () => {
@@ -53,8 +59,8 @@ contract('Voting', ([_, owner, holder10, holder20, holder30, holder40, holder50]
       })
 
       it('does not store a vote extension', async () => {
-        const { quietEndingExtendedSeconds } = await getVoteState(voting, voteId)
-        assertBn(quietEndingExtendedSeconds, 0, 'vote extended seconds do not match')
+        const { quietEndingExtensionDuration } = await getVoteState(voting, voteId)
+        assertBn(quietEndingExtensionDuration, 0, 'vote extended seconds do not match')
       })
 
       it('the vote is no longer open', async () => {
@@ -84,42 +90,118 @@ contract('Voting', ([_, owner, holder10, holder20, holder30, holder40, holder50]
 
         it('new voter can vote', async () => {
           assert.isTrue(await voting.canVote(voteId, holder50), 'voter cannot vote')
-        })
 
-        it('extends the vote duration', async () => {
           const receipt = await voting.vote(voteId, true, { from: holder50 })
-          assertAmountOfEvents(receipt, 'VoteQuietEndingExtension')
-          assertEvent(receipt, 'VoteQuietEndingExtension', { expectedArgs: { voteId, passing: currentSupport } })
+          assertEvent(receipt, 'CastVote', { expectedArgs: { voteId, voter: holder50, caster: holder50, supports: true } })
         })
 
-        it('stores the vote extension', async () => {
-          await voting.vote(voteId, true, { from: holder50 })
-
-          const { quietEndingExtendedSeconds } = await getVoteState(voting, voteId)
-          assertBn(quietEndingExtendedSeconds, QUIET_ENDING_EXTENSION, 'vote extended seconds do not match')
+        it('does not allow executing the vote', async () => {
+          assert.isFalse(await voting.canExecute(voteId), 'vote can be executed')
+          await assertRevert(voting.executeVote(voteId, script), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
         })
 
-        context('when the vote is flipped again', () => {
-          const newSupport = !currentSupport
+        it('does not allow closing the vote', async () => {
+          assert.isFalse(await voting.canClose(voteId), 'vote can be closed')
 
-          it('extends the vote again', async () => {
-            await voting.vote(voteId, newSupport, { from: holder50 })
-            await voting.mockIncreaseTime(QUIET_ENDING_EXTENSION)
+          const { actionId } = await voting.getVote(voteId)
+          await assertRevert(agreement.close(actionId), 'AGR_CANNOT_CLOSE_ACTION')
+        })
 
-            const { isOpen } = await getVoteState(voting, voteId)
-            assert.isTrue(isOpen, 'vote is not open')
+        context('when no one votes during the quiet ending extension', () => {
+          beforeEach('move after the quiet ending period', async () => {
+            await voting.mockIncreaseTime(QUIET_ENDING_EXTENSION + 1)
           })
-        })
 
-        context('when the vote is not flipped again', () => {
-          const newSupport = currentSupport
-
-          it('does not extend the vote again', async () => {
-            await voting.vote(voteId, newSupport, { from: holder50 })
-            await voting.mockIncreaseTime(QUIET_ENDING_EXTENSION)
-
+          it('is considered closed', async () => {
             const { isOpen } = await getVoteState(voting, voteId)
             assert.isFalse(isOpen, 'vote is open')
+          })
+
+          it('does not store the quiet ending extended seconds', async () => {
+            const { quietEndingExtensionDuration } = await getVoteState(voting, voteId)
+            assertBn(quietEndingExtensionDuration, 0, 'vote extended seconds do not match')
+          })
+
+          it('does not allow other voters to vote', async () => {
+            assert.isFalse(await voting.canVote(voteId, holder50), 'voter cannot vote')
+            await assertRevert(voting.vote(voteId, true, { from: holder50 }), VOTING_ERRORS.VOTING_CANNOT_VOTE)
+          })
+
+          if (currentSupport) {
+            it('allows executing the vote after the extension', async () => {
+              assert.isTrue(await voting.canExecute(voteId), 'vote cannot be executed')
+
+              await voting.executeVote(voteId, script)
+              assertBn(await executionTarget.counter(), 1, 'vote was not executed')
+            })
+
+            it('allows closing the vote and executing after it', async () => {
+              assert.isTrue(await voting.canClose(voteId), 'vote cannot be closed')
+
+              const { actionId } = await voting.getVote(voteId)
+              const receipt = await agreement.close(actionId)
+
+              assertEvent(receipt, 'ActionClosed', { decodeForAbi: agreement.abi, expectedArgs: { actionId } })
+
+              assert.isTrue(await voting.canExecute(voteId), 'vote cannot be executed')
+
+              await voting.executeVote(voteId, script)
+              assertBn(await executionTarget.counter(), 1, 'vote was not executed')
+            })
+          } else {
+            it('does not allow executing the vote after the extension', async () => {
+              assert.isFalse(await voting.canExecute(voteId), 'vote can be executed')
+              await assertRevert(voting.executeVote(voteId, script), VOTING_ERRORS.VOTING_CANNOT_EXECUTE)
+            })
+
+            it('allows closing the vote', async () => {
+              assert.isTrue(await voting.canClose(voteId), 'vote cannot be closed')
+
+              const { actionId } = await voting.getVote(voteId)
+              const receipt = await agreement.close(actionId)
+
+              assertEvent(receipt, 'ActionClosed', { decodeForAbi: agreement.abi, expectedArgs: { actionId } })
+            })
+          }
+        })
+
+        context('when someone votes during the quiet ending extension', () => {
+          it('extends the vote duration', async () => {
+            const receipt = await voting.vote(voteId, true, { from: holder50 })
+
+            assertAmountOfEvents(receipt, 'QuietEndingExtendVote')
+            assertEvent(receipt, 'QuietEndingExtendVote', { expectedArgs: { voteId, passing: currentSupport } })
+          })
+
+          it('stores the vote extension', async () => {
+            await voting.vote(voteId, true, { from: holder50 })
+
+            const { quietEndingExtensionDuration } = await getVoteState(voting, voteId)
+            assertBn(quietEndingExtensionDuration, QUIET_ENDING_EXTENSION, 'vote extended seconds do not match')
+          })
+
+          context('when the vote is flipped again', () => {
+            const newSupport = !currentSupport
+
+            it('extends the vote again', async () => {
+              await voting.vote(voteId, newSupport, { from: holder50 })
+              await voting.mockIncreaseTime(QUIET_ENDING_EXTENSION)
+
+              const { isOpen } = await getVoteState(voting, voteId)
+              assert.isTrue(isOpen, 'vote is not open')
+            })
+          })
+
+          context('when the vote is not flipped again', () => {
+            const newSupport = currentSupport
+
+            it('does not extend the vote again', async () => {
+              await voting.vote(voteId, newSupport, { from: holder50 })
+              await voting.mockIncreaseTime(QUIET_ENDING_EXTENSION)
+
+              const { isOpen } = await getVoteState(voting, voteId)
+              assert.isFalse(isOpen, 'vote is open')
+            })
           })
         })
       })

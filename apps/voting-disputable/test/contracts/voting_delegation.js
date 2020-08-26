@@ -10,7 +10,7 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
 
   const MIN_QUORUM = pct16(20)
   const MIN_SUPPORT = pct16(30)
-  const OVERRULE_WINDOW = ONE_DAY
+  const DELEGATED_VOTING_PERIOD = ONE_DAY * 4
   const QUIET_ENDING_PERIOD = ONE_DAY * 4
   const QUIET_ENDING_EXTENSION = ONE_DAY * 5
   const VOTE_DURATION = ONE_DAY * 5
@@ -24,7 +24,7 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
   })
 
   beforeEach('deploy voting', async () => {
-    voting = await deployer.deployAndInitialize({ owner, minimumAcceptanceQuorum: MIN_QUORUM, requiredSupport: MIN_SUPPORT, voteDuration: VOTE_DURATION, overruleWindow: OVERRULE_WINDOW, quietEndingPeriod: QUIET_ENDING_PERIOD, quietEndingExtension: QUIET_ENDING_EXTENSION })
+    voting = await deployer.deployAndInitialize({ owner, minimumAcceptanceQuorum: MIN_QUORUM, requiredSupport: MIN_SUPPORT, voteDuration: VOTE_DURATION, delegatedVotingPeriod: DELEGATED_VOTING_PERIOD, quietEndingPeriod: QUIET_ENDING_PERIOD, quietEndingExtension: QUIET_ENDING_EXTENSION })
   })
 
   const getCastVote = async (voter, id = voteId) => voting.getCastVote(id, voter)
@@ -39,7 +39,7 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
         const receipt = await voting.setRepresentative(representative, { from: voter })
 
         assertAmountOfEvents(receipt, 'ChangeRepresentative')
-        assertEvent(receipt, 'ChangeRepresentative', { expectedArgs: { voter, newRepresentative: representative } })
+        assertEvent(receipt, 'ChangeRepresentative', { expectedArgs: { voter, representative: representative } })
 
         assert.isTrue(await voting.isRepresentativeOf(voter, representative))
       })
@@ -54,7 +54,7 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
         const receipt = await voting.setRepresentative(ZERO_ADDRESS, { from: voter })
 
         assertAmountOfEvents(receipt, 'ChangeRepresentative')
-        assertEvent(receipt, 'ChangeRepresentative', { expectedArgs: { voter, newRepresentative: ZERO_ADDRESS } })
+        assertEvent(receipt, 'ChangeRepresentative', { expectedArgs: { voter, representative: ZERO_ADDRESS } })
 
         assert.isFalse(await voting.isRepresentativeOf(voter, representative))
       })
@@ -85,14 +85,20 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
         })
 
         context('when the voter can vote', () => {
-          context('when before the overrule window', () => {
-            beforeEach('move before the overrule window', async () => {
-              await voting.mockIncreaseTime(VOTE_DURATION - OVERRULE_WINDOW - 1)
-            })
-
+          context('when at the beginning of the delegated voting period', () => {
             context('when the voter has not voted yet', () => {
-              context('when the representative did not proxied a vote', () => {
-                itReturnsTrue(voter, representative)
+              context('when the representative did not proxy a vote', () => {
+                context('when the number of requested voters is valid', () => {
+                  itReturnsTrue(voter, representative)
+                })
+
+                context('when the number of requested voters is not valid', () => {
+                  const voters = new Array(71).fill(voter)
+
+                  it('reverts', async () => {
+                    await assertRevert(voting.canVoteOnBehalfOf(voteId, voters, representative), VOTING_ERRORS.VOTING_DELEGATES_EXCEEDS_MAX_LEN)
+                  })
+                })
               })
 
               context('when the representative already proxied a vote', () => {
@@ -123,33 +129,113 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
             })
           })
 
-          context('when at the beginning of the overrule window', () => {
-            beforeEach('move at the beginning of the overrule window', async () => {
-              await voting.mockIncreaseTime(VOTE_DURATION - OVERRULE_WINDOW)
+          context('when in the middle of the delegated voting period', () => {
+            beforeEach('move to the middle of the delegated voting period', async () => {
+              await voting.mockIncreaseTime(DELEGATED_VOTING_PERIOD / 2)
+            })
+
+            context('when the voter has not voted yet', () => {
+              context('when the representative did not proxy a vote', () => {
+                context('when the number of requested voters is valid', () => {
+                  itReturnsTrue(voter, representative)
+                })
+
+                context('when the number of requested voters is not valid', () => {
+                  const voters = new Array(71).fill(voter)
+
+                  it('reverts', async () => {
+                    await assertRevert(voting.canVoteOnBehalfOf(voteId, voters, representative), VOTING_ERRORS.VOTING_DELEGATES_EXCEEDS_MAX_LEN)
+                  })
+                })
+              })
+
+              context('when the representative already proxied a vote', () => {
+                beforeEach('proxy representative\'s vote', async () => {
+                  await voting.voteOnBehalfOf(voteId, true, [voter], { from: representative })
+                })
+
+                context('when the representative is still allowed', () => {
+                  itReturnsFalse(voter, representative)
+                })
+
+                context('when the representative was disallowed', () => {
+                  beforeEach('change representative', async () => {
+                    await voting.setRepresentative(anotherRepresentative, { from: voter })
+                  })
+
+                  itReturnsFalse(voter, representative)
+                })
+              })
+            })
+
+            context('when the voter has already voted', () => {
+              beforeEach('voter votes', async () => {
+                await voting.vote(voteId, true, { from: voter })
+              })
+
+              itReturnsFalse(voter, representative)
+            })
+          })
+
+          context('when before the end of the delegated voting period', () => {
+            beforeEach('move before the end of the delegated voting period', async () => {
+              await voting.mockIncreaseTime(DELEGATED_VOTING_PERIOD - 1)
+            })
+
+            context('when the voter has not voted yet', () => {
+              context('when the representative did not proxy a vote', () => {
+                context('when the number of requested voters is valid', () => {
+                  itReturnsTrue(voter, representative)
+                })
+
+                context('when the number of requested voters is not valid', () => {
+                  const voters = new Array(71).fill(voter)
+
+                  it('reverts', async () => {
+                    await assertRevert(voting.canVoteOnBehalfOf(voteId, voters, representative), VOTING_ERRORS.VOTING_DELEGATES_EXCEEDS_MAX_LEN)
+                  })
+                })
+              })
+
+              context('when the representative already proxied a vote', () => {
+                beforeEach('proxy representative\'s vote', async () => {
+                  await voting.voteOnBehalfOf(voteId, true, [voter], { from: representative })
+                })
+
+                context('when the representative is still allowed', () => {
+                  itReturnsFalse(voter, representative)
+                })
+
+                context('when the representative was disallowed', () => {
+                  beforeEach('change representative', async () => {
+                    await voting.setRepresentative(anotherRepresentative, { from: voter })
+                  })
+
+                  itReturnsFalse(voter, representative)
+                })
+              })
+            })
+
+            context('when the voter has already voted', () => {
+              beforeEach('voter votes', async () => {
+                await voting.vote(voteId, true, { from: voter })
+              })
+
+              itReturnsFalse(voter, representative)
+            })
+          })
+
+          context('when at the end of the delegated voting period', () => {
+            beforeEach('move at the end of the delegated voting period', async () => {
+              await voting.mockIncreaseTime(DELEGATED_VOTING_PERIOD)
             })
 
             itReturnsFalse(voter, representative)
           })
 
-          context('when in the middle of the overrule window', () => {
-            beforeEach('move to the middle of the overrule window', async () => {
-              await voting.mockIncreaseTime(VOTE_DURATION - OVERRULE_WINDOW / 2)
-            })
-
-            itReturnsFalse(voter, representative)
-          })
-
-          context('when at the end of the overrule window', () => {
-            beforeEach('move at the end of the overrule window', async () => {
-              await voting.mockIncreaseTime(VOTE_DURATION)
-            })
-
-            itReturnsFalse(voter, representative)
-          })
-
-          context('when after the overrule window', () => {
-            beforeEach('move at the end of the overrule window', async () => {
-              await voting.mockIncreaseTime(VOTE_DURATION + 1)
+          context('when after the end of the delegated voting period', () => {
+            beforeEach('move at the end of the delegated voting period', async () => {
+              await voting.mockIncreaseTime(DELEGATED_VOTING_PERIOD + 1)
             })
 
             itReturnsFalse(voter, representative)
@@ -207,7 +293,7 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
             })
           }
 
-          context('when before the overrule window', () => {
+          context('when at the beginning of the delegated voting period', () => {
             context('when the voter has not voted yet', () => {
               it('casts the proxied vote', async () => {
                 const receipt = await voting.voteOnBehalfOf(voteId, false, [voter], { from: representative })
@@ -225,14 +311,14 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
                 assertBn(representativeState.caster, ZERO_ADDRESS, 'representative should not have voted')
 
                 assertAmountOfEvents(receipt, 'CastVote')
-                assertEvent(receipt, 'CastVote', { expectedArgs: { voter, voteId, supports: false, stake: bigExp(51, 18) } })
+                assertEvent(receipt, 'CastVote', { expectedArgs: { voteId, voter, caster: representative, supports: false } })
               })
 
               it('emits an event', async () => {
                 const receipt = await voting.voteOnBehalfOf(voteId, false, [voter], { from: representative })
 
-                assertAmountOfEvents(receipt, 'ProxyVoteSuccess')
-                assertEvent(receipt, 'ProxyVoteSuccess', { expectedArgs: { voter, representative, voteId, supports: false } })
+                assertAmountOfEvents(receipt, 'CastVote')
+                assertEvent(receipt, 'CastVote', { expectedArgs: { voter, caster: representative, voteId, supports: false } })
               })
 
               it('cannot be changed by the representative', async () => {
@@ -285,67 +371,23 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
                   await voting.voteOnBehalfOf(voteId, false, [voter], { from: representative })
                 })
 
-                const itCanBeOverruledByHolder = () => {
-                  it('can be overruled by the voter', async () => {
-                    const receipt = await voting.vote(voteId, true, { from: voter })
+                it('can be overruled by the voter', async () => {
+                  const receipt = await voting.vote(voteId, true, { from: voter })
 
-                    const { yeas, nays } = await getVoteState(voting, voteId)
-                    assertBn(nays, 0, 'nays should be 0')
-                    assertBn(yeas, bigExp(51, 18), 'yeas should be 51')
+                  const { yeas, nays } = await getVoteState(voting, voteId)
+                  assertBn(nays, 0, 'nays should be 0')
+                  assertBn(yeas, bigExp(51, 18), 'yeas should be 51')
 
-                    const voterState = await getCastVote(voter)
-                    assertBn(voterState.state, VOTER_STATE.YEA, 'voter should have voted')
-                    assert.equal(voterState.caster, voter, 'vote caster does not match')
+                  const voterState = await getCastVote(voter)
+                  assertBn(voterState.state, VOTER_STATE.YEA, 'voter should have voted')
+                  assert.equal(voterState.caster, voter, 'vote caster does not match')
 
-                    const representativeState = await getCastVote(representative)
-                    assertBn(representativeState.state, VOTER_STATE.ABSENT, 'representative should not have voted')
-                    assertBn(representativeState.caster, ZERO_ADDRESS, 'representative should not have voted')
+                  const representativeState = await getCastVote(representative)
+                  assertBn(representativeState.state, VOTER_STATE.ABSENT, 'representative should not have voted')
+                  assertBn(representativeState.caster, ZERO_ADDRESS, 'representative should not have voted')
 
-                    assertAmountOfEvents(receipt, 'CastVote')
-                    assertEvent(receipt, 'CastVote', { expectedArgs: { voter, voteId, supports: true, stake: bigExp(51, 18) } })
-                  })
-                }
-
-                const itCannotBeOverruledByHolder = () => {
-                  it('cannot be overruled by the voter', async () => {
-                    await assertRevert(voting.vote(voteId, true, { from: voter }), VOTING_ERRORS.VOTING_CANNOT_VOTE)
-                  })
-                }
-
-                context('when before the overrule window', () => {
-                  itCanBeOverruledByHolder()
-                })
-
-                context('when at the beginning of the overrule window', () => {
-                  beforeEach('move at the beginning of the overrule window', async () => {
-                    await voting.mockIncreaseTime(VOTE_DURATION - OVERRULE_WINDOW - 1)
-                  })
-
-                  itCanBeOverruledByHolder()
-                })
-
-                context('when in the middle of the overrule window', () => {
-                  beforeEach('move to the middle of the overrule window', async () => {
-                    await voting.mockIncreaseTime(VOTE_DURATION - OVERRULE_WINDOW / 2)
-                  })
-
-                  itCanBeOverruledByHolder()
-                })
-
-                context('when at the end of the overrule window', () => {
-                  beforeEach('move at the end of the overrule window', async () => {
-                    await voting.mockIncreaseTime(VOTE_DURATION)
-                  })
-
-                  itCannotBeOverruledByHolder()
-                })
-
-                context('when after the overrule window', () => {
-                  beforeEach('move after the overrule window', async () => {
-                    await voting.mockIncreaseTime(VOTE_DURATION + 1)
-                  })
-
-                  itCannotBeOverruledByHolder()
+                  assertAmountOfEvents(receipt, 'CastVote')
+                  assertEvent(receipt, 'CastVote', { expectedArgs: { voteId, voter, caster: voter, supports: true } })
                 })
               })
 
@@ -353,7 +395,7 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
                 const itDoesNotExtendTheVoteDuration = support => {
                   it('does not extend the vote duration', async () => {
                     const receipt = await voting.voteOnBehalfOf(voteId, support, [voter], { from })
-                    assertAmountOfEvents(receipt, 'VoteQuietEndingExtension', { expectedAmount: 0 })
+                    assertAmountOfEvents(receipt, 'QuietEndingExtendVote', { expectedAmount: 0 })
                   })
                 }
 
@@ -364,7 +406,8 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
 
                   context('when cast during the quiet ending period', () => {
                     beforeEach('move to the middle of the quiet ending period', async () => {
-                      await voting.mockIncreaseTime(VOTE_DURATION - QUIET_ENDING_PERIOD + 1)
+                      const { startDate } = await getVoteState(voting, voteId)
+                      await voting.mockSetTimestamp(startDate.add(bn(VOTE_DURATION - QUIET_ENDING_PERIOD / 2)))
                     })
 
                     itDoesNotExtendTheVoteDuration()
@@ -395,8 +438,8 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
                           assert.isTrue(await voting.canVote(voteId, thirdVoter), 'voter cannot vote')
 
                           const receipt = await voting.vote(voteId, true, { from: thirdVoter })
-                          assertAmountOfEvents(receipt, 'VoteQuietEndingExtension')
-                          assertEvent(receipt, 'VoteQuietEndingExtension', { expectedArgs: { voteId, passing: support } })
+                          assertAmountOfEvents(receipt, 'QuietEndingExtendVote')
+                          assertEvent(receipt, 'QuietEndingExtendVote', { expectedArgs: { voteId, passing: support } })
                         })
 
                         it('stores the vote extension in the following vote', async () => {
@@ -404,11 +447,11 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
                           await voting.voteOnBehalfOf(voteId, support, [voter], { from })
                           await voting.mockIncreaseTime(QUIET_ENDING_PERIOD / 2)
 
-                          const { quietEndingExtendedSeconds: previousExtendedSeconds } = await getVoteState(voting, voteId)
+                          const { quietEndingExtensionDuration: previousExtendedSeconds } = await getVoteState(voting, voteId)
 
                           await voting.vote(voteId, true, { from: thirdVoter })
 
-                          const { quietEndingExtendedSeconds: currentExtendedSeconds } = await getVoteState(voting, voteId)
+                          const { quietEndingExtensionDuration: currentExtendedSeconds } = await getVoteState(voting, voteId)
                           assertBn(currentExtendedSeconds, previousExtendedSeconds.add(bn(QUIET_ENDING_EXTENSION)), 'vote extended seconds do not match')
                         })
                       } else {
@@ -427,7 +470,8 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
                     const shouldExtendVote = true
 
                     beforeEach('move to the middle of the quiet ending period', async () => {
-                      await voting.mockIncreaseTime(VOTE_DURATION - QUIET_ENDING_PERIOD / 2)
+                      const { startDate } = await getVoteState(voting, voteId)
+                      await voting.mockSetTimestamp(startDate.add(bn(VOTE_DURATION - QUIET_ENDING_PERIOD / 2)))
                     })
 
                     itHandlesVoteDurationProperly(shouldExtendVote)
@@ -462,33 +506,451 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
             })
           })
 
-          context('when at the beginning of the overrule window', () => {
-            beforeEach('move at the beginning of the overrule window', async () => {
-              await voting.mockIncreaseTime(VOTE_DURATION - OVERRULE_WINDOW)
+          context('when in the middle of the delegated voting period', () => {
+            beforeEach('move to the middle of the delegated voting period', async () => {
+              await voting.mockIncreaseTime(DELEGATED_VOTING_PERIOD / 2)
+            })
+
+            context('when the voter has not voted yet', () => {
+              it('casts the proxied vote', async () => {
+                const receipt = await voting.voteOnBehalfOf(voteId, false, [voter], { from: representative })
+
+                const { yeas, nays } = await getVoteState(voting, voteId)
+                assertBn(yeas, 0, 'yeas should be 0')
+                assertBn(nays, bigExp(51, 18).toString(), 'nays should be 51')
+
+                const voterState = await getCastVote(voter)
+                assertBn(voterState.state, VOTER_STATE.NAY, 'voter should have voted')
+                assert.equal(voterState.caster, representative, 'vote caster does not match')
+
+                const representativeState = await getCastVote(representative)
+                assertBn(representativeState.state, VOTER_STATE.ABSENT, 'representative should not have voted')
+                assertBn(representativeState.caster, ZERO_ADDRESS, 'representative should not have voted')
+
+                assertAmountOfEvents(receipt, 'CastVote')
+                assertEvent(receipt, 'CastVote', { expectedArgs: { voteId, voter, caster: representative, supports: false } })
+              })
+
+              it('emits an event', async () => {
+                const receipt = await voting.voteOnBehalfOf(voteId, false, [voter], { from: representative })
+
+                assertAmountOfEvents(receipt, 'CastVote')
+                assertEvent(receipt, 'CastVote', { expectedArgs: { voter, caster: representative, voteId, supports: false } })
+              })
+
+              it('cannot be changed by the representative', async () => {
+                await voting.voteOnBehalfOf(voteId, false, [voter], { from: representative })
+
+                const receipt = await voting.voteOnBehalfOf(voteId, true, [voter], { from: representative })
+
+                const { yeas, nays } = await getVoteState(voting, voteId)
+                assertBn(nays, bigExp(51, 18), 'nays should be 51')
+                assertBn(yeas, 0, 'yeas should be 0')
+
+                const voterState = await getCastVote(voter)
+                assertBn(voterState.state, VOTER_STATE.NAY, 'voter should have voted')
+                assert.equal(voterState.caster, representative, 'vote caster does not match')
+
+                const representativeState = await getCastVote(representative)
+                assertBn(representativeState.state, VOTER_STATE.ABSENT, 'representative should not have voted')
+                assertBn(representativeState.caster, ZERO_ADDRESS, 'representative should not have voted')
+
+                assertAmountOfEvents(receipt, 'CastVote', { expectedAmount: 0 })
+                assertAmountOfEvents(receipt, 'ProxyVoteFailure')
+                assertEvent(receipt, 'ProxyVoteFailure', { expectedArgs: { voter, representative, voteId } })
+              })
+
+              it('can not be changed by another representative', async () => {
+                await voting.voteOnBehalfOf(voteId, false, [voter], { from: representative })
+
+                await voting.setRepresentative(anotherRepresentative, { from: voter })
+                const receipt = await voting.voteOnBehalfOf(voteId, true, [voter], { from: anotherRepresentative })
+
+                const { yeas, nays } = await getVoteState(voting, voteId)
+                assertBn(nays, bigExp(51, 18), 'nays should be 51')
+                assertBn(yeas, 0, 'yeas should be 0')
+
+                const voterState = await getCastVote(voter)
+                assertBn(voterState.state, VOTER_STATE.NAY, 'voter should have voted')
+                assert.equal(voterState.caster, representative, 'vote caster does not match')
+
+                const representativeState = await getCastVote(representative)
+                assertBn(representativeState.state, VOTER_STATE.ABSENT, 'representative should not have voted')
+                assertBn(representativeState.caster, ZERO_ADDRESS, 'representative should not have voted')
+
+                assertAmountOfEvents(receipt, 'CastVote', { expectedAmount: 0 })
+                assertAmountOfEvents(receipt, 'ProxyVoteFailure')
+                assertEvent(receipt, 'ProxyVoteFailure', { expectedArgs: { voter, representative: anotherRepresentative, voteId } })
+              })
+
+              context('overruling', () => {
+                beforeEach('proxy representative\'s vote', async () => {
+                  await voting.voteOnBehalfOf(voteId, false, [voter], { from: representative })
+                })
+
+                it('can be overruled by the voter', async () => {
+                    const receipt = await voting.vote(voteId, true, { from: voter })
+
+                    const { yeas, nays } = await getVoteState(voting, voteId)
+                    assertBn(nays, 0, 'nays should be 0')
+                    assertBn(yeas, bigExp(51, 18), 'yeas should be 51')
+
+                    const voterState = await getCastVote(voter)
+                    assertBn(voterState.state, VOTER_STATE.YEA, 'voter should have voted')
+                    assert.equal(voterState.caster, voter, 'vote caster does not match')
+
+                    const representativeState = await getCastVote(representative)
+                    assertBn(representativeState.state, VOTER_STATE.ABSENT, 'representative should not have voted')
+                    assertBn(representativeState.caster, ZERO_ADDRESS, 'representative should not have voted')
+
+                    assertAmountOfEvents(receipt, 'CastVote')
+                    assertEvent(receipt, 'CastVote', { expectedArgs: { voteId, voter, caster: voter, supports: true } })
+                  })
+              })
+
+              context('quiet ending', () => {
+                const itDoesNotExtendTheVoteDuration = support => {
+                  it('does not extend the vote duration', async () => {
+                    const receipt = await voting.voteOnBehalfOf(voteId, support, [voter], { from })
+                    assertAmountOfEvents(receipt, 'QuietEndingExtendVote', { expectedAmount: 0 })
+                  })
+                }
+
+                context('when no one voted before', () => {
+                  context('when cast before the quiet ending period', () => {
+                    itDoesNotExtendTheVoteDuration()
+                  })
+
+                  context('when cast during the quiet ending period', () => {
+                    beforeEach('move to the middle of the quiet ending period', async () => {
+                      const { startDate } = await getVoteState(voting, voteId)
+                      await voting.mockSetTimestamp(startDate.add(bn(VOTE_DURATION - QUIET_ENDING_PERIOD / 2)))
+                    })
+
+                    itDoesNotExtendTheVoteDuration()
+                  })
+                })
+
+                context('when someone voted before', () => {
+                  const previousSupport = false
+
+                  beforeEach('cast vote', async () => {
+                    await voting.vote(voteId, previousSupport, { from: anotherVoter })
+                  })
+
+                  const itHandlesVoteDurationProperly = shouldExtendVote => {
+                    context('when the outcome is not flipped', () => {
+                      itDoesNotExtendTheVoteDuration(previousSupport)
+                    })
+
+                    context('when the outcome is flipped', () => {
+                      const support = !previousSupport
+
+                      if (shouldExtendVote) {
+                        it('extends the vote duration', async () => {
+                          // vote and move after the vote's end date
+                          await voting.voteOnBehalfOf(voteId, support, [voter], { from })
+                          await voting.mockIncreaseTime(QUIET_ENDING_PERIOD / 2)
+
+                          assert.isTrue(await voting.canVote(voteId, thirdVoter), 'voter cannot vote')
+
+                          const receipt = await voting.vote(voteId, true, { from: thirdVoter })
+                          assertAmountOfEvents(receipt, 'QuietEndingExtendVote')
+                          assertEvent(receipt, 'QuietEndingExtendVote', { expectedArgs: { voteId, passing: support } })
+                        })
+
+                        it('stores the vote extension in the following vote', async () => {
+                          // vote and move after the vote's end date
+                          await voting.voteOnBehalfOf(voteId, support, [voter], { from })
+                          await voting.mockIncreaseTime(QUIET_ENDING_PERIOD / 2)
+
+                          const { quietEndingExtensionDuration: previousExtendedSeconds } = await getVoteState(voting, voteId)
+
+                          await voting.vote(voteId, true, { from: thirdVoter })
+
+                          const { quietEndingExtensionDuration: currentExtendedSeconds } = await getVoteState(voting, voteId)
+                          assertBn(currentExtendedSeconds, previousExtendedSeconds.add(bn(QUIET_ENDING_EXTENSION)), 'vote extended seconds do not match')
+                        })
+                      } else {
+                        itDoesNotExtendTheVoteDuration(support)
+                      }
+                    })
+                  }
+
+                  context('when the vote is cast before the quiet ending period', () => {
+                    const shouldExtendVote = false
+
+                    itHandlesVoteDurationProperly(shouldExtendVote)
+                  })
+
+                  context('when the vote is cast during the quiet ending period', () => {
+                    const shouldExtendVote = true
+
+                    beforeEach('move to the middle of the quiet ending period', async () => {
+                      const { startDate } = await getVoteState(voting, voteId)
+                      await voting.mockSetTimestamp(startDate.add(bn(VOTE_DURATION - QUIET_ENDING_PERIOD / 2)))
+                    })
+
+                    itHandlesVoteDurationProperly(shouldExtendVote)
+                  })
+                })
+              })
+            })
+
+            context('when the voter has already voted', () => {
+              beforeEach('voter votes', async () => {
+                await voting.vote(voteId, true, { from: voter })
+              })
+
+              it('does not cast a vote', async () => {
+                await voting.voteOnBehalfOf(voteId, true, [voter], { from })
+
+                const { yeas, nays } = await getVoteState(voting, voteId)
+                assertBn(nays, 0, 'nays should be 0')
+                assertBn(yeas, bigExp(51, 18), 'yeas should be 51%')
+
+                const voterState = await getCastVote(voter)
+                assertBn(voterState.state, VOTER_STATE.YEA, 'voter should have voted')
+                assert.equal(voterState.caster, voter, 'vote caster does not match')
+              })
+
+              it('emits a proxy failed event', async () => {
+                const receipt = await voting.voteOnBehalfOf(voteId, true, [voter], { from })
+
+                assertAmountOfEvents(receipt, 'ProxyVoteFailure')
+                assertEvent(receipt, 'ProxyVoteFailure', { expectedArgs: { voter, representative, voteId } })
+              })
+            })
+          })
+
+          context('when before the end of the delegated voting period', () => {
+            beforeEach('move before the end of the delegated voting period', async () => {
+              await voting.mockIncreaseTime(DELEGATED_VOTING_PERIOD - 1)
+            })
+
+            context('when the voter has not voted yet', () => {
+              it('casts the proxied vote', async () => {
+                const receipt = await voting.voteOnBehalfOf(voteId, false, [voter], { from: representative })
+
+                const { yeas, nays } = await getVoteState(voting, voteId)
+                assertBn(yeas, 0, 'yeas should be 0')
+                assertBn(nays, bigExp(51, 18).toString(), 'nays should be 51')
+
+                const voterState = await getCastVote(voter)
+                assertBn(voterState.state, VOTER_STATE.NAY, 'voter should have voted')
+                assert.equal(voterState.caster, representative, 'vote caster does not match')
+
+                const representativeState = await getCastVote(representative)
+                assertBn(representativeState.state, VOTER_STATE.ABSENT, 'representative should not have voted')
+                assertBn(representativeState.caster, ZERO_ADDRESS, 'representative should not have voted')
+
+                assertAmountOfEvents(receipt, 'CastVote')
+                assertEvent(receipt, 'CastVote', { expectedArgs: { voteId, voter, caster: representative, supports: false } })
+              })
+
+              it('emits an event', async () => {
+                const receipt = await voting.voteOnBehalfOf(voteId, false, [voter], { from: representative })
+
+                assertAmountOfEvents(receipt, 'CastVote')
+                assertEvent(receipt, 'CastVote', { expectedArgs: { voter, caster: representative, voteId, supports: false } })
+              })
+
+              it('cannot be changed by the representative', async () => {
+                await voting.voteOnBehalfOf(voteId, false, [voter], { from: representative })
+
+                const receipt = await voting.voteOnBehalfOf(voteId, true, [voter], { from: representative })
+
+                const { yeas, nays } = await getVoteState(voting, voteId)
+                assertBn(nays, bigExp(51, 18), 'nays should be 51')
+                assertBn(yeas, 0, 'yeas should be 0')
+
+                const voterState = await getCastVote(voter)
+                assertBn(voterState.state, VOTER_STATE.NAY, 'voter should have voted')
+                assert.equal(voterState.caster, representative, 'vote caster does not match')
+
+                const representativeState = await getCastVote(representative)
+                assertBn(representativeState.state, VOTER_STATE.ABSENT, 'representative should not have voted')
+                assertBn(representativeState.caster, ZERO_ADDRESS, 'representative should not have voted')
+
+                assertAmountOfEvents(receipt, 'CastVote', { expectedAmount: 0 })
+                assertAmountOfEvents(receipt, 'ProxyVoteFailure')
+                assertEvent(receipt, 'ProxyVoteFailure', { expectedArgs: { voter, representative, voteId } })
+              })
+
+              it('can not be changed by another representative', async () => {
+                await voting.voteOnBehalfOf(voteId, false, [voter], { from: representative })
+
+                await voting.setRepresentative(anotherRepresentative, { from: voter })
+                const receipt = await voting.voteOnBehalfOf(voteId, true, [voter], { from: anotherRepresentative })
+
+                const { yeas, nays } = await getVoteState(voting, voteId)
+                assertBn(nays, bigExp(51, 18), 'nays should be 51')
+                assertBn(yeas, 0, 'yeas should be 0')
+
+                const voterState = await getCastVote(voter)
+                assertBn(voterState.state, VOTER_STATE.NAY, 'voter should have voted')
+                assert.equal(voterState.caster, representative, 'vote caster does not match')
+
+                const representativeState = await getCastVote(representative)
+                assertBn(representativeState.state, VOTER_STATE.ABSENT, 'representative should not have voted')
+                assertBn(representativeState.caster, ZERO_ADDRESS, 'representative should not have voted')
+
+                assertAmountOfEvents(receipt, 'CastVote', { expectedAmount: 0 })
+                assertAmountOfEvents(receipt, 'ProxyVoteFailure')
+                assertEvent(receipt, 'ProxyVoteFailure', { expectedArgs: { voter, representative: anotherRepresentative, voteId } })
+              })
+
+              context('overruling', () => {
+                beforeEach('proxy representative\'s vote', async () => {
+                  await voting.voteOnBehalfOf(voteId, false, [voter], { from: representative })
+                })
+
+                it('can be overruled by the voter', async () => {
+                  const receipt = await voting.vote(voteId, true, { from: voter })
+
+                  const { yeas, nays } = await getVoteState(voting, voteId)
+                  assertBn(nays, 0, 'nays should be 0')
+                  assertBn(yeas, bigExp(51, 18), 'yeas should be 51')
+
+                  const voterState = await getCastVote(voter)
+                  assertBn(voterState.state, VOTER_STATE.YEA, 'voter should have voted')
+                  assert.equal(voterState.caster, voter, 'vote caster does not match')
+
+                  const representativeState = await getCastVote(representative)
+                  assertBn(representativeState.state, VOTER_STATE.ABSENT, 'representative should not have voted')
+                  assertBn(representativeState.caster, ZERO_ADDRESS, 'representative should not have voted')
+
+                  assertAmountOfEvents(receipt, 'CastVote')
+                  assertEvent(receipt, 'CastVote', { expectedArgs: { voteId, voter, caster: voter, supports: true } })
+                })
+              })
+
+              context('quiet ending', () => {
+                const itDoesNotExtendTheVoteDuration = support => {
+                  it('does not extend the vote duration', async () => {
+                    const receipt = await voting.voteOnBehalfOf(voteId, support, [voter], { from })
+                    assertAmountOfEvents(receipt, 'QuietEndingExtendVote', { expectedAmount: 0 })
+                  })
+                }
+
+                context('when no one voted before', () => {
+                  context('when cast before the quiet ending period', () => {
+                    itDoesNotExtendTheVoteDuration()
+                  })
+
+                  context('when cast during the quiet ending period', () => {
+                    beforeEach('move to the middle of the quiet ending period', async () => {
+                      const { startDate } = await getVoteState(voting, voteId)
+                      await voting.mockSetTimestamp(startDate.add(bn(VOTE_DURATION - QUIET_ENDING_PERIOD / 2)))
+                    })
+
+                    itDoesNotExtendTheVoteDuration()
+                  })
+                })
+
+                context('when someone voted before', () => {
+                  const previousSupport = false
+
+                  beforeEach('cast vote', async () => {
+                    await voting.vote(voteId, previousSupport, { from: anotherVoter })
+                  })
+
+                  const itHandlesVoteDurationProperly = shouldExtendVote => {
+                    context('when the outcome is not flipped', () => {
+                      itDoesNotExtendTheVoteDuration(previousSupport)
+                    })
+
+                    context('when the outcome is flipped', () => {
+                      const support = !previousSupport
+
+                      if (shouldExtendVote) {
+                        it('extends the vote duration', async () => {
+                          // vote and move after the vote's end date
+                          await voting.voteOnBehalfOf(voteId, support, [voter], { from })
+                          await voting.mockIncreaseTime(QUIET_ENDING_PERIOD / 2)
+
+                          assert.isTrue(await voting.canVote(voteId, thirdVoter), 'voter cannot vote')
+
+                          const receipt = await voting.vote(voteId, true, { from: thirdVoter })
+                          assertAmountOfEvents(receipt, 'QuietEndingExtendVote')
+                          assertEvent(receipt, 'QuietEndingExtendVote', { expectedArgs: { voteId, passing: support } })
+                        })
+
+                        it('stores the vote extension in the following vote', async () => {
+                          // vote and move after the vote's end date
+                          await voting.voteOnBehalfOf(voteId, support, [voter], { from })
+                          await voting.mockIncreaseTime(QUIET_ENDING_PERIOD / 2)
+
+                          const { quietEndingExtensionDuration: previousExtendedSeconds } = await getVoteState(voting, voteId)
+
+                          await voting.vote(voteId, true, { from: thirdVoter })
+
+                          const { quietEndingExtensionDuration: currentExtendedSeconds } = await getVoteState(voting, voteId)
+                          assertBn(currentExtendedSeconds, previousExtendedSeconds.add(bn(QUIET_ENDING_EXTENSION)), 'vote extended seconds do not match')
+                        })
+                      } else {
+                        itDoesNotExtendTheVoteDuration(support)
+                      }
+                    })
+                  }
+
+                  context('when the vote is cast before the quiet ending period', () => {
+                    const shouldExtendVote = false
+
+                    itHandlesVoteDurationProperly(shouldExtendVote)
+                  })
+
+                  context('when the vote is cast during the quiet ending period', () => {
+                    const shouldExtendVote = true
+
+                    beforeEach('move to the middle of the quiet ending period', async () => {
+                      const { startDate } = await getVoteState(voting, voteId)
+                      await voting.mockSetTimestamp(startDate.add(bn(VOTE_DURATION - QUIET_ENDING_PERIOD / 2)))
+                    })
+
+                    itHandlesVoteDurationProperly(shouldExtendVote)
+                  })
+                })
+              })
+            })
+
+            context('when the voter has already voted', () => {
+              beforeEach('voter votes', async () => {
+                await voting.vote(voteId, true, { from: voter })
+              })
+
+              it('does not cast a vote', async () => {
+                await voting.voteOnBehalfOf(voteId, true, [voter], { from })
+
+                const { yeas, nays } = await getVoteState(voting, voteId)
+                assertBn(nays, 0, 'nays should be 0')
+                assertBn(yeas, bigExp(51, 18), 'yeas should be 51%')
+
+                const voterState = await getCastVote(voter)
+                assertBn(voterState.state, VOTER_STATE.YEA, 'voter should have voted')
+                assert.equal(voterState.caster, voter, 'vote caster does not match')
+              })
+
+              it('emits a proxy failed event', async () => {
+                const receipt = await voting.voteOnBehalfOf(voteId, true, [voter], { from })
+
+                assertAmountOfEvents(receipt, 'ProxyVoteFailure')
+                assertEvent(receipt, 'ProxyVoteFailure', { expectedArgs: { voter, representative, voteId } })
+              })
+            })
+          })
+
+          context('when right at the end of the delegated voting period', () => {
+            beforeEach('move at the end of the delegated voting period', async () => {
+              await voting.mockIncreaseTime(DELEGATED_VOTING_PERIOD)
             })
 
             itReverts()
           })
 
-          context('when in the middle of the overrule window', () => {
-            beforeEach('move to the middle of the overrule window', async () => {
-              await voting.mockIncreaseTime(VOTE_DURATION - OVERRULE_WINDOW / 2)
-            })
-
-            itReverts()
-          })
-
-          context('when at the end of the overrule window', () => {
-            beforeEach('move at the end of the overrule window', async () => {
-              await voting.mockIncreaseTime(VOTE_DURATION)
-            })
-
-            itReverts()
-          })
-
-          context('when after the overrule window', () => {
-            beforeEach('move at the end of the overrule window', async () => {
-              await voting.mockIncreaseTime(VOTE_DURATION + 1)
+          context('when after the end of the delegated voting period', () => {
+            beforeEach('move at the end of the delegated voting period', async () => {
+              await voting.mockIncreaseTime(DELEGATED_VOTING_PERIOD + 1)
             })
 
             itReverts()
@@ -559,9 +1021,9 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
           assertAmountOfEvents(receipt, 'ProxyVoteFailure', { expectedAmount: 1 })
           assertEvent(receipt, 'ProxyVoteFailure', { expectedArgs: { voter: previousVoter, representative, voteId }, index: 0 })
 
-          assertAmountOfEvents(receipt, 'ProxyVoteSuccess', { expectedAmount: 2 })
-          assertEvent(receipt, 'ProxyVoteSuccess', { expectedArgs: { voter, representative, voteId, supports: false }, index: 0 })
-          assertEvent(receipt, 'ProxyVoteSuccess', { expectedArgs: { voter: anotherVoter, representative, voteId, supports: false }, index: 1 })
+          assertAmountOfEvents(receipt, 'CastVote', { expectedAmount: 2 })
+          assertEvent(receipt, 'CastVote', { expectedArgs: { voter, caster: representative, voteId, supports: false }, index: 0 })
+          assertEvent(receipt, 'CastVote', { expectedArgs: { voter: anotherVoter, caster: representative, voteId, supports: false }, index: 1 })
 
           const { yeas, nays } = await getVoteState(voting, voteId)
           assertBn(yeas, bigExp(1, 18), 'yeas should be 1')
@@ -582,8 +1044,7 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
       })
 
       context('when the input is not valid', () => {
-        const repeat = (x, y) => [...Array(x)].map(() => y)
-        const voters = repeat(71, voter)
+        const voters = new Array(71).fill(voter)
 
         context('when the input length exceeds the max length allowed', () => {
           it('reverts', async () => {
@@ -602,58 +1063,54 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
     })
   })
 
-  describe('withinOverruleWindow', () => {
+  describe('canRepresentativesVote', () => {
     beforeEach('create a vote', async () => {
       ({ voteId } = await createVote({ voting, from: voter }))
     })
 
-    context('when previous to the overrule window', () => {
-      beforeEach('increase time', async () => {
-        await voting.mockIncreaseTime(VOTE_DURATION - OVERRULE_WINDOW - 1)
-      })
-
-      it('returns false', async () => {
-        assert.isFalse(await voting.withinOverruleWindow(voteId))
+    context('when right at the beginning of the delegated voting period', () => {
+      it('returns true', async () => {
+        assert.isTrue(await voting.canRepresentativesVote(voteId))
       })
     })
 
-    context('when right at the beginning of the overrule window', () => {
+    context('when in the middle of the delegated voting period', () => {
       beforeEach('increase time', async () => {
-        await voting.mockIncreaseTime(VOTE_DURATION - OVERRULE_WINDOW)
+        await voting.mockIncreaseTime(DELEGATED_VOTING_PERIOD / 2)
       })
 
       it('returns true', async () => {
-        assert.isTrue(await voting.withinOverruleWindow(voteId))
+        assert.isTrue(await voting.canRepresentativesVote(voteId))
       })
     })
 
-    context('when in the middle of the overrule window', () => {
+    context('when right before the end of the delegated voting period', () => {
       beforeEach('increase time', async () => {
-        await voting.mockIncreaseTime(VOTE_DURATION - OVERRULE_WINDOW / 2)
+        await voting.mockIncreaseTime(DELEGATED_VOTING_PERIOD - 1)
       })
 
       it('returns true', async () => {
-        assert.isTrue(await voting.withinOverruleWindow(voteId))
+        assert.isTrue(await voting.canRepresentativesVote(voteId))
       })
     })
 
-    context('when right at the end of the overrule window', () => {
+    context('when right at the end of the delegated voting period', () => {
       beforeEach('increase time', async () => {
-        await voting.mockIncreaseTime(VOTE_DURATION)
+        await voting.mockIncreaseTime(DELEGATED_VOTING_PERIOD)
       })
 
       it('returns false', async () => {
-        assert.isFalse(await voting.withinOverruleWindow(voteId))
+        assert.isFalse(await voting.canRepresentativesVote(voteId))
       })
     })
 
-    context('when after the vote ends', () => {
+    context('when after the end of the delegated voting period ends', () => {
       beforeEach('increase time', async () => {
-        await voting.mockIncreaseTime(VOTE_DURATION + 1)
+        await voting.mockIncreaseTime(DELEGATED_VOTING_PERIOD + 1)
       })
 
       it('returns false', async () => {
-        assert.isFalse(await voting.withinOverruleWindow(voteId))
+        assert.isFalse(await voting.canRepresentativesVote(voteId))
       })
     })
   })
@@ -686,7 +1143,6 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
       const receipt = await voting.voteOnBehalfOf(voteId, true, voters, { from: representative })
 
       assertAmountOfEvents(receipt, 'CastVote', { expectedAmount: MAX_DELEGATES_PER_TX })
-      assertAmountOfEvents(receipt, 'ProxyVoteSuccess', { expectedAmount: MAX_DELEGATES_PER_TX })
       assert.isAtMost(receipt.receipt.cumulativeGasUsed, 6.8e6)
 
       const { yeas, nays } = await getVoteState(voting, voteId)

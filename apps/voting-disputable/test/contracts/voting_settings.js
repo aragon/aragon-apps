@@ -9,7 +9,7 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
   let voting
 
   const VOTE_DURATION = 5 * ONE_DAY
-  const OVERRULE_WINDOW = ONE_DAY
+  const DELEGATED_VOTING_PERIOD = ONE_DAY * 4
   const EXECUTION_DELAY = 0
   const QUIET_ENDING_PERIOD = ONE_DAY
   const QUIET_ENDING_EXTENSION = ONE_DAY / 2
@@ -24,7 +24,65 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
   })
 
   beforeEach('deploy voting', async () => {
-    voting = await deployer.deployAndInitialize({ owner, supportRequired: REQUIRED_SUPPORT, minimumAcceptanceQuorum: MINIMUM_ACCEPTANCE_QUORUM, voteDuration: VOTE_DURATION, overruleWindow: OVERRULE_WINDOW, quietEndingPeriod: QUIET_ENDING_PERIOD, quietEndingExtension: QUIET_ENDING_EXTENSION, executionDelay: EXECUTION_DELAY })
+    voting = await deployer.deployAndInitialize({ owner, supportRequired: REQUIRED_SUPPORT, minimumAcceptanceQuorum: MINIMUM_ACCEPTANCE_QUORUM, voteDuration: VOTE_DURATION, delegatedVotingPeriod: DELEGATED_VOTING_PERIOD, quietEndingPeriod: QUIET_ENDING_PERIOD, quietEndingExtension: QUIET_ENDING_EXTENSION, executionDelay: EXECUTION_DELAY })
+  })
+
+  describe('changeVoteTime', () => {
+    context('when the sender is allowed', () => {
+      const from = owner
+
+      context('when the new value is zero', () => {
+        const newVoteTime = 0
+
+        it('fails changing required support lower than minimum acceptance quorum', async () => {
+          await assertRevert(voting.changeVoteTime(newVoteTime, { from }), VOTING_ERRORS.VOTING_VOTE_TIME_ZERO)
+        })
+      })
+
+      context('when the new value is greater than zero', () => {
+        const newVoteTime = ONE_DAY
+
+        it('changes the vote time', async () => {
+          await voting.changeVoteTime(newVoteTime, { from })
+
+          const currentSettingId = await voting.getCurrentSettingId()
+          const { voteTime } = await voting.getSetting(currentSettingId)
+          assertBn(voteTime, newVoteTime, 'should have changed vote time')
+        })
+
+        it('emits an event', async () => {
+          const receipt = await voting.changeVoteTime(newVoteTime, { from })
+
+          assertAmountOfEvents(receipt, 'NewSetting')
+          assertAmountOfEvents(receipt, 'ChangeVoteTime')
+          assertEvent(receipt, 'ChangeVoteTime', { expectedArgs: { voteTime: newVoteTime } })
+        })
+
+        it('does not affect vote times in old votes', async () => {
+          const { voteId, script } = await createVote({ voting, from: holder51 })
+          await voting.changeVoteTime(newVoteTime, { from })
+
+          await voting.mockIncreaseTime(newVoteTime * 2)
+          await voting.vote(voteId, true, { from: holder51 })
+          await voting.vote(voteId, false, { from: holder20 })
+          await voting.vote(voteId, false, { from: holder29 })
+
+          const { voteTime } = await getVoteSetting(voting, voteId)
+          assertBn(voteTime, VOTE_DURATION, 'vote time should stay equal')
+
+          await voting.mockIncreaseTime(VOTE_DURATION)
+          await voting.executeVote(voteId, script) // exec doesn't fail
+        })
+      })
+    })
+
+    context('when the sender is not allowed', () => {
+      const from = anyone
+
+      it('reverts', async () => {
+        await assertRevert(voting.changeVoteTime(ONE_DAY, { from }), ARAGON_OS_ERRORS.APP_AUTH_FAILED)
+      })
+    })
   })
 
   describe('changeSupportRequiredPct', () => {
@@ -59,7 +117,7 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
         })
 
         it('does not affect vote required support', async () => {
-          const { voteId } = await createVote({ voting, from: holder51 })
+          const { voteId, script } = await createVote({ voting, from: holder51 })
           await voting.changeSupportRequiredPct(pct16(70), { from })
 
           // With previous required support at 50%, vote should be approved
@@ -73,7 +131,7 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
 
           const { supportRequiredPct } = await getVoteSetting(voting, voteId)
           assertBn(supportRequiredPct, REQUIRED_SUPPORT, 'required support in vote should stay equal')
-          await voting.executeVote(voteId) // exec doesn't fail
+          await voting.executeVote(voteId, script) // exec doesn't fail
         })
       })
 
@@ -125,7 +183,7 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
         })
 
         it('does not affect the vote min quorum', async () => {
-          const { voteId } = await createVote({ voting, from: holder51 })
+          const { voteId, script } = await createVote({ voting, from: holder51 })
           await voting.changeMinAcceptQuorumPct(pct16(50), { from })
 
           // With previous min acceptance quorum at 20%, vote should be approved
@@ -137,7 +195,7 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
 
           const { minAcceptQuorumPct } = await getVoteSetting(voting, voteId)
           assertBn(minAcceptQuorumPct, MINIMUM_ACCEPTANCE_QUORUM, 'acceptance quorum in vote should stay equal')
-          await voting.executeVote(voteId) // exec doesn't fail
+          await voting.executeVote(voteId, script) // exec doesn't fail
         })
       }
 
@@ -171,77 +229,77 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
     })
   })
 
-  describe('changeOverruleWindow', () => {
+  describe('changeDelegatedVotingPeriod', () => {
     context('when the sender is allowed', () => {
       const from = owner
 
-      const itChangesTheOverruleWindow = newWindow => {
-        it('changes the overrule window', async () => {
-          await voting.changeOverruleWindow(newWindow, { from })
+      const itChangesTheDelegatedVotingPeriod = newDelegatedVotingPeriod => {
+        it('changes the delegated voting period', async () => {
+          await voting.changeDelegatedVotingPeriod(newDelegatedVotingPeriod, { from })
 
           const currentSettingId = await voting.getCurrentSettingId()
-          const { overruleWindow } = await voting.getSetting(currentSettingId)
-          assertBn(overruleWindow, newWindow, 'overrule window does not match')
+          const { delegatedVotingPeriod } = await voting.getSetting(currentSettingId)
+          assertBn(delegatedVotingPeriod, newDelegatedVotingPeriod, 'delegated voting period does not match')
         })
 
         it('emits an event', async () => {
-          const receipt = await voting.changeOverruleWindow(newWindow, { from })
+          const receipt = await voting.changeDelegatedVotingPeriod(newDelegatedVotingPeriod, { from })
 
           assertAmountOfEvents(receipt, 'NewSetting')
-          assertAmountOfEvents(receipt, 'ChangeOverruleWindow')
-          assertEvent(receipt, 'ChangeOverruleWindow', { expectedArgs: { overruleWindow: newWindow } })
+          assertAmountOfEvents(receipt, 'ChangeDelegatedVotingPeriod')
+          assertEvent(receipt, 'ChangeDelegatedVotingPeriod', { expectedArgs: { delegatedVotingPeriod: newDelegatedVotingPeriod } })
         })
 
         it('does not affect previous created votes', async () => {
           const { voteId } = await createVote({ voting, from: holder51 })
 
-          await voting.changeOverruleWindow(newWindow, { from })
+          await voting.changeDelegatedVotingPeriod(newDelegatedVotingPeriod, { from })
 
-          const { overruleWindow } = await getVoteSetting(voting, voteId)
-          assertBn(overruleWindow, OVERRULE_WINDOW, 'overrule window does not match')
+          const { delegatedVotingPeriod } = await getVoteSetting(voting, voteId)
+          assertBn(delegatedVotingPeriod, DELEGATED_VOTING_PERIOD, 'delegated voting period does not match')
         })
       }
 
       context('when the new window is lower than the vote duration', () => {
-        const newWindow = VOTE_DURATION - 1
+        const newDelegatedVotingPeriod = VOTE_DURATION - 1
 
-        itChangesTheOverruleWindow(newWindow)
+        itChangesTheDelegatedVotingPeriod(newDelegatedVotingPeriod)
       })
 
       context('when the new window is equal to the vote duration', () => {
-        const newWindow = VOTE_DURATION
+        const newDelegatedVotingPeriod = VOTE_DURATION
 
-        itChangesTheOverruleWindow(newWindow)
+        itChangesTheDelegatedVotingPeriod(newDelegatedVotingPeriod)
       })
 
       context('when the new window is greater than the vote duration', () => {
-        const newWindow = VOTE_DURATION + 1
+        const newDelegatedVotingPeriod = VOTE_DURATION + 1
 
         it('reverts', async () => {
-          await assertRevert(voting.changeOverruleWindow(newWindow, { from }), VOTING_ERRORS.VOTING_INVALID_OVERRULE_WINDOW)
+          await assertRevert(voting.changeDelegatedVotingPeriod(newDelegatedVotingPeriod, { from }), VOTING_ERRORS.VOTING_INVALID_DLGT_VOTE_PERIOD)
         })
       })
     })
 
     context('when the sender is not allowed', () => {
       const from = anyone
-      const newWindow = ONE_DAY * 2
+      const newDelegatedVotingPeriod = ONE_DAY * 2
 
       it('reverts', async () => {
-        await assertRevert(voting.changeOverruleWindow(newWindow, { from }), ARAGON_OS_ERRORS.APP_AUTH_FAILED)
+        await assertRevert(voting.changeDelegatedVotingPeriod(newDelegatedVotingPeriod, { from }), ARAGON_OS_ERRORS.APP_AUTH_FAILED)
       })
     })
   })
 
-  describe('changeQuietEndingPeriod', () => {
+  describe('changeQuietEndingConfiguration', () => {
     const newQuietEndingExtension = VOTE_DURATION + 1
 
     context('when the sender is allowed', () => {
       const from = owner
 
-      const itChangesTheQuietEndingPeriod = (newPeriod, newExtension) => {
-        it('changes the overrule window', async () => {
-          await voting.changeQuietEndingPeriod(newPeriod, newExtension, { from })
+      const itChangesTheQuietEndingConfiguration = (newPeriod, newExtension) => {
+        it('changes the delegated voting period', async () => {
+          await voting.changeQuietEndingConfiguration(newPeriod, newExtension, { from })
 
           const currentSettingId = await voting.getCurrentSettingId()
           const { quietEndingPeriod, quietEndingExtension } = await voting.getSetting(currentSettingId)
@@ -250,17 +308,17 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
         })
 
         it('emits an event', async () => {
-          const receipt = await voting.changeQuietEndingPeriod(newPeriod, newExtension, { from })
+          const receipt = await voting.changeQuietEndingConfiguration(newPeriod, newExtension, { from })
 
           assertAmountOfEvents(receipt, 'NewSetting')
-          assertAmountOfEvents(receipt, 'ChangeQuietEndingPeriod')
-          assertEvent(receipt, 'ChangeQuietEndingPeriod', { expectedArgs: { quietEndingPeriod: newPeriod, quietEndingExtension: newExtension } })
+          assertAmountOfEvents(receipt, 'ChangeQuietEndingConfiguration')
+          assertEvent(receipt, 'ChangeQuietEndingConfiguration', { expectedArgs: { quietEndingPeriod: newPeriod, quietEndingExtension: newExtension } })
         })
 
         it('does not affect previous created votes', async () => {
           const { voteId } = await createVote({ voting, from: holder51 })
 
-          await voting.changeQuietEndingPeriod(newPeriod, newExtension, { from })
+          await voting.changeQuietEndingConfiguration(newPeriod, newExtension, { from })
 
           const { quietEndingPeriod, quietEndingExtension } = await getVoteSetting(voting, voteId)
           assertBn(quietEndingPeriod, QUIET_ENDING_PERIOD, 'quiet ending period does not match')
@@ -270,20 +328,20 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
 
       const itReverts = (newPeriod, newExtension, errorMessage) => {
         it('reverts', async () => {
-          await assertRevert(voting.changeQuietEndingPeriod(newPeriod, newExtension, { from }), errorMessage)
+          await assertRevert(voting.changeQuietEndingConfiguration(newPeriod, newExtension, { from }), errorMessage)
         })
       }
 
       context('when the new period is lower than the vote duration', () => {
         const newQuietEndingPeriod = VOTE_DURATION - 1
 
-        itChangesTheQuietEndingPeriod(newQuietEndingPeriod, newQuietEndingExtension)
+        itChangesTheQuietEndingConfiguration(newQuietEndingPeriod, newQuietEndingExtension)
       })
 
       context('when the new period is equal to the vote duration', () => {
         const newQuietEndingPeriod = VOTE_DURATION
 
-        itChangesTheQuietEndingPeriod(newQuietEndingPeriod, newQuietEndingExtension)
+        itChangesTheQuietEndingConfiguration(newQuietEndingPeriod, newQuietEndingExtension)
       })
 
       context('when the new period is greater than the vote duration', () => {
@@ -297,7 +355,7 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
       const from = anyone
 
       it('reverts', async () => {
-        await assertRevert(voting.changeQuietEndingPeriod(QUIET_ENDING_PERIOD, newQuietEndingExtension, { from }), ARAGON_OS_ERRORS.APP_AUTH_FAILED)
+        await assertRevert(voting.changeQuietEndingConfiguration(QUIET_ENDING_PERIOD, newQuietEndingExtension, { from }), ARAGON_OS_ERRORS.APP_AUTH_FAILED)
       })
     })
   })
@@ -308,7 +366,7 @@ contract('Voting settings', ([_, owner, anyone, holder51, holder20, holder29]) =
     context('when the sender is allowed', () => {
       const from = owner
 
-      it('changes the overrule window', async () => {
+      it('changes the delegated voting period', async () => {
         await voting.changeExecutionDelay(newDelay, { from })
 
         const currentSettingId = await voting.getCurrentSettingId()
