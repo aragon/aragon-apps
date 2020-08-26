@@ -62,9 +62,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     enum VoterState { Absent, Yea, Nay }
 
     enum VoteStatus {
-        // Note: may be able to find a better name than "active". This state just includes all votes
-        // that have not been challenged or executed (thus including votes that have ended).
-        Active,                         // An ongoing vote
+        Normal,                         // An ongoing vote
         Paused,                         // A vote that is paused due to it having an open challenge or dispute
         Cancelled,                      // A vote that has been explicitly cancelled due to a challenge or dispute
         Executed                        // A vote that has been executed
@@ -371,7 +369,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     */
     function canClose(uint256 _voteId) external view returns (bool) {
         Vote storage vote_ = _getVote(_voteId);
-        return (_isActive(vote_) || _isExecuted(vote_)) && _hasEnded(vote_, settings[vote_.settingId]);
+        return (_isNormal(vote_) || _isExecuted(vote_)) && _hasEnded(vote_, settings[vote_.settingId]);
     }
 
     // Getter fns
@@ -573,7 +571,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     */
     function _onDisputableActionChallenged(uint256 _voteId, uint256 _challengeId, address /* _challenger */) internal {
         Vote storage vote_ = _getVote(_voteId);
-        require(_isActive(vote_), ERROR_CANNOT_PAUSE_VOTE);
+        require(_isNormal(vote_), ERROR_CANNOT_PAUSE_VOTE);
 
         vote_.status = VoteStatus.Paused;
         vote_.pausedAt = getTimestamp64();
@@ -588,7 +586,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         Vote storage vote_ = _getVote(_voteId);
         require(_isPaused(vote_), ERROR_VOTE_NOT_PAUSED);
 
-        vote_.status = VoteStatus.Active;
+        vote_.status = VoteStatus.Normal;
         vote_.pauseDuration = getTimestamp64().sub(vote_.pausedAt);
         emit ResumeVote(_voteId);
     }
@@ -720,7 +718,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         voteId = votesLength++;
 
         Vote storage vote_ = votes[voteId];
-        vote_.status = VoteStatus.Active;
+        vote_.status = VoteStatus.Normal;
         vote_.startDate = getTimestamp64();
         vote_.snapshotBlock = snapshotBlock;
         vote_.totalPower = totalPower;
@@ -855,7 +853,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @return True if the vote currently allows representatives to vote
     */
     function _canRepresentativesVote(Vote storage _vote) internal view returns (bool) {
-        return _isActive(_vote) && !_hasStartedOverruleWindow(_vote, settings[_vote.settingId]);
+        return _isNormal(_vote) && !_hasStartedOverruleWindow(_vote, settings[_vote.settingId]);
     }
 
     /**
@@ -865,7 +863,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     */
     function _canExecute(Vote storage _vote) internal view returns (bool) {
         // If the vote is executed, paused, or cancelled, it cannot be executed
-        if (!_isActive(_vote)) {
+        if (!_isNormal(_vote)) {
             return false;
         }
 
@@ -885,12 +883,12 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     }
 
     /**
-    * @dev Tell if a vote is active
+    * @dev Tell if a vote is normal
     * @param _vote Vote instance being queried
-    * @return True if the vote is active
+    * @return True if the vote is normal
     */
-    function _isActive(Vote storage _vote) internal view returns (bool) {
-        return _vote.status == VoteStatus.Active;
+    function _isNormal(Vote storage _vote) internal view returns (bool) {
+        return _vote.status == VoteStatus.Normal;
     }
 
     /**
@@ -933,7 +931,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @return True if the vote is open for voting
     */
     function _isVoteOpenForVoting(Vote storage _vote, Setting storage _setting) internal view returns (bool) {
-        return _isActive(_vote) && !_hasEnded(_vote, _setting);
+        return _isNormal(_vote) && !_hasEnded(_vote, _setting);
     }
 
     /**
@@ -1049,7 +1047,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     *      and if the pause occurred before the start date of the time duration being queried.
     *
     *                                                  [   queried duration   ]
-    *      [   vote active    ][   vote paused    ][   .   vote active        ]
+    *      [   vote normal    ][   vote paused    ][   .   vote normal        ]
     *      ^                                           ^                      ^
     *      |                                           |                      |
     *  vote starts                            duration start date         vote ends

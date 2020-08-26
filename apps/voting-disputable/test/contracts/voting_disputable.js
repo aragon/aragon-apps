@@ -51,7 +51,7 @@ contract('Voting disputable', ([_, owner, representative, voter10, voter20, vote
       assertBn(actionId, 1, 'action ID does not match')
       assertBn(pausedAt, 0, 'paused at does not match')
       assertBn(pauseDuration, 0, 'pause duration does not match')
-      assertBn(status, VOTE_STATUS.ACTIVE, 'vote status does not match')
+      assertBn(status, VOTE_STATUS.NORMAL, 'vote status does not match')
     })
 
     it('registers a new action in the agreement', async () => {
@@ -168,7 +168,7 @@ contract('Voting disputable', ([_, owner, representative, voter10, voter20, vote
     const itResumesTheVote = () => {
       it('resumes the vote', async () => {
         const { actionId: voteActionId, pausedAt, pauseDuration, status } = await getVoteState(voting, voteId)
-        assertBn(status, VOTE_STATUS.ACTIVE, 'vote status does not match')
+        assertBn(status, VOTE_STATUS.NORMAL, 'vote status does not match')
 
         assertBn(voteActionId, actionId, 'action ID does not match')
         assertBn(pausedAt, pauseTimestamp, 'paused at does not match')

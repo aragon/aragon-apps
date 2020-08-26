@@ -9,7 +9,7 @@ const VOTER_STATE = {
 }
 
 const VOTE_STATUS = {
-  ACTIVE: 0,
+  NORMAL: 0,
   PAUSED: 1,
   CANCELLED: 2,
   EXECUTED: 3,
