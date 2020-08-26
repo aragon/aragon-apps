@@ -46,8 +46,8 @@ class AgreementWrapper {
   }
 
   async getChallenge(challengeId) {
-    const { actionId, context, endDate, challenger, settlementOffer, state, disputeId, ruling, submitterFinishedEvidence, challengerFinishedEvidence, evidencePeriodClosed } = await this.agreement.getChallenge(challengeId)
-    return { actionId, context, endDate, challenger, settlementOffer, state, disputeId, ruling, submitterFinishedEvidence, challengerFinishedEvidence, evidencePeriodClosed }
+    const { actionId, context, endDate, challenger, settlementOffer, state, disputeId, ruling, submitterFinishedEvidence, challengerFinishedEvidence } = await this.agreement.getChallenge(challengeId)
+    return { actionId, context, endDate, challenger, settlementOffer, state, disputeId, ruling, submitterFinishedEvidence, challengerFinishedEvidence }
   }
 
   async getChallengeArbitratorFees(challengeId) {

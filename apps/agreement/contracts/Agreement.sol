@@ -136,7 +136,6 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         ChallengeState state;                    // Current state of the challenge
         bool submitterFinishedEvidence;          // Whether the action submitter has finished submitting evidence for the raised dispute
         bool challengerFinishedEvidence;         // Whether the action challenger has finished submitting evidence for the raised dispute
-        bool evidencePeriodClosed;               // Whether the evidence period was closed for the raised dispute
         uint256 disputeId;                       // Identification number of the dispute on the arbitrator
         uint256 ruling;                          // Ruling given from the arbitrator for the dispute
     }
@@ -514,11 +513,8 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     function closeEvidencePeriod(uint256 _disputeId) external {
         (, Action storage action, , Challenge storage challenge) = _getDisputedAction(_disputeId);
         require(_isDisputed(challenge), ERROR_CANNOT_SUBMIT_EVIDENCE);
+        require(challenge.submitterFinishedEvidence && challenge.challengerFinishedEvidence, ERROR_CANNOT_CLOSE_EVIDENCE_PERIOD);
 
-        bool finishedSubmittingEvidence = challenge.submitterFinishedEvidence && challenge.challengerFinishedEvidence;
-        require(finishedSubmittingEvidence && !challenge.evidencePeriodClosed, ERROR_CANNOT_CLOSE_EVIDENCE_PERIOD);
-
-        challenge.evidencePeriodClosed = true;
         IArbitrator arbitrator = _getArbitratorFor(action);
         arbitrator.closeEvidencePeriod(_disputeId);
     }
@@ -687,7 +683,6 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     * @return state Current state of the challenge
     * @return submitterFinishedEvidence Whether the action submitter has finished submitting evidence for the associated dispute
     * @return challengerFinishedEvidence Whether the action challenger has finished submitting evidence for the associated dispute
-    * @return evidencePeriodClosed Whether the evidence period has been closed for the associated dispute
     * @return disputeId Identification number of the associated dispute on the arbitrator
     * @return ruling Ruling given from the arbitrator for the dispute
     */
@@ -703,7 +698,6 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
             ChallengeState state,
             bool submitterFinishedEvidence,
             bool challengerFinishedEvidence,
-            bool evidencePeriodClosed,
             uint256 disputeId,
             uint256 ruling
         )
@@ -718,7 +712,6 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         state = challenge.state;
         submitterFinishedEvidence = challenge.submitterFinishedEvidence;
         challengerFinishedEvidence = challenge.challengerFinishedEvidence;
-        evidencePeriodClosed = challenge.evidencePeriodClosed;
         disputeId = challenge.disputeId;
         ruling = challenge.ruling;
     }

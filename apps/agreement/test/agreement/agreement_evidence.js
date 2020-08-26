@@ -148,9 +148,6 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                         it('does not close the evidence submission period', async () => {
                           const receipt = await disputable.submitEvidence({ actionId, evidence, from, finished: currentlyFinished })
                           assertAmountOfEvents(receipt, 'EvidencePeriodClosed', { decodeForAbi: disputable.arbitrator.abi, expectedAmount: 0 })
-
-                          const { evidencePeriodClosed } = await disputable.getChallenge(challengeId)
-                          assert.equal(evidencePeriodClosed, false, 'challenge evidence period closed does not match')
                         })
 
                         if (hasFinished) {
@@ -159,9 +156,6 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
 
                             const receipt = await disputable.closeEvidencePeriod(actionId)
                             assertAmountOfEvents(receipt, 'EvidencePeriodClosed', { decodeForAbi: disputable.arbitrator.abi })
-
-                            const { evidencePeriodClosed } = await disputable.getChallenge(challengeId)
-                            assert.equal(evidencePeriodClosed, true, 'challenge evidence period closed does not match')
                           })
                         } else {
                           it('cannot close the evidence submission period manually', async () => {
