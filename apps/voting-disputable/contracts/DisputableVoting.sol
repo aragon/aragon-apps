@@ -773,8 +773,9 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     */
     function _castVote(Vote storage _vote, uint256 _voteId, bool _supports, address _voter, address _caster) internal {
         Setting storage setting = settings[_vote.settingId];
-        // Note: if we move the quiet ending check at the end here, we could optimize this so it doesn't get calculated outside of the quiet ending period
-        bool wasAccepted = _isAccepted(_vote, setting);
+        if (_hasStartedQuietEndingPeriod(_vote, setting)) {
+            _ensureQuietEnding(_vote, setting, _voteId);
+        }
 
         uint256 yeas = _vote.yea;
         uint256 nays = _vote.nay;
@@ -802,12 +803,6 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         castVote.state = _voterStateFor(_supports);
         castVote.caster = _caster;
         emit CastVote(_voteId, _voter, _supports, _caster == address(0) ? _voter : _caster);
-
-        // Note: could we move this to be at the start of `castVote` so it acts like a modifier /
-        // pre-condition, making sure we're calculating the quiet ending period correctly?
-        if (_hasStartedQuietEndingPeriod(_vote, setting)) {
-            _ensureQuietEnding(_vote, setting, _voteId, wasAccepted);
-        }
     }
 
     /**
@@ -815,20 +810,21 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @param _vote Vote instance
     * @param _setting Setting instance applicable to the vote
     * @param _voteId Identification number of the vote
-    * @param _wasAccepted Whether the vote is currently accepted
     */
-    function _ensureQuietEnding(Vote storage _vote, Setting storage _setting, uint256 _voteId, bool _wasAccepted) internal {
+    function _ensureQuietEnding(Vote storage _vote, Setting storage _setting, uint256 _voteId) internal {
+        bool isAccepted = _isAccepted(_vote, _setting);
+
         if (_vote.quietEndingSnapshotSupport == VoterState.Absent) {
             // If we do not have a snapshot of the support yet, simply store the given value.
             // Note that if there are no votes during the quiet ending period, it is obviously impossible for the vote to be flipped and
             // this snapshot is never stored.
-            _vote.quietEndingSnapshotSupport = _voterStateFor(_wasAccepted);
+            _vote.quietEndingSnapshotSupport = _voterStateFor(isAccepted);
         } else {
             // We are calculating quiet ending extensions via "rolling snapshots", and so we only update the vote's cached duration once
             // the last period is over and we've confirmed the flip.
             if (getTimestamp() >= _lastComputedVoteEndDate(_vote, _setting)) {
                 _vote.quietEndingExtensionDuration = _vote.quietEndingExtensionDuration.add(_setting.quietEndingExtension);
-                emit QuietEndingExtendVote(_voteId, _wasAccepted);
+                emit QuietEndingExtendVote(_voteId, isAccepted);
             }
         }
     }
