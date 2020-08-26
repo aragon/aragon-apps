@@ -1,6 +1,6 @@
 {
   "name": "@aragon/apps-agreement",
-  "version": "0.1.0-beta.0",
+  "version": "1.0.0-rc.0",
   "author": "Aragon Association <legal@aragon.org>",
   "license": "(GPL-3.0-or-later OR AGPL-3.0-or-later)",
   "files": [
@@ -23,7 +23,7 @@
     "abi:extract": "buidler-extract --output abi/ --keys abi"
   },
   "dependencies": {
-    "@aragon/os": "5.0.0-beta.8",
+    "@aragon/os": "5.0.0-rc.0",
     "@aragon/staking": "0.2.9"
   },
   "devDependencies": {

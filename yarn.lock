@@ -2,6 +2,13 @@
 # yarn lockfile v1
 
 
+"@aragon/apps-agreement@^0.1.0-beta.0":
+  version "0.1.0-beta.0"
+  resolved "https://registry.yarnpkg.com/@aragon/apps-agreement/-/apps-agreement-0.1.0-beta.0.tgz#c59f097135dd6ba1e4fd30e06974d1b649653b3e"
+  integrity sha512-TO+SNyeCT3M2UZslpA1wgRGbZXXSDWuzbY+QxbptDtTeisVTonbrbpmrILmi3TsCBehPD/qcdWlPxRK+LmG+ZQ==
+  dependencies:
+    "@aragon/os" "5.0.0-beta.0"
+
 "@aragon/contract-helpers-test@0.1.0", "@aragon/contract-helpers-test@^0.1.0":
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/@aragon/contract-helpers-test/-/contract-helpers-test-0.1.0.tgz#5c5f09739a0b33ab66843bc4849cb2b997d88af0"
@@ -25,10 +32,25 @@
     mkdirp "^0.5.1"
     truffle-flattener "^1.2.9"
 
+"@aragon/os@5.0.0-beta.0":
+  version "5.0.0-beta.0"
+  resolved "https://registry.yarnpkg.com/@aragon/os/-/os-5.0.0-beta.0.tgz#e52b003554c242f3fc68b4d4b53669b2f1dce636"
+  integrity sha512-NaoM+lYg6CG8q7DW31o6YeIo3Ej9NcIJo4S91C5bA6fyIjKtj9OvRxrTcoNUuHJeCZ9SzJ+oNiuLDp/PhWbRbw==
+  dependencies:
+    "@aragon/truffle-config-v4" "^1.0.1"
+    homedir "^0.6.0"
+    mkdirp "^0.5.1"
+    truffle-flattener "^1.2.9"
+
 "@aragon/os@5.0.0-beta.8":
   version "5.0.0-beta.8"
   resolved "https://registry.yarnpkg.com/@aragon/os/-/os-5.0.0-beta.8.tgz#9bd4db2a24273debbbde49b01fc5f82cce33ed5f"
   integrity sha512-XISU169ceBgKWPZUfvnCOnJ040Z+sOI0IgBT40PzjWTfpduymZYQURp+zhqozFgtaxPUJ+DqgB650b+AFrY9sA==
+
+"@aragon/os@5.0.0-rc.0":
+  version "5.0.0-rc.0"
+  resolved "https://registry.yarnpkg.com/@aragon/os/-/os-5.0.0-rc.0.tgz#a4e68fc452aebf59b7976d7f763b71da714f4b2e"
+  integrity sha512-jqSxL5f4k7fHT6EyROZCi8oXG1ZBzIXbaStfQFokhZVKtLN0yXayOz5WukVaHrllRUQLtWcrSAXHnx6P6WGLkA==
 
 "@aragon/staking@0.2.9":
   version "0.2.9"
