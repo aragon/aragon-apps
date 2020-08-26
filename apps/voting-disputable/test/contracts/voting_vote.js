@@ -81,7 +81,7 @@ contract('Voting', ([_, owner, holder20, holder29, holder51, nonHolder, represen
           context('when cast before the quiet ending period', () => {
             it('does not extend the vote duration', async () => {
               const receipt = await voting.vote(voteId, true, { from })
-              assertAmountOfEvents(receipt, 'VoteQuietEndingExtension', { expectedAmount: 0 })
+              assertAmountOfEvents(receipt, 'QuietEndingExtendVote', { expectedAmount: 0 })
             })
 
             it('does not store the quiet ending snapshot support', async () => {
@@ -111,8 +111,8 @@ contract('Voting', ([_, owner, holder20, holder29, holder51, nonHolder, represen
               assert.isTrue(await voting.canVote(voteId, holder51), 'voter cannot vote')
 
               const receipt = await voting.vote(voteId, true, { from: holder51 })
-              assertAmountOfEvents(receipt, 'VoteQuietEndingExtension')
-              assertEvent(receipt, 'VoteQuietEndingExtension', { expectedArgs: { voteId, passing: true } })
+              assertAmountOfEvents(receipt, 'QuietEndingExtendVote')
+              assertEvent(receipt, 'QuietEndingExtendVote', { expectedArgs: { voteId, passing: true } })
             })
 
             it('stores the vote extension in the following vote', async () => {
@@ -151,7 +151,7 @@ contract('Voting', ([_, owner, holder20, holder29, holder51, nonHolder, represen
               const itDoesNotExtendTheVoteDuration = support => {
                 it('does not extend the vote duration', async () => {
                   const receipt = await voting.vote(voteId, support, { from })
-                  assertAmountOfEvents(receipt, 'VoteQuietEndingExtension', { expectedAmount: 0 })
+                  assertAmountOfEvents(receipt, 'QuietEndingExtendVote', { expectedAmount: 0 })
                 })
               }
 
@@ -177,8 +177,8 @@ contract('Voting', ([_, owner, holder20, holder29, holder51, nonHolder, represen
                     assert.isTrue(await voting.canVote(voteId, holder51), 'voter cannot vote')
 
                     const receipt = await voting.vote(voteId, true, { from: holder51 })
-                    assertAmountOfEvents(receipt, 'VoteQuietEndingExtension')
-                    assertEvent(receipt, 'VoteQuietEndingExtension', { expectedArgs: { voteId, passing: support } })
+                    assertAmountOfEvents(receipt, 'QuietEndingExtendVote')
+                    assertEvent(receipt, 'QuietEndingExtendVote', { expectedArgs: { voteId, passing: support } })
                   })
 
                   it('stores the vote extension in the following vote', async () => {

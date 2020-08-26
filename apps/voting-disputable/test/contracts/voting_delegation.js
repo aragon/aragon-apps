@@ -365,7 +365,7 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
                 const itDoesNotExtendTheVoteDuration = support => {
                   it('does not extend the vote duration', async () => {
                     const receipt = await voting.voteOnBehalfOf(voteId, support, [voter], { from })
-                    assertAmountOfEvents(receipt, 'VoteQuietEndingExtension', { expectedAmount: 0 })
+                    assertAmountOfEvents(receipt, 'QuietEndingExtendVote', { expectedAmount: 0 })
                   })
                 }
 
@@ -407,8 +407,8 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
                           assert.isTrue(await voting.canVote(voteId, thirdVoter), 'voter cannot vote')
 
                           const receipt = await voting.vote(voteId, true, { from: thirdVoter })
-                          assertAmountOfEvents(receipt, 'VoteQuietEndingExtension')
-                          assertEvent(receipt, 'VoteQuietEndingExtension', { expectedArgs: { voteId, passing: support } })
+                          assertAmountOfEvents(receipt, 'QuietEndingExtendVote')
+                          assertEvent(receipt, 'QuietEndingExtendVote', { expectedArgs: { voteId, passing: support } })
                         })
 
                         it('stores the vote extension in the following vote', async () => {

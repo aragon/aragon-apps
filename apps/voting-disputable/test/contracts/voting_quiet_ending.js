@@ -169,8 +169,8 @@ contract('Voting', ([_, owner, holder10, holder20, holder30, holder40, holder50]
           it('extends the vote duration', async () => {
             const receipt = await voting.vote(voteId, true, { from: holder50 })
 
-            assertAmountOfEvents(receipt, 'VoteQuietEndingExtension')
-            assertEvent(receipt, 'VoteQuietEndingExtension', { expectedArgs: { voteId, passing: currentSupport } })
+            assertAmountOfEvents(receipt, 'QuietEndingExtendVote')
+            assertEvent(receipt, 'QuietEndingExtendVote', { expectedArgs: { voteId, passing: currentSupport } })
           })
 
           it('stores the vote extension', async () => {

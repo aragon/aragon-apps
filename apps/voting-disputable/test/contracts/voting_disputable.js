@@ -237,7 +237,7 @@ contract('Voting disputable', ([_, owner, representative, voter10, voter20, vote
         const beforeQuietEnding = currentTimestamp.add(bn(VOTING_DURATION)).sub(bn(QUIET_ENDING_PERIOD + 1))
         await voting.mockSetTimestamp(beforeQuietEnding)
         const firstReceipt = await voting.vote(voteId, false, { from: voter29 })
-        assertAmountOfEvents(firstReceipt, 'VoteQuietEndingExtension', { expectedAmount: 0 })
+        assertAmountOfEvents(firstReceipt, 'QuietEndingExtendVote', { expectedAmount: 0 })
 
         const firstVoteState = await getVoteState(voting, voteId)
         assertBn(firstVoteState.quietEndingSnapshotSupport, VOTER_STATE.ABSENT, 'quiet ending snapshot does not match')
@@ -245,7 +245,7 @@ contract('Voting disputable', ([_, owner, representative, voter10, voter20, vote
         // force flipped vote, move within quiet ending period
         await voting.mockIncreaseTime(QUIET_ENDING_PERIOD / 2)
         const secondReceipt = await voting.vote(voteId, true, { from: voter40 })
-        assertAmountOfEvents(secondReceipt, 'VoteQuietEndingExtension', { expectedAmount: 0 })
+        assertAmountOfEvents(secondReceipt, 'QuietEndingExtendVote', { expectedAmount: 0 })
 
         const secondVoteState = await getVoteState(voting, voteId)
         assertBn(secondVoteState.quietEndingSnapshotSupport, VOTER_STATE.NAY, 'quiet ending snapshot does not match')
@@ -254,8 +254,8 @@ contract('Voting disputable', ([_, owner, representative, voter10, voter20, vote
         await voting.mockIncreaseTime(QUIET_ENDING_PERIOD / 2 + QUIET_ENDING_EXTENSION / 2)
         assert.isTrue(await voting.canVote(voteId, voter10), 'voter cannot vote')
         const thirdReceipt = await voting.vote(voteId, true, { from: voter10 })
-        assertAmountOfEvents(thirdReceipt, 'VoteQuietEndingExtension', { expectedAmount: 1 })
-        assertEvent(thirdReceipt, 'VoteQuietEndingExtension', { voteId, passing: true })
+        assertAmountOfEvents(thirdReceipt, 'QuietEndingExtendVote', { expectedAmount: 1 })
+        assertEvent(thirdReceipt, 'QuietEndingExtendVote', { voteId, passing: true })
 
         const thirdVoteState = await getVoteState(voting, voteId)
         assertBn(thirdVoteState.quietEndingSnapshotSupport, VOTER_STATE.NAY, 'quiet ending snapshot does not match')

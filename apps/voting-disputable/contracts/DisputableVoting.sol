@@ -143,8 +143,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     event ResumeVote(uint256 indexed voteId);
     event CancelVote(uint256 indexed voteId);
     event ExecuteVote(uint256 indexed voteId);
-    // Note: maybe we should stick with Vote* or *Vote? E.g. ExtendVote()?
-    event VoteQuietEndingExtension(uint256 indexed voteId, bool passing);
+    event QuietEndingExtendVote(uint256 indexed voteId, bool passing);
 
     event CastVote(uint256 indexed voteId, address indexed voter, bool supports, address caster);
     event ChangeRepresentative(address indexed voter, address indexed representative);
@@ -805,7 +804,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
             // Note that we are trusting `_canVote()`, if we reached this point, it means the vote's flip was already confirmed.
             if (getTimestamp() >= _lastComputedVoteEndDate(_vote)) {
                 _vote.quietEndingExtensionDuration = _vote.quietEndingExtensionDuration.add(_setting.quietEndingExtension);
-                emit VoteQuietEndingExtension(_voteId, _wasAccepted);
+                emit QuietEndingExtendVote(_voteId, _wasAccepted);
             }
         }
     }
