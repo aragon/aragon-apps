@@ -135,9 +135,9 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     event NewSetting(uint256 settingId);
     event ChangeSupportRequired(uint64 supportRequiredPct);
     event ChangeMinQuorum(uint64 minAcceptQuorumPct);
-    event ChangeExecutionDelay(uint64 executionDelay);
     event ChangeOverruleWindow(uint64 overruleWindow);
     event ChangeQuietEndingConfiguration(uint64 quietEndingPeriod, uint64 quietEndingExtension);
+    event ChangeExecutionDelay(uint64 executionDelay);
 
     event StartVote(uint256 indexed voteId, address indexed creator, bytes context, bytes executionScript);
     event PauseVote(uint256 indexed voteId, uint256 indexed challengeId);
@@ -387,10 +387,10 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @param _settingId Identification number of the setting
     * @return supportRequiredPct Required support % (yes power / voted power) for a vote to pass; expressed as a percentage of 10^18
     * @return minAcceptQuorumPct Required quorum % (yes power / total power) for a vote to pass; expressed as a percentage of 10^18
-    * @return executionDelay Duration to wait before a passed vote can be executed
     * @return overruleWindow Duration of overrule window
     * @return quietEndingPeriod Duration to detect non-quiet endings
     * @return quietEndingExtension Duration to extend a vote in case of non-quiet ending
+    * @return executionDelay Duration to wait before a passed vote can be executed
     */
     function getSetting(uint256 _settingId)
         external
@@ -398,20 +398,19 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         returns (
             uint64 supportRequiredPct,
             uint64 minAcceptQuorumPct,
-            // Note: propse to move executionDelay to the end
-            uint64 executionDelay,
             uint64 overruleWindow,
             uint64 quietEndingPeriod,
-            uint64 quietEndingExtension
+            uint64 quietEndingExtension,
+            uint64 executionDelay
         )
     {
         Setting storage setting = _getSetting(_settingId);
         supportRequiredPct = setting.supportRequiredPct;
         minAcceptQuorumPct = setting.minAcceptQuorumPct;
-        executionDelay = setting.executionDelay;
         overruleWindow = setting.overruleWindow;
         quietEndingPeriod = setting.quietEndingPeriod;
         quietEndingExtension = setting.quietEndingExtension;
+        executionDelay = setting.executionDelay;
     }
 
     /**
@@ -715,10 +714,10 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         Setting storage from = _getSetting(settingId - 1);
         to.supportRequiredPct = from.supportRequiredPct;
         to.minAcceptQuorumPct = from.minAcceptQuorumPct;
-        to.executionDelay = from.executionDelay;
+        to.overruleWindow = from.overruleWindow;
         to.quietEndingPeriod = from.quietEndingPeriod;
         to.quietEndingExtension = from.quietEndingExtension;
-        to.overruleWindow = from.overruleWindow;
+        to.executionDelay = from.executionDelay;
         return to;
     }
 
