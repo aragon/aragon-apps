@@ -487,33 +487,21 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     */
     function submitEvidence(uint256 _disputeId, bytes _evidence, bool _finished) external {
         (, Action storage action, , Challenge storage challenge) = _getDisputedAction(_disputeId);
-        // Note: should we also check that the evidence period hasn't already been closed?
         require(_isDisputed(challenge), ERROR_CANNOT_SUBMIT_EVIDENCE);
 
         IArbitrator arbitrator = _getArbitratorFor(action);
-        bool submitterFinishedEvidence = challenge.submitterFinishedEvidence;
-        bool challengerFinishedEvidence = challenge.challengerFinishedEvidence;
-
         if (msg.sender == action.submitter) {
             // If the submitter finished submitting evidence earlier, also emit this event as finished
-            _submitEvidence(arbitrator, _disputeId, msg.sender, _evidence, submitterFinishedEvidence || _finished);
-            if (_finished) {
-                submitterFinishedEvidence = _finished;
-                challenge.submitterFinishedEvidence = _finished;
-            }
+            bool submitterFinishedEvidence = challenge.submitterFinishedEvidence || _finished;
+            _submitEvidence(arbitrator, _disputeId, msg.sender, _evidence, submitterFinishedEvidence);
+            challenge.submitterFinishedEvidence = submitterFinishedEvidence;
         } else if (msg.sender == challenge.challenger) {
             // If the challenger finished submitting evidence earlier, also emit this event as finished
-            _submitEvidence(arbitrator, _disputeId, msg.sender, _evidence, challengerFinishedEvidence || _finished);
-            if (_finished) {
-                challengerFinishedEvidence = _finished;
-                challenge.challengerFinishedEvidence = _finished;
-            }
+            bool challengerFinishedEvidence = challenge.challengerFinishedEvidence || _finished;
+            _submitEvidence(arbitrator, _disputeId, msg.sender, _evidence, challengerFinishedEvidence);
+            challenge.challengerFinishedEvidence = challengerFinishedEvidence;
         } else {
             revert(ERROR_SENDER_NOT_ALLOWED);
-        }
-
-        if (submitterFinishedEvidence && challengerFinishedEvidence && !challenge.evidencePeriodClosed) {
-            _closeEvidencePeriod(challenge, arbitrator, _disputeId);
         }
     }
 
@@ -530,8 +518,9 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         bool finishedSubmittingEvidence = challenge.submitterFinishedEvidence && challenge.challengerFinishedEvidence;
         require(finishedSubmittingEvidence && !challenge.evidencePeriodClosed, ERROR_CANNOT_CLOSE_EVIDENCE_PERIOD);
 
+        challenge.evidencePeriodClosed = true;
         IArbitrator arbitrator = _getArbitratorFor(action);
-        _closeEvidencePeriod(challenge, arbitrator, _disputeId);
+        arbitrator.closeEvidencePeriod(_disputeId);
     }
 
     /**
@@ -1060,17 +1049,6 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         if (_evidence.length > 0) {
             emit EvidenceSubmitted(_arbitrator, _disputeId, _submitter, _evidence, _finished);
         }
-    }
-
-    /**
-    * @dev Close evidence submission period for a dispute on an arbitrator
-    * @param _challenge Currently open challenge instance associated to the dispute
-    * @param _arbitrator Arbitrator to submit evidence on
-    * @param _disputeId Identification number of the dispute on the arbitrator
-    */
-    function _closeEvidencePeriod(Challenge storage _challenge, IArbitrator _arbitrator, uint256 _disputeId) internal {
-        _challenge.evidencePeriodClosed = true;
-        _arbitrator.closeEvidencePeriod(_disputeId);
     }
 
     /**
