@@ -551,7 +551,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     function withinOverruleWindow(uint256 _voteId) external view returns (bool) {
         Vote storage vote_ = _getVote(_voteId);
         Setting storage setting = settings[vote_.settingId];
-        return _isVoteOpenForVoting(vote_, setting) && _withinOverruleWindow(vote_, setting);
+        return _isVoteOpenForVoting(vote_, setting) && _hasStartedOverruleWindow(vote_, setting);
     }
 
     /**
@@ -778,7 +778,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
 
         // Note: could we move this to be at the start of `castVote` so it acts like a modifier /
         // pre-condition, making sure we're calculating the quiet ending period correctly?
-        if (_withinQuietEndingPeriod(_vote, setting)) {
+        if (_hasStartedQuietEndingPeriod(_vote, setting)) {
             _ensureQuietEnding(_vote, setting, _voteId, wasAccepted);
         }
     }
@@ -855,7 +855,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @return True if the vote currently allows representatives to vote
     */
     function _canRepresentativesVote(Vote storage _vote) internal view returns (bool) {
-        return _isActive(_vote) && !_withinOverruleWindow(_vote, settings[_vote.settingId]);
+        return _isActive(_vote) && !_hasStartedOverruleWindow(_vote, settings[_vote.settingId]);
     }
 
     /**
@@ -875,8 +875,8 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
             return false;
         }
 
-        // If the vote is within its execution delay window, it cannot be executed
-        if (_withinExecutionDelayWindow(_vote, setting)) {
+        // If the vote is execution delay has not finished yet, it cannot be executed
+        if (_hasNotFinishedExecutionDelay(_vote, setting)) {
             return false;
         }
 
@@ -967,36 +967,35 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         return wasAcceptedBeforeLastFlip != _isAccepted(_vote, setting);
     }
 
-   // Note: maybe we should rename these "within" functions as they are not really "within" (they only check a single bound, rather than two)
     /**
-    * @dev Tell if a vote is within its overrule window
+    * @dev Tell if a vote's overrule window has started or not
     *      This function doesn't ensure whether the vote is open or not
     * @param _vote Vote instance being queried
     * @param _setting Setting instance applicable to the vote
-    * @return True if the vote is within its overrule window
+    * @return True if the vote's overrule window has started
     */
-    function _withinOverruleWindow(Vote storage _vote, Setting storage _setting) internal view returns (bool) {
+    function _hasStartedOverruleWindow(Vote storage _vote, Setting storage _setting) internal view returns (bool) {
         return getTimestamp() >= _durationStartDate(_vote, _setting.overruleWindow);
     }
 
     /**
-    * @dev Tell if a vote is within its quiet ending period
+    * @dev Tell if a vote's quiet ending period has started or not
     *      This function doesn't ensure whether the vote is open or not
     * @param _vote Vote instance being queried
     * @param _setting Setting instance applicable to the vote
-    * @return True if the vote is within its quiet ending period
+    * @return True if the vote's quiet ending period has started
     */
-    function _withinQuietEndingPeriod(Vote storage _vote, Setting storage _setting) internal view returns (bool) {
+    function _hasStartedQuietEndingPeriod(Vote storage _vote, Setting storage _setting) internal view returns (bool) {
         return getTimestamp() >= _durationStartDate(_vote, _setting.quietEndingPeriod);
     }
 
     /**
-    * @dev Tell if a vote is within its execution delay window
+    * @dev Tell if a vote's execution delay has not finished
     * @param _vote Vote instance being queried
     * @param _setting Setting instance applicable to the vote
-    * @return True if the vote is within its execution delay window
+    * @return True if the vote's execution delay has not finished
     */
-    function _withinExecutionDelayWindow(Vote storage _vote, Setting storage _setting) internal view returns (bool) {
+    function _hasNotFinishedExecutionDelay(Vote storage _vote, Setting storage _setting) internal view returns (bool) {
         uint64 endDate = _currentVoteEndDate(_vote, _setting);
         return getTimestamp() < endDate.add(_setting.executionDelay);
     }
