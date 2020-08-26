@@ -93,7 +93,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
 
     struct CollateralRequirement {
         ERC20 token;                        // ERC20 token to be used for collateral
-        uint64 challengeDuration;           // Challenge duration in seconds, during which the submitter can raise a dispute
+        uint64 challengeDuration;           // Challenge duration, during which the submitter can raise a dispute
         uint256 actionAmount;               // Amount of collateral token to be locked from the submitter's staking pool when creating actions
         uint256 challengeAmount;            // Amount of collateral token to be locked from the challenger's own balance when challenging actions
         IStaking staking;                   // Staking pool cache for the collateral token -- will never change
@@ -139,15 +139,15 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     IStakingFactory public stakingFactory;                           // Staking factory, for finding each collateral token's staking pool
 
     uint256 private nextSettingId;
-    mapping (uint256 => Setting) private settings;                  // List of historic agreement settings indexed by ID
+    mapping (uint256 => Setting) private settings;                  // List of historic agreement settings indexed by ID (starting at 1)
     mapping (address => uint256) private lastSettingSignedBy;       // Mapping of address => last agreement setting signed
     mapping (address => DisputableInfo) private disputableInfos;    // Mapping of Disputable app => disputable infos
 
     uint256 private nextActionId;
-    mapping (uint256 => Action) private actions;                    // List of actions indexed by ID
+    mapping (uint256 => Action) private actions;                    // List of actions indexed by ID (starting at 1)
 
     uint256 private nextChallengeId;
-    mapping (uint256 => Challenge) private challenges;              // List of challenges indexed by ID
+    mapping (uint256 => Challenge) private challenges;              // List of challenges indexed by ID (starting at 1)
     mapping (uint256 => uint256) private challengeByDispute;        // Mapping of arbitrator's dispute ID => challenge ID
 
     /**
@@ -222,7 +222,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     * @param _collateralToken Address of the ERC20 token to be used for collateral
     * @param _actionAmount Amount of collateral tokens that will be locked every time an action is submitted
     * @param _challengeAmount Amount of collateral tokens that will be locked every time an action is challenged
-    * @param _challengeDuration Challenge duration in seconds, during which the submitter can raise a dispute
+    * @param _challengeDuration Challenge duration, during which the submitter can raise a dispute
     */
     function activate(
         address _disputableAddress,
@@ -271,7 +271,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     * @param _collateralToken Address of the ERC20 token to be used for collateral
     * @param _actionAmount Amount of collateral tokens that will be locked every time an action is submitted
     * @param _challengeAmount Amount of collateral tokens that will be locked every time an action is challenged
-    * @param _challengeDuration Challenge duration in seconds, during which the submitter can raise a dispute
+    * @param _challengeDuration Challenge duration, during which the submitter can raise a dispute
     */
     function changeCollateralRequirement(
         DisputableAragonApp _disputable,
@@ -569,7 +569,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     * @return collateralToken Address of the ERC20 token to be used for collateral
     * @return actionAmount Amount of collateral tokens that will be locked every time an action is created
     * @return challengeAmount Amount of collateral tokens that will be locked every time an action is challenged
-    * @return challengeDuration Challenge duration in seconds, during which the submitter can raise a dispute
+    * @return challengeDuration Challenge duration, during which the submitter can raise a dispute
     */
     function getCollateralRequirement(address _disputable, uint256 _collateralRequirementId)
         external
@@ -854,7 +854,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     * @param _collateralToken Address of the ERC20 token to be used for collateral
     * @param _actionAmount Amount of collateral tokens that will be locked every time an action is submitted
     * @param _challengeAmount Amount of collateral tokens that will be locked every time an action is challenged
-    * @param _challengeDuration Challenge duration in seconds, during which the submitter can raise a dispute
+    * @param _challengeDuration Challenge duration, during which the submitter can raise a dispute
     */
     function _changeCollateralRequirement(
         DisputableAragonApp _disputable,
