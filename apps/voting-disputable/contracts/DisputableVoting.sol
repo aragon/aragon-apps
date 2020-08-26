@@ -126,8 +126,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     uint64 public voteTime;                                 // "Base" duration of each vote -- vote lifespans may be adjusted by pause and extension durations
     MiniMeToken public token;                               // Token for determining voting power; we assume it's not malicious
 
-    // Note: make this public instead
-    uint256 internal settingsLength;                        // Number of settings created
+    uint256 public settingsLength;                          // Number of settings created
     mapping (uint256 => Setting) internal settings;         // List of settings indexed by ID (starting at 0)
 
     uint256 public votesLength;                             // Number of votes created
