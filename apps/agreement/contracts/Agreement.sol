@@ -209,7 +209,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     *      This can be called permission-lessly to allow any account to re-sync the cashier when changed by the arbitrator.
     *      Initialization check is implicitly provided by `_getSetting()`, as valid settings can only be created after initialization.
     */
-    function syncAppFeesCashier() external  {
+    function syncAppFeesCashier() external {
         Setting storage setting = _getSetting(_getCurrentSettingId());
         IAragonAppFeesCashier newAppFeesCashier = _getArbitratorFeesCashier(setting.arbitrator);
         IAragonAppFeesCashier currentAppFeesCashier = setting.aragonAppFeesCashier;
