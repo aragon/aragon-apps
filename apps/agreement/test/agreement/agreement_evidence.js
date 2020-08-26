@@ -91,30 +91,31 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                 })
 
                 context('when the dispute was not ruled', () => {
-                  const itSubmitsEvidenceProperly = from => {
-                    const itRegistersEvidenceProperly = finished => {
+                  const itSubmitsEvidenceProperly = (from, hadFinishedSubmittingEvidence) => {
+                    const itRegistersEvidenceProperly = currentlyFinished => {
                       const evidence = '0x123123'
+                      const hasFinished = hadFinishedSubmittingEvidence || currentlyFinished
 
-                      it(`${finished ? 'updates' : 'does not update'} the dispute`, async () => {
-                        await disputable.submitEvidence({ actionId, evidence, from, finished })
+                      it(`${hasFinished ? 'updates' : 'does not update'} the dispute`, async () => {
+                        await disputable.submitEvidence({ actionId, evidence, from, finished: currentlyFinished })
 
                         const { ruling, submitterFinishedEvidence, challengerFinishedEvidence } = await disputable.getChallenge(challengeId)
 
                         assertBn(ruling, RULINGS.MISSING, 'ruling does not match')
-                        assert.equal(submitterFinishedEvidence, from === submitter ? finished : false, 'submitter finished does not match')
-                        assert.equal(challengerFinishedEvidence, from === challenger ? finished : false, 'challenger finished does not match')
+                        assert.equal(submitterFinishedEvidence, from === submitter ? hasFinished : false, 'submitter finished does not match')
+                        assert.equal(challengerFinishedEvidence, from === challenger ? hasFinished : false, 'challenger finished does not match')
                       })
 
                       it('submits the given evidence', async () => {
                         const { disputeId } = await disputable.getChallenge(challengeId)
-                        const receipt = await disputable.submitEvidence({ actionId, evidence, from, finished })
+                        const receipt = await disputable.submitEvidence({ actionId, evidence, from, finished: currentlyFinished })
 
-                        assertAmountOfEvents(receipt, 'EvidenceSubmitted', { decodeForAbi: disputable.abi })
-                        assertEvent(receipt, 'EvidenceSubmitted', { expectedArgs: { disputeId, submitter: from, evidence, finished }, decodeForAbi: disputable.abi })
+                        assertAmountOfEvents(receipt, 'EvidenceSubmitted')
+                        assertEvent(receipt, 'EvidenceSubmitted', { expectedArgs: { disputeId, submitter: from, evidence, finished: hasFinished } })
                       })
 
                       it('can be ruled', async () => {
-                        await disputable.submitEvidence({ actionId, evidence, from, finished })
+                        await disputable.submitEvidence({ actionId, evidence, from, finished: currentlyFinished })
 
                         const { canClose, canChallenge, canSettle, canDispute, canClaimSettlement, canRuleDispute } = await disputable.getAllowedPaths(actionId)
                         assert.isTrue(canRuleDispute, 'action dispute cannot be ruled')
@@ -124,6 +125,45 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                         assert.isFalse(canSettle, 'action can be settled')
                         assert.isFalse(canDispute, 'action can be disputed')
                         assert.isFalse(canClaimSettlement, 'action settlement can be claimed')
+                      })
+
+                      it('cannot close the evidence submission period manually', async () => {
+                        await assertRevert(disputable.closeEvidencePeriod(actionId), AGREEMENT_ERRORS.ERROR_CANNOT_CLOSE_EVIDENCE_PERIOD)
+                      })
+
+                      context('when the other party has not closed the evidence submission period yet', () => {
+                        it('does not close the evidence submission period', async () => {
+                          const receipt = await disputable.submitEvidence({ actionId, evidence, from, finished: currentlyFinished })
+
+                          assertAmountOfEvents(receipt, 'EvidencePeriodClosed', { decodeForAbi: disputable.arbitrator.abi, expectedAmount: 0 })
+                        })
+                      })
+
+                      context('when the other party has closed the evidence submission period', () => {
+                        beforeEach('close evidence submission period for other party', async () => {
+                          const sender = from === submitter ? challenger : submitter
+                          await disputable.submitEvidence({ actionId, evidence: '0x1234', from: sender, finished: true })
+                        })
+
+                        it('does not close the evidence submission period', async () => {
+                          const receipt = await disputable.submitEvidence({ actionId, evidence, from, finished: currentlyFinished })
+                          assertAmountOfEvents(receipt, 'EvidencePeriodClosed', { decodeForAbi: disputable.arbitrator.abi, expectedAmount: 0 })
+                        })
+
+                        if (hasFinished) {
+                          it('can close the evidence submission period manually', async () => {
+                            await disputable.submitEvidence({ actionId, evidence, from, finished: currentlyFinished })
+
+                            const receipt = await disputable.closeEvidencePeriod(actionId)
+                            assertAmountOfEvents(receipt, 'EvidencePeriodClosed', { decodeForAbi: disputable.arbitrator.abi })
+                          })
+                        } else {
+                          it('cannot close the evidence submission period manually', async () => {
+                            await disputable.submitEvidence({ actionId, evidence, from, finished: currentlyFinished })
+
+                            await assertRevert(disputable.closeEvidencePeriod(actionId), AGREEMENT_ERRORS.ERROR_CANNOT_CLOSE_EVIDENCE_PERIOD)
+                          })
+                        }
                       })
                     }
 
@@ -139,36 +179,40 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                   context('when the sender is the submitter', () => {
                     const from = submitter
 
-                    context('when the sender has not finished submitting evidence', () => {
-                      itSubmitsEvidenceProperly(from)
+                    context('when the sender had not finished submitting evidence', () => {
+                      const hadFinishedSubmittingEvidence = false
+
+                      itSubmitsEvidenceProperly(from, hadFinishedSubmittingEvidence)
                     })
 
-                    context('when the sender has finished submitting evidence', () => {
+                    context('when the sender had finished submitting evidence', () => {
+                      const hadFinishedSubmittingEvidence = true
+
                       beforeEach('finish submitting evidence', async () => {
                         await disputable.finishEvidence({ actionId, from })
                       })
 
-                      it('reverts', async () => {
-                        await assertRevert(disputable.submitEvidence({ actionId, from }), AGREEMENT_ERRORS.ERROR_SUBMITTER_FINISHED_EVIDENCE)
-                      })
+                      itSubmitsEvidenceProperly(from, hadFinishedSubmittingEvidence)
                     })
                   })
 
                   context('when the sender is the challenger', () => {
                     const from = challenger
 
-                    context('when the sender has not finished submitting evidence', () => {
-                      itSubmitsEvidenceProperly(from)
+                    context('when the sender had not finished submitting evidence', () => {
+                      const hadFinishedSubmittingEvidence = false
+
+                      itSubmitsEvidenceProperly(from, hadFinishedSubmittingEvidence)
                     })
 
-                    context('when the sender has finished submitting evidence', () => {
+                    context('when the sender had finished submitting evidence', () => {
+                      const hadFinishedSubmittingEvidence = true
+
                       beforeEach('finish submitting evidence', async () => {
                         await disputable.finishEvidence({ actionId, from })
                       })
 
-                      it('reverts', async () => {
-                        await assertRevert(disputable.submitEvidence({ actionId, from }), AGREEMENT_ERRORS.ERROR_CHALLENGER_FINISHED_EVIDENCE)
-                      })
+                      itSubmitsEvidenceProperly(from, hadFinishedSubmittingEvidence)
                     })
                   })
 
@@ -244,7 +288,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
         itCanSubmitEvidence()
       })
 
-      context('when the app was unregistered', () => {
+      context('when the app was deactivated', () => {
         beforeEach('mark app as unregistered', async () => {
           await disputable.deactivate()
         })

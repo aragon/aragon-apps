@@ -32,6 +32,7 @@ contract TokenBalanceOracle is IACLOracle {
         return senderBalance >= minBalance;
     }
 
+    // Note: perhaps this should be done with a JS test helper instead?
     function getPermissionParam() external view returns (uint256) {
         return _paramsTo256(ORACLE_PARAM_ID, uint8(Op.EQ), uint240(address(this)));
     }

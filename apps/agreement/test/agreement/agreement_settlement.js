@@ -77,12 +77,13 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
 
                   const currentActionState = await disputable.getAction(actionId)
                   assert.isTrue(currentActionState.closed, 'action is not closed')
+                  assert.isFalse(currentActionState.lastChallengeActive, 'action challenge should not be active')
 
                   assert.equal(currentActionState.disputable, previousActionState.disputable, 'disputable does not match')
                   assert.equal(currentActionState.submitter, previousActionState.submitter, 'submitter does not match')
                   assert.equal(currentActionState.context, previousActionState.context, 'action context does not match')
                   assertBn(currentActionState.settingId, previousActionState.settingId, 'setting ID does not match')
-                  assertBn(currentActionState.currentChallengeId, previousActionState.currentChallengeId, 'challenge ID does not match')
+                  assertBn(currentActionState.lastChallengeId, previousActionState.lastChallengeId, 'challenge ID does not match')
                   assertBn(currentActionState.disputableActionId, previousActionState.disputableActionId, 'disputable action ID does not match')
                   assertBn(currentActionState.collateralRequirementId, previousActionState.collateralRequirementId, 'collateral requirement ID does not match')
                 })
@@ -138,11 +139,11 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                 })
 
                 it('emits an event', async () => {
-                  const { currentChallengeId } = await disputable.getAction(actionId)
+                  const { lastChallengeId } = await disputable.getAction(actionId)
                   const receipt = await disputable.settle({ actionId, from })
 
                   assertAmountOfEvents(receipt, AGREEMENT_EVENTS.ACTION_SETTLED)
-                  assertEvent(receipt, AGREEMENT_EVENTS.ACTION_SETTLED, { expectedArgs: { actionId, challengeId: currentChallengeId } })
+                  assertEvent(receipt, AGREEMENT_EVENTS.ACTION_SETTLED, { expectedArgs: { actionId, challengeId: lastChallengeId } })
                 })
 
                 it('there are no more paths allowed', async () => {
@@ -155,15 +156,6 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                   assert.isFalse(canDispute, 'action can be disputed')
                   assert.isFalse(canClaimSettlement, 'action settlement can be claimed')
                   assert.isFalse(canRuleDispute, 'action dispute can be ruled')
-                })
-
-                it('ignores the disputable callback behavior', async () => {
-                  await disputable.mockDisputable({ callbacksRevert: true })
-
-                  const receipt = await disputable.settle({ actionId, from })
-
-                  // disputable event shouldn't be emitted when disputable reverts
-                  assertAmountOfEvents(receipt, DISPUTABLE_EVENTS.REJECTED, { expectedAmount: 0, decodeForAbi: disputable.disputableAbi })
                 })
               }
 
@@ -321,7 +313,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
         itCanSettleActions()
       })
 
-      context('when the app was unregistered', () => {
+      context('when the app was deactivated', () => {
         beforeEach('mark app as unregistered', async () => {
           await disputable.deactivate()
         })
@@ -330,8 +322,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
       })
     })
 
-    // TODO: Skipping this test for now, Truffle is failing due to a weird error
-    context.skip('when the given action does not exist', () => {
+    context('when the given action does not exist', () => {
       it('reverts', async () => {
         await assertRevert(disputable.settle({ actionId: 0 }), AGREEMENT_ERRORS.ERROR_ACTION_DOES_NOT_EXIST)
       })

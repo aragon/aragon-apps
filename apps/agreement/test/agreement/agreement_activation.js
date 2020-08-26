@@ -2,7 +2,7 @@ const deployer = require('../helpers/utils/deployer')(web3, artifacts)
 const { AGREEMENT_EVENTS } = require('../helpers/utils/events')
 const { AGREEMENT_ERRORS, ARAGON_OS_ERRORS } = require('../helpers/utils/errors')
 
-const { bn, injectWeb3, injectArtifacts } = require('@aragon/contract-helpers-test')
+const { ZERO_ADDRESS, bn, injectWeb3, injectArtifacts } = require('@aragon/contract-helpers-test')
 const { assertBn, assertRevert, assertEvent, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/asserts')
 
 injectWeb3(web3)
@@ -19,8 +19,8 @@ contract('Agreement', ([_, someone, owner]) => {
     context('when the sender has permissions', () => {
       const from = owner
 
-      context('when the disputable was unregistered', () => {
-        it('registers the disputable app', async () => {
+      context('when the disputable was inactive', () => {
+        it('activates the disputable app', async () => {
           const receipt = await disputable.activate({ from })
 
           assertAmountOfEvents(receipt, AGREEMENT_EVENTS.DISPUTABLE_ACTIVATED)
@@ -45,6 +45,11 @@ contract('Agreement', ([_, someone, owner]) => {
           assertBn(challengeCollateral, disputable.challengeCollateral, 'challenge collateral does not match')
           assertBn(challengeDuration, disputable.challengeDuration, 'challenge duration does not match')
         })
+
+        it('reverts if the disputable is not a contract', async () => {
+          const { collateralToken, actionCollateral, challengeCollateral, challengeDuration } = disputable
+          await assertRevert(disputable.agreement.activate(ZERO_ADDRESS, collateralToken.address, challengeDuration, actionCollateral, challengeCollateral, { from }), AGREEMENT_ERRORS.ERROR_DISPUTABLE_NOT_CONTRACT)
+        })
       })
 
       context('when the disputable was activated', () => {
@@ -58,12 +63,12 @@ contract('Agreement', ([_, someone, owner]) => {
           })
         })
 
-        context('when the disputable is unregistered', () => {
+        context('when the disputable is deactivated', () => {
           beforeEach('deactivate disputable', async () => {
             await disputable.deactivate({ from })
           })
 
-          it('re-registers the disputable app', async () => {
+          it('re-activates the disputable app', async () => {
             const receipt = await disputable.activate({ from })
 
             assertAmountOfEvents(receipt, AGREEMENT_EVENTS.DISPUTABLE_ACTIVATED)
@@ -110,8 +115,8 @@ contract('Agreement', ([_, someone, owner]) => {
           await disputable.activate({ from })
         })
 
-        const itUnregistersTheDisputableApp = () => {
-          it('unregisters the disputable app', async () => {
+        const itDeactivatesTheDisputableApp = () => {
+          it('deactivates the disputable app', async () => {
             const receipt = await disputable.deactivate({ from })
 
             assertAmountOfEvents(receipt, AGREEMENT_EVENTS.DISPUTABLE_DEACTIVATED)
@@ -124,7 +129,7 @@ contract('Agreement', ([_, someone, owner]) => {
         }
 
         context('when there were no actions ongoing', () => {
-          itUnregistersTheDisputableApp()
+          itDeactivatesTheDisputableApp()
         })
 
         context('when there were some actions ongoing', () => {
@@ -132,7 +137,7 @@ contract('Agreement', ([_, someone, owner]) => {
             await disputable.newAction({})
           })
 
-          itUnregistersTheDisputableApp()
+          itDeactivatesTheDisputableApp()
         })
       })
 

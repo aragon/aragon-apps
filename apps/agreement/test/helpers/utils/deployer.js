@@ -129,7 +129,7 @@ class AgreementDeployer {
     const defaultOptions = { ...DEFAULT_AGREEMENT_INITIALIZATION_PARAMS, ...options }
     const { title, content, setCashier } = defaultOptions
 
-    await this.agreement.initialize(title, content, arbitrator.address, setCashier, stakingFactory.address)
+    await this.agreement.initialize(arbitrator.address, setCashier, title, content, stakingFactory.address)
     return this.agreement
   }
 
@@ -168,7 +168,7 @@ class AgreementDeployer {
     if (options.activate || options.activate === undefined) {
       const collateralToken = options.collateralToken || this.collateralToken
       const { actionCollateral, challengeCollateral, challengeDuration } = { ...DEFAULT_DISPUTABLE_INITIALIZATION_PARAMS, ...options }
-      await this.agreement.activate(disputable.address, collateralToken.address, actionCollateral, challengeCollateral, challengeDuration, { from: owner })
+      await this.agreement.activate(disputable.address, collateralToken.address, challengeDuration, actionCollateral, challengeCollateral, { from: owner })
     }
 
     if (currentTimestamp) await this.mockTime(disputable, currentTimestamp)

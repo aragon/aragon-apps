@@ -79,7 +79,7 @@ contract('Agreement', ([_, user]) => {
       })
 
       context('in favor of the submitter', () => {
-        itCostsAtMost(257e3, () => disputable.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_SUBMITTER }))
+        itCostsAtMost(258e3, () => disputable.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_SUBMITTER }))
       })
 
       context('in favor of the challenger', () => {

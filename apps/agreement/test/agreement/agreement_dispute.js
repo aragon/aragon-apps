@@ -49,7 +49,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
             const challengeContext = '0x123456'
 
             beforeEach('challenge action', async () => {
-              ({ challengeId } = await disputable.challenge({ actionId, challenger, challengeContext }))
+              ({ challengeId } = await disputable.challenge({ actionId, challenger, challengeContext, finishedSubmittingEvidence: true }))
             })
 
             context('when the challenge was not answered', () => {
@@ -95,9 +95,10 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                       assert.equal(currentActionState.submitter, previousActionState.submitter, 'submitter does not match')
                       assert.equal(currentActionState.context, previousActionState.context, 'action context does not match')
                       assertBn(currentActionState.settingId, previousActionState.settingId, 'setting ID does not match')
-                      assertBn(currentActionState.currentChallengeId, previousActionState.currentChallengeId, 'challenge ID does not match')
+                      assertBn(currentActionState.lastChallengeId, previousActionState.lastChallengeId, 'challenge ID does not match')
                       assertBn(currentActionState.disputableActionId, previousActionState.disputableActionId, 'disputable action ID does not match')
                       assertBn(currentActionState.collateralRequirementId, previousActionState.collateralRequirementId, 'collateral ID does not match')
+                      assert.isTrue(currentActionState.lastChallengeActive, 'action challenge should still be active')
                     })
 
                     it('creates a dispute', async () => {
@@ -106,7 +107,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
 
                       assertBn(ruling, RULINGS.MISSING, 'ruling does not match')
                       assert.isFalse(submitterFinishedEvidence, 'submitter finished evidence')
-                      assert.isFalse(challengerFinishedEvidence, 'challenger finished evidence')
+                      assert.isTrue(challengerFinishedEvidence, 'challenger did not finish evidence')
 
                       const appId = '0xcafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234'
                       const paddedChallengeId = padLeft(challengeId, 64)
@@ -122,7 +123,14 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
 
                       assertAmountOfEvents(receipt, 'EvidenceSubmitted', { expectedAmount: 2, decodeForAbi: disputable.abi })
                       assertEvent(receipt, 'EvidenceSubmitted', { index: 0, expectedArgs: { arbitrator: disputable.arbitrator, disputeId, submitter: submitter, evidence: actionContext, finished: false }, decodeForAbi: disputable.abi })
-                      assertEvent(receipt, 'EvidenceSubmitted', { index: 1, expectedArgs: { arbitrator: disputable.arbitrator, disputeId, submitter: challenger, evidence: challengeContext, finished: false }, decodeForAbi: disputable.abi })
+                      assertEvent(receipt, 'EvidenceSubmitted', { index: 1, expectedArgs: { arbitrator: disputable.arbitrator, disputeId, submitter: challenger, evidence: challengeContext, finished: true }, decodeForAbi: disputable.abi })
+                    })
+
+                    it('allows closing the evidence submission period manually', async () => {
+                      await disputable.dispute({ actionId, from, arbitratorFees, finishedSubmittingEvidence: true })
+
+                      const receipt = await disputable.closeEvidencePeriod(actionId)
+                      assertAmountOfEvents(receipt, 'EvidencePeriodClosed', { decodeForAbi: disputable.arbitrator.abi })
                     })
 
                     it('does not affect the submitter staked balances', async () => {
@@ -156,11 +164,11 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                     })
 
                     it('emits an event', async () => {
-                      const { currentChallengeId } = await disputable.getAction(actionId)
+                      const { lastChallengeId } = await disputable.getAction(actionId)
                       const receipt = await disputable.dispute({ actionId, from, arbitratorFees })
 
                       assertAmountOfEvents(receipt, AGREEMENT_EVENTS.ACTION_DISPUTED)
-                      assertEvent(receipt, AGREEMENT_EVENTS.ACTION_DISPUTED, { expectedArgs: { actionId, challengeId: currentChallengeId } })
+                      assertEvent(receipt, AGREEMENT_EVENTS.ACTION_DISPUTED, { expectedArgs: { actionId, challengeId: lastChallengeId } })
                     })
 
                     it('can be ruled', async () => {
@@ -415,7 +423,7 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
         itCanDisputeActions()
       })
 
-      context('when the app was unregistered', () => {
+      context('when the app was deactivated', () => {
         beforeEach('mark app as unregistered', async () => {
           await disputable.deactivate()
         })
