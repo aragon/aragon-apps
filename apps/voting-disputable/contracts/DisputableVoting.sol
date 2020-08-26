@@ -698,6 +698,30 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     }
 
     /**
+    * @dev Create a copy of the current settings as a new setting instance
+    * @return New setting's instance
+    */
+    function _newCopiedSettings() internal returns (Setting storage) {
+        (Setting storage setting, uint256 settingId) = _newSetting();
+        _copySettings(_getSetting(settingId - 1), setting);
+        return setting;
+    }
+
+    /**
+    * @dev Copy settings from one storage pointer to another
+    */
+    // Note: should we inline?
+    function _copySettings(Setting storage _from, Setting storage _to) internal {
+        // Note: we may want to check if solidity is smart enough to not require us to first load into local vars to optimize sstores
+        _to.supportRequiredPct = _from.supportRequiredPct;
+        _to.minAcceptQuorumPct = _from.minAcceptQuorumPct;
+        _to.executionDelay = _from.executionDelay;
+        _to.quietEndingPeriod = _from.quietEndingPeriod;
+        _to.quietEndingExtension = _from.quietEndingExtension;
+        _to.overruleWindow = _from.overruleWindow;
+    }
+
+    /**
     * @dev Create a new vote
     * @param _executionScript Action (encoded as an EVM script) that will be allowed to execute if the vote passes
     * @param _context Additional context for the vote, also used as the disputable action's context on the attached Agreement
@@ -744,6 +768,80 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
                 _castVote(vote_, _voteId, _supports, voter, msg.sender);
             } else {
                 emit ProxyVoteFailure(_voteId, voter, msg.sender);
+            }
+        }
+    }
+
+    /**
+    * @dev Cast a vote
+    *      Assumes all eligibility checks have passed for the given vote and voter
+    * @param _vote Vote instance
+    * @param _voteId Identification number of vote
+    * @param _supports Whether principal voter supports the vote
+    * @param _voter Address of principal voter
+    * @param _caster Address of vote caster, if voting via representative
+    */
+    function _castVote(Vote storage _vote, uint256 _voteId, bool _supports, address _voter, address _caster) internal {
+        Setting storage setting = settings[_vote.settingId];
+        // Note: if we move the quiet ending check at the end here, we could optimize this so it doesn't get calculated outside of the quiet ending period
+        bool wasAccepted = _isAccepted(_vote, setting);
+
+        uint256 yeas = _vote.yea;
+        uint256 nays = _vote.nay;
+        uint256 voterStake = token.balanceOfAt(_voter, _vote.snapshotBlock);
+
+        VoteCast storage castVote = _vote.castVotes[_voter];
+        VoterState previousVoterState = castVote.state;
+
+        // If voter had previously voted, reset their vote
+        // Note that votes can only be changed once by the principal voter overruling their representative's
+        // vote during the overrule window
+        if (previousVoterState == VoterState.Yea) {
+            yeas = yeas.sub(voterStake);
+        } else if (previousVoterState == VoterState.Nay) {
+            nays = nays.sub(voterStake);
+        }
+
+        if (_supports) {
+            yeas = yeas.add(voterStake);
+        } else {
+            nays = nays.add(voterStake);
+        }
+
+        _vote.yea = yeas;
+        _vote.nay = nays;
+        castVote.state = _voterStateFor(_supports);
+        castVote.caster = _caster;
+        emit CastVote(_voteId, _voter, _supports, _caster == address(0) ? _voter : _caster);
+
+        // Note: could we move this to be at the start of `castVote` so it acts like a modifier /
+        // pre-condition, making sure we're calculating the quiet ending period correctly?
+        if (_withinQuietEndingPeriod(_vote, setting)) {
+            _ensureQuietEnding(_vote, setting, _voteId, wasAccepted);
+        }
+    }
+
+    /**
+    * @dev Ensure we keep track of the information related for detecting a quiet ending
+    * @param _vote Vote instance
+    * @param _setting Setting instance applicable to the vote
+    * @param _voteId Identification number of the vote
+    * @param _wasAccepted Whether the vote is currently accepted
+    */
+    function _ensureQuietEnding(Vote storage _vote, Setting storage _setting, uint256 _voteId, bool _wasAccepted) internal {
+        if (_vote.quietEndingSnapshotSupport == VoterState.Absent) {
+            // If we do not have a snapshot of the support yet, simply store the given value.
+            // Note that if there are no votes during the quiet ending period, it is obviously impossible for the vote to be flipped and
+            // this snapshot is never stored.
+            _vote.quietEndingSnapshotSupport = _voterStateFor(_wasAccepted);
+        } else {
+            // Note: not sure about the intention behind these comments--should we just explain that
+            // we only extend the vote once we have confirmed the flip at the end of the last extension period?
+            // First, we make sure the extension is persisted, if are voting within the extension and it was not considered yet, we store it.
+            // Note that we are trusting `_canVote()`, if we reached this point, it means the vote's flip was already confirmed.
+            if (getTimestamp() >= _lastComputedVoteEndDate(_vote)) {
+                _vote.quietEndingExtendedSeconds = _vote.quietEndingExtendedSeconds.add(_setting.quietEndingExtension);
+                emit VoteQuietEndingExtension(_voteId, _wasAccepted);
             }
         }
     }
@@ -985,6 +1083,25 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     }
 
     /**
+    * @dev Compute the start date of time duration from the original vote's end date.
+    *      It considers the pause duration only if the vote has resumed from being paused,
+    *      and if the pause occurred before the start date of the time duration being queried.
+    *
+    *                                                  [   queried duration   ]
+    *      [   vote active    ][   vote paused    ][   .   vote active        ]
+    *      ^                                           ^                      ^
+    *      |                                           |                      |
+    *  vote starts                            duration start date         vote ends
+    */
+    // Note: based on our conversation about the windows (moving them to be based on the start rather than the end), hopefully we can simplify this calculation!
+    function _durationStartDate(Vote storage _vote, uint64 _duration) internal view returns (uint64) {
+        uint64 pausedAt = _vote.pausedAt;
+        uint64 originalDurationStartDate = _originalVoteEndDate(_vote).sub(_duration);
+        bool pausedBeforeDurationStarts = pausedAt != 0 && pausedAt < originalDurationStartDate;
+        return pausedBeforeDurationStarts ? originalDurationStartDate.add(_vote.pauseDuration) : originalDurationStartDate;
+    }
+
+    /**
     * @dev Tell if a voter has voting power for a vote
     * @param _vote Vote instance being queried
     * @param _voter Address of the voter being queried
@@ -1068,129 +1185,11 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     }
 
     /**
-    * @dev Cast a vote
-    *      Assumes all eligibility checks have passed for the given vote and voter
-    * @param _vote Vote instance
-    * @param _voteId Identification number of vote
-    * @param _supports Whether principal voter supports the vote
-    * @param _voter Address of principal voter
-    * @param _caster Address of vote caster, if voting via representative
-    */
-    // Note: not sure about pushing these to be private 🤷‍♂️
-    function _castVote(Vote storage _vote, uint256 _voteId, bool _supports, address _voter, address _caster) private {
-        Setting storage setting = settings[_vote.settingId];
-        // Note: if we move the quiet ending check at the end here, we could optimize this so it doesn't get calculated outside of the quiet ending period
-        bool wasAccepted = _isAccepted(_vote, setting);
-
-        uint256 yeas = _vote.yea;
-        uint256 nays = _vote.nay;
-        uint256 voterStake = token.balanceOfAt(_voter, _vote.snapshotBlock);
-
-        VoteCast storage castVote = _vote.castVotes[_voter];
-        VoterState previousVoterState = castVote.state;
-
-        // If voter had previously voted, reset their vote
-        // Note that votes can only be changed once by the principal voter overruling their representative's
-        // vote during the overrule window
-        if (previousVoterState == VoterState.Yea) {
-            yeas = yeas.sub(voterStake);
-        } else if (previousVoterState == VoterState.Nay) {
-            nays = nays.sub(voterStake);
-        }
-
-        if (_supports) {
-            yeas = yeas.add(voterStake);
-        } else {
-            nays = nays.add(voterStake);
-        }
-
-        _vote.yea = yeas;
-        _vote.nay = nays;
-        castVote.state = _voterStateFor(_supports);
-        castVote.caster = _caster;
-        emit CastVote(_voteId, _voter, _supports, _caster == address(0) ? _voter : _caster);
-
-        // Note: could we move this to be at the start of `castVote` so it acts like a modifier /
-        // pre-condition, making sure we're calculating the quiet ending period correctly?
-        if (_withinQuietEndingPeriod(_vote, setting)) {
-            _ensureQuietEnding(_vote, setting, _voteId, wasAccepted);
-        }
-    }
-
-    /**
-    * @dev Ensure we keep track of the information related for detecting a quiet ending
-    * @param _vote Vote instance
-    * @param _setting Setting instance applicable to the vote
-    * @param _voteId Identification number of the vote
-    * @param _wasAccepted Whether the vote is currently accepted
-    */
-    function _ensureQuietEnding(Vote storage _vote, Setting storage _setting, uint256 _voteId, bool _wasAccepted) private {
-        if (_vote.quietEndingSnapshotSupport == VoterState.Absent) {
-            // If we do not have a snapshot of the support yet, simply store the given value.
-            // Note that if there are no votes during the quiet ending period, it is obviously impossible for the vote to be flipped and
-            // this snapshot is never stored.
-            _vote.quietEndingSnapshotSupport = _voterStateFor(_wasAccepted);
-        } else {
-            // Note: not sure about the intention behind these comments--should we just explain that
-            // we only extend the vote once we have confirmed the flip at the end of the last extension period?
-            // First, we make sure the extension is persisted, if are voting within the extension and it was not considered yet, we store it.
-            // Note that we are trusting `_canVote()`, if we reached this point, it means the vote's flip was already confirmed.
-            if (getTimestamp() >= _lastComputedVoteEndDate(_vote)) {
-                _vote.quietEndingExtendedSeconds = _vote.quietEndingExtendedSeconds.add(_setting.quietEndingExtension);
-                emit VoteQuietEndingExtension(_voteId, _wasAccepted);
-            }
-        }
-    }
-
-    /**
-    * @dev Create a copy of the current settings as a new setting instance
-    * @return New setting's instance
-    */
-    function _newCopiedSettings() private returns (Setting storage) {
-        (Setting storage setting, uint256 settingId) = _newSetting();
-        _copySettings(_getSetting(settingId - 1), setting);
-        return setting;
-    }
-
-    /**
-    * @dev Copy settings from one storage pointer to another
-    */
-   // Note: should we inline?
-    function _copySettings(Setting storage _from, Setting storage _to) private {
-        // Note: we may want to check if solidity is smart enough to not require us to first load into local vars to optimize sstores
-        _to.supportRequiredPct = _from.supportRequiredPct;
-        _to.minAcceptQuorumPct = _from.minAcceptQuorumPct;
-        _to.executionDelay = _from.executionDelay;
-        _to.quietEndingPeriod = _from.quietEndingPeriod;
-        _to.quietEndingExtension = _from.quietEndingExtension;
-        _to.overruleWindow = _from.overruleWindow;
-    }
-
-    /**
-    * @dev Compute the start date of time duration from the original vote's end date.
-    *      It considers the pause duration only if the vote has resumed from being paused,
-    *      and if the pause occurred before the start date of the time duration being queried.
-    *
-    *                                                  [   queried duration   ]
-    *      [   vote active    ][   vote paused    ][   .   vote active        ]
-    *      ^                                           ^                      ^
-    *      |                                           |                      |
-    *  vote starts                            duration start date         vote ends
-    */
-   // Note: based on our conversation about the windows (moving them to be based on the start rather than the end), hopefully we can simplify this calculation!
-    function _durationStartDate(Vote storage _vote, uint64 _duration) private view returns (uint64) {
-        uint64 pausedAt = _vote.pausedAt;
-        uint64 originalDurationStartDate = _originalVoteEndDate(_vote).sub(_duration);
-        bool pausedBeforeDurationStarts = pausedAt != 0 && pausedAt < originalDurationStartDate;
-        return pausedBeforeDurationStarts ? originalDurationStartDate.add(_vote.pauseDuration) : originalDurationStartDate;
-    }
-
-    /**
     * @dev Translate a voter's support into a voter state
     * @param _supports Whether voter supports the vote
     * @return Voter state, as an enum
     */
-    function _voterStateFor(bool _supports) private pure returns (VoterState) {
+    function _voterStateFor(bool _supports) internal pure returns (VoterState) {
         return _supports ? VoterState.Yea : VoterState.Nay;
     }
 }
