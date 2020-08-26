@@ -716,11 +716,11 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         voteId = votesLength++;
 
         Vote storage vote_ = votes[voteId];
-        vote_.status = VoteStatus.Normal;
-        vote_.startDate = getTimestamp64();
-        vote_.snapshotBlock = snapshotBlock;
         vote_.totalPower = totalPower;
         vote_.settingId = _getCurrentSettingId();
+        vote_.startDate = getTimestamp64();
+        vote_.snapshotBlock = snapshotBlock;
+        vote_.status = VoteStatus.Normal;
         vote_.executionScriptHash = keccak256(_executionScript);
 
         // Notify the attached Agreement about the new vote; this is mandatory in making the vote disputable
