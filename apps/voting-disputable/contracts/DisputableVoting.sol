@@ -509,10 +509,9 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     function canVoteOnBehalfOf(uint256 _voteId, address[] _voters, address _representative) external view returns (bool) {
         Vote storage vote_ = _getVote(_voteId);
 
-        if (!_canRepresentativesVote(vote_)) {
+        if (!_canRepresentativesVote(vote_) || _voters.length > MAX_VOTES_DELEGATION_SET_LENGTH) {
             return false;
         }
-        // Note: should we also check that the length is <= MAX_VOTES_DELEGATION_SET_LENGTH? Perhaps better to keep this as a revert, similar to a missing vote
 
         for (uint256 i = 0; i < _voters.length; i++) {
             address voter = _voters[i];
