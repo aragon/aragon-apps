@@ -791,10 +791,8 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
             // this snapshot is never stored.
             _vote.quietEndingSnapshotSupport = _voterStateFor(_wasAccepted);
         } else {
-            // Note: not sure about the intention behind these comments--should we just explain that
-            // we only extend the vote once we have confirmed the flip at the end of the last extension period?
-            // First, we make sure the extension is persisted, if are voting within the extension and it was not considered yet, we store it.
-            // Note that we are trusting `_canVote()`, if we reached this point, it means the vote's flip was already confirmed.
+            // We only store the quiet ending extension if it wasn't confirmed yet. Note that we are trusting `_canVote()` for that.
+            // If we reached this point, it means the vote's flip was confirmed but the last computed end date is in the past.
             if (getTimestamp() >= _lastComputedVoteEndDate(_vote)) {
                 _vote.quietEndingExtensionDuration = _vote.quietEndingExtensionDuration.add(_setting.quietEndingExtension);
                 emit QuietEndingExtendVote(_voteId, _wasAccepted);
@@ -968,10 +966,10 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @return True if the vote's delegated voting period has finished
     */
     function _hasFinishedDelegatedVotingPeriod(Vote storage _vote, Setting storage _setting) internal view returns (bool) {
-        uint64 pausedAt = _vote.pausedAt;
         uint64 baseDelegatedVotingPeriodEndDate = _vote.startDate.add(_setting.delegatedVotingPeriod);
 
         // If the vote was paused before the deleted voting period ends, we need to extend it
+        uint64 pausedAt = _vote.pausedAt;
         uint64 actualDeletedVotingEndDate = pausedAt != 0 && pausedAt < baseDelegatedVotingPeriodEndDate
             ? baseDelegatedVotingPeriodEndDate.add(_vote.pauseDuration)
             : baseDelegatedVotingPeriodEndDate;
@@ -987,7 +985,16 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @return True if the vote's quiet ending period has started
     */
     function _hasStartedQuietEndingPeriod(Vote storage _vote, Setting storage _setting) internal view returns (bool) {
-        return getTimestamp() >= _durationStartDate(_vote, _setting.quietEndingPeriod);
+        uint64 voteBaseEndDate = _baseVoteEndDate(_vote);
+        uint64 baseQuietEndingPeriodStartDate = voteBaseEndDate.sub(_setting.quietEndingPeriod);
+
+        // If the vote was paused before the quiet ending period starts, we need to delay it
+        uint64 pausedAt = _vote.pausedAt;
+        uint64 actualQuietEndingPeriodStartDate = pausedAt != 0 && pausedAt < baseQuietEndingPeriodStartDate
+            ? baseQuietEndingPeriodStartDate.add(_vote.pauseDuration)
+            : baseQuietEndingPeriodStartDate;
+
+        return getTimestamp() >= actualQuietEndingPeriodStartDate;
     }
 
     /**
@@ -1042,25 +1049,6 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
 
         // Finally, since the last computed end date was reached and the vote was flipped, we must extend it
         return lastComputedEndDate.add(_setting.quietEndingExtension);
-    }
-
-    /**
-    * @dev Compute the start date of time duration from the original vote's end date.
-    *      It considers the pause duration only if the vote has resumed from being paused,
-    *      and if the pause occurred before the start date of the time duration being queried.
-    *
-    *                                                  [   queried duration   ]
-    *      [   vote normal    ][   vote paused    ][   .   vote normal        ]
-    *      ^                                           ^                      ^
-    *      |                                           |                      |
-    *  vote starts                            duration start date         vote ends
-    */
-    // Note: based on our conversation about the windows (moving them to be based on the start rather than the end), hopefully we can simplify this calculation!
-    function _durationStartDate(Vote storage _vote, uint64 _duration) internal view returns (uint64) {
-        uint64 pausedAt = _vote.pausedAt;
-        uint64 originalDurationStartDate = _baseVoteEndDate(_vote).sub(_duration);
-        bool pausedBeforeDurationStarts = pausedAt != 0 && pausedAt < originalDurationStartDate;
-        return pausedBeforeDurationStarts ? originalDurationStartDate.add(_vote.pauseDuration) : originalDurationStartDate;
     }
 
     /**
