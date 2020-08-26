@@ -695,23 +695,15 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @return New setting's instance
     */
     function _newCopiedSettings() internal returns (Setting storage) {
-        (Setting storage setting, uint256 settingId) = _newSetting();
-        _copySettings(_getSetting(settingId - 1), setting);
-        return setting;
-    }
-
-    /**
-    * @dev Copy settings from one storage pointer to another
-    */
-    // Note: should we inline?
-    function _copySettings(Setting storage _from, Setting storage _to) internal {
-        // Note: we may want to check if solidity is smart enough to not require us to first load into local vars to optimize sstores
-        _to.supportRequiredPct = _from.supportRequiredPct;
-        _to.minAcceptQuorumPct = _from.minAcceptQuorumPct;
-        _to.executionDelay = _from.executionDelay;
-        _to.quietEndingPeriod = _from.quietEndingPeriod;
-        _to.quietEndingExtension = _from.quietEndingExtension;
-        _to.overruleWindow = _from.overruleWindow;
+        (Setting storage to, uint256 settingId) = _newSetting();
+        Setting storage from = _getSetting(settingId - 1);
+        to.supportRequiredPct = from.supportRequiredPct;
+        to.minAcceptQuorumPct = from.minAcceptQuorumPct;
+        to.executionDelay = from.executionDelay;
+        to.quietEndingPeriod = from.quietEndingPeriod;
+        to.quietEndingExtension = from.quietEndingExtension;
+        to.overruleWindow = from.overruleWindow;
+        return to;
     }
 
     /**
