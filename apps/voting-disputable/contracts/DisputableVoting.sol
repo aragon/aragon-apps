@@ -990,6 +990,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @param _setting Setting instance applicable to the vote
     * @return True if the vote's execution delay has not finished
     */
+   // Note: seems a bit weird to say "not", even if it is a minor optimization
     function _hasNotFinishedExecutionDelay(Vote storage _vote, Setting storage _setting) internal view returns (bool) {
         uint64 endDate = _currentVoteEndDate(_vote, _setting);
         return getTimestamp() < endDate.add(_setting.executionDelay);
