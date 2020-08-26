@@ -4,7 +4,6 @@
 
 pragma solidity 0.4.24;
 
-// Note: it's not necessary, but we could make the import to IAgreement explicit here
 import "@aragon/os/contracts/apps/disputable/DisputableAragonApp.sol";
 import "@aragon/os/contracts/forwarding/IForwarderWithContext.sol";
 import "@aragon/os/contracts/lib/math/SafeMath.sol";
@@ -361,7 +360,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     function canChallenge(uint256 _voteId) external view returns (bool) {
         Vote storage vote_ = _getVote(_voteId);
         // Votes can only be challenged once
-        return _isVoteOpenForVoting(vote_) && vote_.pausedAt == 0;
+        return vote_.pausedAt == 0 && _isVoteOpenForVoting(vote_, settings[vote_.settingId]);
     }
 
     /**
@@ -372,8 +371,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     */
     function canClose(uint256 _voteId) external view returns (bool) {
         Vote storage vote_ = _getVote(_voteId);
-        Setting storage setting = settings[vote_.settingId];
-        return (_isActive(vote_) || _isExecuted(vote_)) && _hasEnded(vote_, setting);
+        return (_isActive(vote_) || _isExecuted(vote_)) && _hasEnded(vote_, settings[vote_.settingId]);
     }
 
     // Getter fns
@@ -538,7 +536,9 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @return True if the vote is open for voting
     */
     function isVoteOpenForVoting(uint256 _voteId) external view returns (bool) {
-        return _isVoteOpenForVoting(_getVote(_voteId));
+        Vote storage vote_ = _getVote(_voteId);
+        Setting storage setting = settings[vote_.settingId];
+        return _isVoteOpenForVoting(vote_, setting);
     }
 
     /**
@@ -548,10 +548,10 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @param _voteId Vote identifier
     * @return True if the vote is within its overrule window
     */
-   // Note: maybe better renamed as `canRepresentativesVote()`?
     function withinOverruleWindow(uint256 _voteId) external view returns (bool) {
         Vote storage vote_ = _getVote(_voteId);
-        return _isVoteOpenForVoting(vote_) && _withinOverruleWindow(vote_);
+        Setting storage setting = settings[vote_.settingId];
+        return _isVoteOpenForVoting(vote_, setting) && _withinOverruleWindow(vote_, setting);
     }
 
     /**
@@ -845,7 +845,8 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @return True if the voter can participate a certain vote
     */
     function _canVote(Vote storage _vote, address _voter) internal view returns (bool) {
-        return _isVoteOpenForVoting(_vote) && _hasVotingPower(_vote, _voter) && _voteCaster(_vote, _voter) != _voter;
+        Setting storage setting = settings[_vote.settingId];
+        return _isVoteOpenForVoting(_vote, setting) && _hasVotingPower(_vote, _voter) && _voteCaster(_vote, _voter) != _voter;
     }
 
     /**
@@ -854,7 +855,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @return True if the vote currently allows representatives to vote
     */
     function _canRepresentativesVote(Vote storage _vote) internal view returns (bool) {
-        return _isActive(_vote) && !_withinOverruleWindow(_vote);
+        return _isActive(_vote) && !_withinOverruleWindow(_vote, settings[_vote.settingId]);
     }
 
     /**
@@ -928,11 +929,11 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     /**
     * @dev Tell if a vote is open for voting
     * @param _vote Vote instance being queried
+    * @param _setting Setting instance applicable to the vote
     * @return True if the vote is open for voting
     */
-    function _isVoteOpenForVoting(Vote storage _vote) internal view returns (bool) {
-        Setting storage setting = settings[_vote.settingId];
-        return _isActive(_vote) && !_hasEnded(_vote, setting);
+    function _isVoteOpenForVoting(Vote storage _vote, Setting storage _setting) internal view returns (bool) {
+        return _isActive(_vote) && !_hasEnded(_vote, _setting);
     }
 
     /**
@@ -971,12 +972,11 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @dev Tell if a vote is within its overrule window
     *      This function doesn't ensure whether the vote is open or not
     * @param _vote Vote instance being queried
+    * @param _setting Setting instance applicable to the vote
     * @return True if the vote is within its overrule window
     */
-   // Note: might as well pass the setting instance to this like the others?
-    function _withinOverruleWindow(Vote storage _vote) internal view returns (bool) {
-        Setting storage setting = settings[_vote.settingId];
-        return getTimestamp() >= _durationStartDate(_vote, setting.overruleWindow);
+    function _withinOverruleWindow(Vote storage _vote, Setting storage _setting) internal view returns (bool) {
+        return getTimestamp() >= _durationStartDate(_vote, _setting.overruleWindow);
     }
 
     /**
