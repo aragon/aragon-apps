@@ -27,8 +27,6 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
     voting = await deployer.deployAndInitialize({ owner, minimumAcceptanceQuorum: MIN_QUORUM, requiredSupport: MIN_SUPPORT, voteDuration: VOTE_DURATION, delegatedVotingPeriod: DELEGATED_VOTING_PERIOD, quietEndingPeriod: QUIET_ENDING_PERIOD, quietEndingExtension: QUIET_ENDING_EXTENSION })
   })
 
-  const repeat = (x, y) => [...Array(x)].map(() => y)
-
   const getCastVote = async (voter, id = voteId) => voting.getCastVote(id, voter)
 
   describe('setRepresentative', () => {
@@ -95,10 +93,10 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
                 })
 
                 context('when the number of requested voters is not valid', () => {
-                  const voters = repeat(71, voter)
+                  const voters = new Array(71).fill(voter)
 
-                  it('returns false', async () => {
-                    assert.isFalse(await voting.canVoteOnBehalfOf(voteId, voters, representative), 'should not be able to vote')
+                  it('reverts', async () => {
+                    await assertRevert(voting.canVoteOnBehalfOf(voteId, voters, representative), VOTING_ERRORS.VOTING_DELEGATES_EXCEEDS_MAX_LEN)
                   })
                 })
               })
@@ -143,10 +141,10 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
                 })
 
                 context('when the number of requested voters is not valid', () => {
-                  const voters = repeat(71, voter)
+                  const voters = new Array(71).fill(voter)
 
-                  it('returns false', async () => {
-                    assert.isFalse(await voting.canVoteOnBehalfOf(voteId, voters, representative), 'should not be able to vote')
+                  it('reverts', async () => {
+                    await assertRevert(voting.canVoteOnBehalfOf(voteId, voters, representative), VOTING_ERRORS.VOTING_DELEGATES_EXCEEDS_MAX_LEN)
                   })
                 })
               })
@@ -191,10 +189,10 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
                 })
 
                 context('when the number of requested voters is not valid', () => {
-                  const voters = repeat(71, voter)
+                  const voters = new Array(71).fill(voter)
 
-                  it('returns false', async () => {
-                    assert.isFalse(await voting.canVoteOnBehalfOf(voteId, voters, representative), 'should not be able to vote')
+                  it('reverts', async () => {
+                    await assertRevert(voting.canVoteOnBehalfOf(voteId, voters, representative), VOTING_ERRORS.VOTING_DELEGATES_EXCEEDS_MAX_LEN)
                   })
                 })
               })
@@ -1046,7 +1044,7 @@ contract('Voting delegation', ([_, owner, voter, anotherVoter, thirdVoter, repre
       })
 
       context('when the input is not valid', () => {
-        const voters = repeat(71, voter)
+        const voters = new Array(71).fill(voter)
 
         context('when the input length exceeds the max length allowed', () => {
           it('reverts', async () => {

@@ -502,9 +502,10 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @return True if the representative can vote on behalf of the delegated voters in the vote
     */
     function canVoteOnBehalfOf(uint256 _voteId, address[] _voters, address _representative) external view returns (bool) {
-        Vote storage vote_ = _getVote(_voteId);
+        require(_voters.length <= MAX_VOTES_DELEGATION_SET_LENGTH, ERROR_DELEGATES_EXCEEDS_MAX_LEN);
 
-        if (!_canRepresentativesVote(vote_) || _voters.length > MAX_VOTES_DELEGATION_SET_LENGTH) {
+        Vote storage vote_ = _getVote(_voteId);
+        if (!_canRepresentativesVote(vote_)) {
             return false;
         }
 
