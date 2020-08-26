@@ -537,8 +537,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @param _voteId Identification number of the vote being queried
     * @return True if the vote is open for voting
     */
-   // Note: maybe we should rename this to be more accurate (open for voting, or "can vote")?
-    function isVoteOpen(uint256 _voteId) external view returns (bool) {
+    function isVoteOpenForVoting(uint256 _voteId) external view returns (bool) {
         return _isVoteOpenForVoting(_getVote(_voteId));
     }
 

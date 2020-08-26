@@ -17,7 +17,7 @@ const VOTE_STATUS = {
 
 const getVoteState = async (voting, id) => {
   const { yea, nay, totalPower, settingId, actionId, status, startDate, snapshotBlock, pausedAt, pauseDuration, quietEndingExtensionDuration, quietEndingSnapshotSupport, executionScriptHash } = await voting.getVote(id)
-  const isOpen = await voting.isVoteOpen(id)
+  const isOpen = await voting.isVoteOpenForVoting(id)
   const isExecuted = status.eq(bn(VOTE_STATUS.EXECUTED))
   return { isOpen, isExecuted, startDate, snapshotBlock, settingId, status, actionId, yeas: yea, nays: nay, totalPower, pausedAt, pauseDuration, quietEndingExtensionDuration, quietEndingSnapshotSupport, executionScriptHash }
 }
