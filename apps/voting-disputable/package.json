@@ -19,11 +19,7 @@
     "test": "buidler test",
     "test:gas": "REPORT_GAS=true buidler test --network localhost",
     "coverage": "buidler coverage --network coverage",
-    "abi:extract": "buidler-extract --output abi/ --keys abi",
-    "apm:prepublish": "npm run compile",
-    "apm:publish:major": "aragon apm publish major --files app/build/ --prepublish-script apm:prepublish",
-    "apm:publish:minor": "aragon apm publish minor --files app/build/ --prepublish-script apm:prepublish",
-    "apm:publish:patch": "aragon apm publish patch --files app/build/ --prepublish-script apm:prepublish"
+    "abi:extract": "buidler-extract --output abi/ --keys abi"
   },
   "dependencies": {
     "@aragon/apps-agreement": "^0.1.0-beta.0",
