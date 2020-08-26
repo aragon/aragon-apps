@@ -111,11 +111,9 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         uint256 votingPower;                                // Total voting power (based on the snapshot block)
         uint256 settingId;                                  // Identification number of the setting applicable to the vote
         uint256 actionId;                                   // Identification number of the associated disputable action on the attached Agreement
-        // Note: we may want to re-order this state to be based on localized SSTOREs
-        //       start date and snapshot block never change, whereas pausedAt, pauseDuration and status may be changed together
-        VoteStatus status;                                  // Status of the vote
         uint64 startDate;                                   // Datetime when the vote was created
         uint64 snapshotBlock;                               // Block number used to check voting power on attached token
+        VoteStatus status;                                  // Status of the vote
         uint64 pausedAt;                                    // Datetime when the vote was paused
         uint64 pauseDuration;                               // Duration of the pause (only updated once resumed)
         // Note: maybe rename to quietEndingExtensionDuration?
@@ -423,9 +421,9 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @return votingPower Total voting power available (based on the snapshot block)
     * @return settingId Identification number of the setting applicable to the vote
     * @return actionId Identification number of the associated disputable action on the attached Agreement
-    * @return status Status of the vote
     * @return startDate Datetime when the vote was created
     * @return snapshotBlock Block number used to check voting power on attached token
+    * @return status Status of the vote
     * @return pausedAt Datetime when the vote was paused
     * @return pauseDuration Duration of the pause (only updated once resumed)
     * @return quietEndingExtendedSeconds Total number of seconds a vote was extended due to quiet ending
@@ -443,9 +441,9 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
             uint256 votingPower,
             uint256 settingId,
             uint256 actionId,
-            VoteStatus status,
             uint64 startDate,
             uint64 snapshotBlock,
+            VoteStatus status,
             uint64 pausedAt,
             uint64 pauseDuration,
             uint64 quietEndingExtendedSeconds,
@@ -460,9 +458,9 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         votingPower = vote_.votingPower;
         settingId = vote_.settingId;
         actionId = vote_.actionId;
-        status = vote_.status;
         startDate = vote_.startDate;
         snapshotBlock = vote_.snapshotBlock;
+        status = vote_.status;
         pausedAt = vote_.pausedAt;
         pauseDuration = vote_.pauseDuration;
         quietEndingExtendedSeconds = vote_.quietEndingExtendedSeconds;
