@@ -103,15 +103,19 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         uint256 yea;                                        // Voting power for
         uint256 nay;                                        // Voting power against
         uint256 totalPower;                                 // Total voting power (based on the snapshot block)
-        uint256 settingId;                                  // Identification number of the setting applicable to the vote
-        uint256 actionId;                                   // Identification number of the associated disputable action on the attached Agreement
+
         uint64 startDate;                                   // Datetime when the vote was created
         uint64 snapshotBlock;                               // Block number used to check voting power on attached token
         VoteStatus status;                                  // Status of the vote
+
+        uint256 settingId;                                  // Identification number of the setting applicable to the vote
+        uint256 actionId;                                   // Identification number of the associated disputable action on the attached Agreement
+
         uint64 pausedAt;                                    // Datetime when the vote was paused
         uint64 pauseDuration;                               // Duration of the pause (only updated once resumed)
         uint64 quietEndingExtensionDuration;                // Duration a vote was extended due to non-quiet endings
         VoterState quietEndingSnapshotSupport;              // Snapshot of the vote's support at the beginning of the first quiet ending period
+
         bytes32 executionScriptHash;                        // Hash of the EVM script attached to the vote
         mapping (address => VoteCast) castVotes;            // Mapping of voter address => more information about their cast vote
     }
@@ -414,11 +418,11 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @return yea Voting power for
     * @return nay Voting power against
     * @return totalPower Total voting power available (based on the snapshot block)
-    * @return settingId Identification number of the setting applicable to the vote
-    * @return actionId Identification number of the associated disputable action on the attached Agreement
     * @return startDate Datetime when the vote was created
     * @return snapshotBlock Block number used to check voting power on attached token
     * @return status Status of the vote
+    * @return settingId Identification number of the setting applicable to the vote
+    * @return actionId Identification number of the associated disputable action on the attached Agreement
     * @return pausedAt Datetime when the vote was paused
     * @return pauseDuration Duration of the pause (only updated once resumed)
     * @return quietEndingExtensionDuration Duration a vote was extended due to non-quiet endings
@@ -432,11 +436,11 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
             uint256 yea,
             uint256 nay,
             uint256 totalPower,
-            uint256 settingId,
-            uint256 actionId,
             uint64 startDate,
             uint64 snapshotBlock,
             VoteStatus status,
+            uint256 settingId,
+            uint256 actionId,
             uint64 pausedAt,
             uint64 pauseDuration,
             uint64 quietEndingExtensionDuration,
@@ -449,11 +453,11 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         yea = vote_.yea;
         nay = vote_.nay;
         totalPower = vote_.totalPower;
-        settingId = vote_.settingId;
-        actionId = vote_.actionId;
         startDate = vote_.startDate;
         snapshotBlock = vote_.snapshotBlock;
         status = vote_.status;
+        settingId = vote_.settingId;
+        actionId = vote_.actionId;
         pausedAt = vote_.pausedAt;
         pauseDuration = vote_.pauseDuration;
         quietEndingExtensionDuration = vote_.quietEndingExtensionDuration;
@@ -717,10 +721,10 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
 
         Vote storage vote_ = votes[voteId];
         vote_.totalPower = totalPower;
-        vote_.settingId = _getCurrentSettingId();
         vote_.startDate = getTimestamp64();
         vote_.snapshotBlock = snapshotBlock;
         vote_.status = VoteStatus.Normal;
+        vote_.settingId = _getCurrentSettingId();
         vote_.executionScriptHash = keccak256(_executionScript);
 
         // Notify the attached Agreement about the new vote; this is mandatory in making the vote disputable
@@ -951,8 +955,9 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
 
         // If the vote was paused before the delegated voting period ended, we need to extend it
         uint64 pausedAt = _vote.pausedAt;
+        uint64 pauseDuration = _vote.pauseDuration;
         uint64 actualDeletedVotingEndDate = pausedAt != 0 && pausedAt < baseDelegatedVotingPeriodEndDate
-            ? baseDelegatedVotingPeriodEndDate.add(_vote.pauseDuration)
+            ? baseDelegatedVotingPeriodEndDate.add(pauseDuration)
             : baseDelegatedVotingPeriodEndDate;
 
         return getTimestamp() >= actualDeletedVotingEndDate;
@@ -971,8 +976,9 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
 
         // If the vote was paused before the quiet ending period started, we need to delay it
         uint64 pausedAt = _vote.pausedAt;
+        uint64 pauseDuration = _vote.pauseDuration;
         uint64 actualQuietEndingPeriodStartDate = pausedAt != 0 && pausedAt < baseQuietEndingPeriodStartDate
-            ? baseQuietEndingPeriodStartDate.add(_vote.pauseDuration)
+            ? baseQuietEndingPeriodStartDate.add(pauseDuration)
             : baseQuietEndingPeriodStartDate;
 
         return getTimestamp() >= actualQuietEndingPeriodStartDate;
