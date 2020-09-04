@@ -1,5 +1,5 @@
 const { utf8ToHex } = require('web3-utils')
-const { injectWeb3, injectArtifacts, pct16, bn, ONE_DAY } = require('@aragon/contract-helpers-test')
+const { injectWeb3, injectArtifacts, pct16, bigExp, ONE_DAY } = require('@aragon/contract-helpers-test')
 
 const createActions = require('./src/create-actions')
 const grantPermissions = require('./src/grant-permissions')
@@ -30,8 +30,8 @@ const config = {
     delegatedVotingPeriod:  ONE_DAY * 2,
     quietEndingPeriod:      ONE_DAY,
     quietEndingExtension:   ONE_DAY / 2,
-    actionCollateral:       bn(0),
-    challengeCollateral:    bn(0),
+    actionCollateral:       bigExp(1, 18),
+    challengeCollateral:    bigExp(2, 18),
     challengeDuration:      ONE_DAY * 3,
   },
 }
