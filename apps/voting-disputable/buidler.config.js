@@ -5,6 +5,9 @@ usePlugin('@nomiclabs/buidler-truffle5')
 usePlugin('buidler-gas-reporter')
 usePlugin('solidity-coverage')
 
+const ACCOUNTS = (process.env.ETH_KEYS ? process.env.ETH_KEYS.split(',') : [])
+  .map(key => key.trim())
+
 module.exports = {
   networks: {
     // Local development network using ganache. You can set any of the
@@ -25,18 +28,12 @@ module.exports = {
     // Mainnet network configured with Aragon node.
     mainnet: {
       url: 'https://mainnet.eth.aragon.network',
-      accounts: [
-        process.env.ETH_KEY ||
-          '0xa8a54b2d8197bc0b19bb8a084031be71835580a01e70a45a13babd16c9bc1563',
-      ],
+      accounts: ACCOUNTS,
     },
     // Rinkeby network configured with Aragon node.
     rinkeby: {
       url: 'https://rinkeby.eth.aragon.network',
-      accounts: [
-        process.env.ETH_KEY ||
-          '0xa8a54b2d8197bc0b19bb8a084031be71835580a01e70a45a13babd16c9bc1563',
-      ],
+      accounts: ACCOUNTS,
     },
     // Network configured to interact with Frame wallet. Requires
     // to have Frame running on your machine. Download it from:
