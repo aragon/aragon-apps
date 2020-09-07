@@ -31,10 +31,10 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     uint256 internal constant DISPUTES_POSSIBLE_OUTCOMES = 2;
     // Note that Aragon Court treats the possible outcomes as arbitrary numbers, leaving the Arbitrable (us) to define how to understand them.
     // Some outcomes [0, 1, and 2] are reserved by Aragon Court: "missing", "leaked", and "refused", respectively.
-    // This Arbitrable introduces the concept of the submitter/challenger (a binary outcome) as 3/4.
-    // Note that Aragon Court emits the lowest outcome in the event of a tie, and so for us, we prefer the submitter.
-    uint256 internal constant DISPUTES_RULING_SUBMITTER = 3;
-    uint256 internal constant DISPUTES_RULING_CHALLENGER = 4;
+    // This Arbitrable introduces the concept of the challenger/submitter (a binary outcome) as 3/4.
+    // Note that Aragon Court emits the lowest outcome in the event of a tie, and so for us, we prefer the challenger.
+    uint256 internal constant DISPUTES_RULING_CHALLENGER = 3;
+    uint256 internal constant DISPUTES_RULING_SUBMITTER = 4;
 
     /* Validation errors */
     string internal constant ERROR_SENDER_NOT_ALLOWED = "AGR_SENDER_NOT_ALLOWED";
