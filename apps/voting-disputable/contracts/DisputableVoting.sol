@@ -115,7 +115,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         VoteStatus status;                                  // Status of the vote
 
         uint256 settingId;                                  // Identification number of the setting applicable to the vote
-        uint256 actionId;                                   // Identification number of the associated disputable action on the attached Agreement
+        uint256 actionId;                                   // Identification number of the associated disputable action on the linked Agreement
 
         uint64 pausedAt;                                    // Datetime when the vote was paused
         uint64 pauseDuration;                               // Duration of the pause (only updated once resumed)
@@ -222,7 +222,10 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @notice Change delegated voting period to `@transformTime(_delegatedVotingPeriod)`
     * @param _delegatedVotingPeriod New delegated voting period
     */
-    function changeDelegatedVotingPeriod(uint64 _delegatedVotingPeriod) external authP(CHANGE_DELEGATED_VOTING_PERIOD_ROLE, arr(uint256(_delegatedVotingPeriod))) {
+    function changeDelegatedVotingPeriod(uint64 _delegatedVotingPeriod)
+        external
+        authP(CHANGE_DELEGATED_VOTING_PERIOD_ROLE, arr(uint256(_delegatedVotingPeriod)))
+    {
         Setting storage setting = _newCopiedSettings();
         _changeDelegatedVotingPeriod(setting, _delegatedVotingPeriod);
     }
