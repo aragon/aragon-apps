@@ -372,7 +372,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     function canChallenge(uint256 _voteId) external view returns (bool) {
         Vote storage vote_ = _getVote(_voteId);
         // Votes can only be challenged once
-        return vote_.pausedAt == 0 && _isVoteOpenForVoting(vote_, settings[vote_.settingId]);
+        return vote_.pausedAt == 0 && (_isNormal(vote_) && !_hasFinishedExecutionDelay(vote_, settings[vote_.settingId]));
     }
 
     /**
@@ -383,7 +383,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     */
     function canClose(uint256 _voteId) external view returns (bool) {
         Vote storage vote_ = _getVote(_voteId);
-        return (_isNormal(vote_) || _isExecuted(vote_)) && _hasEnded(vote_, settings[vote_.settingId]);
+        return _isExecuted(vote_) || (_isNormal(vote_) && _hasFinishedExecutionDelay(vote_, settings[vote_.settingId]));
     }
 
     // Getter fns
@@ -891,11 +891,6 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
 
         Setting storage setting = settings[_vote.settingId];
 
-        // If the vote is still open, it cannot be executed
-        if (!_hasEnded(_vote, setting)) {
-            return false;
-        }
-
         // If the vote's execution delay has not finished yet, it cannot be executed
         if (!_hasFinishedExecutionDelay(_vote, setting)) {
             return false;
@@ -954,17 +949,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @return True if the vote is open for voting
     */
     function _isVoteOpenForVoting(Vote storage _vote, Setting storage _setting) internal view returns (bool) {
-        return _isNormal(_vote) && !_hasEnded(_vote, _setting);
-    }
-
-    /**
-    * @dev Tell if a vote has ended
-    * @param _vote Vote instance being queried
-    * @param _setting Setting instance applicable to the vote
-    * @return True if the vote has ended
-    */
-    function _hasEnded(Vote storage _vote, Setting storage _setting) internal view returns (bool) {
-        return getTimestamp() >= _currentVoteEndDate(_vote, _setting);
+        return _isNormal(_vote) && getTimestamp() < _currentVoteEndDate(_vote, _setting);
     }
 
     /**
