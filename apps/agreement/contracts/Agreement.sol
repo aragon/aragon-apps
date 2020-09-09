@@ -342,9 +342,9 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         // Pay action submission fees
         Setting storage setting = _getSetting(currentSettingId);
         DisputableAragonApp disputable = DisputableAragonApp(msg.sender);
+        uint256 id = nextActionId++;
         _payAppFees(setting, disputable, _submitter, id);
 
-        uint256 id = nextActionId++;
         Action storage action = actions[id];
         action.disputable = disputable;
         action.disputableActionId = _disputableActionId;
