@@ -332,7 +332,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
 
         uint256 currentSettingId = _getCurrentSettingId();
         uint256 lastSettingIdSigned = lastSettingSignedBy[_submitter];
-        require(lastSettingIdSigned >= currentSettingId, ERROR_SIGNER_MUST_SIGN);
+        require(lastSettingIdSigned == currentSettingId, ERROR_SIGNER_MUST_SIGN);
 
         // An initial collateral requirement is created when disputable apps are activated, thus length is always greater than 0
         uint256 currentCollateralRequirementId = disputableInfo.nextCollateralRequirementsId - 1;
