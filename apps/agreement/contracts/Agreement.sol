@@ -465,8 +465,13 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         IArbitrator arbitrator = _getArbitratorFor(action);
         bytes memory metadata = abi.encodePacked(appId(), action.lastChallengeId);
         uint256 disputeId = _createDispute(action, challenge, arbitrator, metadata);
+        bool challengerFinishedEvidence = challenge.challengerFinishedEvidence;
         _submitEvidence(arbitrator, disputeId, submitter, action.context, _submitterFinishedEvidence);
-        _submitEvidence(arbitrator, disputeId, challenge.challenger, challenge.context, challenge.challengerFinishedEvidence);
+        _submitEvidence(arbitrator, disputeId, challenge.challenger, challenge.context, challengerFinishedEvidence);
+
+        if (_submitterFinishedEvidence && challengerFinishedEvidence) {
+            arbitrator.closeEvidencePeriod(disputeId);
+        }
 
         challenge.state = ChallengeState.Disputed;
         challenge.submitterFinishedEvidence = _submitterFinishedEvidence;
