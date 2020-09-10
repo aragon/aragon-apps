@@ -30,10 +30,10 @@
   resolved "https://registry.yarnpkg.com/@aragon/os/-/os-5.0.0-rc.0.tgz#a4e68fc452aebf59b7976d7f763b71da714f4b2e"
   integrity sha512-jqSxL5f4k7fHT6EyROZCi8oXG1ZBzIXbaStfQFokhZVKtLN0yXayOz5WukVaHrllRUQLtWcrSAXHnx6P6WGLkA==
 
-"@aragon/staking@0.2.9":
-  version "0.2.9"
-  resolved "https://registry.yarnpkg.com/@aragon/staking/-/staking-0.2.9.tgz#e678716757e771049797b86b44c76445c1aa2b1c"
-  integrity sha512-1KK4SsUTD4ZweZ+hLlDUvDoyY4CN8xiGo/ENe+OlMX/CcU3a3fHl0ix4uHaCzJ9gCJQGG65inxlml2lzFnmP9A==
+"@aragon/staking@0.3.1":
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/@aragon/staking/-/staking-0.3.1.tgz#6dd33dfc98c6f6a0a8880561da39684187bb4d7d"
+  integrity sha512-W3dIwc43Vum9kFMI+op0SiEtWOp6mk/AhQsMPK0AHI53Ngzgn7lOPXg5IB+28fKpAjX7xWhMr9+Wok0zhZjfNw==
 
 "@aragon/truffle-config-v4@^1.0.1":
   version "1.0.1"
