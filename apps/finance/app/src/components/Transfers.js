@@ -218,7 +218,14 @@ const Transfers = React.memo(({ tokens, transactions }) => {
         )
 
         return [
-          <time dateTime={formattedDate} title={formattedDate}>
+          <time
+            dateTime={formattedDate}
+            title={formattedDate}
+            css={`
+              padding-right: ${2 * GU}px;
+              white-space: nowrap;
+            `}
+          >
             {formatDate(date)}
           </time>,
           <div
