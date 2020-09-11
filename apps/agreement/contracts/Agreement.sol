@@ -470,7 +470,9 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         _submitEvidence(arbitrator, disputeId, challenge.challenger, challenge.context, challengerFinishedEvidence);
 
         if (_submitterFinishedEvidence && challengerFinishedEvidence) {
-            arbitrator.closeEvidencePeriod(disputeId);
+            // Try-catch for: arbitrator.closeEvidencePeriod(disputeId);
+            bytes memory closeEvidencePeriodCalldata = abi.encodeWithSelector(arbitrator.closeEvidencePeriod.selector, disputeId);
+            address(arbitrator).call(closeEvidencePeriodCalldata);
         }
 
         challenge.state = ChallengeState.Disputed;
