@@ -218,7 +218,14 @@ const Transfers = React.memo(({ tokens, transactions }) => {
         )
 
         return [
-          <time dateTime={formattedDate} title={formattedDate}>
+          <time
+            dateTime={formattedDate}
+            title={formattedDate}
+            css={`
+              padding-right: ${2 * GU}px;
+              white-space: nowrap;
+            `}
+          >
             {formatDate(date)}
           </time>,
           <div
@@ -239,7 +246,10 @@ const Transfers = React.memo(({ tokens, transactions }) => {
           </div>,
           <div
             css={`
-              padding: 0 ${0.5 * GU}px;
+              padding: ${1 * GU}px ${0.5 * GU}px;
+              overflow-wrap: break-word;
+              word-break: break-word;
+              hyphens: auto;
             `}
           >
             {reference}
