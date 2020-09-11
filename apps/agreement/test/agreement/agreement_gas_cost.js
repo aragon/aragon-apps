@@ -18,7 +18,7 @@ contract('Agreement', ([_, user]) => {
     }
 
     context('stake', () => {
-      itCostsAtMost(205e3, () => disputable.stake({ user }))
+      itCostsAtMost(201e3, () => disputable.stake({ user }))
     })
 
     context('unstake', () => {
@@ -26,11 +26,11 @@ contract('Agreement', ([_, user]) => {
         await disputable.stake({ user })
       })
 
-      itCostsAtMost(185e3, () => disputable.unstake({ user }))
+      itCostsAtMost(181e3, () => disputable.unstake({ user }))
     })
 
     context('newAction', () => {
-      itCostsAtMost(297e3, async () => (await disputable.newAction({})).receipt)
+      itCostsAtMost(293e3, async () => (await disputable.newAction({})).receipt)
     })
 
     context('closeAction', () => {
@@ -38,7 +38,7 @@ contract('Agreement', ([_, user]) => {
         ({ actionId } = await disputable.newAction({}))
       })
 
-      itCostsAtMost(86e3, () => disputable.close(actionId))
+      itCostsAtMost(81e3, () => disputable.close(actionId))
     })
 
     context('challenge', () => {
@@ -55,7 +55,7 @@ contract('Agreement', ([_, user]) => {
         await disputable.challenge({ actionId })
       })
 
-      itCostsAtMost(276e3, () => disputable.settle({ actionId }))
+      itCostsAtMost(272e3, () => disputable.settle({ actionId }))
     })
 
     context('dispute', () => {
@@ -83,7 +83,7 @@ contract('Agreement', ([_, user]) => {
       })
 
       context('in favor of the challenger', () => {
-        itCostsAtMost(445e3, () => disputable.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_CHALLENGER }))
+        itCostsAtMost(415e3, () => disputable.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_CHALLENGER }))
       })
     })
   })
