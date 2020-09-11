@@ -339,13 +339,15 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         CollateralRequirement storage requirement = _getCollateralRequirement(disputableInfo, currentCollateralRequirementId);
         _lockBalance(requirement.staking, _submitter, requirement.actionAmount);
 
+        // Create new action
+        uint256 id = nextActionId++;
+        Action storage action = actions[id];
+
         // Pay action submission fees
         Setting storage setting = _getSetting(currentSettingId);
         DisputableAragonApp disputable = DisputableAragonApp(msg.sender);
-        uint256 id = nextActionId++;
         _payAppFees(setting, disputable, _submitter, id);
 
-        Action storage action = actions[id];
         action.disputable = disputable;
         action.disputableActionId = _disputableActionId;
         action.collateralRequirementId = currentCollateralRequirementId;
