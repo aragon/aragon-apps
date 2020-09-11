@@ -191,6 +191,8 @@ const Transactions = React.memo(function Transactions({
             css={`
               ${textStyle('body2')};
               color: ${theme.surfaceContent};
+              padding-right: ${2 * GU}px;
+              white-space: nowrap;
             `}
           >
             {formattedDate}
@@ -237,6 +239,10 @@ const Transactions = React.memo(function Transactions({
             css={`
               ${textStyle('body2')};
               color: ${theme.surfaceContent};
+              padding: ${1 * GU}px ${0.5 * GU}px;
+              overflow-wrap: break-word;
+              word-break: break-word;
+              hyphens: auto;
             `}
           >
             {reference}
