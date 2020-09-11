@@ -239,7 +239,10 @@ const Transfers = React.memo(({ tokens, transactions }) => {
           </div>,
           <div
             css={`
-              padding: 0 ${0.5 * GU}px;
+              padding: ${1 * GU}px ${0.5 * GU}px;
+              overflow-wrap: break-word;
+              word-break: break-word;
+              hyphens: auto;
             `}
           >
             {reference}
