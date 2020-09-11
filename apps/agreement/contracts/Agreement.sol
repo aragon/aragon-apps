@@ -332,20 +332,22 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
 
         uint256 currentSettingId = _getCurrentSettingId();
         uint256 lastSettingIdSigned = lastSettingSignedBy[_submitter];
-        require(lastSettingIdSigned >= currentSettingId, ERROR_SIGNER_MUST_SIGN);
+        require(lastSettingIdSigned == currentSettingId, ERROR_SIGNER_MUST_SIGN);
 
         // An initial collateral requirement is created when disputable apps are activated, thus length is always greater than 0
         uint256 currentCollateralRequirementId = disputableInfo.nextCollateralRequirementsId - 1;
         CollateralRequirement storage requirement = _getCollateralRequirement(disputableInfo, currentCollateralRequirementId);
         _lockBalance(requirement.staking, _submitter, requirement.actionAmount);
 
+        // Create new action
+        uint256 id = nextActionId++;
+        Action storage action = actions[id];
+
         // Pay action submission fees
         Setting storage setting = _getSetting(currentSettingId);
         DisputableAragonApp disputable = DisputableAragonApp(msg.sender);
         _payAppFees(setting, disputable, _submitter, id);
 
-        uint256 id = nextActionId++;
-        Action storage action = actions[id];
         action.disputable = disputable;
         action.disputableActionId = _disputableActionId;
         action.collateralRequirementId = currentCollateralRequirementId;

@@ -66,6 +66,10 @@ class DisputableWrapper extends AgreementWrapper {
     return super.getStaking(token)
   }
 
+  async appId() {
+    return this.disputable.appId()
+  }
+
   async activate(options = {}) {
     const { disputable, collateralToken, actionCollateral, challengeCollateral, challengeDuration } = this
     return super.activate({ disputable, collateralToken, challengeDuration, actionCollateral, challengeCollateral, ...options })
@@ -140,7 +144,7 @@ class DisputableWrapper extends AgreementWrapper {
 
   async setAppFee({ token = undefined, amount }) {
     if (!token) token = this.collateralToken
-    const appId = await this.disputable.appId()
+    const appId = await this.appId()
     const cashier = await this.appFeesCashier()
     return cashier.setAppFee(appId, token.address, amount)
   }

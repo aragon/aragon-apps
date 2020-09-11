@@ -115,7 +115,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         VoteStatus status;                                  // Status of the vote
 
         uint256 settingId;                                  // Identification number of the setting applicable to the vote
-        uint256 actionId;                                   // Identification number of the associated disputable action on the attached Agreement
+        uint256 actionId;                                   // Identification number of the associated disputable action on the linked Agreement
 
         uint64 pausedAt;                                    // Datetime when the vote was paused
         uint64 pauseDuration;                               // Duration of the pause (only updated once resumed)
@@ -222,7 +222,10 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @notice Change delegated voting period to `@transformTime(_delegatedVotingPeriod)`
     * @param _delegatedVotingPeriod New delegated voting period
     */
-    function changeDelegatedVotingPeriod(uint64 _delegatedVotingPeriod) external authP(CHANGE_DELEGATED_VOTING_PERIOD_ROLE, arr(uint256(_delegatedVotingPeriod))) {
+    function changeDelegatedVotingPeriod(uint64 _delegatedVotingPeriod)
+        external
+        authP(CHANGE_DELEGATED_VOTING_PERIOD_ROLE, arr(uint256(_delegatedVotingPeriod)))
+    {
         Setting storage setting = _newCopiedSettings();
         _changeDelegatedVotingPeriod(setting, _delegatedVotingPeriod);
     }
@@ -252,7 +255,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     /**
     * @notice Create a new vote about "`_context`"
     * @param _executionScript Action (encoded as an EVM script) that will be allowed to execute if the vote passes
-    * @param _context Additional context for the vote, also used as the disputable action's context on the attached Agreement
+    * @param _context Additional context for the vote, also used as the disputable action's context on the linked Agreement
     * @return Identification number of the newly created vote
     */
     function newVote(bytes _executionScript, bytes _context) external auth(CREATE_VOTES_ROLE) returns (uint256) {
@@ -317,7 +320,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         vote_.status = VoteStatus.Executed;
         _closeDisputableAction(vote_.actionId);
 
-        // Add attached Agreement to blacklist to disallow the stored EVMScript from directly calling
+        // Add linked Agreement to blacklist to disallow the stored EVMScript from directly calling
         // the Agreement from this app's context (e.g. maliciously closing a different action)
         address[] memory blacklist = new address[](1);
         blacklist[0] = address(_getAgreement());
@@ -341,7 +344,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @dev IForwarderWithContext interface conformance.
     *      This app (as a DisputableAragonApp) is required to be the initial step in the forwarding chain.
     * @param _evmScript Action (encoded as an EVM script) that will be allowed to execute if the vote passes
-    * @param _context Additional context for the vote, also used as the disputable action's context on the attached Agreement
+    * @param _context Additional context for the vote, also used as the disputable action's context on the linked Agreement
     */
     function forward(bytes _evmScript, bytes _context) external {
         require(_canForward(msg.sender, _evmScript), ERROR_CANNOT_FORWARD);
@@ -365,7 +368,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
 
     /**
     * @dev Tell if a vote can be challenged
-    *      Called by the attached Agreement when a challenge is requested for the associated vote
+    *      Called by the linked Agreement when a challenge is requested for the associated vote
     * @param _voteId Identification number of the vote being queried
     * @return True if the vote can be challenged
     */
@@ -377,7 +380,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
 
     /**
     * @dev Tell if a vote can be closed
-    *      Called by the attached Agreement when the action associated with the vote is requested to be manually closed
+    *      Called by the linked Agreement when the action associated with the vote is requested to be manually closed
     * @param _voteId Identification number of the vote being queried
     * @return True if the vote can be closed
     */
@@ -436,7 +439,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @return snapshotBlock Block number used to check voting power on attached token
     * @return status Status of the vote
     * @return settingId Identification number of the setting applicable to the vote
-    * @return actionId Identification number of the associated disputable action on the attached Agreement
+    * @return actionId Identification number of the associated disputable action on the linked Agreement
     * @return pausedAt Datetime when the vote was paused
     * @return pauseDuration Duration of the pause (only updated once resumed)
     * @return quietEndingExtensionDuration Duration a vote was extended due to non-quiet endings
@@ -584,7 +587,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     /**
     * @dev Received when a vote is challenged
     * @param _voteId Identification number of the vote
-    * @param _challengeId Identification number of the challenge associated to the vote on the attached Agreement
+    * @param _challengeId Identification number of the challenge associated to the vote on the linked Agreement
     */
     function _onDisputableActionChallenged(uint256 _voteId, uint256 _challengeId, address /* _challenger */) internal {
         Vote storage vote_ = _getVote(_voteId);
@@ -627,7 +630,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     */
     function _onDisputableActionVoided(uint256 _voteId) internal {
         // When a challenged vote is ruled as voided, it is considered as being allowed.
-        // This could be the case for challenges where the attached Agreement's arbitrator refuses to rule the case.
+        // This could be the case for challenges where the linked Agreement's arbitrator refuses to rule the case.
         _onDisputableActionAllowed(_voteId);
     }
 
@@ -737,7 +740,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     /**
     * @dev Create a new vote
     * @param _executionScript Action (encoded as an EVM script) that will be allowed to execute if the vote passes
-    * @param _context Additional context for the vote, also used as the disputable action's context on the attached Agreement
+    * @param _context Additional context for the vote, also used as the disputable action's context on the linked Agreement
     * @return voteId Identification number for the newly created vote
     */
     function _newVote(bytes _executionScript, bytes _context) internal returns (uint256 voteId) {
@@ -755,8 +758,8 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         vote_.settingId = _getCurrentSettingId();
         vote_.executionScriptHash = keccak256(_executionScript);
 
-        // Notify the attached Agreement about the new vote; this is mandatory in making the vote disputable
-        // Note that we send `msg.sender` as the action's submitter--the attached Agreement may expect to be able to pull funds from this account
+        // Notify the linked Agreement about the new vote; this is mandatory in making the vote disputable
+        // Note that we send `msg.sender` as the action's submitter--the linked Agreement may expect to be able to pull funds from this account
         vote_.actionId = _registerDisputableAction(voteId, _context, msg.sender);
 
         emit StartVote(voteId, msg.sender, _context, _executionScript);

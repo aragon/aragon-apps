@@ -62,14 +62,17 @@ contract AragonAppFeesCashierMock is IAragonAppFeesCashier, IsContract {
     /**
     * @notice Pay fees for app with id `_appId`
     * @param _appId App id paying for
+    * @param _data Optional data input
     */
-    function payAppFees(bytes32 _appId, bytes) external payable {
+    function payAppFees(bytes32 _appId, bytes _data) external payable {
         AppFee storage appFee = appFees[_appId];
         require(appFee.set, ERROR_APP_FEE_NOT_SET);
         require(msg.value == 0, ERROR_ETH_APP_FEE_NOT_ALLOWED);
 
         ERC20 token = appFee.token;
         require(token.transferFrom(msg.sender, address(this), appFee.amount), ERROR_FEE_TOKEN_DEPOSIT_FAILED);
+
+        emit AppFeePaid(msg.sender, _appId, _data);
     }
 
     /**
