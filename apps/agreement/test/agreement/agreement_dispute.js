@@ -133,6 +133,15 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                       await assertRevert(disputable.closeEvidencePeriod(actionId), 'ARBITRATOR_DISPUTE_EVIDENCE_PERIOD_ALREADY_CLOSED')
                     })
 
+                    it('does not revert if it cannot close the evidence submission period automatically', async () => {
+                      await disputable.arbitrator.setCloseEvidencePeriodFailure(true)
+
+                      const receipt = await disputable.dispute({ actionId, from, arbitratorFees, finishedSubmittingEvidence: true })
+
+                      assertAmountOfEvents(receipt, 'EvidencePeriodClosed', { expectedAmount: 0, decodeForAbi: disputable.arbitrator.abi })
+                      await disputable.arbitrator.setCloseEvidencePeriodFailure(false)
+                    })
+
                     it('does not affect the submitter staked balances', async () => {
                       const { locked: previousLockedBalance, available: previousAvailableBalance } = await disputable.getBalance(submitter)
 
