@@ -9,6 +9,7 @@ import "../../../arbitration/IAragonAppFeesCashier.sol";
 
 contract ArbitratorMock is IArbitrator {
     string internal constant ERROR_DISPUTE_NOT_RULED_YET = "ARBITRATOR_DISPUTE_NOT_RULED_YET";
+    string internal constant ERROR_CLOSE_EVIDENCE_PERIOD_FAILED = "ARBITRATOR_CLOSE_EVIDENCE_PERIOD_FAILED";
     string internal constant ERROR_DISPUTE_EVIDENCE_PERIOD_ALREADY_CLOSED = "ARBITRATOR_DISPUTE_EVIDENCE_PERIOD_ALREADY_CLOSED";
 
     struct Dispute {
@@ -24,6 +25,7 @@ contract ArbitratorMock is IArbitrator {
 
     Fee public fee;
     IAragonAppFeesCashier public appFeesCashier;
+    bool public closeEvidencePeriodFail;
 
     uint256 public disputesLength;
     mapping (uint256 => Dispute) public disputes;
@@ -48,6 +50,8 @@ contract ArbitratorMock is IArbitrator {
     }
 
     function closeEvidencePeriod(uint256 _disputeId) external {
+        require(!closeEvidencePeriodFail, ERROR_CLOSE_EVIDENCE_PERIOD_FAILED);
+
         Dispute storage dispute = disputes[_disputeId];
         require(!dispute.evidencePeriodClosed, ERROR_DISPUTE_EVIDENCE_PERIOD_ALREADY_CLOSED);
 
@@ -73,6 +77,10 @@ contract ArbitratorMock is IArbitrator {
 
     function setAppFeesCashier(IAragonAppFeesCashier _newAppFeesCashier) external {
         appFeesCashier = _newAppFeesCashier;
+    }
+
+    function setCloseEvidencePeriodFailure(bool _fail) external {
+        closeEvidencePeriodFail = _fail;
     }
 
     function getDisputeFees() public view returns (address recipient, ERC20 feeToken, uint256 feeAmount) {
