@@ -225,7 +225,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
                         context('when the submitter has no allowed balance in the staking pool', () => {
                           beforeEach('decrease allowance', async () => {
                             const staking = await disputable.getStaking(collateralToken)
-                            const { _allowance: allowance, _amount: locked } = await staking.getLock(submitter, disputable.address)
+                            const { allowance, amount: locked } = await staking.getLock(submitter, disputable.address)
                             await staking.decreaseLockAllowance(submitter, disputable.address, allowance.sub(locked), { from: submitter })
                           })
 

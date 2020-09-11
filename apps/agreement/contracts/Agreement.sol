@@ -14,9 +14,9 @@ import "@aragon/os/contracts/lib/math/SafeMath.sol";
 import "@aragon/os/contracts/lib/math/SafeMath64.sol";
 import "@aragon/os/contracts/lib/token/ERC20.sol";
 
-import "@aragon/staking/interfaces/IStaking.sol";
-import "@aragon/staking/interfaces/IStakingFactory.sol";
-import "@aragon/staking/interfaces/ILockManager.sol";
+import "@aragon/staking/interfaces/0.4/IStaking.sol";
+import "@aragon/staking/interfaces/0.4/IStakingFactory.sol";
+import "@aragon/staking/interfaces/0.4/ILockManager.sol";
 
 import "./arbitration/IArbitrable.sol";
 import "./arbitration/IAragonAppFeesCashier.sol";
@@ -1132,7 +1132,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
             return;
         }
 
-        _staking.lock(_user, address(this), _amount);
+        _staking.lock(_user, _amount);
     }
 
     /**

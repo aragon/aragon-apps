@@ -23,7 +23,7 @@
   },
   "dependencies": {
     "@aragon/os": "5.0.0-rc.0",
-    "@aragon/staking": "0.2.9"
+    "@aragon/staking": "0.3.1"
   },
   "devDependencies": {
     "@aragon/contract-helpers-test": "^0.1.0",
