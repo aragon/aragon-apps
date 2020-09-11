@@ -15,8 +15,8 @@ contract('Agreement', ([_, owner, submitter, challenger, someone]) => {
   describe('lock manager interface', () => {
     let actionId
 
-    context("can't unlock", () => {
-      const cannotUnlock = async (user) => {
+    context('can not unlock', () => {
+      const cannotUnlock = async () => {
         await Promise.all(
           [owner, submitter, challenger, someone].map(async (user) => {
             assert.isFalse(await agreement.canUnlock(user, 0), 'User can unlock')
@@ -34,7 +34,7 @@ contract('Agreement', ([_, owner, submitter, challenger, someone]) => {
         await cannotUnlock()
       })
 
-      it('after siging', async () => {
+      it('after signing', async () => {
         await disputable.sign(submitter)
         await cannotUnlock()
       })
