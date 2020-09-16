@@ -628,9 +628,9 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @param _voteId Identification number of the vote
     */
     function _onDisputableActionVoided(uint256 _voteId) internal {
-        // When a challenged vote is ruled as voided, it is considered as being allowed.
+        // When a challenged vote is ruled as voided, it is considered as being rejected.
         // This could be the case for challenges where the linked Agreement's arbitrator refuses to rule the case.
-        _onDisputableActionAllowed(_voteId);
+        _onDisputableActionRejected(_voteId);
     }
 
     // Internal fns

@@ -165,7 +165,12 @@ contract('Voting disputable', ([_, owner, representative, voter10, voter20, vote
       await voting.mockSetTimestamp(currentTimestamp)
     })
 
-    const itResumesTheVote = () => {
+    context('when allowed', () => {
+      beforeEach('dispute and allow vote', async () => {
+        await agreement.dispute({ actionId })
+        await agreement.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_SUBMITTER })
+      })
+
       it('resumes the vote', async () => {
         const { actionId: voteActionId, pausedAt, pauseDuration, status } = await getVoteState(voting, voteId)
         assertBn(status, VOTE_STATUS.NORMAL, 'vote status does not match')
@@ -265,24 +270,6 @@ contract('Voting disputable', ([_, owner, representative, voter10, voter20, vote
 
         await assertRevert(agreement.challenge({ actionId }), 'AGR_CANNOT_CHALLENGE_ACTION')
       })
-    }
-
-    context('when allowed', () => {
-      beforeEach('dispute and allow vote', async () => {
-        await agreement.dispute({ actionId })
-        await agreement.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_SUBMITTER })
-      })
-
-      itResumesTheVote()
-    })
-
-    context('when voided', () => {
-      beforeEach('dispute and void vote', async () => {
-        await agreement.dispute({ actionId })
-        await agreement.executeRuling({ actionId, ruling: RULINGS.REFUSED })
-      })
-
-      itResumesTheVote()
     })
   })
 
@@ -361,6 +348,15 @@ contract('Voting disputable', ([_, owner, representative, voter10, voter20, vote
       beforeEach('dispute and reject vote', async () => {
         await agreement.dispute({ actionId })
         await agreement.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_CHALLENGER })
+      })
+
+      itCancelsTheVote()
+    })
+
+    context('when voided', () => {
+      beforeEach('dispute and void vote', async () => {
+        await agreement.dispute({ actionId })
+        await agreement.executeRuling({ actionId, ruling: RULINGS.REFUSED })
       })
 
       itCancelsTheVote()
