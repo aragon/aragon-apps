@@ -273,7 +273,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         Vote storage vote_ = _getVote(_voteId);
         require(_canVote(vote_, msg.sender), ERROR_CANNOT_VOTE);
 
-        _castVote(vote_, _voteId, _supports, msg.sender, address(0));
+        _castVote(vote_, _voteId, _supports, msg.sender, msg.sender);
     }
 
     /**
@@ -804,8 +804,8 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         _vote.yea = yeas;
         _vote.nay = nays;
         castVote.state = _voterStateFor(_supports);
-        castVote.caster = _caster;
-        emit CastVote(_voteId, _voter, _supports, _caster == address(0) ? _voter : _caster);
+        castVote.caster = _caster == _voter ? address(0) : _caster;
+        emit CastVote(_voteId, _voter, _supports, _caster);
     }
 
     /**
@@ -1142,7 +1142,7 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
     * @return True if the representative currently represents the voter
     */
     function _isRepresentativeOf(address _voter, address _representative) internal view returns (bool) {
-        return representatives[_voter] == _representative;
+        return representatives[_voter] == _representative || _voter == _representative;
     }
 
     /**
