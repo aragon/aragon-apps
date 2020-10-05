@@ -320,11 +320,10 @@ contract DisputableVoting is IForwarderWithContext, DisputableAragonApp {
         vote_.status = VoteStatus.Executed;
         _closeDisputableAction(vote_.actionId);
 
-        // Add linked Agreement to blacklist to disallow the stored EVMScript from directly calling
-        // the Agreement from this app's context (e.g. maliciously closing a different action)
-        address[] memory blacklist = new address[](1);
-        blacklist[0] = address(_getAgreement());
-        runScript(_executionScript, new bytes(0), blacklist);
+        // IMPORTANT! The linked Agreement is not blacklisted on purpose
+        // It will be users responsibility to check the content of the EVMScripts submitted to the Disputable Voting app
+        // to make sure these are not performing any malicious actions in the Agreement (e.g. maliciously closing a different action)
+        runScript(_executionScript, new bytes(0), new address[](0));
         emit ExecuteVote(_voteId);
     }
 
