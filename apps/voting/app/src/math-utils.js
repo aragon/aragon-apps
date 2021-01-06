@@ -1,4 +1,5 @@
 import BN from 'bn.js'
+import { divideRoundBigInt, formatTokenAmount } from '@aragon/ui'
 
 /**
  * Format numbers for a given number of decimal places
@@ -38,8 +39,86 @@ export function formatNumber(num, decimals = 2, { truncate = true } = {}) {
     : formattedNumber
 }
 
-export function percentageList(values, digits = 0) {
+export function percentageList(values) {
   return scaleBNValuesSet(values).map(value => value.toNumber())
+}
+
+// Format a percentage from BN values.
+// `value` divided by `pctBase` must be in the [0, 1] range.
+export function formatBnPercentage(
+  value,
+  pctBase,
+  { digits = 2, suffix = '%' } = {}
+) {
+  let basePrecision = 10 ** digits
+
+  // Tolerate having too many digits by correcting the value.
+  if (basePrecision > Number.MAX_SAFE_INTEGER) {
+    digits = Math.floor(Math.log(Number.MAX_SAFE_INTEGER) / Math.log(10))
+    basePrecision = 10 ** digits
+  }
+
+  return (
+    formatNumber(
+      bnPercentageToNumber(value.mul(new BN(100)), pctBase, basePrecision),
+      digits
+    ) + suffix
+  )
+}
+
+// Converts a percentage expressed as a value + base into a number between 0 and 1.
+export function bnPercentageToNumber(value, base, precision = 10 ** 9) {
+  value = new BN(value)
+  base = new BN(base)
+  return (
+    parseInt(divideRoundBigInt(value.mul(new BN(precision)), base), 10) /
+    precision
+  )
+}
+
+export class Percentage {
+  constructor(value, base) {
+    this._value = new BN(value)
+    this._base = new BN(base)
+  }
+  base() {
+    return this._base
+  }
+  value() {
+    return this._value
+  }
+  toString(options) {
+    return formatBnPercentage(this._value, this._base, options)
+  }
+  valueOf() {
+    return this.toNumber()
+  }
+  toNumber(precision) {
+    return bnPercentageToNumber(this._value, this._base, precision)
+  }
+}
+
+export class TokenAmount {
+  constructor(value, decimals, { symbol } = {}) {
+    this._value = new BN(value)
+    this._decimals = new BN(decimals)
+    this._symbol = symbol
+  }
+  decimals() {
+    return this._decimals
+  }
+  symbol() {
+    return this._symbol
+  }
+  value() {
+    return this._value
+  }
+  toString(options) {
+    return formatTokenAmount(this._value, this._decimals, {
+      symbol: this._symbol,
+      ...options,
+    })
+  }
 }
 
 /**
@@ -59,8 +138,8 @@ export function round(num, decimals = 2) {
 }
 
 // Return 0 if denominator is 0 to avoid NaNs
-export function safeDiv(num, denom) {
-  return denom ? num / denom : 0
+export function safeBnDiv(num, denom) {
+  return denom.isZero() ? new BN(0) : num.div(denom)
 }
 
 // Scale to `total` a set of values summing to 1.

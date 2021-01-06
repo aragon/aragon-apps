@@ -1,4 +1,6 @@
 import { isBefore } from 'date-fns'
+import BN from 'bn.js'
+import { divideRoundBigInt } from '@aragon/ui'
 import {
   VOTE_ABSENT,
   VOTE_YEA,
@@ -22,8 +24,18 @@ export function isVoteOpen(vote, date) {
   return !executed && isBefore(date, endDate)
 }
 
-export const getQuorumProgress = ({ numData: { yea, votingPower } }) =>
-  yea / votingPower
+export function getQuorumProgress({ data: { yea, votingPower } }) {
+  const precision = 10 ** 9
+  return (
+    parseInt(
+      divideRoundBigInt(
+        yea.value().mul(new BN(precision)),
+        votingPower.value()
+      ),
+      10
+    ) / precision
+  )
+}
 
 export function getVoteStatus(vote, pctBase) {
   if (vote.data.open) {
@@ -43,22 +55,31 @@ export function getVoteStatus(vote, pctBase) {
 }
 
 export function getVoteSuccess(vote, pctBase) {
-  const { yea, minAcceptQuorum, nay, supportRequired, votingPower } = vote.data
+  const { minAcceptQuorum, nay, supportRequired, votingPower, yea } = vote.data
 
-  const totalVotes = yea.add(nay)
+  const totalVotes = yea.value().add(nay.value())
   if (totalVotes.isZero()) {
     return false
   }
-  const yeaPct = yea.mul(pctBase).div(totalVotes)
-  const yeaOfTotalPowerPct = yea.mul(pctBase).div(votingPower)
+
+  const yeaPct = yea
+    .value()
+    .mul(pctBase)
+    .div(totalVotes)
+
+  const yeaOfTotalPowerPct = yea
+    .value()
+    .mul(pctBase)
+    .div(votingPower.value())
 
   // Mirror on-chain calculation
   // yea / votingPower > supportRequired ||
   //   (yea / totalVotes > supportRequired &&
   //    yea / votingPower > minAcceptQuorum)
   return (
-    yeaOfTotalPowerPct.gt(supportRequired) ||
-    (yeaPct.gt(supportRequired) && yeaOfTotalPowerPct.gt(minAcceptQuorum))
+    yeaOfTotalPowerPct.gt(supportRequired.value()) ||
+    (yeaPct.gt(supportRequired.value()) &&
+      yeaOfTotalPowerPct.gt(minAcceptQuorum.value()))
   )
 }
 

@@ -1,4 +1,6 @@
 import { useMemo } from 'react'
+import BN from 'bn.js'
+import { formatTokenAmount } from '@aragon/ui'
 import { useAragonApi } from '@aragon/api-react'
 import { getUserBalanceAt, getUserBalanceNow } from '../token-utils'
 import { getCanExecute, getCanVote } from '../vote-utils'
@@ -9,8 +11,8 @@ import usePromise from './usePromise'
 export default function useExtendedVoteData(vote) {
   const {
     api,
-    connectedAccount,
     appState: { tokenDecimals },
+    connectedAccount,
   } = useAragonApi()
 
   const tokenContract = useTokenContract()
@@ -24,24 +26,34 @@ export default function useExtendedVoteData(vote) {
   )
   const canUserVote = usePromise(canUserVotePromise, [], false)
 
-  const userBalancePromise = useMemo(() => {
-    if (!vote) {
-      return -1
-    }
-    return getUserBalanceAt(
-      connectedAccount,
-      vote.data.snapshotBlock,
-      tokenContract,
-      tokenDecimals
-    )
-  }, [connectedAccount, tokenContract, tokenDecimals, vote])
-  const userBalance = usePromise(userBalancePromise, [], -1)
-
+  const userBalancePromise = useMemo(
+    () =>
+      vote
+        ? getUserBalanceAt(
+            connectedAccount,
+            vote.data.snapshotBlock,
+            tokenContract
+          )
+        : Promise.resolve('-1'),
+    [connectedAccount, tokenContract, tokenDecimals, vote]
+  )
   const userBalanceNowPromise = useMemo(
     () => getUserBalanceNow(connectedAccount, tokenContract, tokenDecimals),
     [connectedAccount, tokenContract, tokenDecimals]
   )
-  const userBalanceNow = usePromise(userBalanceNowPromise, [], -1)
+
+  const userBalanceResolved = usePromise(userBalancePromise, [], '-1')
+  const userBalanceNowResolved = usePromise(userBalanceNowPromise, [], '-1')
+
+  const userBalance =
+    userBalanceResolved !== '-1'
+      ? formatTokenAmount(userBalanceResolved, tokenDecimals)
+      : userBalanceResolved
+
+  const userBalanceNow =
+    userBalanceNowResolved !== '-1'
+      ? formatTokenAmount(userBalanceNowResolved, tokenDecimals)
+      : userBalanceNowResolved
 
   return {
     canExecute,

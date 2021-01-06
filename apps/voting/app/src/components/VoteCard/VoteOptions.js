@@ -1,10 +1,27 @@
 import React from 'react'
+import BN from 'bn.js'
 import { Spring, config as springs } from 'react-spring'
-import VoteOption from './VoteOption'
+import { divideRoundBigInt } from '@aragon/ui'
 import { percentageList } from '../../math-utils'
+import VoteOption from './VoteOption'
 
 const ANIM_DELAY_MIN = 100
 const ANIM_DELAY_MAX = 800
+
+function optionPercentage(optionPower, totalVotingPower) {
+  const precision = 10 ** 9
+  const precisionBn = new BN(precision)
+
+  return (
+    parseInt(
+      divideRoundBigInt(
+        optionPower.value().mul(precisionBn),
+        totalVotingPower.value()
+      ),
+      10
+    ) / precision
+  )
+}
 
 class VoteOptions extends React.Component {
   static defaultProps = {
@@ -28,13 +45,11 @@ class VoteOptions extends React.Component {
     const { delay } = this.state
     const { options, votingPower } = this.props
 
-    const percentages =
-      votingPower > 0
-        ? percentageList(
-            options.map(o => o.power / votingPower),
-            2
-          )
-        : [0, 0]
+    const percentages = votingPower.value().isZero()
+      ? [0, 0]
+      : percentageList(
+          options.map(option => optionPercentage(option.power, votingPower))
+        )
 
     return (
       <React.Fragment>
@@ -44,7 +59,11 @@ class VoteOptions extends React.Component {
             delay={delay}
             config={springs.stiff}
             from={{ value: 0 }}
-            to={{ value: votingPower > 0 ? option.power / votingPower : 0 }}
+            to={{
+              value: votingPower.value().isZero()
+                ? 0
+                : optionPercentage(option.power, votingPower),
+            }}
             native
           >
             {({ value }) => (

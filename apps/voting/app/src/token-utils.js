@@ -1,30 +1,13 @@
-export async function getUserBalanceAt(
-  connectedAccount,
-  snapshotBlock,
-  tokenContract,
-  tokenDecimals
-) {
-  if (!tokenContract || !connectedAccount) {
-    return -1
+export async function getUserBalanceAt(account, snapshotBlock, tokenContract) {
+  if (!tokenContract || !account) {
+    return '-1'
   }
-
-  const balance = await tokenContract
-    .balanceOfAt(connectedAccount, snapshotBlock)
-    .toPromise()
-
-  return Math.floor(parseInt(balance, 10) / Math.pow(10, tokenDecimals))
+  return tokenContract.balanceOfAt(account, snapshotBlock).toPromise()
 }
 
-export async function getUserBalanceNow(
-  connectedAccount,
-  tokenContract,
-  tokenDecimals
-) {
-  if (!tokenContract || !connectedAccount) {
-    return -1
+export async function getUserBalanceNow(account, tokenContract) {
+  if (!tokenContract || !account) {
+    return '-1'
   }
-
-  const balance = await tokenContract.balanceOf(connectedAccount).toPromise()
-
-  return Math.floor(parseInt(balance, 10) / Math.pow(10, tokenDecimals))
+  return tokenContract.balanceOf(account).toPromise()
 }

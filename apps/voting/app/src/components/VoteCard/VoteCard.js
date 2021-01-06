@@ -11,15 +11,8 @@ import You from '../You'
 
 function VoteCard({ vote, onOpen }) {
   const theme = useTheme()
-  const {
-    connectedAccountVote,
-    data,
-    executionTargetData,
-    numData,
-    voteId,
-  } = vote
-  const { votingPower, yea, nay } = numData
-  const { open, metadata, description, endDate } = data
+  const { connectedAccountVote, data, executionTargetData, voteId } = vote
+  const { description, endDate, metadata, nay, open, votingPower, yea } = data
   const options = useMemo(
     () => [
       {
