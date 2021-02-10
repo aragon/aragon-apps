@@ -2,6 +2,7 @@ const { usePlugin } = require('@nomiclabs/buidler/config')
 
 usePlugin("@nomiclabs/buidler-ganache")
 usePlugin('@nomiclabs/buidler-truffle5')
+usePlugin('@aragon/buidler-aragon')
 usePlugin('buidler-gas-reporter')
 usePlugin('solidity-coverage')
 
@@ -9,6 +10,9 @@ const ACCOUNTS = (process.env.ETH_KEYS ? process.env.ETH_KEYS.split(',') : [])
   .map(key => key.trim())
 
 module.exports = {
+  aragon: {
+    appBuildOutputPath: 'app/public/',
+  },
   networks: {
     // Local development network using ganache. You can set any of the
     // Ganache's options. All of them are supported, with the exception
