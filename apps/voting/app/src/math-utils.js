@@ -54,8 +54,7 @@ export function formatBnPercentage(
 
   // Tolerate having too many digits by correcting the value.
   if (basePrecision > Number.MAX_SAFE_INTEGER) {
-    digits = Math.floor(Math.log(Number.MAX_SAFE_INTEGER) / Math.log(10))
-    basePrecision = 10 ** digits
+    basePrecision = 10 ** 18
   }
 
   return (
