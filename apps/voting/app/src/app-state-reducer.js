@@ -18,9 +18,6 @@ function appStateReducer(state) {
   } = state
 
   const pctBaseBn = new BN(pctBase)
-  const pctBaseNum = parseInt(pctBase, 10)
-  const tokenDecimalsNum = parseInt(tokenDecimals, 10)
-  const tokenDecimalsBaseNum = Math.pow(10, tokenDecimalsNum)
 
   return {
     ...state,

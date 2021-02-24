@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import BN from 'bn.js'
-import { formatTokenAmount } from '@aragon/ui'
 import { useAragonApi } from '@aragon/api-react'
+import { formatTokenAmount } from '@aragon/ui'
 import { getUserBalanceAt, getUserBalanceNow } from '../token-utils'
 import { getCanExecute, getCanVote } from '../vote-utils'
 import useTokenContract from './useTokenContract'

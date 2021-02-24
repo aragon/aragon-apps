@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { GU, textStyle, formatTokenAmount, useTheme } from '@aragon/ui'
+import { GU, textStyle, useTheme } from '@aragon/ui'
 import You from './You'
 import { VOTE_NAY, VOTE_YEA } from '../vote-types'
 
