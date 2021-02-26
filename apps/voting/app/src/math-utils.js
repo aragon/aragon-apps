@@ -50,7 +50,7 @@ export function formatBnPercentage(
   pctBase,
   { digits = 2, suffix = '%' } = {}
 ) {
-  const MAX_BASE_PRECISION = 10 ** 18;
+  const MAX_BASE_PRECISION = 10 ** 18
   let basePrecision = 10 ** digits
 
   // Tolerate having too many digits by correcting the value.
