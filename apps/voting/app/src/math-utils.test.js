@@ -1,10 +1,5 @@
 import BN from 'bn.js'
-import {
-  Percentage,
-  TokenAmount,
-  formatBnPercentage,
-  scaleBNValuesSet,
-} from './math-utils'
+import { Percentage, TokenAmount, scaleBNValuesSet } from './math-utils'
 
 const scaleResults = (values, total, precision) =>
   scaleBNValuesSet(values, new BN(total), precision).map(v => v.toString())
@@ -79,104 +74,77 @@ describe('scaleBNValuesSet()', () => {
   })
 })
 
-describe('formatBnPercentage()', () => {
+describe('Percentage Formatting', () => {
   test('should format percentages without digits', () => {
     expect(
-      formatBnPercentage(
-        new BN('500000000000000000'),
-        new BN('1000000000000000000')
-      )
+      new Percentage('500000000000000000', '1000000000000000000').toString()
     ).toEqual('50%')
   })
+
   test('should format percentages with digits', () => {
     expect(
-      formatBnPercentage(
-        new BN('555500000000000000'),
-        new BN('1000000000000000000')
-      )
+      new Percentage('555500000000000000', '1000000000000000000').toString()
     ).toEqual('55.55%')
     expect(
-      formatBnPercentage(
-        new BN('333390000000000000'),
-        new BN('1000000000000000000')
-      )
+      new Percentage('333390000000000000', '1000000000000000000').toString()
     ).toEqual('33.34%')
     expect(
-      formatBnPercentage(
-        new BN('333310000000000000'),
-        new BN('1000000000000000000')
-      )
+      new Percentage('333310000000000000', '1000000000000000000').toString()
     ).toEqual('33.33%')
     expect(
-      formatBnPercentage(
-        new BN('333350000000000000'),
-        new BN('1000000000000000000')
-      )
+      new Percentage('333350000000000000', '1000000000000000000').toString()
     ).toEqual('33.34%')
   })
+
   test('should round percentages', () => {
     expect(
-      formatBnPercentage(
-        new BN('333399999999999999'),
-        new BN('1000000000000000000')
-      )
+      new Percentage('333399999999999999', '1000000000000000000').toString()
     ).toEqual('33.34%')
     expect(
-      formatBnPercentage(
-        new BN('333344444444444444'),
-        new BN('1000000000000000000')
-      )
+      new Percentage('333344444444444444', '1000000000000000000').toString()
     ).toEqual('33.33%')
   })
+
   test('should add the right amount of digits', () => {
     expect(
-      formatBnPercentage(
-        new BN('333349999999999999'),
-        new BN('1000000000000000000'),
-        { digits: 3 }
-      )
+      new Percentage('333349999999999999', '1000000000000000000').toString({
+        digits: 3,
+      })
     ).toEqual('33.335%')
+
     expect(
-      formatBnPercentage(
-        new BN('333300000000000000'),
-        new BN('1000000000000000000'),
-        { digits: 3 }
-      )
+      new Percentage('333300000000000000', '1000000000000000000').toString({
+        digits: 3,
+      })
     ).toEqual('33.33%')
   })
+
   test('should tolerate setting too many digits', () => {
     const maxDigits = Math.floor(
       Math.log(Number.MAX_SAFE_INTEGER) / Math.log(10)
     )
     expect(
-      formatBnPercentage(
-        new BN('333333333333333333'),
-        new BN('1000000000000000000'),
-        { digits: 40 }
-      )
+      new Percentage('333333333333333333', '1000000000000000000').toString({
+        digits: 40,
+      })
     ).toEqual(`33.${'3'.repeat(maxDigits - 1)}%`)
   })
+
   test('should round based on the digits', () => {
     expect(
-      formatBnPercentage(
-        new BN('333359999999999999'),
-        new BN('1000000000000000000'),
-        { digits: 2 }
-      )
+      new Percentage('333359999999999999', '1000000000000000000').toString({
+        digits: 2,
+      })
     ).toEqual('33.34%')
     expect(
-      formatBnPercentage(
-        new BN('333359999999999999'),
-        new BN('1000000000000000000'),
-        { digits: 3 }
-      )
+      new Percentage('333359999999999999', '1000000000000000000').toString({
+        digits: 3,
+      })
     ).toEqual('33.336%')
     expect(
-      formatBnPercentage(
-        new BN('333344666666666666'),
-        new BN('1000000000000000000'),
-        { digits: 4 }
-      )
+      new Percentage('333344666666666666', '1000000000000000000').toString({
+        digits: 4,
+      })
     ).toEqual('33.3345%')
   })
 })
