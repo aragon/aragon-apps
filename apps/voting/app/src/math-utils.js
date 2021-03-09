@@ -71,7 +71,7 @@ export function bnPercentageToNumber(value, base, precision = 10 ** 9) {
   value = new BN(value)
   base = new BN(base)
   return (
-    parseInt(divideRoundBigInt(value.mul(new BN(precision)), base), 10) /
+    parseInt(divideRoundBigInt(new BN(value).mul(new BN(precision)), new BN(base)), 10) /
     precision
   )
 }
