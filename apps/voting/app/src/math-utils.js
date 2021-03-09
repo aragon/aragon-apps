@@ -68,8 +68,6 @@ export function formatBnPercentage(
 
 // Converts a percentage expressed as a value + base into a number between 0 and 1.
 export function bnPercentageToNumber(value, base, precision = 10 ** 9) {
-  value = new BN(value)
-  base = new BN(base)
   return (
     parseInt(divideRoundBigInt(new BN(value).mul(new BN(precision)), new BN(base)), 10) /
     precision
