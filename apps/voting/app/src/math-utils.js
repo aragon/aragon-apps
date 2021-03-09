@@ -10,7 +10,7 @@ import { divideRoundBigInt, formatTokenAmount } from '@aragon/ui'
  * @param {bool} [options.truncate=true] Whether to truncate the trailing decimals (if they're 0)
  * @returns {String} Formatted number
  */
-export function formatNumber(num, decimals = 2, { truncate = true } = {}) {
+function formatNumber(num, decimals = 2, { truncate = true } = {}) {
   const multiplicator = Math.pow(10, decimals)
   const roundedNum = Math.round(num * multiplicator) / multiplicator
   const numString = String(roundedNum)
@@ -39,25 +39,16 @@ export function formatNumber(num, decimals = 2, { truncate = true } = {}) {
     : formattedNumber
 }
 
-export function percentageList(values) {
-  return scaleBNValuesSet(values).map(value => value.toNumber())
-}
-
 /**
  * Format a percentage from BN values.
- * `value` divided by `pctBase` must be in the [0, 1] range.
- * 
- * @param {string} value 
- * @param {number} pctBase
- * @param {{ digits: number, suffix: string }} formattingOptions
- * 
+ *
+ * @param {string} value source value
+ * @param {number} pctBase percentage's base
+ * @param {{ digits: number, suffix: string }} formattingOptions digit and suffix to be use in formatting
+ *
  * @returns {string} Formatted Number
  */
-export function formatBnPercentage(
-  value,
-  pctBase,
-  { digits = 2, suffix = '%' } = {}
-) {
+function formatBnPercentage(value, pctBase, { digits = 2, suffix = '%' } = {}) {
   const MAX_BASE_PRECISION = 10 ** 18
   let basePrecision = 10 ** digits
 
@@ -75,10 +66,12 @@ export function formatBnPercentage(
 }
 
 // Converts a percentage expressed as a value + base into a number between 0 and 1.
-export function bnPercentageToNumber(value, base, precision = 10 ** 9) {
+function bnPercentageToNumber(value, base, precision = 10 ** 9) {
   return (
-    parseInt(divideRoundBigInt(new BN(value).mul(new BN(precision)), new BN(base)), 10) /
-    precision
+    parseInt(
+      divideRoundBigInt(new BN(value).mul(new BN(precision)), new BN(base)),
+      10
+    ) / precision
   )
 }
 
@@ -125,6 +118,10 @@ export class TokenAmount {
       ...options,
     })
   }
+}
+
+export function percentageList(values) {
+  return scaleBNValuesSet(values).map(value => value.toNumber())
 }
 
 /**

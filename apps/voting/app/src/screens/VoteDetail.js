@@ -27,12 +27,7 @@ import VoteActions from '../components/VoteActions'
 import VoteCast from '../components/VoteCast'
 import VoteDescription from '../components/VoteDescription'
 import VoteStatus from '../components/VoteStatus'
-import {
-  formatBnPercentage,
-  percentageList,
-  round,
-  safeBnDiv,
-} from '../math-utils'
+import { percentageList, round, safeBnDiv } from '../math-utils'
 import { getQuorumProgress } from '../vote-utils'
 import { VOTE_NAY, VOTE_YEA } from '../vote-types'
 import { addressesEqual } from '../web3-utils'
