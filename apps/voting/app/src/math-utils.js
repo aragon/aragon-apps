@@ -33,7 +33,7 @@ export function formatNumber(num, decimals = 2, { truncate = true } = {}) {
       }`
     : whole
 
-  // If we were dealing with a yuge number, append the exponent suffix back
+  // If we were dealing with a huge number, append the exponent suffix back
   return exponentialIndex > -1
     ? `${formattedNumber}${numString.substring(exponentialIndex)}`
     : formattedNumber
@@ -43,8 +43,16 @@ export function percentageList(values) {
   return scaleBNValuesSet(values).map(value => value.toNumber())
 }
 
-// Format a percentage from BN values.
-// `value` divided by `pctBase` must be in the [0, 1] range.
+/**
+ * Format a percentage from BN values.
+ * `value` divided by `pctBase` must be in the [0, 1] range.
+ * 
+ * @param {string} value 
+ * @param {number} pctBase
+ * @param {{ digits: number, suffix: string }} formattingOptions
+ * 
+ * @returns {string} Formatted Number
+ */
 export function formatBnPercentage(
   value,
   pctBase,
