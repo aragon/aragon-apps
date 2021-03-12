@@ -38,62 +38,66 @@ function formatNumber(num, decimals = 2, { truncate = true } = {}) {
     ? `${formattedNumber}${numString.substring(exponentialIndex)}`
     : formattedNumber
 }
-
-/**
- * Format a percentage from BN values.
- *
- * @param {string} value source value
- * @param {number} pctBase percentage's base
- * @param {{ digits: number, suffix: string }} formattingOptions digit and suffix to be use in formatting
- *
- * @returns {string} Formatted Number
- */
-function formatBnPercentage(value, pctBase, { digits = 2, suffix = '%' } = {}) {
-  const MAX_BASE_PRECISION = 10 ** 18
-  let basePrecision = 10 ** digits
-
-  // Tolerate having too many digits by correcting the value.
-  if (basePrecision > Number.MAX_SAFE_INTEGER) {
-    basePrecision = MAX_BASE_PRECISION
-  }
-
-  return (
-    formatNumber(
-      bnPercentageToNumber(value.mul(new BN(100)), pctBase, basePrecision),
-      digits
-    ) + suffix
-  )
-}
-
-// Converts a percentage expressed as a value + base into a number between 0 and 1.
-function bnPercentageToNumber(value, base, precision = 10 ** 9) {
-  return (
-    parseInt(
-      divideRoundBigInt(new BN(value).mul(new BN(precision)), new BN(base)),
-      10
-    ) / precision
-  )
-}
-
 export class Percentage {
+  /**
+   * A value represented as Percentage using a specific base unit
+   * @param {string} value source value
+   * @param {string} base base unit
+   */
   constructor(value, base) {
     this._value = new BN(value)
     this._base = new BN(base)
   }
+
   base() {
     return this._base
   }
+
   value() {
     return this._value
   }
-  toString(options) {
-    return formatBnPercentage(this._value, this._base, options)
-  }
+
   valueOf() {
     return this.toNumber()
   }
-  toNumber(precision) {
-    return bnPercentageToNumber(this._value, this._base, precision)
+
+  /**
+   * Parses represented percentage value to string
+   *
+   * @param {{ digits: number, suffix: string }} formattingOptions digit and suffix to be use in formatting
+   * @returns {string} Formatted value
+   */
+  toString({ digits = 2, suffix = '%' } = {}) {
+    const MAX_BASE_PRECISION = 10 ** 15 // max value supported for a base on Big Number libraries
+    let basePrecision = 10 ** digits
+
+    // Tolerate having too many digits by correcting the value.
+    if (basePrecision > Number.MAX_SAFE_INTEGER) {
+      basePrecision = MAX_BASE_PRECISION
+    }
+
+    return (
+      formatNumber(
+        new Percentage(this._value.mul(new BN(100)), this._base).toNumber(
+          basePrecision
+        ),
+        digits
+      ) + suffix
+    )
+  }
+
+  /**
+   * Converts a percentage into a number between 0 and 1.
+   * @param {number} precision precision to use for the parsing
+   * @returns {number} parsed value
+   */
+  toNumber(precision = 10 ** 9) {
+    return (
+      parseInt(
+        divideRoundBigInt(this._value.mul(new BN(precision)), this._base),
+        10
+      ) / precision
+    )
   }
 }
 
@@ -120,6 +124,11 @@ export class TokenAmount {
   }
 }
 
+/**
+ * Scale a set of values
+ * @param {Array} values set of values to be scaled
+ * @returns {Array} list with scaled values
+ */
 export function percentageList(values) {
   return scaleBNValuesSet(values).map(value => value.toNumber())
 }
@@ -140,14 +149,26 @@ export function round(num, decimals = 2) {
   return Number.isNaN(rounded) ? Number(num.toFixed(decimals)) : rounded
 }
 
-// Return 0 if denominator is 0 to avoid NaNs
+/**
+ * Return 0 if denominator is 0 to avoid NaNs
+ * @param {BN} num numerator
+ * @param {BN} denom denominator
+ * @returns {BN} result of the save division operation
+ */
 export function safeBnDiv(num, denom) {
   return denom.isZero() ? new BN(0) : num.div(denom)
 }
 
-// Scale to `total` a set of values summing to 1.
-// Note that the accuracy of `values` is constrained to a set amount of decimals, as BN.js doesn't
-// support decimal operations
+/**
+ * Scale to `total` a set of values summing to 1.
+ * Note that the accuracy of `values` is constrained to a set amount of decimals, as BN.js doesn't
+ * support decimal operations
+ *
+ * @param {Array} values set of values that will be scaled
+ * @param {number} numTotal total value
+ * @param {number} correctionLimit limit of correction
+ * @returns {Array} scaled values
+ */
 export function scaleBNValuesSet(
   values = [],
   numTotal = 100,
