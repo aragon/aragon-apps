@@ -102,6 +102,13 @@ export class Percentage {
 }
 
 export class TokenAmount {
+  /**
+   * The amount of a token represented as entity with its value, number of decimals
+   * and symbol
+   * @param {*} value raw amount of the token
+   * @param {*} decimals number of decimals to use
+   * @param {*} options symbol to use with the token amount
+   */
   constructor(value, decimals, { symbol } = {}) {
     this._value = new BN(value)
     this._decimals = new BN(decimals)
