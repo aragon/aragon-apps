@@ -167,8 +167,8 @@ contract Finance is EtherTokenConstant, IsContract, AragonApp {
     * @param _vault Address of the vault Finance will rely on (non changeable)
     * @param _periodDuration Duration in seconds of each period
     */
-    function initialize(Vault _vault, uint64 _periodDuration) external onlyInit {
-        initialized();
+    function initialize(Vault _vault, uint64 _periodDuration, uint256 epoch) external onlyInit {
+        initialized(epoch);
 
         require(isContract(_vault), ERROR_VAULT_NOT_CONTRACT);
         vault = _vault;

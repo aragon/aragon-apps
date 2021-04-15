@@ -37,8 +37,8 @@ contract Vault is EtherTokenConstant, AragonApp, DepositableStorage {
     * @notice Initialize Vault app
     * @dev As an AragonApp it needs to be initialized in order for roles (`auth` and `authP`) to work
     */
-    function initialize() external onlyInit {
-        initialized();
+    function initialize(uint256 epoch) external onlyInit {
+        initialized(epoch);
         setDepositable(true);
     }
 

@@ -79,12 +79,13 @@ contract TokenManager is ITokenController, IForwarder, AragonApp {
     function initialize(
         MiniMeToken _token,
         bool _transferable,
-        uint256 _maxAccountTokens
+        uint256 _maxAccountTokens,
+        uint256 epoch
     )
         external
         onlyInit
     {
-        initialized();
+        initialized(epoch);
 
         require(_token.controller() == address(this), ERROR_TOKEN_CONTROLLER);
 
