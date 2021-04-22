@@ -6,11 +6,9 @@ pragma solidity 0.4.24;
 
 import "@conflux-/aragon-os/contracts/apps/AragonApp.sol";
 import "@conflux-/aragon-os/contracts/common/IForwarder.sol";
-
 import "@conflux-/aragon-os/contracts/lib/math/SafeMath.sol";
 import "@conflux-/aragon-os/contracts/lib/math/SafeMath64.sol";
-
-import "@aragon/minime/contracts/MiniMeToken.sol";
+import "@aragon/apps-shared-minime/contracts/MiniMeToken.sol";
 
 
 contract Voting is IForwarder, AragonApp {
