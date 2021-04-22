@@ -1,3 +1,3 @@
 module.exports = {
-  skipFiles: ['test', '@aragon/os', '@aragon/apps-vault'],
+  skipFiles: ['test', '@conflux-/aragon-os', '@conflux-/aragon-apps-vault'],
 }

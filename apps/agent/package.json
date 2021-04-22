@@ -1,5 +1,5 @@
 {
-  "name": "@aragon/apps-agent",
+  "name": "@conflux-/aragon-apps-agent",
   "version": "2.1.0",
   "author": "Aragon Association <legal@aragon.org>",
   "license": "(GPL-3.0-or-later OR AGPL-3.0-or-later)",
@@ -25,8 +25,8 @@
     "abi:extract": "buidler-extract --output abi/ --keys abi"
   },
   "dependencies": {
-    "@aragon/apps-vault": "4.1.0",
-    "@aragon/os": "4.4.0"
+    "@conflux-/aragon-apps-vault": "4.1.0",
+    "@conflux-/aragon-os": "4.4.0"
   },
   "devDependencies": {
     "@aragon/contract-helpers-test": "0.1.0",

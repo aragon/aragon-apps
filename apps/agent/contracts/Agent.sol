@@ -9,9 +9,9 @@ import "./standards/IERC165.sol";
 import "./standards/ERC1271.sol";
 import "./standards/IERC721Receiver.sol";
 
-import "@aragon/apps-vault/contracts/Vault.sol";
+import "@conflux-/aragon-apps-vault/contracts/Vault.sol";
 
-import "@aragon/os/contracts/common/IForwarder.sol";
+import "@conflux-/aragon-os/contracts/common/IForwarder.sol";
 
 
 contract Agent is IERC165, IERC721Receiver, ERC1271Bytes, IForwarder, IsContract, Vault {
