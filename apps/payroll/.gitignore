@@ -1,0 +1,23 @@
+# Dependencies
+node_modules
+
+# coverage
+coverage/
+
+# truffle build artifacts
+abi/
+build/
+dist/
+cache/
+artifacts/
+
+# yarn
+yarn-error.log
+
+# Ignore lock files
+package-lock.json
+yarn.lock
+
+# Misc
+.DS_Store
+.cache
