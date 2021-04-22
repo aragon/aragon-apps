@@ -11,8 +11,8 @@ import "@conflux-/aragon-os/contracts/common/IForwarder.sol";
 
 import "@conflux-/aragon-os/contracts/lib/math/SafeMath.sol";
 
-import "@aragon/minime/contracts/MiniMeToken.sol";
-import "@aragon/minime/contracts/ITokenController.sol";
+import "@aragon/apps-shared-minime/contracts/MiniMeToken.sol";
+import "@aragon/apps-shared-minime/contracts/ITokenController.sol";
 
 
 contract TokenManager is ITokenController, IForwarder, AragonApp {

@@ -1,6 +1,6 @@
 {
   "name": "@conflux-/aragon-apps-token-manager",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "author": "Aragon Association <legal@aragon.org>",
   "license": "(GPL-3.0-or-later OR AGPL-3.0-or-later)",
   "contributors": [
@@ -28,7 +28,7 @@
     "abi:extract": "buidler-extract --output abi/ --keys abi"
   },
   "dependencies": {
-    "@aragon/minime": "1.0.0",
+    "@aragon/apps-shared-minime": "^1.0.0",
     "@conflux-/aragon-os": "4.4.0"
   },
   "devDependencies": {
