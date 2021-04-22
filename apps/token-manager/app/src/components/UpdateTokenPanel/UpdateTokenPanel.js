@@ -9,7 +9,7 @@ import {
   Info,
   SidePanel,
   useSidePanelFocusOnReady,
-} from '@aragon/ui'
+} from '@conflux-/aragon-ui'
 import { isAddress } from '../../web3-utils'
 import { fromDecimals, toDecimals, splitDecimalNumber } from '../../utils'
 import LocalIdentitiesAutoComplete from '../LocalIdentitiesAutoComplete/LocalIdentitiesAutoComplete'

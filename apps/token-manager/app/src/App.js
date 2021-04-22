@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import BN from 'bn.js'
-import { Main, SyncIndicator } from '@aragon/ui'
+import { Main, SyncIndicator } from '@conflux-/aragon-ui'
 import { useAragonApi } from '@aragon/api-react'
 import AppHeader from './components/AppHeader'
 import { IdentityProvider } from './components/IdentityManager/IdentityManager'

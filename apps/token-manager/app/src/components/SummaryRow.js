@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { GU, useTheme } from '@aragon/ui'
+import { GU, useTheme } from '@conflux-/aragon-ui'
 
 function SummaryRow({ color, label, pct, content }) {
   const theme = useTheme()

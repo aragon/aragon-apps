@@ -9,7 +9,7 @@ import {
   IdentityBadge,
   RADIUS,
   useTheme,
-} from '@aragon/ui'
+} from '@conflux-/aragon-ui'
 
 const withKey = item => ({ key: item.address, ...item })
 const sortAlphAsc = (a, b) => a.name.localeCompare(b.name)

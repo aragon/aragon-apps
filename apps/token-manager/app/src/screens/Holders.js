@@ -16,7 +16,7 @@ import {
   textStyle,
   useLayout,
   useTheme,
-} from '@aragon/ui'
+} from '@conflux-/aragon-ui'
 import { addressesEqual } from '../web3-utils'
 import InfoBoxes from '../components/InfoBoxes'
 import LocalIdentityBadge from '../components/LocalIdentityBadge/LocalIdentityBadge'

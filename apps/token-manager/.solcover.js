@@ -1,7 +1,7 @@
 module.exports = {
   skipFiles: [
     'test',
-    '@aragon/os',
+    '@conflux-/aragon-os',
     '@aragon/minime',
     '@aragon/contract-helpers-test',
   ],

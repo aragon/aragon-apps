@@ -7,7 +7,7 @@ import {
   GU,
   TokenBadge,
   useTheme,
-} from '@aragon/ui'
+} from '@conflux-/aragon-ui'
 import { stakesPercentages } from '../utils'
 import { addressesEqual } from '../web3-utils'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
