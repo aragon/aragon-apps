@@ -1,15 +1,15 @@
 pragma solidity 0.4.24;
 
-import "@aragon/os/contracts/acl/ACL.sol";
-import "@aragon/os/contracts/kernel/Kernel.sol";
-import "@aragon/os/contracts/factory/DAOFactory.sol";
-import "@aragon/os/contracts/factory/EVMScriptRegistryFactory.sol";
+import "@conflux-/aragon-os/contracts/acl/ACL.sol";
+import "@conflux-/aragon-os/contracts/kernel/Kernel.sol";
+import "@conflux-/aragon-os/contracts/factory/DAOFactory.sol";
+import "@conflux-/aragon-os/contracts/factory/EVMScriptRegistryFactory.sol";
 
 import "@aragon/contract-helpers-test/contracts/0.4/misc/ExecutionTarget.sol";
 import "@aragon/contract-helpers-test/contracts/0.4/token/TokenMock.sol";
 import "@aragon/contract-helpers-test/contracts/0.4/token/TokenReturnFalseMock.sol";
 import "@aragon/contract-helpers-test/contracts/0.4/token/TokenReturnMissingMock.sol";
-import "@aragon/contract-helpers-test/contracts/0.4/aragonOS/EtherTokenConstantMock.sol";
+// import "@aragon/contract-helpers-test/contracts/0.4/aragonOS/EtherTokenConstantMock.sol";
 
 // You might think this file is a bit odd, but let me explain.
 // We only use some contracts in our tests, which means Truffle

@@ -4,16 +4,16 @@
 
 pragma solidity 0.4.24;
 
-import "@aragon/os/contracts/apps/AragonApp.sol";
-import "@aragon/os/contracts/common/EtherTokenConstant.sol";
-import "@aragon/os/contracts/common/IsContract.sol";
-import "@aragon/os/contracts/common/SafeERC20.sol";
+import "@conflux-/aragon-os/contracts/apps/AragonApp.sol";
+import "@conflux-/aragon-os/contracts/common/EtherTokenConstant.sol";
+import "@conflux-/aragon-os/contracts/common/IsContract.sol";
+import "@conflux-/aragon-os/contracts/common/SafeERC20.sol";
 
-import "@aragon/os/contracts/lib/token/ERC20.sol";
-import "@aragon/os/contracts/lib/math/SafeMath.sol";
-import "@aragon/os/contracts/lib/math/SafeMath64.sol";
+import "@conflux-/aragon-os/contracts/lib/token/ERC20.sol";
+import "@conflux-/aragon-os/contracts/lib/math/SafeMath.sol";
+import "@conflux-/aragon-os/contracts/lib/math/SafeMath64.sol";
 
-import "@aragon/apps-vault/contracts/Vault.sol";
+import "@conflux-/aragon-apps-vault/contracts/Vault.sol";
 
 
 contract Finance is EtherTokenConstant, IsContract, AragonApp {
