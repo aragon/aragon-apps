@@ -1,7 +1,7 @@
 module.exports = {
   skipFiles: [
     'test',
-    '@aragon/os',
+    '@conlfux-/aragon-os',
     '@aragon/contract-helpers-test',
   ],
 }

@@ -1,7 +1,7 @@
 pragma solidity 0.4.24;
 
-import "@aragon/os/contracts/kernel/Kernel.sol";
-import "@aragon/os/contracts/common/DepositableStorage.sol";
+import "@conflux-/aragon-os/contracts/kernel/Kernel.sol";
+import "@conflux-/aragon-os/contracts/common/DepositableStorage.sol";
 
 
 contract KernelDepositableMock is DepositableStorage, Kernel {
