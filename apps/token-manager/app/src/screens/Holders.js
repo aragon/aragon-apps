@@ -17,7 +17,7 @@ import {
   useLayout,
   useTheme,
 } from '@conflux-/aragon-ui'
-import { addressesEqual } from '../web3-utils'
+import { addressesEqual, formatAddress } from '../web3-utils'
 import InfoBoxes from '../components/InfoBoxes'
 import LocalIdentityBadge from '../components/LocalIdentityBadge/LocalIdentityBadge'
 import { useIdentity } from '../components/IdentityManager/IdentityManager'
@@ -77,7 +77,7 @@ function Holders({
                 `}
               >
                 <LocalIdentityBadge
-                  entity={address}
+                  entity={formatAddress(address)}
                   connectedAccount={isCurrentUser}
                 />
                 {isCurrentUser && <You css="flex-shrink: 0" />}

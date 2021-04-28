@@ -1,4 +1,5 @@
 import { isAddress } from 'web3-utils'
+import { format } from 'js-conflux-sdk'
 
 // Check address equality
 export function addressesEqual(first, second) {
@@ -11,3 +12,7 @@ export function addressesEqual(first, second) {
 
 // Re-export some web3-utils functions
 export { isAddress } from 'web3-utils'
+
+export function formatAddress(address) {
+  return format.address(address, 1)
+}
