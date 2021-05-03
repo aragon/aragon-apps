@@ -131,7 +131,7 @@ class Withdrawal extends React.Component {
 
     let errorMessage
     if (recipient.error === RECEIPIENT_NOT_ADDRESS_ERROR) {
-      errorMessage = 'Recipient must be a valid Ethereum address'
+      errorMessage = 'Recipient must be a valid Conflux or Ethereum address'
     } else if (amount.error === BALANCE_NOT_ENOUGH_ERROR) {
       errorMessage = 'Amount is greater than balance available'
     } else if (amount.error === DECIMALS_TOO_MANY_ERROR) {
@@ -151,7 +151,7 @@ class Withdrawal extends React.Component {
       <form onSubmit={this.handleSubmit}>
         <h1>{title}</h1>
         <Field
-          label="Recipient (must be a valid Ethereum address)"
+          label="Recipient (must be a valid Conflux or Ethereum address)"
           css="height: 60px"
         >
           <LocalIdentitiesAutoComplete

@@ -194,8 +194,8 @@ function usePanelForm({
       isAddress(holderAddress) || isAddress(format.hexAddress(holderAddress))
         ? null
         : mode === 'assign'
-        ? 'The recipient must be a valid Ethereum address.'
-        : 'The account must be a valid Ethereum address.'
+        ? 'The recipient must be a valid Conflux or Ethereum address.'
+        : 'The account must be a valid Conflux or Ethereum address.'
 
     if (holderError) {
       setHolderField({ ...holderField, error: holderError })
@@ -310,8 +310,8 @@ function TokenPanelContent({
       <Field
         label={
           mode === 'assign'
-            ? 'Recipient (must be a valid Ethereum address)'
-            : 'Account (must be a valid Ethereum address)'
+            ? 'Recipient (must be a valid Conflux or Ethereum address)'
+            : 'Account (must be a valid Conflux or Ethereum address)'
         }
       >
         <LocalIdentitiesAutoComplete
