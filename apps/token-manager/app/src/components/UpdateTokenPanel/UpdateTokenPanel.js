@@ -250,7 +250,9 @@ function TokenPanelContent({
     warningMessage,
   } = usePanelForm({
     getHolderBalance,
-    initialHolder: formatAddress(holderAddress, network.id),
+    initialHolder: holderAddress
+      ? formatAddress(holderAddress, network.id)
+      : holderAddress,
     maxAccountTokens,
     mode,
     onUpdateTokens,

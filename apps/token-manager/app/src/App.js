@@ -11,6 +11,7 @@ import Details from './screens/Details'
 import Holders from './screens/Holders'
 import { addressesEqual } from './web3-utils'
 import { useAppLogic } from './app-logic'
+import { format } from 'js-conflux-sdk'
 
 const initialAssignTokensConfig = {
   mode: null,
@@ -45,10 +46,10 @@ class App extends React.PureComponent {
 
     // Don't care about responses
     if (mode === 'assign') {
-      api.mint(holder, amount).toPromise()
+      api.mint(format.hexAddress(holder), amount).toPromise()
     }
     if (mode === 'remove') {
-      api.burn(holder, amount).toPromise()
+      api.burn(format.hexAddress(holder), amount).toPromise()
     }
 
     this.handleSidepanelClose()
