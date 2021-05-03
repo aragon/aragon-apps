@@ -1,7 +1,7 @@
 import React, { useMemo, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import BN from 'bn.js'
-import { useConnectedAccount } from '@aragon/api-react'
+import { useConnectedAccount, useNetwork } from '@aragon/api-react'
 import {
   ContextMenu,
   ContextMenuItem,
@@ -17,7 +17,7 @@ import {
   useLayout,
   useTheme,
 } from '@conflux-/aragon-ui'
-import { addressesEqual, formatAddress } from '../web3-utils'
+import { addressesEqual } from '../web3-utils'
 import InfoBoxes from '../components/InfoBoxes'
 import LocalIdentityBadge from '../components/LocalIdentityBadge/LocalIdentityBadge'
 import { useIdentity } from '../components/IdentityManager/IdentityManager'
@@ -77,7 +77,7 @@ function Holders({
                 `}
               >
                 <LocalIdentityBadge
-                  entity={formatAddress(address)}
+                  entity={address}
                   connectedAccount={isCurrentUser}
                 />
                 {isCurrentUser && <You css="flex-shrink: 0" />}

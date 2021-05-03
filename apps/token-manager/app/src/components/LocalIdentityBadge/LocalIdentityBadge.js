@@ -10,10 +10,12 @@ const LocalIdentityBadge = ({ defaultLabel, entity, ...props }) => {
   const network = useNetwork()
   const [label, showLocalIdentityModal] = useIdentity(entity)
   const handleClick = () => showLocalIdentityModal(entity)
+
   return (
     <IdentityBadge
       label={label || defaultLabel}
       entity={entity}
+      chainId={network.id}
       networkType={network && network.type}
       popoverAction={{
         label: <LocalLabelPopoverActionLabel hasLabel={Boolean(label)} />,

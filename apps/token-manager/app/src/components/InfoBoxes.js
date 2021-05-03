@@ -49,6 +49,7 @@ function InfoBoxes({
   const connectedAccount = useConnectedAccount()
   const network = useNetwork()
 
+  console.error('network', network)
   const stakes = useMemo(() => displayedStakes(holders, tokenSupply), [
     holders,
     tokenSupply,
@@ -71,6 +72,7 @@ function InfoBoxes({
               'Token',
               <TokenBadge
                 address={tokenAddress}
+                chainId={network.id}
                 name={tokenName}
                 symbol={tokenSymbol}
                 networkType={network && network.type}
@@ -92,14 +94,17 @@ function InfoBoxes({
                 > span:nth-child(1) {
                   color: ${theme.surfaceContentSecondary};
                 }
+
                 > span:nth-child(2) {
                   // “:” is here for accessibility reasons, we can hide it
                   opacity: 0;
                   width: 10px;
                 }
+
                 > span:nth-child(3) {
                   flex-shrink: 1;
                 }
+
                 > strong {
                   text-transform: uppercase;
                 }
