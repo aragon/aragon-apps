@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { RADIUS, springs, useTheme } from '@aragon/ui'
+import { RADIUS, springs, useTheme } from '@conflux-/aragon-ui'
 import { Spring, animated } from 'react-spring'
 
 function SummaryBar({ positiveSize, negativeSize, requiredSize, ...props }) {

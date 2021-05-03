@@ -1,6 +1,6 @@
 import React from 'react'
 import { useNetwork } from '@aragon/api-react'
-import { AppBadge } from '@aragon/ui'
+import { AppBadge } from '@conflux-/aragon-ui'
 import { useIdentity } from '../../identity-manager'
 import LocalLabelPopoverTitle from './LocalLabelPopoverTitle'
 import LocalLabelPopoverActionLabel from './LocalLabelPopoverActionLabel'
@@ -12,6 +12,7 @@ const LocalLabelAppBadge = ({ appAddress, label, ...props }) => {
   return (
     <AppBadge
       appAddress={appAddress}
+      chainId={network.id}
       label={localLabel || label}
       networkType={network && network.type}
       popoverAction={{

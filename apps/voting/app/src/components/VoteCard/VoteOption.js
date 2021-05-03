@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { GU, RADIUS, textStyle, useTheme } from '@aragon/ui'
+import { GU, RADIUS, textStyle, useTheme } from '@conflux-/aragon-ui'
 import { animated } from 'react-spring'
 
 function VoteOption({ color, label, percentage, value }) {

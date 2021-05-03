@@ -1,5 +1,5 @@
 import React from 'react'
-import { GU, Tag } from '@aragon/ui'
+import { GU, Tag } from '@conflux-/aragon-ui'
 
 const You = () => (
   <Tag

@@ -7,7 +7,7 @@ import {
   unselectable,
   useLayout,
   useTheme,
-} from '@aragon/ui'
+} from '@conflux-/aragon-ui'
 
 const VoteCardGroup = ({ title, count, children }) => {
   const theme = useTheme()

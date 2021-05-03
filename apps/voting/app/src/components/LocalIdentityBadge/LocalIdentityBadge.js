@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { useNetwork } from '@aragon/api-react'
-import { IdentityBadge } from '@aragon/ui'
+import { IdentityBadge } from '@conflux-/aragon-ui'
 import { useIdentity } from '../../identity-manager'
 import LocalLabelPopoverTitle from './LocalLabelPopoverTitle'
 import LocalLabelPopoverActionLabel from './LocalLabelPopoverActionLabel'
@@ -14,6 +14,7 @@ const LocalIdentityBadge = ({ defaultLabel, entity, ...props }) => {
     <IdentityBadge
       label={label || defaultLabel}
       entity={entity}
+      chainId={network.id}
       networkType={network && network.type}
       popoverAction={{
         label: <LocalLabelPopoverActionLabel hasLabel={Boolean(label)} />,

@@ -12,7 +12,7 @@ import {
   RADIUS,
   textStyle,
   useTheme,
-} from '@aragon/ui'
+} from '@conflux-/aragon-ui'
 import { useAppState, useConnectedAccount, useNetwork } from '@aragon/api-react'
 import useExtendedVoteData from '../hooks/useExtendedVoteData'
 import { noop, formatDate } from '../utils'
