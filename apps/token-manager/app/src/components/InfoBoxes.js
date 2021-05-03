@@ -49,7 +49,6 @@ function InfoBoxes({
   const connectedAccount = useConnectedAccount()
   const network = useNetwork()
 
-  console.error('network', network)
   const stakes = useMemo(() => displayedStakes(holders, tokenSupply), [
     holders,
     tokenSupply,
