@@ -1,7 +1,7 @@
 import { useContext, useCallback } from 'react'
 import { format } from 'date-fns'
 import { saveAs } from 'file-saver'
-import { formatTokenAmount, useToast } from '@aragon/ui'
+import { formatTokenAmount, useToast } from '@conflux-/aragon-ui'
 import { IdentityContext } from './IdentityManager/IdentityManager'
 import { toChecksumAddress } from '../lib/web3-utils'
 import { ISO_SHORT_FORMAT } from '../lib/date-utils'

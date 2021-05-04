@@ -99,8 +99,8 @@ async function initialize() {
   const ethAddress = ETHER_TOKEN_FAKE_ADDRESS
   tokenContracts.set(ethAddress, ETH_CONTRACT)
   tokenDecimals.set(ETH_CONTRACT, '18')
-  tokenNames.set(ETH_CONTRACT, 'Ether')
-  tokenSymbols.set(ETH_CONTRACT, 'ETH')
+  tokenNames.set(ETH_CONTRACT, 'Conflux')
+  tokenSymbols.set(ETH_CONTRACT, 'CFX')
 
   const settings = {
     network,

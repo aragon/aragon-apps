@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react'
 import { useAragonApi } from '@aragon/api-react'
-import { Header, Main, SyncIndicator } from '@aragon/ui'
+import { Header, Main, SyncIndicator } from '@conflux-/aragon-ui'
 import Balances from './components/Balances'
 import { IdentityProvider } from './components/IdentityManager/IdentityManager'
 import AgentHelp from './components/AgentHelp'
