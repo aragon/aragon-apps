@@ -1,5 +1,5 @@
 import React from 'react'
-import { DropDown, Field, TextInput } from '@aragon/ui'
+import { DropDown, Field, TextInput } from '@conflux-/aragon-ui'
 import { useNetwork } from '@aragon/api-react'
 import { ETHER_TOKEN_VERIFIED_BY_SYMBOL } from '../../lib/verified-tokens'
 import { isAddress } from '../../lib/web3-utils'

@@ -7,13 +7,14 @@ import {
   Main,
   SidePanel,
   SyncIndicator,
-} from '@aragon/ui'
+} from '@conflux-/aragon-ui'
 import { useAragonApi } from '@aragon/api-react'
 import { ETHER_TOKEN_FAKE_ADDRESS } from './lib/token-utils'
 import { IdentityProvider } from './components/IdentityManager/IdentityManager'
 import Balances from './components/Balances'
 import NewTransferPanelContent from './components/NewTransfer/PanelContent'
 import Transfers from './components/Transfers'
+import { format } from 'js-conflux-sdk'
 
 class App extends React.Component {
   static propTypes = {
@@ -36,7 +37,12 @@ class App extends React.Component {
   handleWithdraw = (tokenAddress, recipient, amount, reference) => {
     // Immediate, one-time payment
     this.props.api
-      .newImmediatePayment(tokenAddress, recipient, amount, reference)
+      .newImmediatePayment(
+        tokenAddress,
+        format.hexAddress(recipient),
+        amount,
+        reference
+      )
       .toPromise() // Don't care about response
     this.handleNewTransferClose()
   }

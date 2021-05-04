@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { SidePanel, Tabs, GU } from '@aragon/ui'
+import { SidePanel, Tabs, GU } from '@conflux-/aragon-ui'
 import Deposit from './Deposit'
 import Withdrawal from './Withdrawal'
 

@@ -1,6 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { ButtonBase, TextInput, noop, GU, RADIUS } from '@aragon/ui'
+import { ButtonBase, TextInput, noop, GU, RADIUS } from '@conflux-/aragon-ui'
 
 const MAX_BUTTON_WIDTH = 6 * GU
 

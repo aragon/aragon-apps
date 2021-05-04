@@ -10,11 +10,12 @@ import {
   GU,
   textStyle,
   useTheme,
-} from '@aragon/ui'
+} from '@conflux-/aragon-ui'
 import LocalIdentitiesAutoComplete from '../LocalIdentitiesAutoComplete/LocalIdentitiesAutoComplete'
 import { toDecimals, fromDecimals } from '../../lib/math-utils'
 import { addressPattern, isAddress } from '../../lib/web3-utils'
 import AmountInput from '../AmountInput'
+import { format } from 'js-conflux-sdk'
 
 const NO_ERROR = Symbol('NO_ERROR')
 const RECEIPIENT_NOT_ADDRESS_ERROR = Symbol('RECEIPIENT_NOT_ADDRESS_ERROR')
@@ -41,6 +42,7 @@ class Withdrawal extends React.Component {
     selectedToken: NULL_SELECTED_TOKEN,
   }
   _recipientInput = React.createRef()
+
   componentDidUpdate(prevProps) {
     const { readyToFocus } = this.props
     const input = this._recipientInput.current
@@ -48,9 +50,11 @@ class Withdrawal extends React.Component {
       input.focus()
     }
   }
+
   nonZeroTokens() {
     return this.props.tokens.filter(({ amount }) => !amount.isZero())
   }
+
   handleAmountUpdate = event => {
     this.setState({
       amount: {
@@ -88,7 +92,17 @@ class Withdrawal extends React.Component {
     })
     const amountTooBig = Number(adjustedAmount) > token.amount
 
-    if (!isAddress(recipientAddress)) {
+    if (
+      !(
+        isAddress(recipientAddress) ||
+        isAddress(format.hexAddress(recipientAddress))
+      )
+    ) {
+      console.error(
+        'not addr',
+        recipientAddress,
+        format.hexAddress(recipientAddress)
+      )
       this.setState(({ recipient }) => ({
         recipient: {
           ...recipient,
