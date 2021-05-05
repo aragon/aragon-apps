@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "@conflux-/aragon-apps-vault": "4.1.0",
-    "@conflux-/aragon-os": "4.4.0"
+    "@conflux-/aragon-os": "4.4.2"
   },
   "devDependencies": {
     "@aragon/contract-helpers-test": "0.1.0",
