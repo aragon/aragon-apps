@@ -16,7 +16,7 @@ import {
   useLayout,
   useTheme,
   useToast,
-} from '@aragon/ui'
+} from '@conflux-/aragon-ui'
 import {
   useAragonApi,
   useConnectedAccount,

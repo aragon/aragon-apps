@@ -5,7 +5,7 @@ import {
   textStyle,
   useLayout,
   useTheme,
-} from '@aragon/ui'
+} from '@conflux-/aragon-ui'
 import SummaryBar from '../SummaryBar'
 import SummaryRow from '../SummaryRow'
 import { useVestedTokensInfo } from '../../app-logic'

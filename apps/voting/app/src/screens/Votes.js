@@ -8,7 +8,7 @@ import {
   useLayout,
   useTheme,
   DateRangePicker,
-} from '@aragon/ui'
+} from '@conflux-/aragon-ui'
 import EmptyFilteredVotes from '../components/EmptyFilteredVotes'
 import VoteCard from '../components/VoteCard/VoteCard'
 import VoteCardGroup from '../components/VoteCard/VoteCardGroup'

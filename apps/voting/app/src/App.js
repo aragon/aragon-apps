@@ -6,7 +6,7 @@ import {
   Main,
   SyncIndicator,
   useLayout,
-} from '@aragon/ui'
+} from '@conflux-/aragon-ui'
 import { useGuiStyle } from '@aragon/api-react'
 import NewVotePanel from './components/NewVotePanel'
 import useFilterVotes from './hooks/useFilterVotes'

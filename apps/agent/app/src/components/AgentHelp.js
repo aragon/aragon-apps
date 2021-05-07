@@ -1,5 +1,5 @@
 import React from 'react'
-import { GU, Info, Link, useTheme } from '@aragon/ui'
+import { GU, Info, Link, useTheme } from '@conflux-/aragon-ui'
 import AgentSvg from './AgentSvg'
 
 function AgentHelp() {

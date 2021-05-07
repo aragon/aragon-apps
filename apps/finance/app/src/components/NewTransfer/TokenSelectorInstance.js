@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { GU } from '@aragon/ui'
+import { GU } from '@conflux-/aragon-ui'
 import { useNetwork } from '@aragon/api-react'
 import LocalIdentityBadge from '../LocalIdentityBadge/LocalIdentityBadge'
 import { tokenIconUrl } from '../../lib/icon-utils'

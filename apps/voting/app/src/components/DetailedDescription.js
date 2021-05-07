@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react'
-import { GU, useTheme } from '@aragon/ui'
+import { GU, useTheme } from '@conflux-/aragon-ui'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
 
 function DetailedDescription({ path }) {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { useAragonApi } from '@aragon/api-react'
+import { useAragonApi, useNetwork } from '@aragon/api-react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
 import {
@@ -9,7 +9,7 @@ import {
   IdentityBadge,
   RADIUS,
   useTheme,
-} from '@aragon/ui'
+} from '@conflux-/aragon-ui'
 
 const withKey = item => ({ key: item.address, ...item })
 const sortAlphAsc = (a, b) => a.name.localeCompare(b.name)
@@ -24,6 +24,7 @@ const LocalIdentitiesAutoComplete = React.memo(
     const [items, setItems] = useState([])
     const [selected, setSelected] = useState(null)
     const [searchTerm, setSearchTerm] = useState('')
+    const network = useNetwork()
 
     const handleSearch = useCallback(
       async term => {
@@ -62,7 +63,12 @@ const LocalIdentitiesAutoComplete = React.memo(
       if (searchTerm.indexOf('0x') === 0) {
         return (
           <Option>
-            <IdentityBadge compact badgeOnly entity={address} />
+            <IdentityBadge
+              compact
+              badgeOnly
+              entity={address}
+              chainId={network.id}
+            />
             <Name>{name}</Name>
           </Option>
         )
@@ -70,7 +76,12 @@ const LocalIdentitiesAutoComplete = React.memo(
       return (
         <Option>
           <Name>{name}</Name>
-          <IdentityBadge compact badgeOnly entity={address} />
+          <IdentityBadge
+            compact
+            badgeOnly
+            entity={address}
+            chainId={network.id}
+          />
         </Option>
       )
     })

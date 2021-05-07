@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react'
-import { Card, GU, Timer, textStyle, useTheme } from '@aragon/ui'
+import { Card, GU, Timer, textStyle, useTheme } from '@conflux-/aragon-ui'
 import { noop } from '../../utils'
 import { VOTE_YEA, VOTE_NAY } from '../../vote-types'
 import LocalLabelAppBadge from '..//LocalIdentityBadge/LocalLabelAppBadge'

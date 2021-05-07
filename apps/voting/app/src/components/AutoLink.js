@@ -1,6 +1,6 @@
 import React from 'react'
 import Linkify from 'react-linkify'
-import { Link } from '@aragon/ui'
+import { Link } from '@conflux-/aragon-ui'
 
 const InlineLink = props => (
   <Link

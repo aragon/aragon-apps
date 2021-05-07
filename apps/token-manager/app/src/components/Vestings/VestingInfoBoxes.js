@@ -7,7 +7,7 @@ import {
   GU,
   textStyle,
   useTheme,
-} from '@aragon/ui'
+} from '@conflux-/aragon-ui'
 import { addressesEqual } from '../../web3-utils'
 import { shortenAddress } from '../../utils'
 import { useAppLogic, useTotalVestedTokensInfo } from '../../app-logic'

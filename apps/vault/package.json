@@ -27,7 +27,7 @@
     "abi:extract": "buidler-extract --output abi/ --keys abi"
   },
   "dependencies": {
-    "@conflux-/aragon-os": "4.4.0"
+    "@conflux-/aragon-os": "4.4.2"
   },
   "devDependencies": {
     "@aragon/contract-helpers-test": "^0.1.0",

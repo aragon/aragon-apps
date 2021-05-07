@@ -1,5 +1,5 @@
 import React from 'react'
-import { DateRangePicker, DropDown, GU } from '@aragon/ui'
+import { DateRangePicker, DropDown, GU } from '@conflux-/aragon-ui'
 import { noop } from '../lib/utils'
 
 function TransactionFilters({

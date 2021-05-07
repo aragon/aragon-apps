@@ -1,5 +1,5 @@
 import React from 'react'
-import { ButtonIcon } from '@aragon/ui'
+import { ButtonIcon } from '@conflux-/aragon-ui'
 
 export default props => (
   <ButtonIcon label="Toggle filters" {...props}>

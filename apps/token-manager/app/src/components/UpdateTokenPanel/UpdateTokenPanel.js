@@ -9,11 +9,13 @@ import {
   Info,
   SidePanel,
   useSidePanelFocusOnReady,
-} from '@aragon/ui'
-import { isAddress } from '../../web3-utils'
+} from '@conflux-/aragon-ui'
+import { formatAddress, isAddress } from '../../web3-utils'
 import { fromDecimals, toDecimals, splitDecimalNumber } from '../../utils'
 import LocalIdentitiesAutoComplete from '../LocalIdentitiesAutoComplete/LocalIdentitiesAutoComplete'
 import AmountInput from '../AmountInput'
+import { format } from 'js-conflux-sdk'
+import { useNetwork } from '@aragon/api-react'
 
 // Any more and the number input field starts to put numbers in scientific notation
 const MAX_INPUT_DECIMAL_BASE = 6
@@ -188,11 +190,12 @@ function usePanelForm({
 
   const validateFields = useCallback(() => {
     const holderAddress = holderField.value.trim()
-    const holderError = isAddress(holderAddress)
-      ? null
-      : mode === 'assign'
-      ? 'The recipient must be a valid Ethereum address.'
-      : 'The account must be a valid Ethereum address.'
+    const holderError =
+      isAddress(holderAddress) || isAddress(format.hexAddress(holderAddress))
+        ? null
+        : mode === 'assign'
+        ? 'The recipient must be a valid Conflux or Ethereum address.'
+        : 'The account must be a valid Conflux or Ethereum address.'
 
     if (holderError) {
       setHolderField({ ...holderField, error: holderError })
@@ -234,6 +237,7 @@ function TokenPanelContent({
 }) {
   const holderInputRef = useSidePanelFocusOnReady()
   const amountInputRef = useSidePanelFocusOnReady()
+  const network = useNetwork()
 
   const {
     amountField,
@@ -246,7 +250,9 @@ function TokenPanelContent({
     warningMessage,
   } = usePanelForm({
     getHolderBalance,
-    initialHolder: holderAddress,
+    initialHolder: holderAddress
+      ? formatAddress(holderAddress, network.id)
+      : holderAddress,
     maxAccountTokens,
     mode,
     onUpdateTokens,
@@ -304,8 +310,8 @@ function TokenPanelContent({
       <Field
         label={
           mode === 'assign'
-            ? 'Recipient (must be a valid Ethereum address)'
-            : 'Account (must be a valid Ethereum address)'
+            ? 'Recipient (must be a valid Conflux or Ethereum address)'
+            : 'Account (must be a valid Conflux or Ethereum address)'
         }
       >
         <LocalIdentitiesAutoComplete

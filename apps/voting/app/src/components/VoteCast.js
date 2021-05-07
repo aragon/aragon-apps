@@ -1,5 +1,5 @@
 import React from 'react'
-import { GU, IconCheck, RADIUS, textStyle, useTheme } from '@aragon/ui'
+import { GU, IconCheck, RADIUS, textStyle, useTheme } from '@conflux-/aragon-ui'
 import { useAppState } from '@aragon/api-react'
 import useExtendedVoteData from '../hooks/useExtendedVoteData'
 import { VOTE_YEA } from '../vote-types'

@@ -8,7 +8,7 @@ import {
   SidePanel,
   TextInput,
   useSidePanelFocusOnReady,
-} from '@aragon/ui'
+} from '@conflux-/aragon-ui'
 
 const NewVotePanel = React.memo(function NewVotePanel({
   panelState,

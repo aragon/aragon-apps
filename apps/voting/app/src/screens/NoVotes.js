@@ -1,5 +1,5 @@
 import React from 'react'
-import { Button, EmptyStateCard, GU, LoadingRing } from '@aragon/ui'
+import { Button, EmptyStateCard, GU, LoadingRing } from '@conflux-/aragon-ui'
 import noVotesPng from '../assets/no-votes.png'
 
 const NoVotes = React.memo(function NoVotes({ onNewVote, isSyncing }) {

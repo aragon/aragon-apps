@@ -1,5 +1,12 @@
 import React, { useState } from 'react'
-import { ButtonBase, GU, IconUp, RADIUS, springs, useTheme } from '@aragon/ui'
+import {
+  ButtonBase,
+  GU,
+  IconUp,
+  RADIUS,
+  springs,
+  useTheme,
+} from '@conflux-/aragon-ui'
 import { Transition, animated } from 'react-spring'
 
 const AnimatedDiv = animated.div
@@ -17,6 +24,7 @@ function ToggleContent({ label, children }) {
           display: flex;
           align-items: center;
           width: calc(100%);
+
           &:active {
             color: ${theme.surfaceContentSecondary};
           }

@@ -13,7 +13,7 @@ import {
   GU,
   textStyle,
   useTheme,
-} from '@aragon/ui'
+} from '@conflux-/aragon-ui'
 import { useAragonApi } from '@aragon/api-react'
 import QRCode from 'qrcode.react'
 import tokenBalanceOfAbi from '../../abi/token-balanceof.json'
@@ -368,7 +368,7 @@ class Deposit extends React.Component {
                   `}
                 >
                   <strong>WARNING</strong>: Do <strong>not</strong> send non-CFX
-                  tokens directly to this address.
+                  (e.g. ERC-20) tokens directly to this address.
                 </p>
               </Info>
             </ToggleContent>

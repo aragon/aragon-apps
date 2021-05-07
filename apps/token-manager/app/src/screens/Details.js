@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react'
-import { Accordion, Bar, BackButton, Box, Split } from '@aragon/ui'
+import { Accordion, Bar, BackButton, Box, Split } from '@conflux-/aragon-ui'
 import EmptyVestings from '../components/Vestings/EmptyVestings'
 import VestingContent from '../components/Vestings/VestingContent'
 import VestingExpandableContent from '../components/Vestings/VestingExpandableContent'

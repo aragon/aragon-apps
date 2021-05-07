@@ -1,5 +1,5 @@
 import React from 'react'
-import { useTheme, IconCheck, GU, textStyle, springs } from '@aragon/ui'
+import { useTheme, IconCheck, GU, textStyle, springs } from '@conflux-/aragon-ui'
 import { Spring } from 'react-spring'
 
 const VotedIndicator = React.memo(function VotedIndicator({ expand }) {

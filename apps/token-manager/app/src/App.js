@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import BN from 'bn.js'
-import { Main, SyncIndicator } from '@aragon/ui'
+import { Main, SyncIndicator } from '@conflux-/aragon-ui'
 import { useAragonApi } from '@aragon/api-react'
 import AppHeader from './components/AppHeader'
 import { IdentityProvider } from './components/IdentityManager/IdentityManager'
@@ -11,6 +11,7 @@ import Details from './screens/Details'
 import Holders from './screens/Holders'
 import { addressesEqual } from './web3-utils'
 import { useAppLogic } from './app-logic'
+import { format } from 'js-conflux-sdk'
 
 const initialAssignTokensConfig = {
   mode: null,
@@ -45,10 +46,10 @@ class App extends React.PureComponent {
 
     // Don't care about responses
     if (mode === 'assign') {
-      api.mint(holder, amount).toPromise()
+      api.mint(format.hexAddress(holder), amount).toPromise()
     }
     if (mode === 'remove') {
-      api.burn(holder, amount).toPromise()
+      api.burn(format.hexAddress(holder), amount).toPromise()
     }
 
     this.handleSidepanelClose()

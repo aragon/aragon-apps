@@ -1,5 +1,5 @@
 import React from 'react'
-import { Button, EmptyStateCard, GU } from '@aragon/ui'
+import { Button, EmptyStateCard, GU } from '@conflux-/aragon-ui'
 import emptyIcon from '../assets/empty-card-icon.svg'
 
 const EmptyState = React.memo(function NoVotes({ onAssignHolder }) {

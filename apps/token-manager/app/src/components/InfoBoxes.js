@@ -7,7 +7,7 @@ import {
   GU,
   TokenBadge,
   useTheme,
-} from '@aragon/ui'
+} from '@conflux-/aragon-ui'
 import { stakesPercentages } from '../utils'
 import { addressesEqual } from '../web3-utils'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
@@ -71,6 +71,7 @@ function InfoBoxes({
               'Token',
               <TokenBadge
                 address={tokenAddress}
+                chainId={network.id}
                 name={tokenName}
                 symbol={tokenSymbol}
                 networkType={network && network.type}
@@ -92,14 +93,17 @@ function InfoBoxes({
                 > span:nth-child(1) {
                   color: ${theme.surfaceContentSecondary};
                 }
+
                 > span:nth-child(2) {
                   // “:” is here for accessibility reasons, we can hide it
                   opacity: 0;
                   width: 10px;
                 }
+
                 > span:nth-child(3) {
                   flex-shrink: 1;
                 }
+
                 > strong {
                   text-transform: uppercase;
                 }
