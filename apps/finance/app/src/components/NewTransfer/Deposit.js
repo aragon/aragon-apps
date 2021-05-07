@@ -140,7 +140,7 @@ class Deposit extends React.Component {
   async loadTokenData(address) {
     const { api, network, connectedAccount } = this.props
 
-    // ETH
+    // CFX
     if (addressesEqual(address, ETHER_TOKEN_FAKE_ADDRESS)) {
       const userBalance = await api
         .web3Eth('getBalance', connectedAccount)
@@ -150,7 +150,7 @@ class Deposit extends React.Component {
       return {
         decimals: 18,
         loading: false,
-        symbol: 'ETH',
+        symbol: 'CFX',
         userBalance,
       }
     }
@@ -340,7 +340,7 @@ class Deposit extends React.Component {
         {appAddress && ethSelected && (
           <div>
             <VSpace size={3} />
-            <ToggleContent label="Show address for direct ETH transfer ">
+            <ToggleContent label="Show address for direct CFX transfer ">
               <VSpace size={2} />
               <QRCode
                 value={appAddress}
@@ -357,7 +357,7 @@ class Deposit extends React.Component {
               />
               <VSpace size={2} />
               <Info>
-                Use the above address or QR code to transfer ETH directly to
+                Use the above address or QR code to transfer CFX directly to
                 your organization’s Finance app. You should specify a gas limit
                 of 350,000 for this transfer.
                 <p
@@ -367,8 +367,8 @@ class Deposit extends React.Component {
                     font-size: 12px;
                   `}
                 >
-                  <strong>WARNING</strong>: Do <strong>not</strong> send non-ETH
-                  (e.g. ERC-20) tokens directly to this address.
+                  <strong>WARNING</strong>: Do <strong>not</strong> send non-CFX
+                  tokens directly to this address.
                 </p>
               </Info>
             </ToggleContent>
@@ -410,7 +410,7 @@ const SelectedTokenBalance = ({ network, selectedToken }) => {
           You have{' '}
           {userBalance === '0' ? 'no' : fromDecimals(userBalance, decimals)}{' '}
           {addressesEqual(address, ETHER_TOKEN_FAKE_ADDRESS) ? (
-            'ETH'
+            'CFX'
           ) : (
             <span
               css={`

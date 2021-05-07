@@ -1,7 +1,7 @@
 import BN from 'bn.js'
 import { ETHER_TOKEN_FAKE_ADDRESS } from './lib/token-utils'
 
-// Use this function to sort by ETH and then token symbol
+// Use this function to sort by CFX and then token symbol
 const compareBalancesByEthAndSymbol = (tokenA, tokenB) => {
   if (tokenA.address === ETHER_TOKEN_FAKE_ADDRESS) {
     return -1
