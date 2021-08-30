@@ -107,13 +107,14 @@ async function initialize(vaultAddress, ethAddress) {
     .network()
     .pipe(first())
     .toPromise()
+
   TEST_TOKEN_ADDRESSES.push(...getTestTokenAddresses(network.type))
 
   // Set up ETH placeholders
   tokenContracts.set(ethAddress, ETH_CONTRACT)
-  tokenDecimals.set(ETH_CONTRACT, '18')
-  tokenNames.set(ETH_CONTRACT, 'Ether')
-  tokenSymbols.set(ETH_CONTRACT, 'ETH')
+  tokenDecimals.set(ETH_CONTRACT, network?.nativeCurrency?.decimals || '18')
+  tokenNames.set(ETH_CONTRACT, network?.nativeCurrency?.name || 'Ether')
+  tokenSymbols.set(ETH_CONTRACT, network?.nativeCurrency?.symbol || 'Eth')
 
   const settings = {
     network,

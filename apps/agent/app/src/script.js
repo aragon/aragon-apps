@@ -97,10 +97,12 @@ async function initialize() {
   const proxyAddress = currentApp.appAddress
   // Set up ETH placeholders
   const ethAddress = ETHER_TOKEN_FAKE_ADDRESS
+
+  // Set up ETH plsaceholders
   tokenContracts.set(ethAddress, ETH_CONTRACT)
-  tokenDecimals.set(ETH_CONTRACT, '18')
-  tokenNames.set(ETH_CONTRACT, 'Ether')
-  tokenSymbols.set(ETH_CONTRACT, 'ETH')
+  tokenDecimals.set(ETH_CONTRACT, network?.nativeCurrency?.decimals || '18')
+  tokenNames.set(ETH_CONTRACT, network?.nativeCurrency?.name || 'Ether 123')
+  tokenSymbols.set(ETH_CONTRACT, network?.nativeCurrency?.symbol || 'Eth 123')
 
   const settings = {
     network,
@@ -354,6 +356,7 @@ async function updateBalances(balances, tokenAddress, settings) {
   const balancesIndex = newBalances.findIndex(({ address }) =>
     addressesEqual(address, tokenAddress)
   )
+
   if (balancesIndex === -1) {
     return newBalances.concat(
       await newBalanceEntry(tokenContract, tokenAddress, settings)

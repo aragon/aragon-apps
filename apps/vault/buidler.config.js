@@ -4,6 +4,7 @@ usePlugin("@nomiclabs/buidler-ganache")
 usePlugin('@nomiclabs/buidler-truffle5')
 usePlugin('buidler-gas-reporter')
 usePlugin('solidity-coverage')
+usePlugin('@aragon/buidler-aragon')
 
 const ACCOUNTS = (process.env.ETH_KEYS ? process.env.ETH_KEYS.split(',') : [])
   .map(key => key.trim())
@@ -41,6 +42,10 @@ module.exports = {
     frame: {
       httpHeaders: { origin: 'buidler' },
       url: 'http://localhost:1248',
+    },
+    mumbai: {
+      url: 'https://polygon-mumbai.g.alchemy.com/v2/z3go4SKtSuiegUwtfkfd5tBCLDTcwYP_',
+      accounts: ACCOUNTS,
     }
   },
   solc: {
