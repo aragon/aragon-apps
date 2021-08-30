@@ -1,5 +1,9 @@
 const { usePlugin } = require('@nomiclabs/buidler/config')
 
+const { config } = require('dotenv')
+const { resolve } =require('path')
+config({ path: resolve(__dirname, '../../.env') })
+
 usePlugin("@nomiclabs/buidler-ganache")
 usePlugin('@nomiclabs/buidler-truffle5')
 usePlugin('buidler-gas-reporter')
@@ -46,6 +50,10 @@ module.exports = {
     mumbai: {
       url: 'https://polygon-mumbai.g.alchemy.com/v2/z3go4SKtSuiegUwtfkfd5tBCLDTcwYP_',
       accounts: ACCOUNTS
+    },
+    matic: {
+      url: 'https://polygon-mainnet.g.alchemy.com/v2/VUyk2zak-hvcH902FZoSrxBHB7CEN52w',
+      accounts: ACCOUNTS,
     }
   },
   solc: {

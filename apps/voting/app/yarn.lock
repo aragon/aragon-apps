@@ -104,12 +104,12 @@
     ethers "~4.0.4"
     lodash "^4.17.11"
 
-"@aragon/api-react@^2.2.0":
+"@aragon/api-react@2.2.0":
   version "2.2.0"
   resolved "https://registry.yarnpkg.com/@aragon/api-react/-/api-react-2.2.0.tgz#26f3b87537a408a5f88dd3f1e703d5fa6dbed658"
   integrity sha512-SiC42xGtErn4TcI8MPL/QPpPlJWzycoGYT2DBPGCfUH3S2566KOEVpMO6i+StksGCzdG9iatWlX5V1UfA9oZTg==
 
-"@aragon/api@^2.1.4":
+"@aragon/api@2.1.4":
   version "2.1.4"
   resolved "https://registry.yarnpkg.com/@aragon/api/-/api-2.1.4.tgz#4030a97ee124fd70a728d28b820f3ae110e3aaa1"
   integrity sha512-5g4GJ4kH0vUsy70w3zPJd47XD00c6CHwT4XQRWBY4CQgOAYHlTg8ZeAy8N8vW4wSSL8MIKLQ2ReAcd1mXQUrbw==
@@ -12930,9 +12930,9 @@ use-token@^0.2.0:
   dependencies:
     js-sha3 "^0.8.0"
 
-"use-wallet@https://github.com/aragon/use-wallet.git#multichain":
+"use-wallet@git+https://github.com/aragon/use-wallet.git#multichain":
   version "0.9.0"
-  resolved "https://github.com/aragon/use-wallet.git#8e9b3a9356ff0768119bc90201822c9b6d15edf7"
+  resolved "git+https://github.com/aragon/use-wallet.git#8e9b3a9356ff0768119bc90201822c9b6d15edf7"
   dependencies:
     "@aragon/provided-connector" "^6.0.8"
     "@typescript-eslint/parser" "^4.1.0"
