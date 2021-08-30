@@ -23,6 +23,8 @@ function BalanceToken({
   const amountFormattedRounded = formatTokenAmount(amount, decimals, {
     digits: 3,
   })
+
+  console.log(convertedAmount.toString(), decimals.toString(), formatTokenAmount(convertedAmount, decimals), ' goodon 1123123123e')
   const amountWasRounded = amountFormatted !== amountFormattedRounded
 
   return (

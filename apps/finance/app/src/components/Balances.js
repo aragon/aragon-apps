@@ -37,7 +37,7 @@ function Balances({ balances }) {
   const theme = useTheme()
   const { layoutName } = useLayout()
   const balanceItems = useBalanceItems(balances)
-
+  
   const compact = layoutName === 'small'
 
   return (

@@ -29,6 +29,11 @@
       "registry": "0xfbae32d1cde62858bc45f51efc8cc4fa1415447e",
       "appName": "vault.aragonpm.eth",
       "network": "rinkeby"
+    },
+    "mumbai": {
+      "registry": "0x431f0eed904590b176f9ff8c36a1c4ff0ee9b982",
+      "appName": "vault.aragonpm.eth",
+      "network": "mumbai"
     }
   },
   "roles": [

@@ -18,9 +18,12 @@ lerna-debug.log
 */*/dist
 */*/cache
 */*/artifacts
-
+*/*/build
+*/**/dist
+*/**/build
 # yarn
 yarn-error.log
+*/**/.env
 
 # Ignore package-lock files (only use yarn.lock)
 package-lock.json

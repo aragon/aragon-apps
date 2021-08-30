@@ -25,6 +25,11 @@
       "registry": "0xfe03625ea880a8cba336f9b5ad6e15b0a3b5a939",
       "appName": "agent.aragonpm.eth",
       "network": "rinkeby"
+    },
+    "mumbai": {
+      "registry": "0x431f0eed904590b176f9ff8c36a1c4ff0ee9b982",
+      "appName": "agent.aragonpm.eth",
+      "network": "mumbai"
     }
   },
   "roles": [

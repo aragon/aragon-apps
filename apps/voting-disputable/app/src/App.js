@@ -1,3 +1,5 @@
+/* tslint:disable */
+
 import React, { useCallback } from 'react'
 import {
   Button,
