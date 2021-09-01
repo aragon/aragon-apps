@@ -26,7 +26,7 @@
     "@aragon/minime": "1.0.0",
     "@aragon/os": "5.0.0-rc.0",
     "@aragon/staking": "0.3.1",
-    "@aragon/ui": "^1.8.0"
+    "@aragon/ui": "^1.9.0"
   },
   "devDependencies": {
     "@aragon/apps-agreement": "1.0.0-rc.0",
