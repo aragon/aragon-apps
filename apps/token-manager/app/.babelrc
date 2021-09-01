@@ -1,19 +1,28 @@
 {
   "presets": [
     [
-      "env",
+      "@babel/preset-env",
       {
         "modules": false,
-        "useBuiltIns": false
+        "useBuiltIns": "entry",
+        "corejs": 3,
+        "shippedProposals": true
       }
     ],
-    "stage-2"
+    "@babel/preset-react"
   ],
+  "plugins": [["styled-components", { "displayName": true }]],
   "env": {
-    "test": { "presets": [["env"], "stage-2"] }
-  },
-  "plugins": [
-    ["styled-components", { "displayName": true }],
-    "transform-runtime"
-  ]
+    "test": {
+      "presets": [
+        [
+          "@babel/preset-env",
+          {
+            "modules": "commonjs",
+            "targets": { "node": "current" }
+          }
+        ]
+      ]
+    }
+  }
 }

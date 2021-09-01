@@ -4,10 +4,10 @@
   "private": true,
   "license": "AGPL-3.0-or-later",
   "dependencies": {
-    "@aragon/api": "^2.1.4",
-    "@aragon/api-react": "^2.2.0",
+    "@aragon/api": "^2.2.3",
+    "@aragon/api-react": "^2.2.4",
     "@aragon/templates-tokens": "^1.2.0",
-    "@aragon/ui": "^1.8.0",
+    "@aragon/ui": "^1.9.0",
     "@babel/polyfill": "^7.8.3",
     "date-fns": "2.0.0-alpha.22",
     "file-saver": "^2.0.2",
@@ -41,11 +41,11 @@
   },
   "scripts": {
     "lint": "eslint ./src",
-    "sync-assets": "copy-aragon-ui-assets -n aragon-ui ./build && rsync -rtu ./public/ ./build",
-    "start": "npm run sync-assets && npm run watch:script & parcel serve index.html -p 3005 --out-dir build/",
-    "build": "npm run sync-assets && npm run build:script && parcel build index.html --out-dir build/ --public-url \".\"",
-    "watch:script": "parcel watch src/script.js --out-dir build/ --no-hmr",
-    "build:script": "parcel build src/script.js --out-dir build/"
+    "start": "npm run sync-assets && npm run watch:script & parcel serve index.html -p 3005 --out-dir ../dist/",
+    "build": "rm -rf ../dist/ && npm run sync-assets && npm run build:script && parcel build index.html --no-cache --out-dir ../dist/ --public-url \".\"",
+    "build:script": "parcel build src/script.js --out-dir ../dist/",
+    "watch:script": "parcel watch src/script.js --out-dir ../dist/ --no-hmr",
+    "sync-assets": "copy-aragon-ui-assets -n aragon-ui ../dist && rsync -rtu ./public/ ../dist/"
   },
   "browserslist": [
     ">2%",

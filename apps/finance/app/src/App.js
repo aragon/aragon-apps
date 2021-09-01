@@ -15,6 +15,7 @@ import Balances from './components/Balances'
 import NewTransferPanelContent from './components/NewTransfer/PanelContent'
 import Transfers from './components/Transfers'
 
+console.log("gio")
 class App extends React.Component {
   static propTypes = {
     api: PropTypes.object,
