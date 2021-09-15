@@ -1,0 +1,49 @@
+{
+  "roles": [
+    {
+      "name": "Set Token Manager",
+      "id": "SET_TOKEN_MANAGER_ROLE",
+      "params": []
+    },
+    {
+      "name": "Set vault",
+      "id": "SET_VAULT_ROLE",
+      "params": []
+    },
+    {
+      "name": "Finalise token request",
+      "id": "FINALISE_TOKEN_REQUEST_ROLE",
+      "params": []
+    },
+    {
+      "name": "Add/Remove a token from the accepted tokens",
+      "id": "MODIFY_TOKENS_ROLE",
+      "params": []
+    }
+  ],
+  "environments": {
+    "default": {
+      "network": "development",
+      "appName": "token-request.open.aragonpm.eth"
+    },
+    "staging": {
+      "registry": "0xfe03625ea880a8cba336f9b5ad6e15b0a3b5a939",
+      "appName": "token-request.open.aragonpm.eth",
+      "wsRPC": "wss://rinkeby.eth.aragon.network/ws",
+      "network": "rinkeby"
+    },
+    "rinkeby": {
+      "registry": "0x98df287b6c145399aaa709692c8d308357bc085d",
+      "appName": "token-request.aragonpm.eth",
+      "wsRPC": "wss://rinkeby.eth.aragon.network/ws",
+      "network": "rinkeby"
+    },
+    "mainnet": {
+      "registry": "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e",
+      "appName": "token-request.aragonpm.eth",
+      "wsRPC": "wss://mainnet.eth.aragon.network/ws",
+      "network": "mainnet"
+    }
+  },
+  "path": "contracts/TokenRequest.sol"
+}
