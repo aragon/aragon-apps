@@ -19,7 +19,6 @@ import "@aragon/os/contracts/apm/APMNamehash.sol";
 import "@aragon/apps-voting/contracts/Voting.sol";
 import "@aragon/apps-vault/contracts/Vault.sol";
 import "@aragon/apps-token-manager/contracts/TokenManager.sol";
-import "@aragon/apps-shared-minime/contracts/MiniMeToken.sol";
 import "@1hive/oracle-token-balance/contracts/TokenBalanceOracle.sol";
 import "../TimeLock.sol";
 

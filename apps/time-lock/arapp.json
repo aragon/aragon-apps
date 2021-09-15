@@ -14,11 +14,6 @@
       "name": "Change spam penalty factor role",
       "id": "CHANGE_SPAM_PENALTY_ROLE",
       "params": []
-    },
-    {
-      "name": "Lock tokens role",
-      "id": "LOCK_TOKENS_ROLE",
-      "params": []
     }
   ],
   "environments": {
@@ -43,6 +38,16 @@
       "appName": "time-lock.aragonpm.eth",
       "wsRPC": "wss://mainnet.eth.aragon.network/ws",
       "network": "mainnet"
+    },
+    "mumbai": {
+      "registry": "0x431f0eed904590b176f9ff8c36a1c4ff0ee9b982",
+      "appName": "time-lock.aragonpm.eth",
+      "network": "mumbai"
+    },
+    "matic": {
+      "registry": "0x3c70a0190d09f34519e6e218364451add21b7d4b",
+      "appName": "time-lock.aragonpm.eth",
+      "network": "matic"
     }
   },
   "path": "contracts/TimeLock.sol"
