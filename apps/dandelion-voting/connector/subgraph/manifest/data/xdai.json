@@ -1,0 +1,28 @@
+{
+  "network": "xdai",
+  "dataSources": {
+    "Organizations": [],
+    "OrganizationFactories": [
+      {
+        "name": "DAOFactory@0.8.1",
+        "address": "0x4037f97fcc94287257e50bd14c7da9cb4df18250",
+        "startBlock": 10076184
+      }
+    ],
+    "OrganizationTemplates": [
+      {
+        "name": "dandelion-org-template.aragonpm.eth@1.0.0",
+        "address": "0x611946cba62fbacc5873b864d485f87ad4fd73ca",
+        "startBlock": 10704312
+      },
+      {
+        "name": "gardens-template.aragonpm.eth@1.0.0",
+        "address": "0x08843b9258b1a6cdfcb9b5fb83f0c361d48c2ca5",
+        "startBlock": 10079605
+      }
+    ],
+    "LegacyOrganizationTemplates": [],
+    "TokenFactories": [],
+    "Tokens": []
+  }
+}
