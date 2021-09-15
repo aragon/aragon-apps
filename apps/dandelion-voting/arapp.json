@@ -32,7 +32,17 @@
       "appName": "dandelion-voting.1hive.aragonpm.eth",
       "wsRPC": "wss://xdai.poanetwork.dev/wss",
       "network": "xdai"
-    }	    
+    },
+    "mumbai": {
+      "registry": "0x431f0eed904590b176f9ff8c36a1c4ff0ee9b982",
+      "network": "mumbai",
+      "appName": "dandelion-voting.aragonpm.eth"
+    },
+    "matic": {
+      "registry": "0x3c70a0190d09f34519e6e218364451add21b7d4b",
+      "network": "matic",
+      "appName": "dandelion-voting.aragonpm.eth"
+    }
   },
   "roles": [
     {
