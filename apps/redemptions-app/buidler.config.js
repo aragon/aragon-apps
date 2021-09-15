@@ -45,6 +45,8 @@ module.exports = {
       httpHeaders: { origin: 'buidler' },
       url: 'http://localhost:1248',
     },
+    rinkeby: settingsForNetwork("rinkeby"),
+    mainnet: settingsForNetwork("mainnet"),
     mumbai: settingsForNetwork("mumbai"),
     matic: settingsForNetwork('matic')
   },
