@@ -3,7 +3,7 @@
     {
       "name": "Redeem tokens from the vault",
       "id": "REDEEM_ROLE",
-      "params": []
+      "params": ["Receiver address"]
     },
     {
       "name": "Add token to redemption list",
@@ -38,6 +38,18 @@
       "appName": "redemptions.aragonpm.eth",
       "wsRPC": "wss://mainnet.eth.aragon.network/ws",
       "network": "mainnet"
+    },
+    "mumbai": {
+      "registry": "0x431f0eed904590b176f9ff8c36a1c4ff0ee9b982",
+      "appName": "redemptions.aragonpm.eth",
+      "wsRPC": "wss://matic-testnet-archive-ws.bwarelabs.com",
+      "network": "mumbai"
+    },
+    "matic": {
+      "registry": "0x3c70a0190d09f34519e6e218364451add21b7d4b",
+      "appName": "redemptions.aragonpm.eth",
+      "wsRPC": "wss://cool-frosty-frog.matic.quiknode.pro/bd32caa885f4bbf687a022490b1b5cce6ddab38a",
+      "network": "matic"
     }
   },
   "path": "contracts/Redemptions.sol"
