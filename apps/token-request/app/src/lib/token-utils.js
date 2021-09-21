@@ -10,7 +10,7 @@ import { formatDisplayAmount } from './math-utils'
 // Some known tokens don’t strictly follow ERC-20 and it would be difficult to
 // adapt to every situation. The data listed in this map is used as a fallback
 // if either some part of their interface doesn't conform to a standard we
-export const ETHER_TOKEN_FAKE_ADDRESS = '0x0000000000000000000000000000000000000000' // support.
+export const TOKEN_FAKE_ADDRESS = '0x0000000000000000000000000000000000000000' // support.
 
 const KNOWN_TOKENS_FALLBACK = new Map([
   [
@@ -22,7 +22,7 @@ const KNOWN_TOKENS_FALLBACK = new Map([
   [
     'private',
     new Map([
-      [ETHER_TOKEN_FAKE_ADDRESS, { symbol: 'ETH', name: 'Ether', decimals: '18' }],
+      [TOKEN_FAKE_ADDRESS, { symbol: 'ETH', name: 'Ether', decimals: '18' }],
       ['0x89d24a6b4ccb1b6faa2625fe562bdd9a23260359', { symbol: 'DAI', name: 'Dai Stablecoin v1.0', decimals: '18' }],
       ['0x0d8775f648430679a709e98d2b0cb6250d2887ef', { symbol: 'BAT', name: 'Bassic attention token', decimals: '18' }],
     ]),

@@ -1,7 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
 import { Badge, Viewport } from '@aragon/ui'
-import { ETHER_TOKEN_FAKE_ADDRESS } from '../lib/token-utils'
+import { TOKEN_FAKE_ADDRESS } from '../lib/token-utils'
 import { addressesEqual, shortenAddress } from '../lib/web3-utils'
 
 class TokenSelectorInstance extends React.PureComponent {

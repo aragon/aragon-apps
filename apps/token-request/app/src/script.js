@@ -9,16 +9,10 @@ import {
   getTokenSymbol,
   getTokenName,
   getTokenDecimals,
-  ETHER_TOKEN_FAKE_ADDRESS,
+  TOKEN_FAKE_ADDRESS,
 } from './lib/token-utils'
 
 const app = new Aragon()
-
-const ETHER_DATA = {
-  decimals: 18,
-  name: 'Ether',
-  symbol: 'ETH',
-}
 
 app
   .call('tokenManager')
@@ -84,10 +78,10 @@ function initializeState(tokenManagerContract, tokens, settings) {
       const token = await getTokenData(minimeAddress, settings)
       const acceptedTokens = await getAcceptedTokens(tokens, settings)
 
-      tokens.includes(ETHER_TOKEN_FAKE_ADDRESS) &&
+      tokens.includes(TOKEN_FAKE_ADDRESS) &&
         acceptedTokens.unshift({
-          ...ETHER_DATA,
-          address: ETHER_TOKEN_FAKE_ADDRESS,
+          ...settings.network.nativeCurrency,
+          address: TOKEN_FAKE_ADDRESS,
         })
       token && app.indentify(`token-request ${token.symbol}`)
       return {
@@ -104,7 +98,7 @@ function initializeState(tokenManagerContract, tokens, settings) {
 
 const getAcceptedTokens = async (tokens, settings) => {
   const promises = tokens
-    .filter(token => token != ETHER_TOKEN_FAKE_ADDRESS)
+    .filter(token => token != TOKEN_FAKE_ADDRESS)
     .map(tokenAddress => getTokenData(tokenAddress, settings))
   return Promise.all(promises)
 }
@@ -125,7 +119,7 @@ async function newTokenRequest(
   try {
     const { requests = [] } = state
     const { decimals, name, symbol } =
-      depositToken === ETHER_TOKEN_FAKE_ADDRESS ? ETHER_DATA : await getTokenData(depositToken, settings)
+      depositToken === TOKEN_FAKE_ADDRESS ? settings.network.nativeCurrency : await getTokenData(depositToken, settings)
 
     const { timestamp } = await app.web3Eth('getBlock', blockNumber).toPromise()
 

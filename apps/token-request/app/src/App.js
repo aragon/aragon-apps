@@ -6,7 +6,7 @@ import { Main, SidePanel, SyncIndicator, Tabs, Header, GU } from '@aragon/ui'
 import NewRequest from './components/Panels/NewRequest'
 import { useAppLogic } from './hooks/app-hooks'
 import requestIcon from './assets/icono.svg'
-import { ETHER_TOKEN_FAKE_ADDRESS } from './lib/token-utils'
+import { TOKEN_FAKE_ADDRESS } from './lib/token-utils'
 import Requests from './screens/Requests'
 import RequestDetail from './screens/RequestDetail'
 import MainButton from './components/MainButton'
@@ -29,7 +29,7 @@ const App = () => {
 
   const handleRequest = async (tokenAddress, depositAmount, requestedAmount, reference) => {
     let intentParams
-    if (tokenAddress === ETHER_TOKEN_FAKE_ADDRESS) {
+    if (tokenAddress === TOKEN_FAKE_ADDRESS) {
       intentParams = { value: depositAmount }
     } else {
       // Get the number of period transitions necessary; we floor because we don't need to

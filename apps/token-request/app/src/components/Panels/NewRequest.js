@@ -12,14 +12,13 @@ import {
   textStyle,
   Info,
   Link,
-  unselectable,
 } from '@aragon/ui'
 import { useAppState, useNetwork } from '@aragon/api-react'
 import { useAragonApi, useApi } from '@aragon/api-react'
 import TokenSelector from '../TokenSelector'
 import { addressesEqual, isAddress } from '../../lib/web3-utils'
 import { fromDecimals, toDecimals } from '../../lib/math-utils'
-import { ETHER_TOKEN_FAKE_ADDRESS, tokenDataFallback, getTokenSymbol } from '../../lib/token-utils'
+import { TOKEN_FAKE_ADDRESS, tokenDataFallback, getTokenSymbol } from '../../lib/token-utils'
 import tokenBalanceOfAbi from '../../abi/token-balanceof.json'
 import tokenDecimalsAbi from '../../abi/token-decimals.json'
 import tokenSymbolAbi from '../../abi/token-symbol.json'
@@ -86,9 +85,9 @@ const NewRequest = React.memo(({ panelOpened, acceptedTokens, onRequest, connect
     }
     if (selectedToken.index != -1) {
       getSelectedTokenData()
-      const ethSelected =
-        isAddress(selectedToken.value) && addressesEqual(selectedToken.value, ETHER_TOKEN_FAKE_ADDRESS)
-      const tokenSelected = selectedToken.value && !ethSelected
+      const nativeCurrencySelected =
+        isAddress(selectedToken.value) && addressesEqual(selectedToken.value, TOKEN_FAKE_ADDRESS)
+      const tokenSelected = selectedToken.value && !nativeCurrencySelected
       setIsTokenSelected(tokenSelected)
     }
   }, [selectedToken.index])
@@ -189,18 +188,14 @@ const NewRequest = React.memo(({ panelOpened, acceptedTokens, onRequest, connect
 
   const loadTokenData = async address => {
     // ETH
-    if (addressesEqual(address, ETHER_TOKEN_FAKE_ADDRESS)) {
+    if (addressesEqual(address, TOKEN_FAKE_ADDRESS)) {
       const userBalance = await api
         .web3Eth('getBalance', connectedAccount)
         .toPromise()
         .catch(() => '-1')
 
-      return {
-        decimals: 18,
-        loading: false,
-        symbol: 'ETH',
-        userBalance,
-      }
+      return { ...network.nativeCurrency, loading: false, userBalance }
+
     }
 
     // Tokens
