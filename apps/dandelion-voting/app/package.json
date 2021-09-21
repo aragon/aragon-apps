@@ -20,14 +20,8 @@
     "web3-eth": "1.2.1"
   },
   "devDependencies": {
-    "babel-core": "^6.26.0",
-    "babel-eslint": "^9.0.0",
-    "babel-jest": "^23.0.1",
-    "babel-plugin-styled-components": "^1.5.1",
-    "babel-plugin-transform-runtime": "^6.23.0",
-    "babel-preset-env": "^1.6.1",
-    "babel-preset-react": "^6.24.1",
-    "babel-preset-stage-2": "^6.24.1",
+    "@babel/core": "^7.15.5",
+    "@babel/preset-react": "^7.14.5",
     "eslint": "5.5.0",
     "eslint-config-prettier": "^3.0.1",
     "eslint-config-standard": "^12.0.0",
