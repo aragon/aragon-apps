@@ -74,7 +74,7 @@ async function initialize(vaultAddress, tokenManagerAddress, nativeCurrencyAddre
   return createStore({
     network,
     ethToken: {
-      address: ethAddress,
+      address: nativeCurrencyAddress,
     },
     vault: {
       address: vaultAddress,
