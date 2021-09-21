@@ -19,6 +19,7 @@
   "scripts": {
     "console": "buidler console",
     "compile": "buidler compile --force",
+    "prepare": "npm run compile",
     "devchain": "buidler node",
     "lint": "solium --dir ./contracts",
     "test": "buidler test",

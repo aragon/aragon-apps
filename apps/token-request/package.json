@@ -8,7 +8,7 @@
     "start:http": "npm run start:http:template",
     "start:http:template": "aragon run --http localhost:8001 --http-served-from ./dist --template Template --template-init @ARAGON_ENS",
     "build": "cd app && npm run build && cd ..",
-    "prepare": "cd app && npm install && cd ..",
+    "prepare": "npm run compile && cd app && npm install && cd ..",
     "start:app": "cd app && npm start && cd ..",
     "compile": "buidler compile",
     "prepublishOnly": "aragon contracts compile",

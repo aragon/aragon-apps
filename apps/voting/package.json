@@ -21,6 +21,7 @@
     "compile": "buidler compile --force",
     "devchain": "buidler node",
     "build": "cd app && yarn build",
+    "prepare": "npm run compile && cd app && npm install",
     "lint": "solium --dir ./contracts",
     "test": "buidler test",
     "test:gas": "REPORT_GAS=true buidler test --network localhost",

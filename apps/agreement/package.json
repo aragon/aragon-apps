@@ -15,6 +15,7 @@
     "compile": "buidler compile --force",
     "compile:staking": "buidler compile --config buidler.config.staking.js",
     "devchain": "buidler node",
+    "prepare": "npm run compile",
     "lint": "solium --dir ./contracts",
     "test": "yarn compile:staking && buidler test",
     "test:gas": "REPORT_GAS=true yarn test --network localhost",

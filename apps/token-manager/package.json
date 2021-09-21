@@ -20,6 +20,7 @@
     "console": "buidler console",
     "compile": "buidler compile --force",
     "build": "cd app && yarn build",
+    "prepare": "npm run compile && cd app && npm install",
     "devchain": "buidler node",
     "lint": "solium --dir ./contracts",
     "test": "buidler test",

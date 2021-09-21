@@ -20,6 +20,7 @@
     "build": "cd app && yarn build",
     "lint": "solium --dir ./contracts",
     "test": "buidler test",
+    "prepare": "npm run compile && cd app && npm install",
     "test:gas": "REPORT_GAS=true buidler test --network localhost",
     "coverage": "buidler coverage --network coverage",
     "abi:extract": "buidler-extract --output abi/ --keys abi"

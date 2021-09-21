@@ -7,6 +7,8 @@
     "publish:minor": "aragon apm publish minor --files public",
     "publish:major": "aragon apm publish major --files public",
     "deploy:staging": "npm run publish:major -- --environment staging",
+    "prepare": "npm run compile",
+    "compile": "buidler compile",
     "versions": "aragon apm versions",
     "lint": "eslint . & solium --dir ./contracts",
     "lint:fix": "eslint . --fix & solium --dir ./contracts --fix",
