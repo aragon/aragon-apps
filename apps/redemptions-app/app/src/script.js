@@ -46,7 +46,7 @@ retryEvery(() => {
   )
 })
 
-async function initialize(vaultAddress, tokenManagerAddress, ethAddress) {
+async function initialize(vaultAddress, tokenManagerAddress, nativeCurrencyAddress) {
   const vaultContract = app.external(vaultAddress, vaultAbi)
   const tokenManagerContract = app.external(tokenManagerAddress, tokenManagerAbi)
 
