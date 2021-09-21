@@ -10,6 +10,7 @@
     "build": "cd app && npm run build && cd ..",
     "prepare": "cd app && npm install && cd ..",
     "start:app": "cd app && npm start && cd ..",
+    "compile": "buidler compile",
     "prepublishOnly": "aragon contracts compile",
     "publish:patch": "aragon apm publish patch --files dist",
     "publish:minor": "aragon apm publish minor --files dist",
