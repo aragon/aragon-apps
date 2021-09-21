@@ -90,6 +90,8 @@ function testDateRangeFilter(filter, vote) {
   return (
     !start ||
     !end ||
+    !startDate ||
+    !endDate ||
     (isAfter(startDate, startOfDay(start)) && isBefore(endDate, endOfDay(end)))
   )
 }

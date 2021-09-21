@@ -4,12 +4,14 @@ import { getVoteTransition } from '../vote-utils'
 import { VOTE_ABSENT } from '../vote-types'
 import { EMPTY_ADDRESS } from '../web3-utils'
 import { useBlockTime, useLatestBlock } from './useBlock'
+import { useVoteDates } from './useVoteDates'
 
 // Decorate the votes array with more information relevant to the frontend
 function useDecoratedVotes() {
   const { votes, connectedAccountVotes } = useAppState()
   const currentApp = useCurrentApp()
   const installedApps = useInstalledApps()
+  const blockDates = useVoteDates(votes)
 
   return useMemo(() => {
     if (!(votes && currentApp && installedApps)) {
@@ -60,6 +62,9 @@ function useDecoratedVotes() {
         }
       }
 
+      vote.data.startDate = blockDates.get(vote.data.startBlock)
+      vote.data.endDate = blockDates.get(vote.data.endBlock)
+
       return {
         ...vote,
         executionTargetData,
@@ -82,7 +87,7 @@ function useDecoratedVotes() {
       .sort((a, b) => a.name.localeCompare(b.name))
 
     return [decoratedVotes, executionTargets]
-  }, [votes, connectedAccountVotes, currentApp, installedApps])
+  }, [votes, blockDates, connectedAccountVotes, currentApp, installedApps])
 }
 
 // Get the votes array ready to be used in the app.

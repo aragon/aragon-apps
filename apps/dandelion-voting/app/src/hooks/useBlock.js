@@ -13,6 +13,8 @@ const NETWORK_TIMES = new Map([
   ['goerli', 15],
   ['private', 3],
   ['xdai', 5],
+  ['matic', 2],
+  ['mumbai', 2]
 ])
 
 export function useBlockTime() {
