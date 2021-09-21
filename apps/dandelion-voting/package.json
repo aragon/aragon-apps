@@ -8,6 +8,7 @@
     "compile": "buidler compile --force",
     "devchain": "buidler node",
     "build": "cd app && npm run build",
+    "prepare": "cd app && npm install",
     "lint": "buidler check && echo 'Lint complete.'",
     "test": "buidler test --network buidlerevm",
     "test:gas": "GAS_REPORTER=true npm run test",
