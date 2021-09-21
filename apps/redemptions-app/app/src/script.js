@@ -5,7 +5,8 @@ import { forkJoin } from 'rxjs'
 import Aragon, { events } from '@aragon/api'
 
 import {
-  ETHER_TOKEN_FAKE_ADDRESS,
+  DEFAULT_CURRENCY,
+  TOKEN_FAKE_ADDRESS,
   isTokenVerified,
   tokenDataFallback,
   getTokenSymbol,
@@ -24,20 +25,20 @@ import tokenManagerAbi from './abi/tokenManager.json'
 import vaultAbi from './abi/vault.json'
 
 const tokenAbi = [].concat(tokenDecimalsAbi, tokenNameAbi, tokenSymbolAbi, tokenSupplyAbi)
-const ZERO_ADDRESS = ETHER_TOKEN_FAKE_ADDRESS
+const ZERO_ADDRESS = TOKEN_FAKE_ADDRESS
 
 const tokenContracts = new Map() // Addr -> External contract
 const tokenDecimals = new Map() // External contract -> decimals
 const tokenNames = new Map() // External contract -> name
 const tokenSymbols = new Map() // External contract -> symbol
 
-const ETH_CONTRACT = Symbol('ETH_CONTRACT')
+const NATIVE_CURRENCY_CONTRACT = Symbol('NATIVE_CURRENCY_CONTRACT')
 
 const app = new Aragon()
 
 retryEvery(() => {
   forkJoin(app.call('vault'), app.call('tokenManager')).subscribe(
-    adresses => initialize(...adresses, ETHER_TOKEN_FAKE_ADDRESS),
+    adresses => initialize(...adresses, TOKEN_FAKE_ADDRESS),
     err =>
       console.error(
         `Could not start background script execution due to the contract not loading vault or tokenManager: ${err}`
@@ -60,11 +61,15 @@ async function initialize(vaultAddress, tokenManagerAddress, ethAddress) {
     .pipe(first())
     .toPromise()
 
-  // Set up ETH placeholders
-  tokenContracts.set(ethAddress, ETH_CONTRACT)
-  tokenDecimals.set(ETH_CONTRACT, '18')
-  tokenNames.set(ETH_CONTRACT, 'Ether')
-  tokenSymbols.set(ETH_CONTRACT, 'ETH')
+  // Set up native token placeholders
+  const { nativeCurrency = DEFAULT_CURRENCY } = network;
+  tokenContracts.set(nativeCurrencyAddress, NATIVE_CURRENCY_CONTRACT);
+  tokenDecimals.set(
+    NATIVE_CURRENCY_CONTRACT,
+    nativeCurrency.decimals.toString()
+  );
+  tokenNames.set(NATIVE_CURRENCY_CONTRACT, nativeCurrency.name);
+  tokenSymbols.set(NATIVE_CURRENCY_CONTRACT, nativeCurrency.symbol);
 
   return createStore({
     network,

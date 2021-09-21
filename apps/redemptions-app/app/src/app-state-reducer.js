@@ -1,11 +1,11 @@
 import BN from 'bn.js'
-import { ETHER_TOKEN_FAKE_ADDRESS } from './lib/token-utils'
+import { TOKEN_FAKE_ADDRESS } from './lib/token-utils'
 
 const compareBalancesByEthAndSymbol = (tokenA, tokenB) => {
-  if (tokenA.address === ETHER_TOKEN_FAKE_ADDRESS) {
+  if (tokenA.address === TOKEN_FAKE_ADDRESS) {
     return -1
   }
-  if (tokenB.address === ETHER_TOKEN_FAKE_ADDRESS) {
+  if (tokenB.address === TOKEN_FAKE_ADDRESS) {
     return 1
   }
   return tokenA.symbol.localeCompare(tokenB.symbol)

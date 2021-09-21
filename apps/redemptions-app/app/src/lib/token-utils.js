@@ -21,7 +21,13 @@ const KNOWN_TOKENS_FALLBACK = new Map([
   ],
 ])
 
-export const ETHER_TOKEN_FAKE_ADDRESS = '0x0000000000000000000000000000000000000000'
+export const DEFAULT_CURRENCY = {
+  symbol: 'ETH',
+  name: 'Ether',
+  decimals: 18,
+}
+
+export const TOKEN_FAKE_ADDRESS = '0x0000000000000000000000000000000000000000'
 
 export const isTokenVerified = (tokenAddress, networkType) =>
   // The verified list is without checksums
