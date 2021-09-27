@@ -23,9 +23,10 @@ jobs:
         id: matrix
         env:
           PULL_LABELS: ${{ github.event.pull_request.labels }}
+        # loop through all labels and prepare matrix to run in the next job
         run: |
           LABELS=()
-          for LABEL in $(cat labels.json | jq '.[].name'); do 
+          for LABEL in $(echo $PULL_LABELS | jq '.[].name'); do 
             APP=$(cut -d":" -f1 <<< $LABEL | sed "s/\"//")
             LEVEL=$(cut -d":" -f2 <<< $LABEL | sed "s/\"//")
             if [ $LEVEL = 'minor' ] || [ $LEVEL = 'major' ] || [ $LEVEL = 'patch' ]; then 
