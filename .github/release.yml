@@ -65,7 +65,7 @@ jobs:
     environment: ${{ matrix.network }}
     steps:
       - uses: actions/checkout@v2
-        ref: 'master'
+        ref: ${{ github.event.pull_request.base.sha }}
       - name: Install node
         uses: actions/setup-node@v1
         with:
@@ -95,20 +95,16 @@ jobs:
           PUBLISH_MESSAGE=$(npx buidler publish ${{ matrix.level }} --dry-run --network ${{ matrix.network }})
           echo "::set-output name=cid::$(echo $PUBLISH_MESSAGE | awk '{ split($0,a,"|"); split(a[8],b," "); print b[6] }')"
           echo "::set-output name=version::$(echo $PUBLISH_MESSAGE | awk '{ split($0,a,"|"); split(a[10],b," "); print b[4] }')"
-      - name: package app
-        id: packaging
+      - name: create tag
+        uses: actions/github-script@v3
         env:
-          CID: ${{ steps.publish.outputs.cid }}
-          PACKAGE_NAME: ${{ matrix.app }}-${{ matrix.network }}-${{ steps.publish.outputs.version }}
-        run: |
-          cd $(mktemp -d)
-          ipfs get $CID
-          tar -czvf $PACKAGE_NAME.tar.gz $CID/
-          echo "::set-output name=tar::$(echo $PWD/$PACKAGE_NAME.tar.gz)"
-      - uses: "marvinpinto/action-automatic-releases@latest"
+          TAG_NAME: "${{ steps.publish.outputs.version }}-${{ matrix.app }}-${{ matrix.network }}"
         with:
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: "${{ steps.publish.outputs.version }}-${{ matrix.app }}-${{ matrix.network }}"
-          prerelease: false
-          title: "${{ steps.publish.outputs.version }}-${{ matrix.app }}-${{ matrix.network }}"
-          files: ${{ steps.packaging.outputs.tar }}
+          github-token: ${{ github.token }}
+          script: |
+            github.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: `refs/tags/${process.env.TAG_NAME}`,
+              sha: context.sha
+            })
