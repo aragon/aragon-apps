@@ -24,6 +24,14 @@ module.exports = {
       gasLimit: 6000000000,
       defaultBalanceEther: 100
     },
+    harmony: {
+      "url":"https://api.harmony.one",
+      "accounts":ACCOUNTS
+    },
+    harmonyTest: {
+      "url":"https://api.s0.b.hmny.io",
+      "accounts":ACCOUNTS
+    },
     // Local development network to test coverage. Solidity coverage
     // pluging launches its own in-process ganache server.
     // and expose it at port 8555.
