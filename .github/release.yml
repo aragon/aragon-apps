@@ -1,0 +1,110 @@
+name: Release
+
+on:
+  pull_request:
+    types: [closed]
+
+env:
+  POSSIBLE_NETWORKS: "mainnet rinkeby mumbai matic"
+
+jobs:
+  checkLabels:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged && github.event.pull_request.labels.*.name && github.base_ref == 'master'
+    steps:
+      - run: echo Check labels is not empty and pull is merged
+  buildMatrix:
+    needs: [checkLabels]
+    runs-on: ubuntu-latest
+    output:
+      labels: ${{ steps.matrix.outputs.labels }}
+      networks: ${{ steps.networks.outputs.networks }}
+    steps:
+      - name: Get Networks
+        id: networks
+        env:
+          PULL_LABELS: ${{ github.event.pull_request.labels }}
+        run: |
+          NETWORKS=""
+          for LABEL in $(echo $PULL_LABELS | jq '.[].name'); do
+            CLEANED=$(echo $LABEL | sed "s/\"//g")
+            if [[ $POSSIBLE_NETWORKS =~ (^|[[:space:]])$CLEANED($|[[:space:]]) ]]; then
+              NETWORKS+=" $CLEANED"
+            fi
+          done
+          echo "::set-output name=networks::$(jq -n --arg v "${NETWORKS:1}" '$v | split(" ")')"
+      - name: Build Matrix
+        id: matrix
+        env:
+          PULL_LABELS: ${{ github.event.pull_request.labels }}
+          NETWORKS: ${{ steps.networks.outputs.networks }}
+        # loop through all labels and prepare matrix to run in the next job
+        run: |
+          LABELS=()
+          for LABEL in $(echo $PULL_LABELS | jq '.[].name'); do 
+            APP=$(cut -d":" -f1 <<< $LABEL | sed "s/\"//")
+            LEVEL=$(cut -d":" -f2 <<< $LABEL | sed "s/\"//")
+            if [ $LEVEL = 'minor' ] || [ $LEVEL = 'major' ] || [ $LEVEL = 'patch' ]; then 
+              for NETWORK in $NETWORKS; do
+                LABELS[${#LABELS[@]}]="{\"app\": \"$APP\", \"level\": \"$LEVEL\", \"network\": \"$NETWORK\"}"
+              done
+            fi
+          done
+          JSON="["
+          for i in "${LABELS[@]}"; do
+            JSON+="$i,"
+          done
+          JSON="${JSON::-1}]"
+          echo "::set-output name=labels::{\"include\":$JSON}"
+
+  release:
+    needs: [buildMatrix]
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
+    matrix: ${{ fromJson(needs.buildMatrix.outputs.labels }}
+    environment: ${{ matrix.network }}
+    steps:
+      - uses: actions/checkout@v2
+        ref: ${{ github.event.pull_request.base.sha }}
+      - name: Install node
+        uses: actions/setup-node@v1
+        with:
+          node_version: 12
+      - name: setup ipfs
+        uses: ibnesayeed/setup-ipfs@master
+        with:
+          run_daemon: true
+      - name: Configure aragon cli 
+        run: |
+          echo ${{ secrets.ARAGON_CLI_JSON }} >> ~/.aragon/${{ matrix.network }}_key.json
+      - name: Install npm packages
+        run: yarn
+      - name: build, publish and package
+        id: build
+        run: | 
+          cd apps/${{ matrix.app }}
+          yarn --ignore-engines --dev
+          cd app 
+          yarn 
+          cd .. 
+          yarn build 
+          yarn compile
+      - name: publish
+        id: publish
+        run:  |
+          PUBLISH_MESSAGE=$(npx buidler publish ${{ matrix.level }} --dry-run --network ${{ matrix.network }})
+          echo "::set-output name=cid::$(echo $PUBLISH_MESSAGE | awk '{ split($0,a,"|"); split(a[8],b," "); print b[6] }')"
+          echo "::set-output name=version::$(echo $PUBLISH_MESSAGE | awk '{ split($0,a,"|"); split(a[10],b," "); print b[4] }')"
+      - name: create tag
+        uses: actions/github-script@v3
+        env:
+          TAG_NAME: "${{ steps.publish.outputs.version }}-${{ matrix.app }}-${{ matrix.network }}"
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            github.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: `refs/tags/${process.env.TAG_NAME}`,
+              sha: context.sha
+            })
