@@ -23,29 +23,28 @@ jobs:
       - name: Get Networks
         id: networks
         env:
-          PULL_LABELS: ${{ github.event.pull_request.labels }}
+          PULL_LABELS: ${{ toJson(github.event.pull_request.labels) }}
         run: |
           NETWORKS=""
-          for LABEL in $(echo $PULL_LABELS | jq '.[].name'); do
-            CLEANED=$(echo $LABEL | sed "s/\"//g")
-            if [[ $POSSIBLE_NETWORKS =~ (^|[[:space:]])$CLEANED($|[[:space:]]) ]]; then
-              NETWORKS+=" $CLEANED"
+          for LABEL in $(echo $PULL_LABELS | jq -r '.[].name'); do
+            if [[ $POSSIBLE_NETWORKS =~ (^|[[:space:]])$LABEL($|[[:space:]]) ]]; then
+              NETWORKS+=" $LABEL"
             fi
           done
           echo "::set-output name=networks::$(jq -n --arg v "${NETWORKS:1}" '$v | split(" ")')"
       - name: Build Matrix
         id: matrix
         env:
-          PULL_LABELS: ${{ github.event.pull_request.labels }}
+          PULL_LABELS: ${{ toJson(github.event.pull_request.labels) }}
           NETWORKS: ${{ steps.networks.outputs.networks }}
         # loop through all labels and prepare matrix to run in the next job
         run: |
           LABELS=()
-          for LABEL in $(echo $PULL_LABELS | jq '.[].name'); do 
-            APP=$(cut -d":" -f1 <<< $LABEL | sed "s/\"//")
-            LEVEL=$(cut -d":" -f2 <<< $LABEL | sed "s/\"//")
+          for LABEL in $(echo $PULL_LABELS | jq -r '.[].name'); do 
+            APP=$(cut -d":" -f1 <<< $LABEL)
+            LEVEL=$(cut -d":" -f2 <<< $LABEL)
             if [ $LEVEL = 'minor' ] || [ $LEVEL = 'major' ] || [ $LEVEL = 'patch' ]; then 
-              for NETWORK in $NETWORKS; do
+              for NETWORK in $(echo $NETWORKS | jq -r '.[]'); do
                 LABELS[${#LABELS[@]}]="{\"app\": \"$APP\", \"level\": \"$LEVEL\", \"network\": \"$NETWORK\"}"
               done
             fi
