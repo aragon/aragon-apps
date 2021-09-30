@@ -31,7 +31,7 @@ jobs:
               NETWORKS+=" $LABEL"
             fi
           done
-          echo "::set-output name=networks::$(jq -n --arg v "${NETWORKS:1}" '$v | split(" ")')"
+          echo "::set-output name=networks::$(jq -c -n --arg v "${NETWORKS:1}" '$v | split(" ")')"
       - name: Build Matrix
         id: matrix
         env:
