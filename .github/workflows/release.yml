@@ -62,7 +62,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.pull_request.merged == true
     strategy:
-      matrix: ${{ fromJson(needs.buildMatrix.outputs.labels }}
+      matrix: ${{ fromJson(needs.buildMatrix.outputs.labels) }}
     environment: ${{ matrix.network }}
     steps:
       - uses: actions/checkout@v2
@@ -71,7 +71,7 @@ jobs:
       - name: Install node
         uses: actions/setup-node@v1
         with:
-          node_version: 12
+          node-version: 12
       - name: setup ipfs
         uses: ibnesayeed/setup-ipfs@master
         with:

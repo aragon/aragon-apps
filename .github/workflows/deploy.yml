@@ -32,13 +32,13 @@ jobs:
   deploy:
       runs-on: ubuntu-latest
       needs: [checkTag]
-      environment: ${{ needs.checkTag.outputs.environment }} 
+      environment: ${{ needs.checkTag.outputs.network }} 
       steps:
         - uses: actions/checkout@v2
         - name: Install node
           uses: actions/setup-node@v1
           with:
-            node_version: 12
+            node-version: 12
         - name: setup ipfs
           uses: ibnesayeed/setup-ipfs@master
           with:
@@ -67,7 +67,7 @@ jobs:
           id: packaging
           env:
             CID: ${{ steps.publish.outputs.cid }}
-            PACKAGE_NAME: ${{ needs.checkTag.outputs.app }}.aragonpm.eth@${{{ needs.checkTag.outputs.version }}}
+            PACKAGE_NAME: ${{ needs.checkTag.outputs.app }}.aragonpm.eth@${{ needs.checkTag.outputs.version }}}
           run: |
             cd $(mktemp -d)
             ipfs get $CID
