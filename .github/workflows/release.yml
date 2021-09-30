@@ -16,7 +16,7 @@ jobs:
   buildMatrix:
     needs: [checkLabels]
     runs-on: ubuntu-latest
-    output:
+    outputs:
       labels: ${{ steps.matrix.outputs.labels }}
       networks: ${{ steps.networks.outputs.networks }}
     steps:
@@ -61,11 +61,13 @@ jobs:
     needs: [buildMatrix]
     runs-on: ubuntu-latest
     if: github.event.pull_request.merged == true
-    matrix: ${{ fromJson(needs.buildMatrix.outputs.labels }}
+    strategy:
+      matrix: ${{ fromJson(needs.buildMatrix.outputs.labels }}
     environment: ${{ matrix.network }}
     steps:
       - uses: actions/checkout@v2
-        ref: ${{ github.event.pull_request.base.sha }}
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
       - name: Install node
         uses: actions/setup-node@v1
         with:

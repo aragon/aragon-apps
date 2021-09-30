@@ -8,7 +8,7 @@ on:
 jobs:
   checkTag:
     runs-on: ubuntu-latest
-    output:
+    outputs:
       valid: ${{ steps.check.outputs.valid }}
       app: ${{ steps.check.outputs.app }}
       network: ${{ steps.check.outputs.network }}
