@@ -1,0 +1,24 @@
+{
+  "network": "mainnet",
+  "dataSources": {
+    "Organizations": [],
+    "OrganizationFactories": [
+      {
+        "name": "DAOFactory@0.8.1",
+        "address": "0x7378ad1ba8f3c8e64bbb2a04473edd35846360f1",
+        "startBlock": 9428558
+      }
+    ],
+    "OrganizationTemplates": [
+      {
+        "name": "dandelion-org-template.aragonpm.eth@1.0.0",
+        "address": "0xbc2A863ef2B96d454aC7790D5A9E8cFfd8EccBa8",
+        "startBlock": 9438534
+      }
+    ],
+    "LegacyOrganizationTemplates": [],
+    "TokenFactories": [],
+    "Tokens": []
+  }
+}
+

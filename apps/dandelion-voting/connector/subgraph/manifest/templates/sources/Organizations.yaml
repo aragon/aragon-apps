@@ -1,0 +1,5 @@
+# Organizations
+{{#dataSources.Organizations}}
+  {{> Kernel.template.yaml}}
+{{/dataSources.Organizations}}
+# /Organizations

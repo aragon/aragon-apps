@@ -1,0 +1,52 @@
+{
+  "name": "@1hive/connect-app-dandelion-voting",
+  "version": "0.0.1",
+  "license": "AGPL-3.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "prepublishOnly": "yarn build",
+    "build": "yarn clean && yarn compile",
+    "dev": "yarn build --watch",
+    "test": "is-ci \"test:coverage\" \"test:watch\"",
+    "test:coverage": "jest --coverage --forceExit --detectOpenHandles",
+    "test:watch": "jest --watch",
+    "test:debug": "node --inspect-brk node_modules/jest/bin/jest.js --runInBand --watch",
+    "clean": "rm -rf ./dist ./tsconfig.tsbuildinfo",
+    "compile": "tsc",
+    "lint": "eslint --ext .ts ./src"
+  },
+  "files": [
+    "dist"
+  ],
+  "devDependencies": {
+    "@types/jest": "^26.0.4",
+    "@types/react": "^16.9.34",
+    "@typescript-eslint/eslint-plugin": "^2.29.0",
+    "@typescript-eslint/parser": "^2.29.0",
+    "eslint": "^6.8.0",
+    "is-ci-cli": "^2.1.2",
+    "jest": "^26.1.0",
+    "prettier": "^2.0.5",
+    "ts-jest": "^26.1.3",
+    "typescript": "^3.8.3"
+  },
+  "dependencies": {
+    "@aragon/connect-core": "^0.2.0",
+    "@aragon/connect-thegraph": "^0.2.0",
+    "graphql-tag": "^2.10.3"
+  },
+  "description": "Access organizations and interact with Dandelion Voting apps.",
+  "keywords": [
+    "ethereum",
+    "javascript",
+    "web3",
+    "dapp",
+    "aragon",
+    "1hive"
+  ],
+  "author": "1Hive",
+  "homepage": "https://github.com/1Hive/dandelion-voting-app",
+  "bugs": "https://github.com/1Hive/dandelion-voting-app/issues",
+  "repository": "https://github.com/1Hive/dandelion-voting-app"
+}

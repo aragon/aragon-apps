@@ -1,0 +1,28 @@
+{
+  "name": "@1hive/subgraph-dandelion-voting",
+  "version": "0.1.1",
+  "scripts": {
+    "codegen": "rm -rf generated; graph codegen",
+    "build": "rm -rf build; graph build",
+    "manifest-mainnet": "scripts/build-manifest.sh mainnet",
+    "manifest-mainnet-staging": "env STAGING=true scripts/build-manifest.sh mainnet",
+    "manifest-rinkeby": "scripts/build-manifest.sh rinkeby",
+    "manifest-rinkeby-staging": "env STAGING=true scripts/build-manifest.sh rinkeby",
+    "manifest-xdai": "env scripts/build-manifest.sh xdai",
+    "deploy-mainnet": "scripts/deploy.sh 1hive dandelion-voting mainnet",
+    "deploy-mainnet-staging": "env STAGING=true scripts/deploy.sh 1hive dandelion-voting mainnet",
+    "deploy-rinkeby": "scripts/deploy.sh 1hive dandelion-voting rinkeby",
+    "deploy-rinkeby-staging": "STAGING=true scripts/deploy.sh 1hive dv rinkeby",
+    "deploy-xdai": "scripts/deploy.sh 1hive dandelion-voting xdai",
+    "deploy-xdai-staging": "STAGING=true scripts/deploy.sh 1hive dandelion-voting xdai"
+  },
+  "devDependencies": {
+    "@graphprotocol/graph-cli": "^0.18.0",
+    "@graphprotocol/graph-ts": "^0.18.1",
+    "mustache": "^4.0.1"
+  },
+  "dependencies": {
+    "babel-polyfill": "^6.26.0",
+    "babel-register": "^6.26.0"
+  }
+}

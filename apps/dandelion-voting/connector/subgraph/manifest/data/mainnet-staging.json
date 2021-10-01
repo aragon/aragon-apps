@@ -1,0 +1,18 @@
+{
+  "network": "mainnet",
+  "dataSources": {
+    "Organizations": [
+      {
+        "name": "PieDAO",
+        "address": "0x0c188B183FF758500D1D18B432313d10e9F6b8a4",
+        "startBlock": "9593674"
+      }
+    ],
+    "OrganizationFactories": [],
+    "OrganizationTemplates": [],
+    "LegacyOrganizationTemplates": [],
+    "TokenFactories": [],
+    "Tokens": []
+  }
+}
+
