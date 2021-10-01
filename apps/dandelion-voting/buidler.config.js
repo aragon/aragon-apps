@@ -1,3 +1,4 @@
+const { networks } = require('@aragon/buidler-config')
 const { usePlugin } = require('@nomiclabs/buidler/config')
 const hooks = require('./scripts/buidler-hooks')
 
@@ -8,20 +9,7 @@ usePlugin('solidity-coverage')
 
 module.exports = {
   defaultNetwork: 'localhost',
-  networks: {
-    localhost: {
-      url: 'http://localhost:8545',
-      accounts: {
-        mnemonic: "explain tackle mirror kit van hammer degree position ginger unfair soup bonus"
-      }
-    },
-    coverage: {
-      url: 'http://localhost:8555',
-    },
-    xdai: {
-      url: 'https://xdai.poanetwork.dev/'
-    }
-  },
+  networks,
   solc: {
     version: '0.4.24',
     optimizer: {
@@ -40,3 +28,4 @@ module.exports = {
     hooks,
   },
 }
+

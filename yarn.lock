@@ -2760,10 +2760,10 @@
   dependencies:
     "@types/bignumber.js" "^5.0.0"
 
-"@nomiclabs/buidler@^1.0.2", "@nomiclabs/buidler@^1.4.8":
-  version "1.4.8"
-  resolved "https://registry.yarnpkg.com/@nomiclabs/buidler/-/buidler-1.4.8.tgz#36ebbd0fb54eb2052b1336bf90ee47825393e5dc"
-  integrity sha512-OUnNWx+WXOJzueJCfyuEXu3qNMq1j9eGDDpgflpRwjPeiQQnvVzfbwrPjs0PlxOC3Xtmaxabtgek5wGxS1C7Ew==
+"@nomiclabs/buidler@^1.4.3":
+  version "1.4.3"
+  resolved "https://registry.yarnpkg.com/@nomiclabs/buidler/-/buidler-1.4.3.tgz#4ac50d82830bd660fbd3b25ffd08e1d649da172e"
+  integrity sha512-EcUurzBFN9yJxoAzeKW+72NCyWa2WIe1pC0AOIapoUsIhElFy8OpIKERK28EWB2yuQlIxhI98hg5ieAWVg3qJw==
   dependencies:
     "@nomiclabs/ethereumjs-vm" "^4.1.1"
     "@sentry/node" "^5.18.1"
@@ -2779,7 +2779,6 @@
     deepmerge "^2.1.0"
     download "^7.1.0"
     enquirer "^2.3.0"
-    env-paths "^2.2.0"
     eth-sig-util "^2.5.2"
     ethereum-cryptography "^0.1.2"
     ethereumjs-abi "^0.6.8"
@@ -2809,10 +2808,10 @@
     uuid "^3.3.2"
     ws "^7.2.1"
 
-"@nomiclabs/buidler@^1.4.3":
-  version "1.4.3"
-  resolved "https://registry.yarnpkg.com/@nomiclabs/buidler/-/buidler-1.4.3.tgz#4ac50d82830bd660fbd3b25ffd08e1d649da172e"
-  integrity sha512-EcUurzBFN9yJxoAzeKW+72NCyWa2WIe1pC0AOIapoUsIhElFy8OpIKERK28EWB2yuQlIxhI98hg5ieAWVg3qJw==
+"@nomiclabs/buidler@^1.4.8":
+  version "1.4.8"
+  resolved "https://registry.yarnpkg.com/@nomiclabs/buidler/-/buidler-1.4.8.tgz#36ebbd0fb54eb2052b1336bf90ee47825393e5dc"
+  integrity sha512-OUnNWx+WXOJzueJCfyuEXu3qNMq1j9eGDDpgflpRwjPeiQQnvVzfbwrPjs0PlxOC3Xtmaxabtgek5wGxS1C7Ew==
   dependencies:
     "@nomiclabs/ethereumjs-vm" "^4.1.1"
     "@sentry/node" "^5.18.1"
@@ -2828,6 +2827,7 @@
     deepmerge "^2.1.0"
     download "^7.1.0"
     enquirer "^2.3.0"
+    env-paths "^2.2.0"
     eth-sig-util "^2.5.2"
     ethereum-cryptography "^0.1.2"
     ethereumjs-abi "^0.6.8"
