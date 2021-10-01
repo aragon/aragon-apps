@@ -2,12 +2,7 @@
   "name": "@1hive/oracle-token-balance",
   "version": "1.1.0",
   "scripts": {
-    "prepublishOnly": "aragon contracts compile",
-    "publish:patch": "aragon apm publish patch --files public",
-    "publish:minor": "aragon apm publish minor --files public",
-    "publish:major": "aragon apm publish major --files public",
-    "deploy:staging": "npm run publish:major -- --environment staging",
-    "versions": "aragon apm versions",
+    "build": "buidler compile --force",
     "lint": "eslint . & solium --dir ./contracts",
     "lint:fix": "eslint . --fix & solium --dir ./contracts --fix",
     "coverage": "cross-env SOLIDITY_COVERAGE=true npm run ganache-cli:test",
@@ -26,6 +21,7 @@
   "devDependencies": {
     "@aragon/cli": "^6.0.0",
     "@aragon/test-helpers": "^2.1.0",
+    "@nomiclabs/buidler": "^1.4.8",
     "babel-eslint": "^10.0.3",
     "eslint": "^5.13.0",
     "eslint-config-prettier": "^6.5.0",
