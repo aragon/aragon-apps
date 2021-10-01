@@ -1,0 +1,9 @@
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 22">
+  <defs>
+    <style>.cls-1{fill:none;stroke:#fff;stroke-linecap:round;stroke-linejoin:round;}</style>
+  </defs>
+  <path fill="url(#a)" d="M0 0h24v24H0z"/>
+  <path d="M8.58 10.45V8.61A3.37 3.37 0 0112 5.29h0a3.37 3.37 0 013.42 3.32v1.84" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke='#fff' />
+  <path d="M12 9.79a4.6 4.6 0 11-4.6 4.6 4.6 4.6 0 014.6-4.6m0-.92a5.52 5.52 0 105.52 5.52A5.52 5.52 0 0012 8.87z" stroke='#fff'/>
+  <path fill="none" d="M12 11.33v3.24l2.01 1.7" stroke='#fff'/>
+</svg> 

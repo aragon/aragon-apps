@@ -1,0 +1,14 @@
+# Dependencies
+node_modules
+
+# Build dirs
+.cache/
+build/
+dist/
+
+# Coverage
+coverage
+coverage.json
+
+.DS_Store
+package-lock.json
