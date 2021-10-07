@@ -1,0 +1,31 @@
+[{
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_accountId",
+        "type": "uint64"
+      }
+    ],
+    "name": "getAccount",
+    "outputs": [
+      {
+        "name": "metadata",
+        "type": "string"
+      },
+      {
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "name": "hasBudget",
+        "type": "bool"
+      },
+      {
+        "name": "budget",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  }]
