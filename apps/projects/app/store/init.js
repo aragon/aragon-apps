@@ -1,4 +1,4 @@
-import vaultAbi from '../../../shared/json-abis/vault'
+import vaultAbi from '../../../../shared/abi/vault.json'
 import standardBounties from '../abi/StandardBounties.json'
 import { app, handleEvent, INITIAL_STATE } from './'
 import { initializeTokens } from './helpers'
