@@ -45,6 +45,7 @@ jobs:
             run_daemon: true
         - name: Configure aragon cli 
           run: |
+            mkdir -p ~/.aragon
             echo ${{ secrets.ARAGON_CLI_JSON }} >> ~/.aragon/${{ needs.checkTag.outputs.network }}_key.json
         - name: Install npm packages
           run: yarn
