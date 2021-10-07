@@ -2,6 +2,7 @@
   "name": "@aragon/apps-projects",
   "version": "0.0.1",
   "description": "Project management app from Planning Suite",
+  "homepage": "https://github.com/aragon/aragon-apps/tree/master/apps/projects"
   "scripts": {
     "build:app": "parcel build app/index.html -d dist/ --public-url '.' --no-cache",
     "build:script": "parcel build app/script.js -d dist/ --no-cache",

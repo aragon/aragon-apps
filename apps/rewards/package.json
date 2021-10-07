@@ -2,6 +2,7 @@
   "name": "@aragon/apps-rewards",
   "version": "0.0.1",
   "description": "Rewards app from Planning Suite",
+  "homepage": "https://github.com/aragon/aragon-apps/tree/master/apps/rewards"
   "scripts": {
     "build:app": "parcel build app/index.html -d dist/ --public-url \".\" --no-cache",
     "build:script": "parcel build app/script.js -d dist/ --no-cache",
