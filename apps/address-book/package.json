@@ -1,5 +1,5 @@
 {
-  "name": "@tps/apps-address-book",
+  "name": "@aragon/apps-address-book",
   "version": "0.0.1",
   "description": "Address book app from Planning Suite",
   "scripts": {
@@ -74,8 +74,9 @@
   "author": "",
   "repository": {
     "type": "git",
-    "url": "https://github.com/AutarkLabs/planning-suite"
+    "url": "https://github.com/aragon/aragon-apps"
   },
+  "homepage": "https://github.com/aragon/aragon-apps/tree/master/apps/address-book/README.md",
   "keywords": [],
   "license": "GPL-3.0",
   "lint-staged": {
