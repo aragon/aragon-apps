@@ -1,6 +1,6 @@
 {
   "name": "@aragon/apps-dot-voting",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Dot Voting app from Planning Suite",
   "homepage": "https://github.com/aragon/aragon-apps/tree/master/apps/dot-voting",
   "scripts": {
