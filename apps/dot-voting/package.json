@@ -2,7 +2,7 @@
   "name": "@aragon/apps-dot-voting",
   "version": "0.0.1",
   "description": "Dot Voting app from Planning Suite",
-  "homepage": "https://github.com/aragon/aragon-apps/tree/master/apps/dot-voting"
+  "homepage": "https://github.com/aragon/aragon-apps/tree/master/apps/dot-voting",
   "scripts": {
     "build:app": "parcel build app/index.html -d dist/ --public-url '.' --no-cache",
     "build:script": "parcel build app/script.js -d dist/ --no-cache",
