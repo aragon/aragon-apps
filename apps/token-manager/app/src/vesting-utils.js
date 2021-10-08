@@ -25,6 +25,12 @@ function getVestingUnlockedTokens(time, { amount, start, cliff, end }) {
 
 export function getVestedTokensInfo(now, vestingData) {
   const { amount, start, cliff, vesting: end } = vestingData
+
+  if (!amount && !start && !cliff && !end) {
+    // this vesting has been revoked
+    return false;
+  }
+  
   const amountBn = new BN(amount)
 
   // Shortcuts for before cliff and after vested cases.
