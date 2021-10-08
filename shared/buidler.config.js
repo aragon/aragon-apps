@@ -1,14 +1,27 @@
-const config = require('../../shared/buidler.config')
+/*
+ * @TODO move this to @aragon/builder-config
+ */
+const { usePlugin } = require('@nomiclabs/buidler/config')
 
-<<<<<<< HEAD
-usePlugin("@nomiclabs/buidler-ganache")
+const path = require('path')
+const homedir = require('os').homedir
+
+usePlugin('@nomiclabs/buidler-ganache')
 usePlugin('@nomiclabs/buidler-truffle5')
 usePlugin('buidler-gas-reporter')
 usePlugin('solidity-coverage')
+usePlugin('@aragon/buidler-aragon')
 
-const ACCOUNTS = (process.env.ETH_KEYS ? process.env.ETH_KEYS.split(',') : [])
-  .map(key => key.trim())
+const configFilePath = (filename) => path.join(homedir(), `.aragon/${filename}`)
 
+const settingsForNetwork = (network) => {
+  try {
+    const { keys, rpc } = require(configFilePath(`${network}_key.json`))
+    return { accounts: keys, url: rpc }
+  } catch (e) {
+    return { accounts: [], url: '' }
+  }
+}
 module.exports = {
   networks: {
     // Local development network using ganache. You can set any of the
@@ -18,15 +31,7 @@ module.exports = {
     ganache: {
       url: 'http://localhost:8545',
       gasLimit: 6000000000,
-      defaultBalanceEther: 100
-    },
-    harmony: {
-      "url":"https://api.harmony.one",
-      "accounts":ACCOUNTS
-    },
-    harmonyTest: {
-      "url":"https://api.s0.b.hmny.io",
-      "accounts":ACCOUNTS
+      defaultBalanceEther: 100,
     },
     // Local development network to test coverage. Solidity coverage
     // pluging launches its own in-process ganache server.
@@ -34,30 +39,25 @@ module.exports = {
     coverage: {
       url: 'http://localhost:8555',
     },
-    // Mainnet network configured with Aragon node.
-    mainnet: {
-      url: 'https://mainnet.eth.aragon.network',
-      accounts: ACCOUNTS,
-    },
-    // Rinkeby network configured with Aragon node.
-    rinkeby: {
-      url: 'https://rinkeby.eth.aragon.network',
-      accounts: ACCOUNTS,
-    },
+    mainnet: settingsForNetwork('mainnet'),
+    rinkeby: settingsForNetwork('rinkeby'),
     // Network configured to interact with Frame wallet. Requires
     // to have Frame running on your machine. Download it from:
     // https://frame.sh
     frame: {
       httpHeaders: { origin: 'buidler' },
       url: 'http://localhost:1248',
-    }
+    },
+    harmony: settingsForNetwork('harmony'),
+    harmonyTest: settingsForNetwork('harmonyTest'),
+    mumbai: settingsForNetwork('mumbai'),
+    matic: settingsForNetwork('matic'),
   },
   solc: {
     version: '0.4.24',
     optimizer: {
       enabled: true,
-      // Any more and the contract goes over the size limit
-      runs: 1000,
+      runs: 10000,
     },
   },
   // The gas reporter plugin do not properly handle the buidlerevm
@@ -69,7 +69,3 @@ module.exports = {
     enabled: process.env.REPORT_GAS ? true : false,
   },
 }
-=======
-config.solc.optimizer.runs = 1000
-module.exports = config
->>>>>>> 65dae18a5fb53b7d7bd1b3e60d85f1915b1c0a48

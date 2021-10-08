@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 const { usePlugin } = require('@nomiclabs/buidler/config')
 
 const { config } = require('dotenv')
@@ -80,3 +81,6 @@ module.exports = {
     enabled: process.env.REPORT_GAS ? true : false,
   },
 }
+=======
+module.exports = require('../../shared/buidler.config')
+>>>>>>> 65dae18a5fb53b7d7bd1b3e60d85f1915b1c0a48

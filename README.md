@@ -10,7 +10,7 @@ This monorepo contains the following apps:
 - **[Agent](apps/agent)**: Hold assets and perform actions from Aragon organizations.
 - **[Agreement](apps/agreement)**: Govern organizations through a subjective rules.
 - **[Finance](apps/finance)**: Send payments and manage expenses with budgeting.
-- **[Tokens](apps/token-manager)**: Manages organization tokens.
+- **[Tokens](apps/token-manager)**: Manages an organization's token supply and distribution.
 - **[Vault](apps/vault)**: Securely owns and manages tokens on behalf of a DAO.
 - **[Voting](apps/voting)**: Create votes that execute actions on behalf of token holders.
 - **[Disputable Voting](apps/voting-disputable)**: Create disputable votes that execute actions on behalf of token holders.

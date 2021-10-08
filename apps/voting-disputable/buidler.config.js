@@ -1,5 +1,6 @@
-const { usePlugin } = require('@nomiclabs/buidler/config')
+const config = require('../../shared/buidler.config')
 
+<<<<<<< HEAD
 usePlugin("@nomiclabs/buidler-ganache")
 usePlugin('@nomiclabs/buidler-truffle5')
 usePlugin('buidler-gas-reporter')
@@ -67,3 +68,7 @@ module.exports = {
     enabled: process.env.REPORT_GAS ? true : false,
   },
 }
+=======
+config.solc.optimizer.runs = 1000
+module.exports = config
+>>>>>>> 65dae18a5fb53b7d7bd1b3e60d85f1915b1c0a48
