@@ -18,6 +18,11 @@
     "test:gas": "echo GAS_REPORTER=true npm test",
     "test": "echo cross-env TRUFFLE_TEST=true npm run ganache-cli:test"
   },
+  "files": [
+    "contracts/",
+    "manifest.json",
+    "arapp.json"
+  ],
   "dependencies": {
     "@aragon/api": "2.0.0-beta.8",
     "@aragon/api-react": "2.0.0-beta.8",

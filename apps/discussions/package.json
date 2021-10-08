@@ -8,6 +8,11 @@
     "type": "git",
     "url": "git+https://github.com/aragon/aragon-apps.git"
   },
+  "files": [
+    "contracts/",
+    "manifest.json",
+    "arapp.json"
+  ],
   "dependencies": {
     "@aragon/api": "2.0.0-beta.8",
     "@aragon/api-react": "2.0.0-beta.8",
