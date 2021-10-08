@@ -54,16 +54,11 @@ jobs:
           run: | 
             cd apps/${{ needs.checkTag.outputs.app }}
             yarn --ignore-engines --dev
-            cd app 
-            yarn 
-            cd .. 
-            yarn build 
-            yarn compile
         - name: publish
           id: publish
           run:  |
             cd apps/${{ needs.checkTag.outputs.app }}
-            PUBLISH_MESSAGE=$(npx buidler publish ${{ needs.checkTag.outputs.version }} --network ${{ needs.checkTag.outputs.network }})
+            PUBLISH_MESSAGE=$(npx hardhat publish ${{ needs.checkTag.outputs.version }} --network ${{ needs.checkTag.outputs.network }})
             echo "::set-output name=cid::$(echo $PUBLISH_MESSAGE | awk '{ split($0,a,"|"); split(a[8],b," "); print b[6] }')"
         - name: package app
           id: packaging
