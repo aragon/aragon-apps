@@ -1,8 +1,8 @@
 {
-  "name": "@1hive/oracle-token-balance",
+  "name": "@aragon/oracle-token-balance",
   "version": "1.1.0",
   "scripts": {
-    "build": "buidler compile --force",
+    "build": "hardhat compile --force",
     "lint": "eslint . & solium --dir ./contracts",
     "lint:fix": "eslint . --fix & solium --dir ./contracts --fix",
     "coverage": "cross-env SOLIDITY_COVERAGE=true npm run ganache-cli:test",
@@ -20,8 +20,11 @@
   "description": "ACL Oracle enforcing token ownership",
   "devDependencies": {
     "@aragon/cli": "^6.0.0",
+    "@aragon/hardhat-aragon": "^0.0.1",
+    "@aragon/hardhat-config": "^0.0.1",
     "@aragon/test-helpers": "^2.1.0",
-    "@nomiclabs/buidler": "^1.4.8",
+    "@nomiclabs/hardhat-ethers": "^2.0.2",
+    "@nomiclabs/hardhat-etherscan": "^2.1.6",
     "babel-eslint": "^10.0.3",
     "eslint": "^5.13.0",
     "eslint-config-prettier": "^6.5.0",
@@ -32,8 +35,10 @@
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-standard": "^4.0.1",
     "eth-ens-namehash": "^2.0.8",
+    "ethers": "^5.4.7",
     "ethlint": "^1.2.3",
     "ganache-cli": "^6.7.0",
+    "hardhat": "^2.6.5",
     "prettier": "^1.17.1"
   },
   "dependencies": {
