@@ -1,6 +1,6 @@
 {
   "name": "@aragon/apps-address-book",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Address book app from Planning Suite",
   "scripts": {
     "build:app": "parcel build app/index.html -d dist/ --public-url '.' --no-cache",
