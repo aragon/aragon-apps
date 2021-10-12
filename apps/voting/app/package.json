@@ -6,7 +6,8 @@
   "dependencies": {
     "@aragon/api": "^2.2.3",
     "@aragon/api-react": "^2.2.4",
-    "@aragon/ui": "^1.9.0",
+    "@aragon/ui": "^1.9.2",
+    "@nomiclabs/buidler": "^1.4.8",
     "bn.js": "^4.11.8",
     "date-fns": "2.0.0-alpha.22",
     "onecolor": "^3.1.0",
