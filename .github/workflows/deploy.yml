@@ -100,6 +100,9 @@ jobs:
           with:
             python-version: '3.x'
             architecture: 'x64'
+        - name: install pyyaml
+          run: |
+            pip install --user pyyaml
         - name: extend deployments file
           env:
             APP: ${{ needs.checkTag.outputs.app }}
