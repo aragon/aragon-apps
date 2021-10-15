@@ -57,9 +57,11 @@ jobs:
           run: | 
             cd apps/${{ needs.checkTag.outputs.app }}
             yarn --ignore-engines --dev
-            cd app 
-            yarn 
-            cd .. 
+            if [[ -d app ]]; then
+              cd app 
+              yarn 
+              cd .. 
+            fi
             yarn build 
             yarn compile
         - name: publish
