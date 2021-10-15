@@ -17,7 +17,7 @@ jobs:
     steps:
       - name: check tag name
         id: check
-        run:
+        run: |
           VERSION=$(echo "${GITHUB_REF##*/}" | cut -d '-' -f 1)
           APP=$(echo "${GITHUB_REF##*/}" | cut -d '-' -f 2)
           NETWORK=$(echo "${GITHUB_REF##*/}" | cut -d '-' -f 3)
