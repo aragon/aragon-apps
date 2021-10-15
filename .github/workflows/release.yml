@@ -19,6 +19,7 @@ jobs:
     outputs:
       labels: ${{ steps.matrix.outputs.labels }}
       networks: ${{ steps.networks.outputs.networks }}
+      valid: ${{ steps.matrix.outputs.valid }}
     steps:
       - name: Get Networks
         id: networks
@@ -49,17 +50,22 @@ jobs:
               done
             fi
           done
-          JSON="["
-          for i in "${LABELS[@]}"; do
-            JSON+="$i,"
-          done
-          JSON="${JSON::-1}]"
-          echo "::set-output name=labels::{\"include\":$JSON}"
 
+          if [ ${#LABELS[@]} -eq 0 ]; then
+            echo "::set-output name=valid::false"
+          else
+            JSON="["
+            for i in "${LABELS[@]}"; do
+              JSON+="$i,"
+            done
+            JSON="${JSON::-1}]"
+            echo "::set-output name=labels::{\"include\":$JSON}"
+            echo "::set-output name=valid::true"
+          fi
   release:
     needs: [buildMatrix]
     runs-on: ubuntu-latest
-    if: github.event.pull_request.merged == true
+    if: github.event.pull_request.merged == true && needs.buildMatrix.outputs.valid == true
     strategy:
       matrix: ${{ fromJson(needs.buildMatrix.outputs.labels) }}
     environment: ${{ matrix.network }}
