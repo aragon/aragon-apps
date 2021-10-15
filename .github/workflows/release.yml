@@ -68,6 +68,7 @@ jobs:
     if: github.event.pull_request.merged == true && needs.buildMatrix.outputs.valid == 'true'
     strategy:
       matrix: ${{ fromJson(needs.buildMatrix.outputs.labels) }}
+      fail-fast: false
     environment: ${{ matrix.network }}
     steps:
       - uses: actions/checkout@v2
@@ -92,9 +93,11 @@ jobs:
         run: | 
           cd apps/${{ matrix.app }}
           yarn --ignore-engines --dev
-          cd app 
-          yarn 
-          cd .. 
+          if [[ -d app ]]; then
+            cd app 
+            yarn 
+            cd .. 
+          fi
           yarn build 
           yarn compile
       - name: publish
