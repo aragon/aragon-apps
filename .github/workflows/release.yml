@@ -103,7 +103,7 @@ jobs:
         env:
           TAG_NAME: "${{ steps.publish.outputs.version }}-${{ matrix.app }}-${{ matrix.network }}"
         with:
-          github-token: ${{ github.token }}
+          github-token: ${{ secrets.ARABOT_PAT }}
           script: |
             github.git.createRef({
               owner: context.repo.owner,
