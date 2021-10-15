@@ -96,6 +96,10 @@ jobs:
             ref: 'master'
             token: ${{ secrets.ARABOT_PAT }}
             path: deployments
+        - uses: actions/setup-python@v2
+          with:
+            python-version: '3.x'
+            architecture: 'x64'
         - name: extend deployments file
           env:
             APP: ${{ needs.checkTag.outputs.app }}
