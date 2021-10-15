@@ -13,19 +13,22 @@ jobs:
       app: ${{ steps.check.outputs.app }}
       network: ${{ steps.check.outputs.network }}
       version: ${{ steps.check.outputs.version }}
+      tag: ${{ steps.check.outputs.tag }}
     steps:
       - name: check tag name
         id: check
         run:
-          VERSION=$(echo "${{ github.event.release.tag }}" | cut -d '-' -f 1)
-          APP=$(echo "${{ github.event.release.tag }}" | cut -d '-' -f 2)
-          NETWORK=$(echo "${{ github.event.release.tag }}" | cut -d '-' -f 3)
+          VERSION=$(echo "${GITHUB_REF##*/}" | cut -d '-' -f 1)
+          APP=$(echo "${GITHUB_REF##*/}" | cut -d '-' -f 2)
+          NETWORK=$(echo "${GITHUB_REF##*/}" | cut -d '-' -f 3)
+          TAG=${GITHUB_REF##*/}
 
           if [ "$APP" != "" ] && [ "$NETWORK" != "" ] && [ "$VERSION" != "" ]; then
             echo "::set-output name=valid::true"
             echo "::set-output name=app::$APP"
             echo "::set-output name=network::$NETWORK"
             echo "::set-output name=version::$VERSION"
+            echo "::set-output name=tag::$TAG"
           else
             echo "::set-output name=valid::false"
           fi
@@ -80,9 +83,9 @@ jobs:
         - uses: "marvinpinto/action-automatic-releases@latest"
           with:
             repo_token: "${{ secrets.GITHUB_TOKEN }}"
-            automatic_release_tag: "${{ github.event.release.tag }}"
+            automatic_release_tag: "${{ needs.checkTag.outputs.tag }}"
             prerelease: false
-            title: "${{ github.event.release.tag }}"
+            title: "${{ needs.checkTag.outputs.tag }}"
             files: |
               ${{ steps.packaging.outputs.tar }}
         - name: Checkout Deployments
