@@ -64,7 +64,9 @@ jobs:
           run:  |
             cd apps/${{ needs.checkTag.outputs.app }}
             PUBLISH_MESSAGE=$(npx buidler publish ${{ needs.checkTag.outputs.version }} --network ${{ needs.checkTag.outputs.network }})
-            echo "::set-output name=cid::$(echo $PUBLISH_MESSAGE | awk '{ split($0,a,"|"); split(a[8],b," "); print b[6] }')"
+            echo "::set-output name=cid::$(echo $PUBLISH_MESSAGE | awk '{ split($0,a,"|"); split(a[6],b," "); print b[6] }')"
+            echo "::set-output name=contract::$(echo $PUBLISH_MESSAGE | awk '{ split($0,a,"|"); split(a[10],b," "); print b[3] }')"
+            echo $PUBLISH_MESSAGE
         - name: package app
           id: packaging
           env:
@@ -90,6 +92,14 @@ jobs:
             ref: 'master'
             token: ${{ secrets.ARABOT_PAT }}
             path: deployments
+        - name: extend deployments file
+          env:
+            APP: ${{ needs.checkTag.outputs.app }}
+            VERSION: ${{ needs.checkTag.outputs.version }}
+            NETWORK: ${{ needs.checkTag.outputs.network }}
+            CID: ${{ steps.publish.outputs.cid }}
+            CONTRACT: ${{ steps.publish.outputs.contract }}
+          run:  python .github/scripts/update_deploymentfile.py "deployments/" $APP $NETWORK $VERSION $CID $CONTRACT $GITHUB_SHA
         - name: Commit and push
           run: |
             cp  ${{ steps.packaging.outputs.tar }} deployments/environments/${{ needs.checkTag.outputs.network }}/${{ needs.checkTag.outputs.app }}.aragonpm.eth/

@@ -96,8 +96,8 @@ jobs:
         run:  |
           cd apps/${{ matrix.app }}
           PUBLISH_MESSAGE=$(npx buidler publish ${{ matrix.level }} --dry-run --network ${{ matrix.network }})
-          echo "::set-output name=cid::$(echo $PUBLISH_MESSAGE | awk '{ split($0,a,"|"); split(a[8],b," "); print b[6] }')"
-          echo "::set-output name=version::$(echo $PUBLISH_MESSAGE | awk '{ split($0,a,"|"); split(a[10],b," "); print b[4] }')"
+          echo "::set-output name=cid::$(echo $PUBLISH_MESSAGE | awk '{ split($0,a,"|"); split(a[6],b," "); print b[6] }')"
+          echo "::set-output name=version::$(echo $PUBLISH_MESSAGE | awk '{ split($0,a,"|"); split(a[8],b," "); print b[4] }')"
       - name: create tag
         uses: actions/github-script@v3
         env:
