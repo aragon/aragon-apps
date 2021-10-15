@@ -65,7 +65,7 @@ jobs:
   release:
     needs: [buildMatrix]
     runs-on: ubuntu-latest
-    if: github.event.pull_request.merged == true && needs.buildMatrix.outputs.valid == true
+    if: github.event.pull_request.merged == true && needs.buildMatrix.outputs.valid == 'true'
     strategy:
       matrix: ${{ fromJson(needs.buildMatrix.outputs.labels) }}
     environment: ${{ matrix.network }}
