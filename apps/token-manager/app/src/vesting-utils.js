@@ -20,13 +20,14 @@ function getVestingUnlockedTokens(time, { amount, start, cliff, end }) {
 
   // Vesting progress: 0 => 1
   const progress = getTimeProgress(time, { start, end })
+  
   return new BN(amountBn).div(new BN(10000)).mul(new BN(progress * 10000))
 }
 
 export function getVestedTokensInfo(now, vestingData) {
   const { amount, start, cliff, vesting: end } = vestingData
 
-  if (!amount && !start && !cliff && !end) {
+  if (amount == 0 || !amount && !start && !cliff && !end) {
     // this vesting has been revoked
     return false;
   }
