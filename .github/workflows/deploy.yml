@@ -3,7 +3,7 @@ name: Deploy
 on:
   push:
     tags:
-      - '[0-9]+.[0-9]+.[0-9]+-[a-zA-Z\-]+-[a-zA-Z]+'
+      - '*'
 
 jobs:
   checkTag:
@@ -35,6 +35,7 @@ jobs:
   deploy:
       runs-on: ubuntu-latest
       needs: [checkTag]
+      if: needs.checkTag.outputs.valid == "true"
       environment: ${{ needs.checkTag.outputs.network }} 
       steps:
         - uses: actions/checkout@v2
