@@ -15,12 +15,17 @@ jobs:
       version: ${{ steps.check.outputs.version }}
       tag: ${{ steps.check.outputs.tag }}
     steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+          architecture: 'x64'
       - name: check tag name
         id: check
         run: |
-          VERSION=$(echo "${GITHUB_REF##*/}" | cut -d '-' -f 1)
-          APP=$(echo "${GITHUB_REF##*/}" | cut -d '-' -f 2)
-          NETWORK=$(echo "${GITHUB_REF##*/}" | cut -d '-' -f 3)
+          VERSION=$(python ./.github/scripts/tag_helper.py ${GITHUB_REF##*/} "version")
+          APP=$(python ./.github/scripts/tag_helper.py ${GITHUB_REF##*/} "app")
+          NETWORK=$(python ./.github/scripts/tag_helper.py ${GITHUB_REF##*/} "network")
           TAG=${GITHUB_REF##*/}
 
           if [ "$APP" != "" ] && [ "$NETWORK" != "" ] && [ "$VERSION" != "" ]; then
