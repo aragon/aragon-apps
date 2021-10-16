@@ -137,7 +137,7 @@ jobs:
             title: "Updates ${{ needs.checkTag.outputs.app }} on ${{ needs.checkTag.outputs.network }} to ${{ needs.checkTag.outputs.version }}"
             body: "Automatic update from aragon/aragon-apps"
         - name: merge pull
-          uses: actions/github-script@v3
+          uses: actions/github-script@v5
           env:
             PULL_NUMBER: ${{ steps.cpr.outputs.pull-request-number }}
           with:
