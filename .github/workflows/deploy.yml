@@ -83,7 +83,7 @@ jobs:
           id: packaging
           env:
             CID: ${{ steps.publish.outputs.cid }}
-            PACKAGE_NAME: ${{ needs.checkTag.outputs.app }}.aragonpm.eth@${{ needs.checkTag.outputs.version }}}
+            PACKAGE_NAME: ${{ needs.checkTag.outputs.app }}.aragonpm.eth@${{ needs.checkTag.outputs.version }}
           run: |
             cd $(mktemp -d)
             ipfs get $CID
