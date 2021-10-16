@@ -145,6 +145,6 @@ jobs:
             script: |
               github.rest.pulls.merge({
                  owner: 'aragon',
-                 repo: 'deployments'
+                 repo: 'deployments',
                  pull_number: process.env.PULL_NUMBER
               })
