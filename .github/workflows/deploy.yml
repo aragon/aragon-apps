@@ -15,12 +15,17 @@ jobs:
       version: ${{ steps.check.outputs.version }}
       tag: ${{ steps.check.outputs.tag }}
     steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+          architecture: 'x64'
       - name: check tag name
         id: check
         run: |
-          VERSION=$(echo "${GITHUB_REF##*/}" | cut -d '-' -f 1)
-          APP=$(echo "${GITHUB_REF##*/}" | cut -d '-' -f 2)
-          NETWORK=$(echo "${GITHUB_REF##*/}" | cut -d '-' -f 3)
+          VERSION=$(python ./.github/scripts/tag_helper.py ${GITHUB_REF##*/} "version")
+          APP=$(python ./.github/scripts/tag_helper.py ${GITHUB_REF##*/} "app")
+          NETWORK=$(python ./.github/scripts/tag_helper.py ${GITHUB_REF##*/} "network")
           TAG=${GITHUB_REF##*/}
 
           if [ "$APP" != "" ] && [ "$NETWORK" != "" ] && [ "$VERSION" != "" ]; then
@@ -78,7 +83,7 @@ jobs:
           id: packaging
           env:
             CID: ${{ steps.publish.outputs.cid }}
-            PACKAGE_NAME: ${{ needs.checkTag.outputs.app }}.aragonpm.eth@${{ needs.checkTag.outputs.version }}}
+            PACKAGE_NAME: ${{ needs.checkTag.outputs.app }}.aragonpm.eth@${{ needs.checkTag.outputs.version }}
           run: |
             cd $(mktemp -d)
             ipfs get $CID
@@ -115,13 +120,31 @@ jobs:
             CONTRACT: ${{ steps.publish.outputs.contract }}
             TXHASH: ${{ steps.publish.outputs.txhash }}
           run:  python .github/scripts/update_deploymentfile.py "deployments/" $APP $NETWORK $VERSION $CID $CONTRACT $GITHUB_SHA $TXHASH
-        - name: Commit and push
+        - name: move files in place
           run: |
             mkdir -p deployments/environments/${{ needs.checkTag.outputs.network }}/${{ needs.checkTag.outputs.app }}.aragonpm.eth/
             cp  ${{ steps.packaging.outputs.tar }} deployments/environments/${{ needs.checkTag.outputs.network }}/${{ needs.checkTag.outputs.app }}.aragonpm.eth/
-            cd deployments/
-            git config user.name github-actions
-            git config user.email github-actions@github.com
-            git add .
-            git commit -m "Updates ${{ needs.checkTag.outputs.app }} on ${{ needs.checkTag.outputs.network }} to ${{ needs.checkTag.outputs.version }}"
-            git push
+        - name: Create Pull Request
+          uses: peter-evans/create-pull-request@v3
+          id: cpr
+          with: 
+            token: ${{ secrets.ARABOT_PAT }}
+            path: deployments
+            commit-message: "Updates ${{ needs.checkTag.outputs.app }} on ${{ needs.checkTag.outputs.network }} to ${{ needs.checkTag.outputs.version }}"
+            branch: ${{ needs.checkTag.outputs.tag }}
+            delete-branch: true
+            base: master
+            title: "Updates ${{ needs.checkTag.outputs.app }} on ${{ needs.checkTag.outputs.network }} to ${{ needs.checkTag.outputs.version }}"
+            body: "Automatic update from aragon/aragon-apps"
+        - name: merge pull
+          uses: actions/github-script@v3
+          env:
+            PULL_NUMBER: ${{ steps.cpr.outputs.pull-request-number }}
+          with:
+            github-token: ${{ secrets.ARABOT_PAT }}
+            script: |
+              github.rest.pulls.merge({
+                 owner: 'aragon',
+                 repo: 'deployments'
+                 pull_number: process.env.PULL_NUMBER
+              })
