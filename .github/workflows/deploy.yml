@@ -3,7 +3,7 @@ name: Deploy
 on:
   push:
     tags:
-      - '[0-9].[0-9].[0-9]-[a-zA-Z]+-[a-zA-Z]+'
+      - '[0-9]+.[0-9]+.[0-9]+-[a-zA-Z\-]+-[a-zA-Z]+'
 
 jobs:
   checkTag:
@@ -60,9 +60,9 @@ jobs:
             if [[ -d app ]]; then
               cd app 
               yarn 
+              yarn build 
               cd .. 
             fi
-            yarn build 
             yarn compile
         - name: publish
           id: publish

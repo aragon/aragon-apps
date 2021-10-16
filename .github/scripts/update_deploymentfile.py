@@ -18,6 +18,8 @@ with open(yamlpath) as f:
   yaml.add_representer(datetime, lambda dumper, data: dumper.represent_scalar('tag:yaml.org,2002:timestamp', data.isoformat(timespec="milliseconds").replace("+00:00", "Z")))
 
   y=yaml.safe_load(f)
+  if not y[app+'.aragonpm.eth']:
+    y[app+'.aragonpm.eth']={'versions': {}}
   y[app+'.aragonpm.eth']['versions'][version] = {
     'date': datetime.now(),
     'txHash': txhash,
