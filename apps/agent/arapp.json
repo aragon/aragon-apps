@@ -91,13 +91,6 @@
       "params": [
         "Designated signer address"
       ]
-    },
-    {
-      "name": "Run EVM Script",
-      "id": "RUN_SCRIPT_ROLE",
-      "params": [
-        "EVM Script"
-      ]
     }
   ]
 }
