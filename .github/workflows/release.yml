@@ -10,7 +10,7 @@ env:
 jobs:
   checkLabels:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.merged && github.event.pull_request.labels.*.name && github.base_ref == 'test-branch-do-not-merge'
+    if: github.event.pull_request.merged && github.event.pull_request.labels.*.name && github.base_ref == 'master'
     steps:
       - run: echo Check labels is not empty and pull is merged
   buildMatrix:
@@ -96,6 +96,10 @@ jobs:
           if [[ -d app ]]; then
             yarn build
           fi
+      - name: publish
+        id: publish
+        run:  |
+          cd apps/${{ needs.checkTag.outputs.app }}
           PUBLISH_MESSAGE=$(npx hardhat publish ${{ matrix.level }} --dry-run --network ${{ matrix.network }})
           echo "::set-output name=cid::$(echo $PUBLISH_MESSAGE | awk '{ split($0,a,"|"); split(a[6],b," "); print b[6] }')"
           echo "::set-output name=version::$(echo $PUBLISH_MESSAGE | awk '{ split($0,a,"|"); split(a[8],b," "); print b[4] }')"
