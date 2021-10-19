@@ -10,7 +10,7 @@ env:
 jobs:
   checkLabels:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.merged && github.event.pull_request.labels.*.name && github.base_ref == 'DAO-361-hardhat-migration'
+    if: github.event.pull_request.merged && github.event.pull_request.labels.*.name && github.base_ref == 'test-branch-do-not-merge'
     steps:
       - run: echo Check labels is not empty and pull is merged
   buildMatrix:
