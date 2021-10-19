@@ -37,4 +37,5 @@ jobs:
         id: publish
         run: |
           cd apps/voting
+          yarn --dev
           npx hardhat help
