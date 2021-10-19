@@ -21,18 +21,20 @@ function Details({ tokenSymbol, tokenDecimals }) {
             selectedHolder.vestings ? (
               <Box>
                 <Accordion
-                  items={selectedHolder.vestings.map(vesting => [
-                    <VestingContent
-                      tokenDecimals={tokenDecimals}
-                      tokenSymbol={tokenSymbol}
-                      vesting={vesting}
-                    />,
-                    <VestingExpandableContent
-                      tokenDecimals={tokenDecimals}
-                      tokenSymbol={tokenSymbol}
-                      vesting={vesting}
-                    />,
-                  ])}
+                  items={selectedHolder.vestings
+                    .filter((vesting) => vesting.data.amount.gt(0))
+                    .map((vesting) => [
+                      <VestingContent
+                        tokenDecimals={tokenDecimals}
+                        tokenSymbol={tokenSymbol}
+                        vesting={vesting}
+                      />,
+                      <VestingExpandableContent
+                        tokenDecimals={tokenDecimals}
+                        tokenSymbol={tokenSymbol}
+                        vesting={vesting}
+                      />,
+                    ])}
                 />
               </Box>
             ) : (

@@ -6,6 +6,16 @@
       "appName": "agreement.aragonpm.eth",
       "network": "rpc"
     },
+    "harmony": {
+      "registry": "0x5d0d0212199b2c041483226b20f1e4ed6ca4a4de",
+      "appName": "agreement.aragonpm.eth",
+      "network": "harmony"
+    },
+    "harmonyTest": {
+      "registry": "0x6679ff29c4f450cab0e0eeb798fb47877add98f3",
+      "appName": "agreement.aragonpm.eth",
+      "network": "harmonyTest"
+    },
     "mainnet": {
       "registry": "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e",
       "appName": "agreement.open.aragonpm.eth",

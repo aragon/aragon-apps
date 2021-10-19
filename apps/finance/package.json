@@ -29,7 +29,9 @@
   },
   "dependencies": {
     "@aragon/apps-vault": "^4.0.0",
-    "@aragon/os": "4.4.0"
+    "@aragon/os": "4.4.0",
+    "parcel-bundler": "^1.12.5",
+    "scrypt": "github:barrysteyn/node-scrypt#fb60a8d3c158fe115a624b5ffa7480f3a24b03fb"
   },
   "devDependencies": {
     "@aragon/buidler-aragon": "0.2.12",
