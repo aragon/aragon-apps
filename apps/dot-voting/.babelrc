@@ -1,0 +1,10 @@
+{
+  "presets": [
+    ["@babel/preset-env", { "modules": false, "useBuiltIns": false }]
+  ],
+  "plugins": [
+    ["styled-components", { "displayName": true }],
+    "@babel/plugin-proposal-class-properties",
+    "react-hot-loader/babel"
+  ]
+}

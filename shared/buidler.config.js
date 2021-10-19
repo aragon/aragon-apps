@@ -48,6 +48,8 @@ module.exports = {
       httpHeaders: { origin: 'buidler' },
       url: 'http://localhost:1248',
     },
+    harmony: settingsForNetwork('harmony'),
+    harmonyTest: settingsForNetwork('harmonyTest'),
     mumbai: settingsForNetwork('mumbai'),
     matic: settingsForNetwork('matic'),
   },

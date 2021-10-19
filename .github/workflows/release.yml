@@ -1,11 +1,11 @@
 name: Release
 
 on:
-  pull_request:
+  pull_request_target:
     types: [closed]
 
 env:
-  POSSIBLE_NETWORKS: "mainnet rinkeby mumbai matic"
+  POSSIBLE_NETWORKS: "mainnet rinkeby mumbai matic harmony harmonyTest "
 
 jobs:
   checkLabels:
@@ -19,6 +19,7 @@ jobs:
     outputs:
       labels: ${{ steps.matrix.outputs.labels }}
       networks: ${{ steps.networks.outputs.networks }}
+      valid: ${{ steps.matrix.outputs.valid }}
     steps:
       - name: Get Networks
         id: networks
@@ -49,24 +50,30 @@ jobs:
               done
             fi
           done
-          JSON="["
-          for i in "${LABELS[@]}"; do
-            JSON+="$i,"
-          done
-          JSON="${JSON::-1}]"
-          echo "::set-output name=labels::{\"include\":$JSON}"
 
+          if [ ${#LABELS[@]} -eq 0 ]; then
+            echo "::set-output name=valid::false"
+          else
+            JSON="["
+            for i in "${LABELS[@]}"; do
+              JSON+="$i,"
+            done
+            JSON="${JSON::-1}]"
+            echo "::set-output name=labels::{\"include\":$JSON}"
+            echo "::set-output name=valid::true"
+          fi
   release:
     needs: [buildMatrix]
     runs-on: ubuntu-latest
-    if: github.event.pull_request.merged == true
+    if: github.event.pull_request.merged == true && needs.buildMatrix.outputs.valid == 'true'
     strategy:
       matrix: ${{ fromJson(needs.buildMatrix.outputs.labels) }}
+      fail-fast: false
     environment: ${{ matrix.network }}
     steps:
       - uses: actions/checkout@v2
         with:
-          ref: ${{ github.event.pull_request.base.sha }}
+          ref: 'master'
       - name: Install node
         uses: actions/setup-node@v1
         with:
@@ -86,21 +93,22 @@ jobs:
         run: | 
           cd apps/${{ matrix.app }}
           yarn --ignore-engines --dev
+          yarn build
       - name: publish
         id: publish
         run:  |
           cd apps/${{ matrix.app }}
           PUBLISH_MESSAGE=$(npx hardhat publish ${{ matrix.level }} --dry-run --network ${{ matrix.network }})
-          echo "::set-output name=cid::$(echo $PUBLISH_MESSAGE | awk '{ split($0,a,"|"); split(a[8],b," "); print b[6] }')"
-          echo "::set-output name=version::$(echo $PUBLISH_MESSAGE | awk '{ split($0,a,"|"); split(a[10],b," "); print b[4] }')"
+          echo "::set-output name=cid::$(echo $PUBLISH_MESSAGE | awk '{ split($0,a,"|"); split(a[6],b," "); print b[6] }')"
+          echo "::set-output name=version::$(echo $PUBLISH_MESSAGE | awk '{ split($0,a,"|"); split(a[8],b," "); print b[4] }')"
       - name: create tag
-        uses: actions/github-script@v3
+        uses: actions/github-script@v5
         env:
           TAG_NAME: "${{ steps.publish.outputs.version }}-${{ matrix.app }}-${{ matrix.network }}"
         with:
-          github-token: ${{ github.token }}
+          github-token: ${{ secrets.ARABOT_PAT }}
           script: |
-            github.git.createRef({
+            github.rest.git.createRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
               ref: `refs/tags/${process.env.TAG_NAME}`,

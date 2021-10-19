@@ -15,6 +15,10 @@ function VestingContent({ tokenDecimals, tokenSymbol, vesting }) {
   const { layoutName } = useLayout()
   const compact = layoutName === 'small'
   const vestingInfo = useVestedTokensInfo(vesting)
+  
+  if (!vestingInfo) {
+    return <></>;
+  }
 
   return (
     <div

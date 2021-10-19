@@ -1,0 +1,70 @@
+{
+  "roles": [
+    {
+      "name": "Create allocation budget",
+      "id": "CREATE_ACCOUNT_ROLE",
+      "params": []
+    },
+    {
+      "name": "Create allocation dot vote",
+      "id": "CREATE_ALLOCATION_ROLE",
+      "params": []
+    },
+    {
+      "name": "Execute allocation",
+      "id": "EXECUTE_ALLOCATION_ROLE",
+      "params": []
+    },
+    {
+      "name": "Execute allocation for a single option",
+      "id": "EXECUTE_PAYOUT_ROLE",
+      "params": []
+    },
+    {
+      "name": "Update allocations accounting period",
+      "id": "CHANGE_PERIOD_ROLE",
+      "params": []
+    },
+    {
+      "name": "Update allocations budgets",
+      "id": "CHANGE_BUDGETS_ROLE",
+      "params": []
+    },
+    {
+      "name": "Update maximum number of options for an allocation",
+      "id": "SET_MAX_CANDIDATES_ROLE",
+      "params": []
+    }
+  ],
+  "environments": {
+    "default": {
+      "registry": "0x5f6f7e8cc7346a11ca2def8f827b7a0b612c56a1",
+      "network": "rpc",
+      "appName": "allocations.aragonpm.eth"
+    },
+    "staging": {
+      "registry": "0x98df287b6c145399aaa709692c8d308357bc085d",
+      "appName": "allocations-staging.open.aragonpm.eth",
+      "wsRPC": "wss://rinkeby.eth.aragon.network/ws",
+      "network": "rinkeby"
+    },
+    "continuous-deployment": {
+      "registry": "0x98df287b6c145399aaa709692c8d308357bc085d",
+      "appName": "alllocations-cd.open.aragonpm.eth",
+      "wsRPC": "wss://rinkeby.eth.aragon.network/ws",
+      "network": "rinkeby"
+    },
+    "rinkeby": {
+      "registry": "0x98df287b6c145399aaa709692c8d308357bc085d",
+      "appName": "allocations.aragonpm.eth",
+      "wsRPC": "wss://rinkeby.eth.aragon.network/ws",
+      "network": "rinkeby"
+    },
+    "production": {
+      "registry": "0x314159265dd8dbb310642f98f50c066173c1259b",
+      "appName": "allocations.aragonpm.eth",
+      "network": "mainnet"
+    }
+  },
+  "path": "contracts/Allocations.sol"
+}
