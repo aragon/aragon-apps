@@ -18,6 +18,7 @@
   ],
   "scripts": {
     "console": "buidler console",
+    "build": "echo 'So github actions do not need to validate if script exists since vault is the only different one'",
     "compile": "buidler compile --force",
     "devchain": "buidler node",
     "lint": "solium --dir ./contracts",
