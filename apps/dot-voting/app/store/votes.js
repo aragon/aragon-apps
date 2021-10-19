@@ -6,7 +6,7 @@ import { EMPTY_CALLSCRIPT } from '../utils/vote-utils'
 import { ETHER_TOKEN_FAKE_ADDRESS, tokenAbi } from '../../../../shared/lib/token-utils'
 import { loadTokenSymbol } from '../../../../shared/store-utils/token'
 import { addressesEqual } from '../../../../shared/lib/web3-utils'
-import allocationsAbi from '../../../shared/json-abis/allocations'
+import allocationsAbi from '../../../../shared/abi/allocations.json'
 
 export const castVote = async (state, { voteId }, settings) => {
   const transform = async vote => ({

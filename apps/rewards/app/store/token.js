@@ -12,10 +12,10 @@ import {
   tokenDataOverride
 } from '../../../../shared/lib/token-utils'
 import { addressesEqual } from '../utils/web3-utils'
-import tokenSymbolAbi from '../../../shared/json-abis/token-symbol.json'
-import tokenNameAbi from '../../../shared/json-abis/token-name.json'
-import tokenBalanceAbi from '../../../shared/json-abis/token-balanceof.json'
-import tokenDecimalsAbi from '../../../shared/json-abis/token-decimals.json'
+import tokenSymbolAbi from '../../../../shared/abi/token-symbol.json'
+import tokenNameAbi from '../../../../shared/abi/token-name.json'
+import tokenBalanceAbi from '../../../../shared/abi/token-balanceof.json'
+import tokenDecimalsAbi from '../../../../shared/abi/token-decimals.json'
 import { app } from './'
 
 const tokenAbi = [].concat(
