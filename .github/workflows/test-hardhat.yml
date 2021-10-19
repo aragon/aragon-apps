@@ -3,7 +3,7 @@ name: Test Hardhat
 on:
   push:
     branches:
-      - master
+      - test-hardhat-2 
 
 env:
   POSSIBLE_NETWORKS: "mainnet rinkeby mumbai matic harmony harmonyTest "
