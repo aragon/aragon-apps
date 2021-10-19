@@ -48,6 +48,16 @@
       "registry": "0x314159265dd8dbb310642f98f50c066173c1259b",
       "appName": "dot-voting.aragonpm.eth",
       "network": "mainnet"
+    },
+    "mumbai": {
+      "registry": "0x431f0eed904590b176f9ff8c36a1c4ff0ee9b982",
+      "appName": "dot-voting.aragonpm.eth",
+      "network": "mumbai"
+    },
+    "matic": {
+      "registry": "0x3c70a0190d09f34519e6e218364451add21b7d4b",
+      "appName": "dot-voting.aragonpm.eth",
+      "network": "matic"
     }
   },
   "path": "contracts/DotVoting.sol"

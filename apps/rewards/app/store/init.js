@@ -1,4 +1,4 @@
-import vaultAbi from '../../../shared/json-abis/vault'
+import vaultAbi from '../../../../shared/abi/vault.json'
 import { initializeTokens } from './token'
 import { app, handleEvent } from './'
 import { ETHER_TOKEN_FAKE_ADDRESS } from '../../../../shared/lib/token-utils'

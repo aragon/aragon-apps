@@ -42,11 +42,11 @@ import {
 } from '../../../utils/constants'
 import { displayCurrency, toWei } from '../../../utils/helpers'
 
-import tokenBalanceOfAbi from '../../../../../shared/json-abis/token-balanceof.json'
-import tokenBalanceOfAtAbi from '../../../../../shared/json-abis/token-balanceofat.json'
-import tokenCreationBlockAbi from '../../../../../shared/json-abis/token-creationblock.json'
-import tokenSymbolAbi from '../../../../../shared/json-abis/token-symbol.json'
-import tokenTransferAbi from '../../../../../shared/json-abis/token-transferable.json'
+import tokenBalanceOfAbi from '../../../../../../shared/abi/token-balanceof.json'
+import tokenBalanceOfAtAbi from '../../../../../../shared/abi/token-balanceofat.json'
+import tokenCreationBlockAbi from '../../../../../../shared/abi/token-creationblock.json'
+import tokenSymbolAbi from '../../../../../../shared/abi/token-symbol.json'
+import tokenTransferAbi from '../../../../../../shared/abi/token-transferable.json'
 
 const tokenAbi = [].concat(tokenBalanceOfAbi, tokenBalanceOfAtAbi, tokenCreationBlockAbi, tokenSymbolAbi)
 
