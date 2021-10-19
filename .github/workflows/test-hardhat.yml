@@ -31,5 +31,6 @@ jobs:
         id: publish
         run: |
           cd apps/voting
-          head node_modules/hardhat/package.json
+          echo ====== ls node-modules
+          ls node_modules
           npx hardhat help
