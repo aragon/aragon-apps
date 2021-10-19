@@ -19,12 +19,6 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: 14
-      - name: setup ipfs
-        uses: ibnesayeed/setup-ipfs@master
-        with:
-          run_daemon: true
-      - name: Install npm packages
-        run: yarn
       - name: build, publish and package
         id: build
         run: | 
