@@ -9,7 +9,7 @@ env:
   POSSIBLE_NETWORKS: "mainnet rinkeby mumbai matic harmony harmonyTest "
 
 jobs:
-  checkLabels:
+  runHardhat:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -31,5 +31,7 @@ jobs:
         id: publish
         run: |
           cd apps/voting
-          yarn --dev
+          ls node_modules
+          ls ../../node_modules/hardhat
+          head ../../node_modules/hardhat/package.json
           npx hardhat help
