@@ -46,8 +46,7 @@
       "apps/*"
     ],
     "nohoist": [
-      "**/@aragon/contract-helpers-test",
-      "**/hardhat"
+      "**/@aragon/contract-helpers-test"
     ]
   }
 }
