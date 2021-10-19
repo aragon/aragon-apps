@@ -28,7 +28,7 @@ jobs:
       - name: build, publish and package
         id: build
         run: | 
-          cd apps/${{ matrix.app }}
+          cd apps/voting
           yarn --ignore-engines --dev
           if [[ -d app ]]; then
             yarn build
@@ -36,5 +36,5 @@ jobs:
       - name: publish
         id: publish
         run: |
-          cd apps/${{ matrix.app }}
+          cd apps/voting
           npx hardhat help
