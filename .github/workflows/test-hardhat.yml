@@ -33,4 +33,5 @@ jobs:
           cd apps/voting
           echo ====== ls node-modules
           ls node_modules
+          ln -s ../../node_modules/hardhat node_modules/hardhat
           npx hardhat help
