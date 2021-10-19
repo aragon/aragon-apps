@@ -93,7 +93,9 @@ jobs:
         run: | 
           cd apps/${{ matrix.app }}
           yarn --ignore-engines --dev
-          yarn build
+          if [[ -d app ]]; then
+            yarn build
+          fi
       - name: publish
         id: publish
         run:  |
