@@ -1,0 +1,223 @@
+digraph G {
+  graph [ ratio = "auto", page = "100", compound = true ];
+subgraph "clusterBountiesMetaTxRelayer" {
+  graph [ label = "BountiesMetaTxRelayer", color = "lightgray", style = "filled" ];
+  "BountiesMetaTxRelayer.<Constructor>" [ label = "<Constructor>", color = "green" ];
+  "BountiesMetaTxRelayer.metaIssueBounty" [ label = "metaIssueBounty", color = "green" ];
+  "BountiesMetaTxRelayer.metaContribute" [ label = "metaContribute", color = "green" ];
+  "BountiesMetaTxRelayer.metaRefundContribution" [ label = "metaRefundContribution", color = "green" ];
+  "BountiesMetaTxRelayer.metaRefundContributions" [ label = "metaRefundContributions", color = "green" ];
+  "BountiesMetaTxRelayer.metaPerformAction" [ label = "metaPerformAction", color = "green" ];
+  "BountiesMetaTxRelayer.metaFulfillBounty" [ label = "metaFulfillBounty", color = "green" ];
+  "BountiesMetaTxRelayer.metaUpdateFulfillment" [ label = "metaUpdateFulfillment", color = "green" ];
+  "BountiesMetaTxRelayer.metaAcceptFulfillment" [ label = "metaAcceptFulfillment", color = "green" ];
+  "BountiesMetaTxRelayer.metaFulfillAndAccept" [ label = "metaFulfillAndAccept", color = "green" ];
+  "BountiesMetaTxRelayer.metaChangeBounty" [ label = "metaChangeBounty", color = "green" ];
+  "BountiesMetaTxRelayer.metaChangeIssuer" [ label = "metaChangeIssuer", color = "green" ];
+  "BountiesMetaTxRelayer.metaChangeApprover" [ label = "metaChangeApprover", color = "green" ];
+  "BountiesMetaTxRelayer.metaChangeData" [ label = "metaChangeData", color = "green" ];
+  "BountiesMetaTxRelayer.metaChangeDeadline" [ label = "metaChangeDeadline", color = "green" ];
+  "BountiesMetaTxRelayer.metaAddIssuers" [ label = "metaAddIssuers", color = "green" ];
+  "BountiesMetaTxRelayer.metaReplaceIssuers" [ label = "metaReplaceIssuers", color = "green" ];
+  "BountiesMetaTxRelayer.metaAddApprovers" [ label = "metaAddApprovers", color = "green" ];
+  "BountiesMetaTxRelayer.metaReplaceApprovers" [ label = "metaReplaceApprovers", color = "green" ];
+  "BountiesMetaTxRelayer.getSigner" [ label = "getSigner" ];
+}
+
+subgraph "clusterStandardBounties" {
+  graph [ label = "StandardBounties", color = "lightgray", style = "filled" ];
+  "StandardBounties.issueBounty" [ label = "issueBounty", color = "green" ];
+  "StandardBounties.contribute" [ label = "contribute", color = "green" ];
+  "StandardBounties.refundContribution" [ label = "refundContribution", color = "green" ];
+  "StandardBounties.refundContributions" [ label = "refundContributions", color = "green" ];
+  "StandardBounties.performAction" [ label = "performAction", color = "green" ];
+  "StandardBounties.fulfillBounty" [ label = "fulfillBounty", color = "green" ];
+  "StandardBounties.updateFulfillment" [ label = "updateFulfillment", color = "green" ];
+  "StandardBounties.acceptFulfillment" [ label = "acceptFulfillment", color = "green" ];
+  "StandardBounties.fulfillAndAccept" [ label = "fulfillAndAccept", color = "green" ];
+  "StandardBounties.changeBounty" [ label = "changeBounty", color = "green" ];
+  "StandardBounties.changeIssuer" [ label = "changeIssuer", color = "green" ];
+  "StandardBounties.changeApprover" [ label = "changeApprover", color = "green" ];
+  "StandardBounties.changeData" [ label = "changeData", color = "green" ];
+  "StandardBounties.changeDeadline" [ label = "changeDeadline", color = "green" ];
+  "StandardBounties.addIssuers" [ label = "addIssuers", color = "green" ];
+  "StandardBounties.replaceIssuers" [ label = "replaceIssuers", color = "green" ];
+  "StandardBounties.validateBountyArrayIndex" [ label = "validateBountyArrayIndex", color = "yellow" ];
+  "StandardBounties.validateContributionArrayIndex" [ label = "validateContributionArrayIndex", color = "yellow" ];
+  "StandardBounties.validateFulfillmentArrayIndex" [ label = "validateFulfillmentArrayIndex", color = "yellow" ];
+  "StandardBounties.validateIssuerArrayIndex" [ label = "validateIssuerArrayIndex", color = "yellow" ];
+  "StandardBounties.validateApproverArrayIndex" [ label = "validateApproverArrayIndex", color = "yellow" ];
+  "StandardBounties.onlyIssuer" [ label = "onlyIssuer", color = "yellow" ];
+  "StandardBounties.onlySubmitter" [ label = "onlySubmitter", color = "yellow" ];
+  "StandardBounties.onlyContributor" [ label = "onlyContributor", color = "yellow" ];
+  "StandardBounties.isApprover" [ label = "isApprover", color = "yellow" ];
+  "StandardBounties.hasNotPaid" [ label = "hasNotPaid", color = "yellow" ];
+  "StandardBounties.hasNotRefunded" [ label = "hasNotRefunded", color = "yellow" ];
+  "StandardBounties.senderIsValid" [ label = "senderIsValid", color = "yellow" ];
+  "StandardBounties.<Constructor>" [ label = "<Constructor>", color = "green" ];
+  "StandardBounties.setMetaTxRelayer" [ label = "setMetaTxRelayer", color = "green" ];
+  "StandardBounties.addApprovers" [ label = "addApprovers", color = "green" ];
+  "StandardBounties.replaceApprovers" [ label = "replaceApprovers", color = "green" ];
+  "StandardBounties.getBounty" [ label = "getBounty", color = "green" ];
+  "StandardBounties.transferTokens" [ label = "transferTokens" ];
+}
+
+subgraph "clusterabi" {
+  graph [ label = "abi", color = "lightgray" ];
+  "abi.encodePacked" [ label = "encodePacked" ];
+}
+
+subgraph "clusterERC20Token" {
+  graph [ label = "ERC20Token", color = "lightgray" ];
+  "ERC20Token.transferFrom" [ label = "transferFrom" ];
+  "ERC20Token.transfer" [ label = "transfer" ];
+}
+
+subgraph "clusterERC721BasicToken" {
+  graph [ label = "ERC721BasicToken", color = "lightgray" ];
+  "ERC721BasicToken.transferFrom" [ label = "transferFrom" ];
+  "ERC721BasicToken.safeTransferFrom" [ label = "safeTransferFrom" ];
+}
+
+subgraph "cluster_to" {
+  graph [ label = "_to", color = "lightgray" ];
+  "_to.transfer" [ label = "transfer" ];
+}
+
+  "BountiesMetaTxRelayer.metaIssueBounty";
+  "abi.encodePacked";
+  "BountiesMetaTxRelayer.getSigner";
+  "StandardBounties.issueBounty";
+  "BountiesMetaTxRelayer.metaContribute";
+  "StandardBounties.contribute";
+  "BountiesMetaTxRelayer.metaRefundContribution";
+  "StandardBounties.refundContribution";
+  "BountiesMetaTxRelayer.metaRefundContributions";
+  "StandardBounties.refundContributions";
+  "BountiesMetaTxRelayer.metaPerformAction";
+  "StandardBounties.performAction";
+  "BountiesMetaTxRelayer.metaFulfillBounty";
+  "StandardBounties.fulfillBounty";
+  "BountiesMetaTxRelayer.metaUpdateFulfillment";
+  "StandardBounties.updateFulfillment";
+  "BountiesMetaTxRelayer.metaAcceptFulfillment";
+  "StandardBounties.acceptFulfillment";
+  "BountiesMetaTxRelayer.metaFulfillAndAccept";
+  "StandardBounties.fulfillAndAccept";
+  "BountiesMetaTxRelayer.metaChangeBounty";
+  "StandardBounties.changeBounty";
+  "BountiesMetaTxRelayer.metaChangeIssuer";
+  "StandardBounties.changeIssuer";
+  "BountiesMetaTxRelayer.metaChangeApprover";
+  "StandardBounties.changeApprover";
+  "BountiesMetaTxRelayer.metaChangeData";
+  "StandardBounties.changeData";
+  "BountiesMetaTxRelayer.metaChangeDeadline";
+  "StandardBounties.changeDeadline";
+  "BountiesMetaTxRelayer.metaAddIssuers";
+  "StandardBounties.addIssuers";
+  "BountiesMetaTxRelayer.metaReplaceIssuers";
+  "StandardBounties.replaceIssuers";
+  "BountiesMetaTxRelayer.metaAddApprovers";
+  "BountiesMetaTxRelayer.metaReplaceApprovers";
+  "ERC20Token.transferFrom";
+  "ERC721BasicToken.transferFrom";
+  "StandardBounties.transferTokens";
+  "_to.transfer";
+  "ERC20Token.transfer";
+  "ERC721BasicToken.safeTransferFrom";
+  "BountiesMetaTxRelayer.metaIssueBounty" -> "abi.encodePacked" [ color = "orange" ];
+  "BountiesMetaTxRelayer.metaIssueBounty" -> "BountiesMetaTxRelayer.getSigner" [ color = "green" ];
+  "BountiesMetaTxRelayer.metaIssueBounty" -> "StandardBounties.issueBounty" [ color = "orange" ];
+  "BountiesMetaTxRelayer.metaContribute" -> "abi.encodePacked" [ color = "orange" ];
+  "BountiesMetaTxRelayer.metaContribute" -> "BountiesMetaTxRelayer.getSigner" [ color = "green" ];
+  "BountiesMetaTxRelayer.metaContribute" -> "StandardBounties.contribute" [ color = "orange" ];
+  "BountiesMetaTxRelayer.metaRefundContribution" -> "abi.encodePacked" [ color = "orange" ];
+  "BountiesMetaTxRelayer.metaRefundContribution" -> "BountiesMetaTxRelayer.getSigner" [ color = "green" ];
+  "BountiesMetaTxRelayer.metaRefundContribution" -> "StandardBounties.refundContribution" [ color = "orange" ];
+  "BountiesMetaTxRelayer.metaRefundContributions" -> "abi.encodePacked" [ color = "orange" ];
+  "BountiesMetaTxRelayer.metaRefundContributions" -> "BountiesMetaTxRelayer.getSigner" [ color = "green" ];
+  "BountiesMetaTxRelayer.metaRefundContributions" -> "StandardBounties.refundContributions" [ color = "orange" ];
+  "BountiesMetaTxRelayer.metaPerformAction" -> "abi.encodePacked" [ color = "orange" ];
+  "BountiesMetaTxRelayer.metaPerformAction" -> "BountiesMetaTxRelayer.getSigner" [ color = "green" ];
+  "BountiesMetaTxRelayer.metaPerformAction" -> "StandardBounties.performAction" [ color = "orange" ];
+  "BountiesMetaTxRelayer.metaFulfillBounty" -> "abi.encodePacked" [ color = "orange" ];
+  "BountiesMetaTxRelayer.metaFulfillBounty" -> "BountiesMetaTxRelayer.getSigner" [ color = "green" ];
+  "BountiesMetaTxRelayer.metaFulfillBounty" -> "StandardBounties.fulfillBounty" [ color = "orange" ];
+  "BountiesMetaTxRelayer.metaUpdateFulfillment" -> "abi.encodePacked" [ color = "orange" ];
+  "BountiesMetaTxRelayer.metaUpdateFulfillment" -> "BountiesMetaTxRelayer.getSigner" [ color = "green" ];
+  "BountiesMetaTxRelayer.metaUpdateFulfillment" -> "StandardBounties.updateFulfillment" [ color = "orange" ];
+  "BountiesMetaTxRelayer.metaAcceptFulfillment" -> "abi.encodePacked" [ color = "orange" ];
+  "BountiesMetaTxRelayer.metaAcceptFulfillment" -> "BountiesMetaTxRelayer.getSigner" [ color = "green" ];
+  "BountiesMetaTxRelayer.metaAcceptFulfillment" -> "StandardBounties.acceptFulfillment" [ color = "orange" ];
+  "BountiesMetaTxRelayer.metaFulfillAndAccept" -> "abi.encodePacked" [ color = "orange" ];
+  "BountiesMetaTxRelayer.metaFulfillAndAccept" -> "BountiesMetaTxRelayer.getSigner" [ color = "green" ];
+  "BountiesMetaTxRelayer.metaFulfillAndAccept" -> "StandardBounties.fulfillAndAccept" [ color = "orange" ];
+  "BountiesMetaTxRelayer.metaChangeBounty" -> "abi.encodePacked" [ color = "orange" ];
+  "BountiesMetaTxRelayer.metaChangeBounty" -> "BountiesMetaTxRelayer.getSigner" [ color = "green" ];
+  "BountiesMetaTxRelayer.metaChangeBounty" -> "StandardBounties.changeBounty" [ color = "orange" ];
+  "BountiesMetaTxRelayer.metaChangeIssuer" -> "abi.encodePacked" [ color = "orange" ];
+  "BountiesMetaTxRelayer.metaChangeIssuer" -> "BountiesMetaTxRelayer.getSigner" [ color = "green" ];
+  "BountiesMetaTxRelayer.metaChangeIssuer" -> "StandardBounties.changeIssuer" [ color = "orange" ];
+  "BountiesMetaTxRelayer.metaChangeApprover" -> "abi.encodePacked" [ color = "orange" ];
+  "BountiesMetaTxRelayer.metaChangeApprover" -> "BountiesMetaTxRelayer.getSigner" [ color = "green" ];
+  "BountiesMetaTxRelayer.metaChangeApprover" -> "StandardBounties.changeApprover" [ color = "orange" ];
+  "BountiesMetaTxRelayer.metaChangeData" -> "abi.encodePacked" [ color = "orange" ];
+  "BountiesMetaTxRelayer.metaChangeData" -> "BountiesMetaTxRelayer.getSigner" [ color = "green" ];
+  "BountiesMetaTxRelayer.metaChangeData" -> "StandardBounties.changeData" [ color = "orange" ];
+  "BountiesMetaTxRelayer.metaChangeDeadline" -> "abi.encodePacked" [ color = "orange" ];
+  "BountiesMetaTxRelayer.metaChangeDeadline" -> "BountiesMetaTxRelayer.getSigner" [ color = "green" ];
+  "BountiesMetaTxRelayer.metaChangeDeadline" -> "StandardBounties.changeDeadline" [ color = "orange" ];
+  "BountiesMetaTxRelayer.metaAddIssuers" -> "abi.encodePacked" [ color = "orange" ];
+  "BountiesMetaTxRelayer.metaAddIssuers" -> "BountiesMetaTxRelayer.getSigner" [ color = "green" ];
+  "BountiesMetaTxRelayer.metaAddIssuers" -> "StandardBounties.addIssuers" [ color = "orange" ];
+  "BountiesMetaTxRelayer.metaReplaceIssuers" -> "abi.encodePacked" [ color = "orange" ];
+  "BountiesMetaTxRelayer.metaReplaceIssuers" -> "BountiesMetaTxRelayer.getSigner" [ color = "green" ];
+  "BountiesMetaTxRelayer.metaReplaceIssuers" -> "StandardBounties.replaceIssuers" [ color = "orange" ];
+  "BountiesMetaTxRelayer.metaAddApprovers" -> "abi.encodePacked" [ color = "orange" ];
+  "BountiesMetaTxRelayer.metaAddApprovers" -> "BountiesMetaTxRelayer.getSigner" [ color = "green" ];
+  "BountiesMetaTxRelayer.metaAddApprovers" -> "StandardBounties.addIssuers" [ color = "orange" ];
+  "BountiesMetaTxRelayer.metaReplaceApprovers" -> "abi.encodePacked" [ color = "orange" ];
+  "BountiesMetaTxRelayer.metaReplaceApprovers" -> "BountiesMetaTxRelayer.getSigner" [ color = "green" ];
+  "BountiesMetaTxRelayer.metaReplaceApprovers" -> "StandardBounties.replaceIssuers" [ color = "orange" ];
+  "BountiesMetaTxRelayer.getSigner" -> "abi.encodePacked" [ color = "orange" ];
+  "StandardBounties.issueBounty" -> "StandardBounties.contribute" [ color = "green" ];
+  "StandardBounties.contribute" -> "ERC20Token.transferFrom" [ color = "orange" ];
+  "StandardBounties.contribute" -> "ERC721BasicToken.transferFrom" [ color = "orange" ];
+  "StandardBounties.refundContribution" -> "StandardBounties.transferTokens" [ color = "green" ];
+  "StandardBounties.refundContributions" -> "StandardBounties.refundContribution" [ color = "green" ];
+  "StandardBounties.acceptFulfillment" -> "StandardBounties.transferTokens" [ color = "green" ];
+  "StandardBounties.fulfillAndAccept" -> "StandardBounties.fulfillBounty" [ color = "green" ];
+  "StandardBounties.fulfillAndAccept" -> "StandardBounties.acceptFulfillment" [ color = "green" ];
+  "StandardBounties.transferTokens" -> "_to.transfer" [ color = "orange" ];
+  "StandardBounties.transferTokens" -> "ERC20Token.transfer" [ color = "orange" ];
+  "StandardBounties.transferTokens" -> "ERC721BasicToken.safeTransferFrom" [ color = "orange" ];
+
+
+rankdir=LR
+node [shape=plaintext]
+subgraph cluster_01 { 
+label = "Legend";
+key [label=<<table border="0" cellpadding="2" cellspacing="0" cellborder="0">
+  <tr><td align="right" port="i1">Internal Call</td></tr>
+  <tr><td align="right" port="i2">External Call</td></tr>
+  <tr><td align="right" port="i3">Defined Contract</td></tr>
+  <tr><td align="right" port="i4">Undefined Contract</td></tr>
+  </table>>]
+key2 [label=<<table border="0" cellpadding="2" cellspacing="0" cellborder="0">
+  <tr><td port="i1">&nbsp;&nbsp;&nbsp;</td></tr>
+  <tr><td port="i2">&nbsp;&nbsp;&nbsp;</td></tr>
+  <tr><td port="i3" bgcolor="lightgray">&nbsp;&nbsp;&nbsp;</td></tr>
+  <tr><td port="i4">
+    <table border="1" cellborder="0" cellspacing="0" cellpadding="7" color="lightgray">
+      <tr>
+       <td></td>
+      </tr>
+     </table>
+  </td></tr>
+  </table>>]
+key:i1:e -> key2:i1:w [color=green]
+key:i2:e -> key2:i2:w [color=orange]
+}
+}
+

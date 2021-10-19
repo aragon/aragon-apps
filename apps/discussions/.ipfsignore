@@ -1,0 +1,15 @@
+# Git files
+.gitignore
+
+# Build files
+.cache
+node_modules
+build
+coverage
+
+# Lock files
+package-lock.json
+yarn.lock
+
+# Others
+test
