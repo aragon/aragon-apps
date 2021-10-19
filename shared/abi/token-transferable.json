@@ -1,0 +1,16 @@
+[
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "transfersEnabled",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

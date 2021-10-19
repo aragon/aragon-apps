@@ -9,7 +9,7 @@ import "@aragon/apps-shared-minime/contracts/MiniMeToken.sol";
 
 // TODO: Revert import path when changes get merged into aragon/os
 // import "@aragon/os/contracts/common/ADynamicForwarder.sol";
-import "@tps/test-helpers/contracts/common/ADynamicForwarder.sol";
+import "./shared/common/ADynamicForwarder.sol";
 
 
 contract DotVoting is ADynamicForwarder, AragonApp {
