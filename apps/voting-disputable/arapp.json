@@ -12,7 +12,7 @@
       "network": "harmony"
     },
     "harmonyTest": {
-      "registry": "0x843ddfab8406e752d03fa75dbb275070f368658d",
+      "registry": "0x6679ff29c4f450cab0e0eeb798fb47877add98f3",
       "appName": "disputable-voting.aragonpm.eth",
       "network": "harmonyTest"
     },
