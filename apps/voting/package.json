@@ -50,5 +50,10 @@
     "solidity-coverage": "^0.7.9",
     "solium": "^1.2.5",
     "web3": "^1.2.11"
+  },
+  "workspaces": {
+    "nohoist": [
+      "hardhat"
+    ]
   }
 }
