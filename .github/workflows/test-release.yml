@@ -104,7 +104,7 @@ jobs:
       - name: create tag
         uses: actions/github-script@v5
         env:
-          TAG_NAME: "test-tag"
+          TAG_NAME: "test-tag-${{ steps.publish.outputs.version }}-${{ steps.publish.outputs.cid }}"
         with:
           github-token: ${{ secrets.ARABOT_PAT }}
           script: |
