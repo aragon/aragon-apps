@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          ref: 'master'
+          ref: 'test-hardhat-2'
       - name: Install node
         uses: actions/setup-node@v1
         with:
@@ -33,5 +33,4 @@ jobs:
           cd apps/test-hardhat
           echo ====== ls node-modules
           ls node_modules
-          ln -s ../../node_modules/hardhat node_modules/hardhat
           npx hardhat help
