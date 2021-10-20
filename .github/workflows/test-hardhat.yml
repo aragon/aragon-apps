@@ -22,7 +22,7 @@ jobs:
       - name: build, publish and package
         id: build
         run: | 
-          cd apps/voting
+          cd apps/test-hardhat
           yarn --ignore-engines --dev
           if [[ -d app ]]; then
             yarn build
@@ -30,7 +30,7 @@ jobs:
       - name: publish
         id: publish
         run: |
-          cd apps/voting
+          cd apps/test-hardhat
           echo ====== ls node-modules
           ls node_modules
           ln -s ../../node_modules/hardhat node_modules/hardhat
