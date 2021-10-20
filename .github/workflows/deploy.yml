@@ -65,7 +65,7 @@ jobs:
             yarn --ignore-engines --dev
             if [[ -d app ]]; then
               yarn build
-            if
+            fi
         - name: publish
           id: publish
           run:  |
