@@ -99,19 +99,14 @@ jobs:
         run:  |
           cd apps/voting
           PUBLISH_MESSAGE=$(npx hardhat publish patch --skip-validation --dry-run --network mumbai)
-          echo "publish message: $PUBLISH_MESSAGE"
-          echo "::set-output name=cid::$(echo $PUBLISH_MESSAGE | awk '{ split($0,a,"|"); split(a[6],b," "); print b[6] }')"
-          echo "::set-output name=version::$(echo $PUBLISH_MESSAGE | awk '{ split($0,a,"|"); split(a[8],b," "); print b[4] }')"
+          echo "publish message"
+          echo "$PUBLISH_MESSAGE" | grep 'ContentURI'
+          echo "$PUBLISH_MESSAGE" | grep 'new version'
+          echo "...."
+          echo "::set-output name=cid::$(echo $PUBLISH_MESSAGE | grep 'ContentURI' | awk '{ split($0,a,"|"); split(a[2],b," "); print b[2] }')"
+          echo "::set-output name=version::$(echo $PUBLISH_MESSAGE | grep 'new version' | awk '{ split($0,a,"|"); split(a[8],b," "); print b[4] }')"
       - name: create tag
-        uses: actions/github-script@v5
         env:
           TAG_NAME: "test-tag-${{ steps.publish.outputs.version }}-${{ steps.publish.outputs.cid }}"
-        with:
-          github-token: ${{ secrets.ARABOT_PAT }}
-          script: |
-            github.rest.git.createRef({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref: `refs/tags/${process.env.TAG_NAME}`,
-              sha: context.sha
-            })
+        run: |
+          echo "tag: $TAG_NAME"
