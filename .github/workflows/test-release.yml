@@ -89,7 +89,7 @@ jobs:
       - name: build, publish and package
         id: build
         run: | 
-          cd apps/${{ matrix.app }}
+          cd apps/voting
           yarn --ignore-engines --dev
           if [[ -d app ]]; then
             yarn build
@@ -97,14 +97,14 @@ jobs:
       - name: publish
         id: publish
         run:  |
-          cd apps/${{ needs.checkTag.outputs.app }}
+          cd apps/voting
           PUBLISH_MESSAGE=$(npx hardhat publish ${{ matrix.level }} --dry-run --network ${{ matrix.network }})
           echo "::set-output name=cid::$(echo $PUBLISH_MESSAGE | awk '{ split($0,a,"|"); split(a[6],b," "); print b[6] }')"
           echo "::set-output name=version::$(echo $PUBLISH_MESSAGE | awk '{ split($0,a,"|"); split(a[8],b," "); print b[4] }')"
       - name: create tag
         uses: actions/github-script@v5
         env:
-          TAG_NAME: "${{ steps.publish.outputs.version }}-${{ matrix.app }}-${{ matrix.network }}"
+          TAG_NAME: "test-tag"
         with:
           github-token: ${{ secrets.ARABOT_PAT }}
           script: |
