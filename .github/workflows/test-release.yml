@@ -102,9 +102,11 @@ jobs:
           echo "publish message"
           echo "$PUBLISH_MESSAGE" | grep 'ContentURI'
           echo "$PUBLISH_MESSAGE" | grep 'new version'
+          echo $PUBLISH_MESSAGE | grep 'new version' | awk '{ split($0,a," "); print a[6] }'
+          echo $PUBLISH_MESSAGE | grep 'ContentURI' | awk '{ split($0,a," "); print a[4] }'
           echo "...."
-          echo "::set-output name=cid::$(echo $PUBLISH_MESSAGE | grep 'ContentURI' | awk '{ split($0,a,"|"); split(a[2],b," "); print b[2] }')"
-          echo "::set-output name=version::$(echo $PUBLISH_MESSAGE | grep 'new version' | awk '{ split($0,a,"|"); split(a[8],b," "); print b[4] }')"
+          echo "::set-output name=cid::$(echo $PUBLISH_MESSAGE | grep 'ContentURI' | awk '{ split($0,a," "); print a[4] }')"
+          echo "::set-output name=version::$(echo $PUBLISH_MESSAGE | grep 'new version' | awk '{ split($0,a," "); print a[6] }')"
       - name: create tag
         env:
           TAG_NAME: "test-tag-${{ steps.publish.outputs.version }}-${{ steps.publish.outputs.cid }}"
