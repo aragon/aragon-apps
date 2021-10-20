@@ -1,4 +1,4 @@
-name: Release
+name: Test Release
 
 on:
   pull_request_target:
@@ -10,7 +10,7 @@ env:
 jobs:
   checkLabels:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.merged && github.event.pull_request.labels.*.name && github.base_ref == 'master'
+    if: github.event.pull_request.merged && github.event.pull_request.labels.*.name
     steps:
       - run: echo Check labels is not empty and pull is merged
   buildMatrix:
@@ -72,8 +72,6 @@ jobs:
     environment: ${{ matrix.network }}
     steps:
       - uses: actions/checkout@v2
-        with:
-          ref: 'master'
       - name: Install node
         uses: actions/setup-node@v1
         with:
