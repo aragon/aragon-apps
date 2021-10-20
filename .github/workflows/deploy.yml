@@ -64,20 +64,16 @@ jobs:
             cd apps/${{ needs.checkTag.outputs.app }}
             yarn --ignore-engines --dev
             if [[ -d app ]]; then
-              cd app 
-              yarn 
-              yarn build 
-              cd .. 
-            fi
-            yarn compile
+              yarn build
+            if
         - name: publish
           id: publish
           run:  |
             cd apps/${{ needs.checkTag.outputs.app }}
-            PUBLISH_MESSAGE=$(npx buidler publish ${{ needs.checkTag.outputs.version }} --network ${{ needs.checkTag.outputs.network }})
-            echo "::set-output name=cid::$(echo $PUBLISH_MESSAGE | awk '{ split($0,a,"|"); split(a[6],b," "); print b[6] }')"
-            echo "::set-output name=contract::$(echo $PUBLISH_MESSAGE | awk '{ split($0,a,"|"); split(a[10],b," "); print b[3] }')"
-            echo "::set-output name=txhash::$(echo $PUBLISH_MESSAGE | awk '{ split($0,a,"|"); split(a[18],b," "); print b[3] }')"
+            PUBLISH_MESSAGE=$(npx hardhat publish ${{ needs.checkTag.outputs.version }} --network ${{ needs.checkTag.outputs.network }})
+            echo "::set-output name=cid::$(echo $PUBLISH_MESSAGE | sed -nE 's/^.*ContentURI: *([^ ]*) *.*$/\1/p')"
+            echo "::set-output name=contract::$(echo $PUBLISH_MESSAGE | sed -nE 's/^.*Contract address: *([^ ]*) *.*$/\1/p')"
+            echo "::set-output name=txhash::$(echo $PUBLISH_MESSAGE | sed -nE 's/^.*Tx hash: *([^ ]*) *.*$/\1/p')"
             echo $PUBLISH_MESSAGE
         - name: package app
           id: packaging
