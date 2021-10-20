@@ -102,11 +102,11 @@ jobs:
           echo "publish message"
           echo "$PUBLISH_MESSAGE" | grep 'ContentURI'
           echo "$PUBLISH_MESSAGE" | grep 'new version'
-          echo $PUBLISH_MESSAGE | sed -nE 's/^.*ContentURI: *(.*) *.*$/\1/p'
-          echo $PUBLISH_MESSAGE | sed -nE 's/^.*next version: *(.*) *.*$/\1/p'
+          echo $PUBLISH_MESSAGE | sed -nE 's/^.*ContentURI: *([^ ]*) *.*$/\1/p'
+          echo $PUBLISH_MESSAGE | sed -nE 's/^.*next version: *([^ ]*) *.*$/\1/p'
           echo "...."
-          echo "::set-output name=cid::$(echo $PUBLISH_MESSAGE | sed -nE 's/^.*ContentURI: *(.*) *.*$/\1/p')"
-          echo "::set-output name=version::$(echo $PUBLISH_MESSAGE | sed -nE 's/^.*next version: *(.*) *.*$/\1/p')"
+          echo "::set-output name=cid::$(echo $PUBLISH_MESSAGE | sed -nE 's/^.*ContentURI: *([^ ]*) *.*$/\1/p')"
+          echo "::set-output name=version::$(echo $PUBLISH_MESSAGE | sed -nE 's/^.*next version: *([^ ]*) *.*$/\1/p')"
       - name: create tag
         env:
           TAG_NAME: "test-tag-${{ steps.publish.outputs.version }}-${{ steps.publish.outputs.cid }}"
