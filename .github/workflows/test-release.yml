@@ -99,7 +99,7 @@ jobs:
         run:  |
           cd apps/voting
           PUBLISH_MESSAGE=$(npx hardhat publish patch --skip-validation --dry-run --network mumbai)
-          echo "${{ PUBLISH_MESSAGE }}"
+          echo "publish message: $PUBLISH_MESSAGE"
           echo "::set-output name=cid::$(echo $PUBLISH_MESSAGE | awk '{ split($0,a,"|"); split(a[6],b," "); print b[6] }')"
           echo "::set-output name=version::$(echo $PUBLISH_MESSAGE | awk '{ split($0,a,"|"); split(a[8],b," "); print b[4] }')"
       - name: create tag
