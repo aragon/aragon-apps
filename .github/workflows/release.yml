@@ -94,19 +94,15 @@ jobs:
           cd apps/${{ matrix.app }}
           yarn --ignore-engines --dev
           if [[ -d app ]]; then
-            cd app 
-            yarn 
-            yarn build 
-            cd .. 
+            yarn build
           fi
-          yarn compile
       - name: publish
         id: publish
         run:  |
           cd apps/${{ matrix.app }}
-          PUBLISH_MESSAGE=$(npx buidler publish ${{ matrix.level }} --dry-run --network ${{ matrix.network }})
-          echo "::set-output name=cid::$(echo $PUBLISH_MESSAGE | awk '{ split($0,a,"|"); split(a[6],b," "); print b[6] }')"
-          echo "::set-output name=version::$(echo $PUBLISH_MESSAGE | awk '{ split($0,a,"|"); split(a[8],b," "); print b[4] }')"
+          PUBLISH_MESSAGE=$(npx hardhat publish ${{ matrix.level }} --dry-run --network ${{ matrix.network }})
+          echo "::set-output name=cid::$(echo $PUBLISH_MESSAGE | sed -nE 's/^.*ContentURI: *([^ ]*) *.*$/\1/p')"
+          echo "::set-output name=version::$(echo $PUBLISH_MESSAGE | sed -nE 's/^.*next version: *([^ ]*) *.*$/\1/p')"
       - name: create tag
         uses: actions/github-script@v5
         env:
