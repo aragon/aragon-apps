@@ -81,6 +81,18 @@
     ipfs-http-client "^50.0.0"
     node-fetch "^2.6.1"
 
+"@aragon/hardhat-aragon@^0.2.0":
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/@aragon/hardhat-aragon/-/hardhat-aragon-0.2.0.tgz#b1bdbf8255a0d024849654023e92357162660b02"
+  integrity sha512-8vsB/ds1RvXtpTL2CwtMdxRBkwFCeTF9m7n1crG/b+I5NbGT/QORGpaVmsvgS23VHXal7JFW4NtykPtMflsG1Q==
+  dependencies:
+    "@solidity-parser/parser" "^0.12.2"
+    chalk "^4.1.1"
+    execa "^5.0.0"
+    fs-extra "^8.1.0"
+    ipfs-http-client "^50.0.0"
+    node-fetch "^2.6.1"
+
 "@aragon/hardhat-config@0.0.1", "@aragon/hardhat-config@^0.0.1":
   version "0.0.1"
   resolved "https://registry.yarnpkg.com/@aragon/hardhat-config/-/hardhat-config-0.0.1.tgz#877f314ceb11f4230fb9817aca93af97c1c07c0a"
