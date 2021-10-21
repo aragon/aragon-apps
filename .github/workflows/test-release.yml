@@ -1,8 +1,6 @@
-name: Release
+name: Test Release
 
-on:
-  pull_request_target:
-    types: [closed]
+on: push
 
 env:
   POSSIBLE_NETWORKS: "mainnet rinkeby mumbai matic harmony harmonyTest "
