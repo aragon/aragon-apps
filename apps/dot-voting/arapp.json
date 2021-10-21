@@ -1,0 +1,64 @@
+{
+  "roles": [
+    {
+      "name": "Create new dot votes",
+      "id": "ROLE_CREATE_VOTES",
+      "params": []
+    },
+    {
+      "name": "Add options to an open dot vote",
+      "id": "ROLE_ADD_CANDIDATES",
+      "params": []
+    },
+    {
+      "name": "Update minimum participation percentage",
+      "id": "ROLE_MODIFY_QUORUM",
+      "params": []
+    },
+    {
+      "name": "Update support required for dot voting option to be valid",
+      "id": "ROLE_MODIFY_CANDIDATE_SUPPORT",
+      "params": []
+    }
+  ],
+  "environments": {
+    "default": {
+      "registry": "0x5f6f7e8cc7346a11ca2def8f827b7a0b612c56a1",
+      "appName": "dot-voting.aragonpm.eth",
+      "network": "rpc"
+    },
+    "rinkeby": {
+      "registry": "0x98Df287B6C145399Aaa709692c8D308357bC085D",
+      "appName": "dot-voting.aragonpm.eth",
+      "network": "rinkeby"
+    },
+    "continuous-deployment": {
+      "registry": "0x98df287b6c145399aaa709692c8d308357bc085d",
+      "appName": "dot-voting-cd.open.aragonpm.eth",
+      "wsRPC": "wss://rinkeby.eth.aragon.network/ws",
+      "network": "rinkeby"
+    },
+    "staging": {
+      "registry": "0x98Df287B6C145399Aaa709692c8D308357bC085D",
+      "appName": "dot-voting-staging.open.aragonpm.eth",
+      "wsRPC": "wss://rinkeby.eth.aragon.network/ws",
+      "network": "rinkeby"
+    },
+    "production": {
+      "registry": "0x314159265dd8dbb310642f98f50c066173c1259b",
+      "appName": "dot-voting.aragonpm.eth",
+      "network": "mainnet"
+    },
+    "mumbai": {
+      "registry": "0x431f0eed904590b176f9ff8c36a1c4ff0ee9b982",
+      "appName": "dot-voting.aragonpm.eth",
+      "network": "mumbai"
+    },
+    "matic": {
+      "registry": "0x3c70a0190d09f34519e6e218364451add21b7d4b",
+      "appName": "dot-voting.aragonpm.eth",
+      "network": "matic"
+    }
+  },
+  "path": "contracts/DotVoting.sol"
+}

@@ -1,0 +1,42 @@
+{
+  "name": "standard-bounties",
+  "version": "2.0.0",
+  "description": "Bounties on any task, paid in any token on Ethereum",
+  "main": "truffle-config.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "compile": "truffle compile",
+    "test": "truffle test",
+    "cvg": "./node_modules/.bin/solidity-coverage",
+    "migrate": "node_modules/.bin/truffle migrate | grep \"^0x[[:alnum:]]\\{40\\}\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ConsenSys/StandardBounties.git"
+  },
+  "keywords": [
+    "ethereum"
+  ],
+  "authors": [
+    "Mark Beylin <mark.beylin@consensys.net>"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ConsenSys/StandardBounties/issues"
+  },
+  "homepage": "https://github.com/ConsenSys/StandardBounties#readme",
+  "dependencies": {
+    "bignumber.js": "^7.2.1",
+    "ethers": "^4.0.7",
+    "ethjs-provider-http": "^0.1.6",
+    "ethjs-rpc": "^0.2.0",
+    "truffle": "^5.0.22"
+  },
+  "devDependencies": {
+    "truffle-hdwallet-provider": "0.0.3",
+    "cryptiles": ">=4.1.2",
+    "sshpk": ">=1.13.2"
+  }
+}

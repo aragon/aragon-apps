@@ -1,0 +1,16 @@
+{
+  "name": "Discussions",
+  "author": "Autark/Open Work Labs",
+  "description": "A discussion application for Aragon",
+  "details_url": "/dist/meta/details.md",
+  "source_url": "https://https://github.com/openworklabs/aragon-discussions",
+  "icons": [
+    {
+      "src": "/dist/meta/icon.svg",
+      "sizes": "56x56"
+    }
+  ],
+  "screenshots": [{ "src": "/dist/meta/screenshot-1.png" }],
+  "start_url": "/dist/index.html",
+  "script": "/dist/script.js"
+}

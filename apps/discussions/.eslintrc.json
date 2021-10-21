@@ -1,0 +1,36 @@
+{
+  "env": {
+    "browser": true,
+    "es6": true
+  },
+  "extends": [
+    "standard",
+    "standard-react",
+    "prettier",
+    "prettier/react"
+  ],
+  "parser": "babel-eslint",
+  "parserOptions": {
+    "ecmaVersion": 6,
+    "ecmaFeatures": {
+      "jsx": true
+    },
+    "sourceType": "module"
+  },
+  "plugins": ["prettier", "react"],
+  "rules": {
+    "valid-jsdoc": "error",
+    "react/prop-types": 0,
+    "prettier/prettier": [
+      "error",
+      {
+        "singleQuote": true,
+        "semi": false,
+        "trailingComma": "es5",
+        "bracketSpacing": true,
+        "jsxBracketSameLine": false
+      }
+    ],
+    "linebreak-style": ["error", "unix"]
+  }
+}
