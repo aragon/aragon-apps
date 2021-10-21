@@ -1,0 +1,5 @@
+# Legacy organization templates
+{{#dataSources.LegacyOrganizationTemplates}}
+  {{> DAOKit.template.yaml}}
+{{/dataSources.LegacyOrganizationTemplates}}
+# /Legacy organization templates

@@ -1,0 +1,23 @@
+{
+  "network": "rinkeby",
+  "dataSources": {
+    "Organizations": [],
+    "OrganizationFactories": [
+      {
+        "name": "DAOFactory@0.8.1",
+        "address": "0x89d87269527495ac29648376d4154ba55c4872fc",
+        "startBlock": 5922866
+      }
+    ],
+    "OrganizationTemplates": [
+      {
+        "name": "dandelion-org-template.aragonpm.eth@1.0.0",
+        "address": "0x09380aeaf234052bb8bde6dceffc45d8fde8f98d",
+        "startBlock": 5925084
+      }
+    ],
+    "LegacyOrganizationTemplates": [],
+    "TokenFactories": [],
+    "Tokens": []
+  }
+}

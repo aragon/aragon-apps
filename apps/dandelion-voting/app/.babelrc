@@ -1,0 +1,17 @@
+{
+  "presets": [
+    [
+      "@babel/preset-env",
+      {
+        "modules": false,
+        "useBuiltIns": "entry",
+        "core-js": 3,
+        "proposals": true,
+      }
+    ],
+    "@babel/preset-react"
+  ],
+  "plugins": [
+    ["styled-components", { "displayName": true }],
+  ]
+}

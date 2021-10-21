@@ -1,0 +1,39 @@
+{
+  "name": "@aragon/apps-dandelion-voting",
+  "version": "2.0.0",
+  "scripts": {
+    "compile": "hardhat compile --force",
+    "build": "cd app && npm install && npm run build",
+    "lint": "solium --dir ./contracts",
+    "test": "echo buidler test --network buidlerevm",
+    "test:gas": "GAS_REPORTER=true npm run test",
+    "coverage": "SOLIDITY_COVERAGE=true npm run test"
+  },
+  "files": [
+    "/abi",
+    "/arapp.json",
+    "/artifacts",
+    "/contracts",
+    "/scripts",
+    "/test"
+  ],
+  "keywords": [],
+  "description": "Voting app for dandelion orgs",
+  "dependencies": {
+    "@1hive/apps-token-manager": "2.1.0",
+    "@aragon/minime": "1.0.0",
+    "@aragon/os": "4.4.0"
+  },
+  "devDependencies": {
+    "@aragon/contract-test-helpers": "0.0.1",
+    "@aragon/hardhat-aragon": "^0.3.0",
+    "@aragon/hardhat-config": "^0.2.0",
+    "@nomiclabs/hardhat-ethers": "^2.0.2",
+    "@nomiclabs/hardhat-etherscan": "^2.1.7",
+    "ethers": "^5.5.1",
+    "hardhat": "^2.6.7",
+    "solidity-coverage": "^0.7.0-beta.3",
+    "solium": "^1.2.5",
+    "web3": "^1.2.6"
+  }
+}

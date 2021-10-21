@@ -49,6 +49,16 @@
       "appName": "dot-voting.aragonpm.eth",
       "network": "mainnet"
     },
+    "harmony": {
+      "registry": "0x5d0d0212199b2c041483226b20f1e4ed6ca4a4de",
+      "appName": "dot-voting.aragonpm.eth",
+      "network": "harmony"
+    },
+    "harmonyTest": {
+      "registry": "0xbc7828fa8665c637901ad5abd5c7e647c9ab140f",
+      "appName": "dot-voting.aragonpm.eth",
+      "network": "harmonyTest"
+    },
     "mumbai": {
       "registry": "0x431f0eed904590b176f9ff8c36a1c4ff0ee9b982",
       "appName": "dot-voting.aragonpm.eth",

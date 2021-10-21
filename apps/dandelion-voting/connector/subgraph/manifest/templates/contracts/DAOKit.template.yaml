@@ -1,0 +1,35 @@
+# DAOKit
+- kind: ethereum/contract
+  name: {{name}}
+  network: {{network}}
+  source:
+    abi: DAOKit
+    address: '{{address}}'
+    startBlock: {{startBlock}}
+  mapping:
+    kind: ethereum/events
+    apiVersion: 0.0.1
+    language: wasm/assemblyscript
+    entities:
+      - NoEnt
+    abis:
+      - name: DAOFactory
+        file: ./abis/DAOFactory.json
+      - name: DAOKit
+        file: ./abis/DAOKit.json
+      - name: DAOTemplate
+        file: ./abis/DAOTemplate.json
+      - name: Kernel
+        file: ./abis/Kernel.json
+      - name: MiniMeToken
+        file: ./abis/MiniMeToken.json
+      - name: MiniMeTokenFactory
+        file: ./abis/MiniMeTokenFactory.json
+    eventHandlers:
+      - event: DeployInstance(address,indexed address)
+        handler: handleDeployInstance
+      - event: InstalledApp(address,bytes32)
+        handler: handleInstalledApp
+      - event: DeployToken(address,indexed address)
+        handler: handleDeployToken
+    file: ./src/aragon/mappings/DAOKit.ts
