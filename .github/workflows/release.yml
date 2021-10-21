@@ -73,7 +73,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-        ref: 'master'
+          ref: 'master'
       - name: Install node
         uses: actions/setup-node@v1
         with:
