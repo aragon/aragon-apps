@@ -42,6 +42,16 @@
       "network": "rpc",
       "appName": "allocations.aragonpm.eth"
     },
+    "harmony": {
+      "registry": "0x5d0d0212199b2c041483226b20f1e4ed6ca4a4de",
+      "appName": "allocations.aragonpm.eth",
+      "network": "harmony"
+    },
+    "harmonyTest": {
+      "registry": "0xbc7828fa8665c637901ad5abd5c7e647c9ab140f",
+      "appName": "allocations.aragonpm.eth",
+      "network": "harmonyTest"
+    },
     "staging": {
       "registry": "0x98df287b6c145399aaa709692c8d308357bc085d",
       "appName": "allocations-staging.open.aragonpm.eth",
