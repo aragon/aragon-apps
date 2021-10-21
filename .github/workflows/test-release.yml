@@ -1,8 +1,6 @@
-name: Release
+name: Test Release
 
-on:
-  pull_request_target:
-    types: [closed]
+on: push
 
 env:
   POSSIBLE_NETWORKS: "mainnet rinkeby mumbai matic harmony harmonyTest "
@@ -10,7 +8,7 @@ env:
 jobs:
   checkLabels:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.merged && github.event.pull_request.labels.*.name && github.base_ref == 'master'
+    if: github.event.pull_request.merged && github.event.pull_request.labels.*.name && github.base_ref == 'DAO-392-hardhat-aragon-3'
     steps:
       - run: echo Check labels is not empty and pull is merged
   buildMatrix:
@@ -72,8 +70,6 @@ jobs:
     environment: ${{ matrix.network }}
     steps:
       - uses: actions/checkout@v2
-        with:
-          ref: 'master'
       - name: Install node
         uses: actions/setup-node@v1
         with:
@@ -102,7 +98,7 @@ jobs:
           PUBLISH_LOG: ./publish-release.log
         run:  |
           cd apps/${{ matrix.app }}
-          npx hardhat publish ${{ matrix.level }} --dry-run --skip-validation --skip-app-build --network ${{ matrix.network }} | tee $PUBLISH_LOG
+          npx hardhat publish ${{ matrix.level }} --skip-validation --skip-app-build --dry-run --network ${{ matrix.network }} | tee $PUBLISH_LOG
           echo "::set-output name=version::$(cat $PUBLISH_LOG | sed -nE 's/^.*next version: *([^ ]*) *.*$/\1/p')"
       - name: create tag
         uses: actions/github-script@v5
