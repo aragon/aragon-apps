@@ -89,14 +89,24 @@ jobs:
       - name: Install npm packages
         run: yarn
       - name: build, publish and package
+        if: ${{ matrix.app != 'StandardBounties' }}
         id: build
-        run: | 
+        run: |
           cd apps/${{ matrix.app }}
           yarn --ignore-engines --dev
           if [[ -d app ]]; then
             yarn build
           fi
+          echo "::set-output name=success::true"
+      - name: deploy
+        id: deploy
+        if: ${{ steps.build.outputs.success != 'true' }}
+        run: |
+          cd shared/integrations/${{ matrix.app }}
+          yarn --dev
+          npx hardhat deploy --network ${{ matrix.network }} --contract ${{ matrix.app }}
       - name: publish
+        if: ${{ steps.build.outputs.success == 'true' }}
         id: publish
         env:
           PUBLISH_LOG: ./publish-release.log
@@ -104,7 +114,9 @@ jobs:
           cd apps/${{ matrix.app }}
           npx hardhat publish ${{ matrix.level }} --dry-run --skip-validation --skip-app-build --network ${{ matrix.network }} | tee $PUBLISH_LOG
           echo "::set-output name=version::$(cat $PUBLISH_LOG | sed -nE 's/^.*next version: *([^ ]*) *.*$/\1/p')"
+          echo "::set-output name=success::true"
       - name: create tag
+        if: ${{ steps.publish.outputs.success == 'true' }}
         uses: actions/github-script@v5
         env:
           TAG_NAME: "${{ steps.publish.outputs.version }}-${{ matrix.app }}-${{ matrix.network }}"

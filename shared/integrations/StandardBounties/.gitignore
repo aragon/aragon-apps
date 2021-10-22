@@ -4,3 +4,4 @@ node_modules/
 coverage.json
 coverage/
 build/
+yarn.lock
