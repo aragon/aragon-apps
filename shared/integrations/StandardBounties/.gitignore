@@ -5,3 +5,5 @@ coverage.json
 coverage/
 build/
 yarn.lock
+artifacts/
+cache
