@@ -17,7 +17,7 @@ This monorepo contains the following apps:
 
 Each of the individual apps come with a frontend that is intended to be installed and used through the [Aragon client](http://github.com/aragon/aragon).
 
-You can read more about how each of the individual apps work in the [Aragon user guide](https://help.aragon.org/category/15-aragon-apps).
+You can read more about how each of the individual apps work in the [Aragon user guide](https://help.aragon.org/article/16-about-aragon-apps).
 
 ## Quick start
 
