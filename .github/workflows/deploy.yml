@@ -95,10 +95,9 @@ jobs:
           working-directory: ${{ steps.packaging.outputs.tempdir }}
           env: 
             CID: ${{ steps.publish.outputs.cid }}
-            PATH: "$PATH:$GITHUB_WORKSPACE/ipfs-cluster-ctl"
             IPFS_CLUSTER_BASIC_AUTH: ${{ secrets.IPFS_CLUSTER_BASIC_AUTH }}
             IPFS_CLUSTER_HOST: ${{ secrets.IPFS_CLUSTER_HOST }}
-          run: ipfs-cluster-ctl --basic-auth $IPFS_CLUSTER_BASIC_AUTH --host "$IPFS_CLUSTER_HOST" add -r $CID
+          run: $GITHUB_WORKSPACE/ipfs-cluster-ctl/ipfs-cluster-ctl --basic-auth $IPFS_CLUSTER_BASIC_AUTH --host "$IPFS_CLUSTER_HOST" add -r $CID
         - uses: "marvinpinto/action-automatic-releases@latest"
           with:
             repo_token: "${{ secrets.GITHUB_TOKEN }}"
