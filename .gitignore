@@ -16,8 +16,8 @@ lerna-debug.log
 # Ignore only for first level to select just the contract build directories
 */*/abi
 */*/dist
-*/*/cache
-*/*/artifacts
+*/**/cache
+*/**/artifacts
 */*/build
 */**/dist
 */**/build

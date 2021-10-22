@@ -273,10 +273,10 @@
     web3-eth-abi "^1.2.1"
     web3-utils "^1.2.1"
 
-"@aragon/hardhat-aragon@0.3.0", "@aragon/hardhat-aragon@^0.3.0":
-  version "0.3.0"
-  resolved "https://registry.yarnpkg.com/@aragon/hardhat-aragon/-/hardhat-aragon-0.3.0.tgz#8b7c73058fa0fc95929626ae24951b9656bc6bbe"
-  integrity sha512-1zmHsoMbmTP2Bn712/bK5in+nrOS5WB9WRjfymmE5M3uzP+P3oARSZXayw1jcfLJdAco+Zn5VJLo+jYKprlCiA==
+"@aragon/hardhat-aragon@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@aragon/hardhat-aragon/-/hardhat-aragon-1.0.0.tgz#f1f0e8fc8d0d3a22e821e1ccb3c8da7d27b31542"
+  integrity sha512-DQ3Ce0N+Cf9i48mvvbHCiaKicSNnVc2HPSD+N21N6YsBgrrXdaEjjLrFkkNF02y+7sscJFHzWphdPArrTmnZvw==
   dependencies:
     "@solidity-parser/parser" "^0.12.2"
     chalk "^4.1.1"
@@ -285,10 +285,10 @@
     ipfs-http-client "^50.0.0"
     node-fetch "^2.6.1"
 
-"@aragon/hardhat-config@0.2.0", "@aragon/hardhat-config@^0.2.0":
-  version "0.2.0"
-  resolved "https://registry.yarnpkg.com/@aragon/hardhat-config/-/hardhat-config-0.2.0.tgz#171a80dc6fbe01d5e9136625d271912bf21ac6e8"
-  integrity sha512-Dadt5IHQ8gnsqw7kkhTbVqsEbMgqFoIzWYyoD+pfZMjvXgRv/5efYoTM3fqb3MtyHQvTbrGFwBMaG/LWnulEKA==
+"@aragon/hardhat-config@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@aragon/hardhat-config/-/hardhat-config-1.0.0.tgz#7b00040aa1e03a70a7ef17bb2439948aed1c2182"
+  integrity sha512-peNZ1/pWJSVwO0b1qT0woHP8QJs7ZlC37+c5Ro6BsyWTg9GvjW0r/KULIF1oHrELCTplQMtmU4OnsYWsMql5cA==
 
 "@aragon/id@^2.1.0":
   version "2.1.1"
