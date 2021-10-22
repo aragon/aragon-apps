@@ -86,6 +86,19 @@ jobs:
             ipfs get $CID
             tar -czvf $PACKAGE_NAME.tar.gz $CID/
             echo "::set-output name=tar::$(echo $PWD/$PACKAGE_NAME.tar.gz)"
+            echo "::set-output name=tempdir::$(echo $PWD)"
+        - name: Install ipfs-cluster-ctl
+          run: |
+            wget https://dist.ipfs.io/ipfs-cluster-ctl/v0.14.1/ipfs-cluster-ctl_v0.14.1_linux-amd64.tar.gz
+            tar xvfz ipfs-cluster-ctl_v0.14.1_linux-amd64.tar.gz
+        - name: pin on cluster
+          working-directory: ${{ steps.packaging.outputs.tempdir }}
+          env: 
+            CID: ${{ steps.publish.outputs.cid }}
+            PATH: "$PATH:$GITHUB_WORKSPACE/ipfs-cluster-ctl"
+            IPFS_CLUSTER_BASIC_AUTH: ${{ secrets.IPFS_CLUSTER_BASIC_AUTH }}
+            IPFS_CLUSTER_HOST: ${{ secrets.IPFS_CLUSTER_HOST }}
+          run: ipfs-cluster-ctl --basic-auth $IPFS_CLUSTER_BASIC_AUTH --host "$IPFS_CLUSTER_HOST" add -r $CID
         - uses: "marvinpinto/action-automatic-releases@latest"
           with:
             repo_token: "${{ secrets.GITHUB_TOKEN }}"
