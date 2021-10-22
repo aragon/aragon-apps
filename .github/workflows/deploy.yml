@@ -68,14 +68,12 @@ jobs:
             fi
         - name: publish
           id: publish
-          env:
-            PUBLISH_LOG: ./publish-deploy.log
           run:  |
             cd apps/${{ needs.checkTag.outputs.app }}
-            npx hardhat publish ${{ needs.checkTag.outputs.version }} --skip-validation --skip-app-build --network ${{ needs.checkTag.outputs.network }} | tee $PUBLISH_LOG
-            echo "::set-output name=cid::$(cat $PUBLISH_LOG | sed -nE 's/^.*ContentURI: *([^ ]*) *.*$/\1/p')"
-            echo "::set-output name=contract::$(cat $PUBLISH_LOG | sed -nE 's/^.*Contract address: *([^ ]*) *.*$/\1/p')"
-            echo "::set-output name=txhash::$(cat $PUBLISH_LOG | sed -nE 's/^.*Tx hash: *([^ ]*) *.*$/\1/p')"
+            PUBLISH_MESSAGE=$(npx hardhat publish ${{ needs.checkTag.outputs.version }} --skip-validation --skip-app-build --network ${{ needs.checkTag.outputs.network }})
+            echo "::set-output name=cid::$(echo $PUBLISH_MESSAGE | sed -nE 's/^.*ContentURI: *([^ ]*) *.*$/\1/p')"
+            echo "::set-output name=contract::$(echo $PUBLISH_MESSAGE | sed -nE 's/^.*Contract address: *([^ ]*) *.*$/\1/p')"
+            echo "::set-output name=txhash::$(echo $PUBLISH_MESSAGE | sed -nE 's/^.*Tx hash: *([^ ]*) *.*$/\1/p')"
         - name: package app
           id: packaging
           env:
