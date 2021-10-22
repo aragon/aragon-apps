@@ -1,0 +1,27 @@
+{
+  "name": "@aragon/apps-minime-factory",
+  "version": "1.0.0",
+  "author": "Aragon Association <legal@aragon.org>",
+  "license": "(GPL-3.0-or-later OR AGPL-3.0-or-later)",
+  "files": [
+    "/arapp.json",
+    "/manifest.json",
+    "/hardhat-config.js",
+    "/public",
+    "/contracts"
+  ],
+  "scripts": {
+    "compile": "hardhat compile"
+  },
+  "devDependencies": {
+    "@aragon/hardhat-aragon": "^1.0.0",
+    "@aragon/hardhat-config": "^1.0.0",
+    "@nomiclabs/hardhat-ethers": "^2.0.2",
+    "@nomiclabs/hardhat-etherscan": "^2.1.6",
+    "ethers": "^5.4.7",
+    "hardhat": "^2.6.5"
+  },
+  "dependencies": {
+    "@aragon/apps-shared-minime": "^1.0.2"
+  }
+}

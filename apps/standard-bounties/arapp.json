@@ -1,0 +1,51 @@
+{
+  "path": "contracts/StandardBounties.sol",
+  "environments": {
+    "default": {
+      "registry": "0x5f6f7e8cc7346a11ca2def8f827b7a0b612c56a1",
+      "appName": "standard-bounties.aragonpm.eth",
+      "network": "rpc"
+    },
+    "harmony": {
+      "registry": "0x5d0d0212199b2c041483226b20f1e4ed6ca4a4de",
+      "appName": "standard-bounties.aragonpm.eth",
+      "network": "harmony"
+    },
+    "harmonyTest": {
+      "registry": "0xbc7828fa8665c637901ad5abd5c7e647c9ab140f",
+      "appName": "standard-bounties.aragonpm.eth",
+      "network": "harmonyTest"
+    },
+    "mainnet": {
+      "registry": "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e",
+      "appName": "standard-bounties.aragonpm.eth",
+      "network": "mainnet"
+    },
+    "rinkeby": {
+      "registry": "0x98Df287B6C145399Aaa709692c8D308357bC085D",
+      "appName": "standard-bounties.aragonpm.eth",
+      "network": "rinkeby"
+    },
+    "ropsten": {
+      "registry": "0x6afe2cacee211ea9179992f89dc61ff25c61e923",
+      "appName": "standard-bounties.aragonpm.eth",
+      "network": "ropsten"
+    },
+    "staging": {
+      "registry": "0xfe03625ea880a8cba336f9b5ad6e15b0a3b5a939",
+      "appName": "standard-bounties.aragonpm.eth",
+      "network": "rinkeby"
+    },
+    "mumbai": {
+      "registry": "0x431f0eed904590b176f9ff8c36a1c4ff0ee9b982",
+      "appName": "standard-bounties.aragonpm.eth",
+      "network": "mumbai"
+    },
+    "matic": {
+      "registry": "0x3c70a0190d09f34519e6e218364451add21b7d4b",
+      "appName": "standard-bounties.aragonpm.eth",
+      "network": "matic"
+    }
+  },
+  "roles": []
+}

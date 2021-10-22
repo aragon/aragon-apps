@@ -151,7 +151,7 @@
   resolved "https://registry.yarnpkg.com/@aragon/apps-shared-minime/-/apps-shared-minime-1.0.1.tgz#988015a0bf969380bf988b2d33b7d0093fc128bb"
   integrity sha512-DJAhj68hJLeZ6/KKKch9G3VAZT0SBoNN9JB6AETAy6M/Iiw0ZQZiCVltw8pJgeH2dvVlEC1y1XiG2rnG9RNhJA==
 
-"@aragon/apps-shared-minime@^1.0.1":
+"@aragon/apps-shared-minime@^1.0.1", "@aragon/apps-shared-minime@^1.0.2":
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/@aragon/apps-shared-minime/-/apps-shared-minime-1.0.2.tgz#1388602be2b296de51e6c3712c80d669c1d2191e"
   integrity sha512-HqvnjU4sF2swvOK3616cvuSs2sofegWd7qqT5iF0YTf9v0w/cAWoj7ZZK3TMVdsQv07HNvQjqucTGa3/qMzblA==
