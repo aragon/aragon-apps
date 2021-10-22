@@ -25,8 +25,8 @@
   "devDependencies": {
     "@aragon/apps-voting": "2.1.0",
     "@aragon/cli": "^6.3.0",
-    "@aragon/hardhat-aragon": "^0.3.0",
-    "@aragon/hardhat-config": "^0.2.0",
+    "@aragon/hardhat-aragon": "^1.0.0",
+    "@aragon/hardhat-config": "^1.0.0",
     "@aragon/test-helpers": "^2.0.0",
     "@nomiclabs/hardhat-ethers": "^2.0.2",
     "@nomiclabs/hardhat-etherscan": "^2.1.6",

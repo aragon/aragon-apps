@@ -51,8 +51,8 @@
     "web3-utils": "^1.0.0"
   },
   "devDependencies": {
-    "@aragon/hardhat-aragon": "^0.3.0",
-    "@aragon/hardhat-config": "^0.2.0",
+    "@aragon/hardhat-aragon": "^1.0.0",
+    "@aragon/hardhat-config": "^1.0.0",
     "@aragon/test-helpers": "^2.0.0",
     "@babel/core": "^7.4.5",
     "@babel/plugin-proposal-class-properties": "^7.4.4",
