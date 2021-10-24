@@ -50,6 +50,7 @@ module.exports = {
     },
     harmony: settingsForNetwork('harmony'),
     harmonyTest: settingsForNetwork('harmonyTest'),
+    bscTest: settingsForNetwork('bsctTest'),
     mumbai: settingsForNetwork('mumbai'),
     matic: settingsForNetwork('matic'),
   },

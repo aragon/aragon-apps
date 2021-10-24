@@ -45,6 +45,11 @@
       "registry": "0x3c70a0190d09f34519e6e218364451add21b7d4b",
       "appName": "agent.aragonpm.eth",
       "network": "matic"
+    },
+    "bscTest": {
+      "registry": "0x843ddfab8406e752d03fa75dbb275070f368658d",
+      "appName": "agent.aragonpm.eth",
+      "network": "bscTest"
     }
   },
   "roles": [
