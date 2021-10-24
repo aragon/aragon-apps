@@ -35,6 +35,11 @@
       "registry": "0xfe03625ea880a8cba336f9b5ad6e15b0a3b5a939",
       "appName": "disputable-voting.open.aragonpm.eth",
       "network": "rinkeby"
+    },
+    "bscTest": {
+      "registry": "0x843ddfab8406e752d03fa75dbb275070f368658d",
+      "appName": "disputable-voting.aragonpm.eth",
+      "network": "bscTest"
     }
   },
   "roles": [

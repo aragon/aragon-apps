@@ -25,10 +25,10 @@
     rxjs "^6.5.2"
     uuid "^3.2.1"
 
-"@aragon/ui@^1.9.0":
-  version "1.9.0"
-  resolved "https://registry.yarnpkg.com/@aragon/ui/-/ui-1.9.0.tgz#760c114070fda58402b87066fe31dda3e11da302"
-  integrity sha512-iYZPQLz4h8PaXIjVxvnfNBd54pe82AYH9mSS9pxBBTuuJq2EdeNMGOeJOL4t6i3C6tUFxhat6QUWG9hXR0vbPA==
+"@aragon/ui@^1.9.2":
+  version "1.9.2"
+  resolved "https://registry.yarnpkg.com/@aragon/ui/-/ui-1.9.2.tgz#d0ff123ba50ee1159292486b8d01103f924f789a"
+  integrity sha512-RToZpC20wriFb/Ps+dLiIxx1h5aQ5ThF22DV1IJiCjlCeEPYCREBXUhlNaRW4yurKmgqsl/inN4Ic1lh7ebVgg==
   dependencies:
     "@babel/runtime" "^7.3.1"
     airbnb-prop-types "^2.9.0"
