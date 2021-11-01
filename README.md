@@ -23,7 +23,7 @@ You can read more about how each of the individual apps work in the [Aragon user
 
 `aragon-apps` uses [`yarn workspaces`](https://classic.yarnpkg.com/en/docs/workspaces) and [`lerna`](https://github.com/lerna/lerna) to manage its individual app workspaces.
 
-To bootstrap, simply run:
+To bootstrap, run:
 
 ```
 yarn
