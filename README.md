@@ -82,4 +82,4 @@ If you come across an issue with Aragon, do a search in the [Issues](https://git
 
 ## Help
 
-For help and support, feel free to contact us at any time on our Spectrum [App development channel](https://spectrum.chat/aragon/app-development).
+For help and support, feel free to contact us at any time on our [Discord](https://discord.com/invite/eqQJkdp).
