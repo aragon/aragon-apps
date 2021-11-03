@@ -38,6 +38,11 @@
       "wsRPC": "wss://rinkeby.eth.aragon.network/ws",
       "network": "rinkeby"
     },
+    "fuji": {
+      "registry": "0x5b442a5e9020a886354c77e4ad10b11ddd883714",
+      "appName": "token-request.aragonpm.eth",
+      "network": "fuji"
+    },
     "mainnet": {
       "registry": "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e",
       "appName": "token-request.aragonpm.eth",

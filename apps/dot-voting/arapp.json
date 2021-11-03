@@ -32,12 +32,18 @@
       "appName": "dot-voting.aragonpm.eth",
       "network": "rinkeby"
     },
+    "fuji": {
+      "registry": "0x5b442a5e9020a886354c77e4ad10b11ddd883714",
+      "appName": "dot-voting.aragonpm.eth",
+      "network": "fuji"
+    },
     "continuous-deployment": {
       "registry": "0x98df287b6c145399aaa709692c8d308357bc085d",
       "appName": "dot-voting-cd.open.aragonpm.eth",
       "wsRPC": "wss://rinkeby.eth.aragon.network/ws",
       "network": "rinkeby"
     },
+    
     "staging": {
       "registry": "0x98Df287B6C145399Aaa709692c8D308357bC085D",
       "appName": "dot-voting-staging.open.aragonpm.eth",
