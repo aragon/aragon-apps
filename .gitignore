@@ -16,11 +16,14 @@ lerna-debug.log
 # Ignore only for first level to select just the contract build directories
 */*/abi
 */*/dist
-*/*/cache
-*/*/artifacts
-
+*/**/cache
+*/**/artifacts
+*/*/build
+*/**/dist
+*/**/build
 # yarn
 yarn-error.log
+*/**/.env
 
 # Ignore package-lock files (only use yarn.lock)
 package-lock.json
@@ -28,3 +31,5 @@ package-lock.json
 # Misc
 .DS_Store
 .cache
+.env
+publish.log

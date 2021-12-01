@@ -301,7 +301,7 @@ class AgreementWrapper {
 
   async allowManager({ token, user, amount }) {
     const staking = await this.getStaking(token)
-    const { _allowance: allowance, _amount: locked } = await staking.getLock(user, this.agreement.address)
+    const { allowance, amount: locked } = await staking.getLock(user, this.agreement.address)
     if (allowance.eq(bn(0))) {
       return staking.allowManager(this.agreement.address, amount, EMPTY_BYTES, { from: user })
     } else if (allowance.sub(locked).lt(amount)) {

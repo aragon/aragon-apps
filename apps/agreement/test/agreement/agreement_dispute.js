@@ -126,11 +126,20 @@ contract('Agreement', ([_, someone, submitter, challenger]) => {
                       assertEvent(receipt, 'EvidenceSubmitted', { index: 1, expectedArgs: { arbitrator: disputable.arbitrator, disputeId, submitter: challenger, evidence: challengeContext, finished: true }, decodeForAbi: disputable.abi })
                     })
 
-                    it('allows closing the evidence submission period manually', async () => {
-                      await disputable.dispute({ actionId, from, arbitratorFees, finishedSubmittingEvidence: true })
+                    it('closes the evidence submission period automatically', async () => {
+                      const receipt = await disputable.dispute({ actionId, from, arbitratorFees, finishedSubmittingEvidence: true })
 
-                      const receipt = await disputable.closeEvidencePeriod(actionId)
                       assertAmountOfEvents(receipt, 'EvidencePeriodClosed', { decodeForAbi: disputable.arbitrator.abi })
+                      await assertRevert(disputable.closeEvidencePeriod(actionId), 'ARBITRATOR_DISPUTE_EVIDENCE_PERIOD_ALREADY_CLOSED')
+                    })
+
+                    it('does not revert if it cannot close the evidence submission period automatically', async () => {
+                      await disputable.arbitrator.setCloseEvidencePeriodFailure(true)
+
+                      const receipt = await disputable.dispute({ actionId, from, arbitratorFees, finishedSubmittingEvidence: true })
+
+                      assertAmountOfEvents(receipt, 'EvidencePeriodClosed', { expectedAmount: 0, decodeForAbi: disputable.arbitrator.abi })
+                      await disputable.arbitrator.setCloseEvidencePeriodFailure(false)
                     })
 
                     it('does not affect the submitter staked balances', async () => {

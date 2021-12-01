@@ -1,0 +1,32 @@
+{
+  "name": "lock-frontend",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "dependencies": {
+    "@aragon/api": "^2.0.0-beta.9",
+    "@aragon/api-react": "^2.0.0-beta.9",
+    "@aragon/ui": "^1.3.0",
+    "core-js": "^3.1.4",
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6",
+    "react-spring": "^8.0.27",
+    "rxjs": "^6.5.2",
+    "styled-components": "^4.3.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.5.4",
+    "@babel/plugin-proposal-class-properties": "^7.5.0",
+    "@babel/preset-env": "^7.5.4",
+    "copyfiles": "^2.1.1",
+    "parcel-bundler": "^1.12.3"
+  },
+  "scripts": {
+    "build": "npm run sync-assets && npm run build:app && npm run build:script",
+    "build:app": "parcel build index.html -d ../dist/ --public-url \".\" --no-cache",
+    "build:script": "parcel build src/script.js --out-dir ../dist/ --no-cache",
+    "watch:script": "parcel watch src/script.js --out-dir ../dist/ --no-hmr",
+    "devserver": "parcel serve index.html -p 8001 --out-dir ../dist/ --no-cache",
+    "start": "npm run sync-assets && npm run build:script -- --no-minify && npm run devserver",
+    "sync-assets": "copy-aragon-ui-assets ../dist && rsync -rtu ./public/ ../dist"
+  }
+}

@@ -1,0 +1,40 @@
+# Do not edit subgraph.yaml, this is a generated file.
+# Instead, edit subgraph.template.yaml and run `yarn manifest-<network>-[staging]`
+specVersion: 0.0.2
+description: A template for Aragon subgraphs
+repository: https://github.com/1Hive/dandelion-voting-app
+schema:
+  file: ./schema.graphql
+dataSources:
+{{> Organizations.yaml}}
+{{> OrganizationFactories.yaml}}
+{{> OrganizationTemplates.yaml}}
+{{> LegacyOrganizationTemplates.yaml}}
+{{> TokenFactories.yaml}}
+{{> Tokens.yaml}}
+templates:
+  {{> Kernel.template.yaml}}
+  {{> MiniMeToken.template.yaml}}
+  - kind: ethereum/contract
+    name: DandelionVoting
+    network: {{network}}
+    source:
+      abi: DandelionVoting
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.1
+      language: wasm/assemblyscript
+      entities:
+        - Vote
+        - Cast
+      abis:
+        - name: DandelionVoting
+          file: ./abis/DandelionVoting.json
+      eventHandlers:
+        - event: StartVote(indexed uint256,indexed address,string)
+          handler: handleStartVote
+        - event: CastVote(indexed uint256,indexed address,bool,uint256)
+          handler: handleCastVote
+        - event: ExecuteVote(indexed uint256)
+          handler: handleExecuteVote
+      file: ./src/DandelionVoting.ts

@@ -9,6 +9,7 @@ import Transactions from './components/Transactions'
 function App() {
   const { api, appState, guiStyle } = useAragonApi()
   const { balances, isSyncing, transactions, tokens, proxyAddress } = appState
+
   const { appearance } = guiStyle
 
   const handleResolveLocalIdentity = useCallback(

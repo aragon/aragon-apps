@@ -10,20 +10,20 @@ This monorepo contains the following apps:
 - **[Agent](apps/agent)**: Hold assets and perform actions from Aragon organizations.
 - **[Agreement](apps/agreement)**: Govern organizations through a subjective rules.
 - **[Finance](apps/finance)**: Send payments and manage expenses with budgeting.
-- **[Tokens](apps/token-manager)**: Manages organization tokens.
+- **[Tokens](apps/token-manager)**: Manages an organization's token supply and distribution.
 - **[Vault](apps/vault)**: Securely owns and manages tokens on behalf of a DAO.
 - **[Voting](apps/voting)**: Create votes that execute actions on behalf of token holders.
 - **[Disputable Voting](apps/voting-disputable)**: Create disputable votes that execute actions on behalf of token holders.
 
 Each of the individual apps come with a frontend that is intended to be installed and used through the [Aragon client](http://github.com/aragon/aragon).
 
-You can read more about how each of the individual apps work in the [Aragon user guide](https://help.aragon.org/category/15-aragon-apps).
+You can read more about how each of the individual apps work in the [Aragon user guide](https://help.aragon.org/article/16-about-aragon-apps).
 
 ## Quick start
 
 `aragon-apps` uses [`yarn workspaces`](https://classic.yarnpkg.com/en/docs/workspaces) and [`lerna`](https://github.com/lerna/lerna) to manage its individual app workspaces.
 
-To bootstrap, simply run:
+To bootstrap, run:
 
 ```
 yarn
@@ -82,4 +82,4 @@ If you come across an issue with Aragon, do a search in the [Issues](https://git
 
 ## Help
 
-For help and support, feel free to contact us at any time on our Spectrum [App development channel](https://spectrum.chat/aragon/app-development).
+For help and support, feel free to contact us at any time on our [Discord](https://discord.com/invite/eqQJkdp).

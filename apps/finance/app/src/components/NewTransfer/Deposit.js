@@ -101,7 +101,6 @@ class Deposit extends React.Component {
     // Set the initial loading state before we go async
     this.setState({ selectedToken }, async () => {
       const tokenData = await this.loadTokenData(address)
-
       // Make sure we still want the information about this token after the async call,
       // in case the token was changed before this finished loading
       if (this.state.selectedToken.value === address) {
@@ -148,9 +147,9 @@ class Deposit extends React.Component {
         .catch(() => '-1')
 
       return {
-        decimals: 18,
+        decimals: network?.nativeCurrency?.decimals || 18,
         loading: false,
-        symbol: 'ETH',
+        symbol: network?.nativeCurrency?.symbol || 'ETH',
         userBalance,
       }
     }
@@ -277,6 +276,8 @@ class Deposit extends React.Component {
     const isMainnet = network.type === 'main'
     const isMaxButtonVisible = selectedToken && selectedToken.data.symbol
 
+    const selectedTokenSymbol  = selectedToken?.data?.symbol || 'ETH'
+
     return (
       <form onSubmit={this.handleSubmit}>
         <h1>{title}</h1>
@@ -340,7 +341,7 @@ class Deposit extends React.Component {
         {appAddress && ethSelected && (
           <div>
             <VSpace size={3} />
-            <ToggleContent label="Show address for direct ETH transfer ">
+            <ToggleContent label={`Show address for direct ${selectedTokenSymbol} transfer `}>
               <VSpace size={2} />
               <QRCode
                 value={appAddress}
@@ -357,7 +358,7 @@ class Deposit extends React.Component {
               />
               <VSpace size={2} />
               <Info>
-                Use the above address or QR code to transfer ETH directly to
+                Use the above address or QR code to transfer {selectedTokenSymbol} directly to
                 your organization’s Finance app. You should specify a gas limit
                 of 350,000 for this transfer.
                 <p
@@ -367,7 +368,7 @@ class Deposit extends React.Component {
                     font-size: 12px;
                   `}
                 >
-                  <strong>WARNING</strong>: Do <strong>not</strong> send non-ETH
+                  <strong>WARNING</strong>: Do <strong>not</strong> send non-{selectedTokenSymbol}
                   (e.g. ERC-20) tokens directly to this address.
                 </p>
               </Info>
@@ -410,7 +411,7 @@ const SelectedTokenBalance = ({ network, selectedToken }) => {
           You have{' '}
           {userBalance === '0' ? 'no' : fromDecimals(userBalance, decimals)}{' '}
           {addressesEqual(address, ETHER_TOKEN_FAKE_ADDRESS) ? (
-            'ETH'
+            `${symbol}`
           ) : (
             <span
               css={`

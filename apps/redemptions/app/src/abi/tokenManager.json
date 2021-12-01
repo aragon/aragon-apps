@@ -1,0 +1,35 @@
+[
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_holder",
+        "type": "address"
+      }
+    ],
+    "name": "spendableBalanceOf",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "token",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

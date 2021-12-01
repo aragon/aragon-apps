@@ -74,7 +74,8 @@ export function useTotalVestedTokensInfo(vestings) {
 
   const vestingsTokensInfo = vestings.map(vesting =>
     getVestedTokensInfo(now, vesting.data)
-  )
+  ).filter((exists) => Boolean(exists) === true) // display only unrevoked vestings
+
   const totalLocked = vestingsTokensInfo.reduce((total, vestingTokenInfo) => {
     return total.add(vestingTokenInfo.lockedTokens)
   }, new BN(0))

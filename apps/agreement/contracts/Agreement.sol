@@ -14,9 +14,9 @@ import "@aragon/os/contracts/lib/math/SafeMath.sol";
 import "@aragon/os/contracts/lib/math/SafeMath64.sol";
 import "@aragon/os/contracts/lib/token/ERC20.sol";
 
-import "@aragon/staking/interfaces/IStaking.sol";
-import "@aragon/staking/interfaces/IStakingFactory.sol";
-import "@aragon/staking/interfaces/ILockManager.sol";
+import "@aragon/staking/interfaces/0.4/IStaking.sol";
+import "@aragon/staking/interfaces/0.4/IStakingFactory.sol";
+import "@aragon/staking/interfaces/0.4/ILockManager.sol";
 
 import "./arbitration/IArbitrable.sol";
 import "./arbitration/IAragonAppFeesCashier.sol";
@@ -31,10 +31,10 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
     uint256 internal constant DISPUTES_POSSIBLE_OUTCOMES = 2;
     // Note that Aragon Court treats the possible outcomes as arbitrary numbers, leaving the Arbitrable (us) to define how to understand them.
     // Some outcomes [0, 1, and 2] are reserved by Aragon Court: "missing", "leaked", and "refused", respectively.
-    // This Arbitrable introduces the concept of the submitter/challenger (a binary outcome) as 3/4.
-    // Note that Aragon Court emits the lowest outcome in the event of a tie, and so for us, we prefer the submitter.
-    uint256 internal constant DISPUTES_RULING_SUBMITTER = 3;
-    uint256 internal constant DISPUTES_RULING_CHALLENGER = 4;
+    // This Arbitrable introduces the concept of the challenger/submitter (a binary outcome) as 3/4.
+    // Note that Aragon Court emits the lowest outcome in the event of a tie, and so for us, we prefer the challenger.
+    uint256 internal constant DISPUTES_RULING_CHALLENGER = 3;
+    uint256 internal constant DISPUTES_RULING_SUBMITTER = 4;
 
     /* Validation errors */
     string internal constant ERROR_SENDER_NOT_ALLOWED = "AGR_SENDER_NOT_ALLOWED";
@@ -332,20 +332,22 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
 
         uint256 currentSettingId = _getCurrentSettingId();
         uint256 lastSettingIdSigned = lastSettingSignedBy[_submitter];
-        require(lastSettingIdSigned >= currentSettingId, ERROR_SIGNER_MUST_SIGN);
+        require(lastSettingIdSigned == currentSettingId, ERROR_SIGNER_MUST_SIGN);
 
         // An initial collateral requirement is created when disputable apps are activated, thus length is always greater than 0
         uint256 currentCollateralRequirementId = disputableInfo.nextCollateralRequirementsId - 1;
         CollateralRequirement storage requirement = _getCollateralRequirement(disputableInfo, currentCollateralRequirementId);
         _lockBalance(requirement.staking, _submitter, requirement.actionAmount);
 
+        // Create new action
+        uint256 id = nextActionId++;
+        Action storage action = actions[id];
+
         // Pay action submission fees
         Setting storage setting = _getSetting(currentSettingId);
         DisputableAragonApp disputable = DisputableAragonApp(msg.sender);
         _payAppFees(setting, disputable, _submitter, id);
 
-        uint256 id = nextActionId++;
-        Action storage action = actions[id];
         action.disputable = disputable;
         action.disputableActionId = _disputableActionId;
         action.collateralRequirementId = currentCollateralRequirementId;
@@ -465,8 +467,15 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
         IArbitrator arbitrator = _getArbitratorFor(action);
         bytes memory metadata = abi.encodePacked(appId(), action.lastChallengeId);
         uint256 disputeId = _createDispute(action, challenge, arbitrator, metadata);
+        bool challengerFinishedEvidence = challenge.challengerFinishedEvidence;
         _submitEvidence(arbitrator, disputeId, submitter, action.context, _submitterFinishedEvidence);
-        _submitEvidence(arbitrator, disputeId, challenge.challenger, challenge.context, challenge.challengerFinishedEvidence);
+        _submitEvidence(arbitrator, disputeId, challenge.challenger, challenge.context, challengerFinishedEvidence);
+
+        if (_submitterFinishedEvidence && challengerFinishedEvidence) {
+            // Try-catch for: arbitrator.closeEvidencePeriod(disputeId);
+            bytes memory closeEvidencePeriodCalldata = abi.encodeWithSelector(arbitrator.closeEvidencePeriod.selector, disputeId);
+            address(arbitrator).call(closeEvidencePeriodCalldata);
+        }
 
         challenge.state = ChallengeState.Disputed;
         challenge.submitterFinishedEvidence = _submitterFinishedEvidence;
@@ -1127,7 +1136,7 @@ contract Agreement is IArbitrable, ILockManager, IAgreement, IACLOracle, AragonA
             return;
         }
 
-        _staking.lock(_user, address(this), _amount);
+        _staking.lock(_user, _amount);
     }
 
     /**

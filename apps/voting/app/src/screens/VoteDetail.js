@@ -14,6 +14,7 @@ import {
   textStyle,
   useLayout,
   useTheme,
+  Info,
 } from '@aragon/ui'
 import { useAppState, useConnectedAccount, useNetwork } from '@aragon/api-react'
 import { format } from 'date-fns'
@@ -62,11 +63,15 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
   const youVoted =
     connectedAccountVote === VOTE_YEA || connectedAccountVote === VOTE_NAY
 
+  const Keyword = 'Transfer funds to govern executor'
+  
   const handleVoteNo = useCallback(() => {
     onVote(voteId, VOTE_NAY)
   }, [onVote, voteId])
   const handleVoteYes = useCallback(() => {
-    onVote(voteId, VOTE_YEA)
+    // if the proposal is about migration, the last voter shouldn't cause vote execution
+    // because it will always fail due to access list feature not used as govern uses proxy contracts.
+    onVote(voteId, VOTE_YEA, !description.includes(Keyword))
   }, [onVote, voteId])
 
   const handleExecute = useCallback(() => {
@@ -114,6 +119,15 @@ function VoteDetail({ vote, onBack, onVote, onExecute }) {
               >
                 <span css="font-weight: bold;">Vote #{voteId}</span>
               </h1>
+              <div>
+                {description.includes(Keyword) && (
+                  <Info>
+                    "Govern Migration: When this proposal passes, please email{' '}
+                    <strong>product@aragon.org</strong> so we can execute it for
+                    you (required for the reward program)."
+                  </Info>
+                )}
+              </div>
               <div
                 css={`
                   display: grid;

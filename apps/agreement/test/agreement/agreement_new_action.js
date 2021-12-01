@@ -1,7 +1,8 @@
 const deployer = require('../helpers/utils/deployer')(web3, artifacts)
-const { AGREEMENT_EVENTS } = require('../helpers/utils/events')
+const { AGREEMENT_EVENTS, APP_FEES_CASHIER_EVENTS } = require('../helpers/utils/events')
 const { AGREEMENT_ERRORS, DISPUTABLE_ERRORS, STAKING_ERRORS } = require('../helpers/utils/errors')
 
+const { padLeft, toHex } = require('web3-utils')
 const { bn, bigExp, injectWeb3, injectArtifacts } = require('@aragon/contract-helpers-test')
 const { assertBn, assertRevert, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
 
@@ -211,6 +212,13 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
                               const currentCashierBalance = await collateralToken.balanceOf(aragonAppFeesCashier.address)
                               assertBn(currentCashierBalance, previousCashierBalance.add(appFeeAmount), 'cashier balance does not match')
                             })
+
+                            it('references the agreement action ID in the cashier', async () => {
+                              const { actionId, receipt } = await disputable.newAction({ submitter, actionContext, stake, sign })
+
+                              assertAmountOfEvents(receipt, APP_FEES_CASHIER_EVENTS.APP_FEE_PAID, { decodeForAbi: aragonAppFeesCashier.abi })
+                              assertEvent(receipt, APP_FEES_CASHIER_EVENTS.APP_FEE_PAID, { expectedArgs: { by: disputable.agreement.address, appId: (await disputable.appId()), data: padLeft(toHex(actionId), 64) }, decodeForAbi: aragonAppFeesCashier.abi })
+                            })
                           })
 
                           context('when the submitter adds some ETH as well', () => {
@@ -225,7 +233,7 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
                         context('when the submitter has no allowed balance in the staking pool', () => {
                           beforeEach('decrease allowance', async () => {
                             const staking = await disputable.getStaking(collateralToken)
-                            const { _allowance: allowance, _amount: locked } = await staking.getLock(submitter, disputable.address)
+                            const { allowance, amount: locked } = await staking.getLock(submitter, disputable.address)
                             await staking.decreaseLockAllowance(submitter, disputable.address, allowance.sub(locked), { from: submitter })
                           })
 
@@ -265,6 +273,13 @@ contract('Agreement', ([_, owner, submitter, someone]) => {
 
                                 const currentCashierBalance = await token.balanceOf(aragonAppFeesCashier.address)
                                 assertBn(currentCashierBalance, previousCashierBalance.add(appFeeAmount), 'cashier balance does not match')
+                              })
+
+                              it('references the agreement action ID in the cashier', async () => {
+                                const { actionId, receipt } = await disputable.newAction({ submitter, actionContext, stake, sign })
+
+                                assertAmountOfEvents(receipt, APP_FEES_CASHIER_EVENTS.APP_FEE_PAID, { decodeForAbi: aragonAppFeesCashier.abi })
+                                assertEvent(receipt, APP_FEES_CASHIER_EVENTS.APP_FEE_PAID, { expectedArgs: { by: disputable.agreement.address, appId: (await disputable.appId()), data: padLeft(toHex(actionId), 64) }, decodeForAbi: aragonAppFeesCashier.abi })
                               })
                             })
 

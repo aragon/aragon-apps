@@ -1,0 +1,36 @@
+type Vote @entity {
+  id: ID!
+  creator: Bytes!
+  metadata: String!
+  executed: Boolean!
+  startBlock: BigInt!
+  executionBlock: BigInt!
+  snapshotBlock: BigInt!
+  supportRequiredPct: BigInt!
+  minAcceptQuorum: BigInt!
+  yea: BigInt!
+  nay: BigInt!
+  votingPower: BigInt!
+  script: Bytes!
+  voteNum: BigInt!
+  casts: [Cast!]!
+  orgAddress: Bytes!
+  appAddress: Bytes!
+}
+
+type Cast @entity {
+  id: ID!
+  voteId: ID!
+  voteNum: BigInt!
+  voter: Bytes!
+  supports: Boolean!
+  voterStake: BigInt!
+  vote: Vote! @derivedFrom(field: "casts")
+}
+
+type AragonInfo @entity {
+  id: ID!
+  orgs: [Bytes!]!
+  apps: [Bytes!]!
+  tokens: [Bytes!]!
+}
