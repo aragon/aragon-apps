@@ -15,11 +15,11 @@ This monorepo contains the following apps:
 - **[Voting](apps/voting)**: Create votes that execute actions on behalf of token holders.
 - **[Disputable Voting](apps/voting-disputable)**: Create disputable votes that execute actions on behalf of token holders.
 - **[Open Enterprise Apps](https://github.com/AutarkLabs/open-enterprise)**:
-    - [Allocations](apps/allocations)
-    - [Address books](apps/address-book)
-    - [Projects](apps/projects)
-    - [Dot Voting](apps/dot-voting)
-    - [Rewards](apps/rewards)
+    - [Allocations](apps/allocations): Create proposals for financial allocation.
+    - [Address books](apps/address-book): Map Ethereum address to human-readable names.
+    - [Projects](apps/projects): Allocate funding to Github issues.
+    - [Dot Voting](apps/dot-voting): Cast votes for Allocation or Issue Curation proposals.
+    - [Rewards](apps/rewards): Distribute payments to token holders.
 
 Each of the individual apps come with a frontend that is intended to be installed and used through the [Aragon client](http://github.com/aragon/aragon).
 
