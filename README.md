@@ -14,6 +14,12 @@ This monorepo contains the following apps:
 - **[Vault](apps/vault)**: Securely owns and manages tokens on behalf of a DAO.
 - **[Voting](apps/voting)**: Create votes that execute actions on behalf of token holders.
 - **[Disputable Voting](apps/voting-disputable)**: Create disputable votes that execute actions on behalf of token holders.
+- **[Open Enterprise Apps](https://github.com/AutarkLabs/open-enterprise)**:
+    - [Allocations](apps/allocations)
+    - [Address books](apps/address-book)
+    - [Projects](apps/projects)
+    - [Dot Voting](apps/dot-voting)
+    - [Rewards](apps/rewards)
 
 Each of the individual apps come with a frontend that is intended to be installed and used through the [Aragon client](http://github.com/aragon/aragon).
 
