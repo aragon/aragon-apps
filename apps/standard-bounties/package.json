@@ -15,7 +15,7 @@
   },
   "devDependencies": {
     "@aragon/hardhat-aragon": "^1.0.0",
-    "@aragon/hardhat-config": "^1.0.0",
+    "@aragon/hardhat-config": "^1.0.1",
     "@nomiclabs/hardhat-ethers": "^2.0.2",
     "@nomiclabs/hardhat-etherscan": "^2.1.6",
     "ethers": "^5.4.7",
