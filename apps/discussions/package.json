@@ -28,7 +28,7 @@
   },
   "devDependencies": {
     "@aragon/hardhat-aragon": "^1.0.0",
-    "@aragon/hardhat-config": "^1.0.0",
+    "@aragon/hardhat-config": "^1.0.1",
     "@aragon/test-helpers": "^2.0.0",
     "@babel/core": "^7.4.5",
     "@babel/plugin-proposal-class-properties": "^7.4.4",
