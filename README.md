@@ -20,6 +20,7 @@ This monorepo contains the following apps:
     - [Projects](apps/projects): Allocate funding to Github issues.
     - [Dot Voting](apps/dot-voting): Cast votes for Allocation or Issue Curation proposals.
     - [Rewards](apps/rewards): Distribute payments to token holders.
+    - [Standard Bounties](apps/standard-bounties): Issue bounties for tasks.
 
 Each of the individual apps come with a frontend that is intended to be installed and used through the [Aragon client](http://github.com/aragon/aragon).
 
