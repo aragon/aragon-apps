@@ -131,6 +131,8 @@ jobs:
           run: |
             mkdir -p deployments/environments/${{ needs.checkTag.outputs.network }}/${{ needs.checkTag.outputs.app }}.aragonpm.eth/
             cp  ${{ steps.packaging.outputs.tar }} deployments/environments/${{ needs.checkTag.outputs.network }}/${{ needs.checkTag.outputs.app }}.aragonpm.eth/
+        - name: Increase git limits
+          run: git config --global http.version HTTP/1.1
         - name: Create Pull Request
           uses: peter-evans/create-pull-request@v3
           id: cpr
