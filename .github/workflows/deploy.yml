@@ -96,29 +96,8 @@ jobs:
             IPFS_CLUSTER_BASIC_AUTH: ${{ secrets.IPFS_CLUSTER_BASIC_AUTH }}
             IPFS_CLUSTER_HOST: ${{ secrets.IPFS_CLUSTER_HOST }}
           run: $GITHUB_WORKSPACE/ipfs-cluster-ctl/ipfs-cluster-ctl --basic-auth $IPFS_CLUSTER_BASIC_AUTH --host "$IPFS_CLUSTER_HOST" add -r $CID
-        - uses: "marvinpinto/action-automatic-releases@latest"
-          with:
-            repo_token: "${{ secrets.GITHUB_TOKEN }}"
-            automatic_release_tag: "${{ needs.checkTag.outputs.tag }}"
-            prerelease: false
-            title: "${{ needs.checkTag.outputs.tag }}"
-            files: |
-              ${{ steps.packaging.outputs.tar }}
-        - name: Checkout Deployments
-          uses: actions/checkout@v2
-          with:
-            repository: 'aragon/deployments'
-            ref: 'master'
-            token: ${{ secrets.ARABOT_PAT }}
-            path: deployments
-        - uses: actions/setup-python@v2
-          with:
-            python-version: '3.x'
-            architecture: 'x64'
-        - name: install pyyaml
-          run: |
-            pip install --user pyyaml
-        - name: extend deployments file
+        - name: create release notes
+          id: release
           env:
             APP: ${{ needs.checkTag.outputs.app }}
             VERSION: ${{ needs.checkTag.outputs.version }}
@@ -126,32 +105,14 @@ jobs:
             CID: ${{ steps.publish.outputs.cid }}
             CONTRACT: ${{ steps.publish.outputs.contract }}
             TXHASH: ${{ steps.publish.outputs.txhash }}
-          run:  python .github/scripts/update_deploymentfile.py "deployments/" $APP $NETWORK $VERSION $CID $CONTRACT $GITHUB_SHA $TXHASH
-        - name: move files in place
+            OUTPUT_FILE: ${{ steps.packaging.outputs.tempdir }}/release.txt
           run: |
-            mkdir -p deployments/environments/${{ needs.checkTag.outputs.network }}/${{ needs.checkTag.outputs.app }}.aragonpm.eth/
-            cp  ${{ steps.packaging.outputs.tar }} deployments/environments/${{ needs.checkTag.outputs.network }}/${{ needs.checkTag.outputs.app }}.aragonpm.eth/
-        - name: Create Pull Request
-          uses: peter-evans/create-pull-request@v3
-          id: cpr
-          with: 
-            token: ${{ secrets.ARABOT_PAT }}
-            path: deployments
-            commit-message: "Updates ${{ needs.checkTag.outputs.app }} on ${{ needs.checkTag.outputs.network }} to ${{ needs.checkTag.outputs.version }}"
-            branch: ${{ needs.checkTag.outputs.tag }}
-            delete-branch: true
-            base: master
-            title: "Updates ${{ needs.checkTag.outputs.app }} on ${{ needs.checkTag.outputs.network }} to ${{ needs.checkTag.outputs.version }}"
-            body: "Automatic update from aragon/aragon-apps"
-        - name: merge pull
-          uses: actions/github-script@v5
-          env:
-            PULL_NUMBER: ${{ steps.cpr.outputs.pull-request-number }}
+            .github/scripts/release-notes.sh $OUTPUT_FILE $APP $NETWORK $VERSION "$CID" "$CONTRACT" $GITHUB_SHA "$TXHASH"
+            echo "::set-output name=notes::$OUTPUT_FILE"
+        - uses: "softprops/action-gh-release@v1"
+          if: startsWith(github.ref, 'refs/tags/')
           with:
-            github-token: ${{ secrets.ARABOT_PAT }}
-            script: |
-              github.rest.pulls.merge({
-                 owner: 'aragon',
-                 repo: 'deployments',
-                 pull_number: process.env.PULL_NUMBER
-              })
+            prerelease: false
+            body_path: ${{ steps.release.outputs.notes }}
+            files: |
+              ${{ steps.packaging.outputs.tar }}
