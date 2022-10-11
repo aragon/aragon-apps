@@ -5,7 +5,7 @@ on:
     types: [closed]
 
 env:
-  POSSIBLE_NETWORKS: "mainnet rinkeby mumbai matic harmony harmonyTest andromeda stardust bscTest"
+  POSSIBLE_NETWORKS: "mainnet goerli mumbai matic harmony harmonyTest andromeda stardust bscTest"
 
 jobs:
   checkLabels:

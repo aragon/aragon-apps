@@ -285,10 +285,10 @@
     ipfs-http-client "^50.0.0"
     node-fetch "^2.6.1"
 
-"@aragon/hardhat-config@^1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@aragon/hardhat-config/-/hardhat-config-1.0.0.tgz#7b00040aa1e03a70a7ef17bb2439948aed1c2182"
-  integrity sha512-peNZ1/pWJSVwO0b1qT0woHP8QJs7ZlC37+c5Ro6BsyWTg9GvjW0r/KULIF1oHrELCTplQMtmU4OnsYWsMql5cA==
+"@aragon/hardhat-config@^1.0.1":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@aragon/hardhat-config/-/hardhat-config-1.0.2.tgz#38e4fab9928bbc073490e6d75c44b43e840d8bc3"
+  integrity sha512-H9uHJWlXJCkI4/k1gc/br/3OAXNimpUB8dXGAcO55O5tSmIEavQuCmnRMKleGUbLAPxCQN0Fa2s5WHMnk3rR2g==
 
 "@aragon/id@^2.1.0":
   version "2.1.1"
