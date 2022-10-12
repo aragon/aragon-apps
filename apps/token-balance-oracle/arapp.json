@@ -68,6 +68,11 @@
       "registry": "0x843ddfab8406e752d03fa75dbb275070f368658d",
       "appName": "token-balance-oracle.aragonpm.eth",
       "network": "andromeda"
+    },
+    "goerli": {
+      "registry": "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e",
+      "appName": "token-balance-oracle.aragonpm.eth",
+      "network": "goerli"
     }
   },
   "path": "contracts/TokenBalanceOracle.sol"
