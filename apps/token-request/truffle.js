@@ -57,9 +57,9 @@ module.exports = {
       network_id: 1,
       provider: providerForNetwork('mainnet'),
     },
-    rinkeby: {
-      network_id: 4,
-      provider: providerForNetwork('rinkeby'),
+    goerli: {
+      network_id: 5,
+      provider: providerForNetwork('goerli'),
     },
     coverage: {
       host: 'localhost',
