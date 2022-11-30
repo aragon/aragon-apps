@@ -25,10 +25,10 @@
     rxjs "^6.5.2"
     uuid "^3.2.1"
 
-"@aragon/ui@^1.9.0":
-  version "1.9.2"
-  resolved "https://registry.yarnpkg.com/@aragon/ui/-/ui-1.9.2.tgz#d0ff123ba50ee1159292486b8d01103f924f789a"
-  integrity sha512-RToZpC20wriFb/Ps+dLiIxx1h5aQ5ThF22DV1IJiCjlCeEPYCREBXUhlNaRW4yurKmgqsl/inN4Ic1lh7ebVgg==
+"@aragon/ui@^1.9.2":
+  version "1.9.3"
+  resolved "https://registry.yarnpkg.com/@aragon/ui/-/ui-1.9.3.tgz#8660a815925bfa2598c175c8bea6233641867aa7"
+  integrity sha512-ofD0PVmz6KgxB8HfIRbTJC2eBOckqMN/pupZqKUosIq8I9M7SEj5UeRW7AtOn6Fp/ipJC5XlYZRxcJUUsP9thg==
   dependencies:
     "@babel/runtime" "^7.3.1"
     airbnb-prop-types "^2.9.0"
@@ -9430,9 +9430,9 @@ write@^0.2.1:
     mkdirp "^0.5.1"
 
 ws@^5.1.1, ws@^5.2.0:
-  version "5.2.2"
-  resolved "https://registry.yarnpkg.com/ws/-/ws-5.2.2.tgz#dffef14866b8e8dc9133582514d1befaf96e980f"
-  integrity sha512-jaHFD6PFv6UgoIVda6qZllptQsMlDEJkTQcybzzXDYM1XO9Y8em691FGMPmM46WGyLU4z9KMgQN+qrux/nhlHA==
+  version "5.2.3"
+  resolved "https://registry.yarnpkg.com/ws/-/ws-5.2.3.tgz#05541053414921bc29c63bee14b8b0dd50b07b3d"
+  integrity sha512-jZArVERrMsKUatIdnLzqvcfydI85dvd/Fp1u/VOpfdDWQ4c9qWXe+VIeAbQ5FrDwciAkr+lzofXLz3Kuf26AOA==
   dependencies:
     async-limiter "~1.0.0"
 
