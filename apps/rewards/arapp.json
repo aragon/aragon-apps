@@ -35,6 +35,11 @@
       "appName": "rewards.aragonpm.eth",
       "network": "mainnet"
     },
+    "fuji": {
+      "registry": "0x5b442a5e9020a886354c77e4ad10b11ddd883714",
+      "appName": "rewards.aragonpm.eth",
+      "network": "fuji"
+    },
     "harmony": {
       "registry": "0x843ddfab8406e752d03fa75dbb275070f368658d",
       "appName": "rewards.aragonpm.eth",

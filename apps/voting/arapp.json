@@ -21,6 +21,11 @@
       "appName": "voting.aragonpm.eth",
       "network": "mainnet"
     },
+    "fuji": {
+      "registry": "0x5b442a5e9020a886354c77e4ad10b11ddd883714",
+      "appName": "voting.aragonpm.eth",
+      "network": "fuji"
+    },
     "rinkeby": {
       "registry": "0x98Df287B6C145399Aaa709692c8D308357bC085D",
       "appName": "voting.aragonpm.eth",
