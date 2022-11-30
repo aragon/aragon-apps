@@ -116,11 +116,11 @@ async function initialize(tokenAddress) {
 function initState({ token, tokenAddress }) {
   return async cachedState => {
     try {
-      const tokenSymbol = await token.symbol().toPromise()
-      app.identify(tokenSymbol)
+      const tokenName = await token.name().toPromise()
+      return app.identify(tokenName)
     } catch (err) {
       console.error(
-        `Failed to load token symbol for token at ${tokenAddress} due to:`,
+        `Failed to load token name for token at ${tokenAddress} due to:`,
         err
       )
     }
@@ -145,6 +145,7 @@ function initState({ token, tokenAddress }) {
     return inititalState
   }
 }
+
 /***********************
  *                     *
  *   Event Handlers    *
