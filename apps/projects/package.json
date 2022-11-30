@@ -35,7 +35,7 @@
     "@babel/polyfill": "^7.2.5",
     "@babel/runtime": "^7.6.0",
     "apollo-boost": "^0.1.22",
-    "axios": "^0.18.0",
+    "axios": "^0.21.2",
     "date-fns": "2.0.0-alpha.22",
     "graphql": "^14.0.2",
     "graphql-request": "^1.8.2",
