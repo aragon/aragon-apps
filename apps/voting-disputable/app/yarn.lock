@@ -25,10 +25,10 @@
     rxjs "^6.5.2"
     uuid "^3.2.1"
 
-"@aragon/ui@^1.9.0":
-  version "1.9.2"
-  resolved "https://registry.yarnpkg.com/@aragon/ui/-/ui-1.9.2.tgz#d0ff123ba50ee1159292486b8d01103f924f789a"
-  integrity sha512-RToZpC20wriFb/Ps+dLiIxx1h5aQ5ThF22DV1IJiCjlCeEPYCREBXUhlNaRW4yurKmgqsl/inN4Ic1lh7ebVgg==
+"@aragon/ui@^1.9.2":
+  version "1.9.3"
+  resolved "https://registry.yarnpkg.com/@aragon/ui/-/ui-1.9.3.tgz#8660a815925bfa2598c175c8bea6233641867aa7"
+  integrity sha512-ofD0PVmz6KgxB8HfIRbTJC2eBOckqMN/pupZqKUosIq8I9M7SEj5UeRW7AtOn6Fp/ipJC5XlYZRxcJUUsP9thg==
   dependencies:
     "@babel/runtime" "^7.3.1"
     airbnb-prop-types "^2.9.0"
@@ -3431,9 +3431,9 @@ decamelize@^1.1.1:
   integrity sha1-9lNNFRSCabIDUue+4m9QH5oZEpA=
 
 decode-uri-component@^0.2.0:
-  version "0.2.0"
-  resolved "https://registry.yarnpkg.com/decode-uri-component/-/decode-uri-component-0.2.0.tgz#eb3913333458775cb84cd1a1fae062106bb87545"
-  integrity sha1-6zkTMzRYd1y4TNGh+uBiEGu4dUU=
+  version "0.2.2"
+  resolved "https://registry.yarnpkg.com/decode-uri-component/-/decode-uri-component-0.2.2.tgz#e69dbe25d37941171dd540e024c444cd5188e1e9"
+  integrity sha512-FqUYQ+8o158GyGTrMFJms9qh3CqTKvAqgqsTnkLI8sKu0028orqBhxNMFkFen0zGyg6epACD32pjVk58ngIErQ==
 
 deep-is@~0.1.3:
   version "0.1.3"
